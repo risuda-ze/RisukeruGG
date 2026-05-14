@@ -52,11 +52,11 @@ export function LeaveTeamDialog({ open, onClose, isOwner, onSuccess }: LeaveTeam
       }
     >
       {isOwner ? (
-        <p className="text-red-600">先に所有権を移譲してください</p>
+        <p className="text-sm text-live">先に所有権を移譲してください</p>
       ) : (
         <>
-          <p>チームを脱退すると、ソロチームに自動移行します。</p>
-          {error && <p className="mt-2 text-red-600 text-sm">{error}</p>}
+          <p className="text-sm text-text">チームを脱退すると、ソロチームに自動移行します。</p>
+          {error && <p className="mt-2 text-sm text-live">{error}</p>}
         </>
       )}
     </Modal>

@@ -2,16 +2,28 @@
 
 import { ReactNode, useEffect } from 'react';
 
-interface ModalProps {
+export interface ModalProps {
+  /** モーダル表示フラグ */
   open: boolean;
+  /** 閉じるコールバック（Escキー・オーバーレイクリック） */
   onClose: () => void;
-  title: string;
+  /** モーダルタイトル */
+  title?: string;
   children: ReactNode;
+  /** フッターエリア（OK/キャンセルボタン等） */
   footer?: ReactNode;
+  /** モーダルサイズ */
+  size?: 'sm' | 'md' | 'lg';
 }
 
-export function Modal({ open, onClose, title, children, footer }: ModalProps) {
-  // ESCキーでモーダルを閉じる
+const sizeClasses = {
+  sm: 'max-w-[360px]',
+  md: 'max-w-[480px]',
+  lg: 'max-w-[640px]',
+};
+
+export function Modal({ open, onClose, title, children, footer, size = 'md' }: ModalProps) {
+  /* ESCキーで閉じる */
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -25,7 +37,7 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
       role="dialog"
       aria-modal="true"
       aria-label={title}
@@ -33,10 +45,16 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-        <h2 className="mb-4 text-lg font-semibold text-zinc-900">{title}</h2>
-        <div className="text-sm text-zinc-700">{children}</div>
-        {footer && <div className="mt-6 flex justify-end gap-3">{footer}</div>}
+      <div className={`w-full ${sizeClasses[size]} rounded-lg bg-card border border-border shadow-lg`}>
+        {title && (
+          <div className="px-6 py-4 border-b border-border">
+            <h2 className="text-base font-semibold text-text">{title}</h2>
+          </div>
+        )}
+        <div className="px-6 py-4 text-sm text-text">{children}</div>
+        {footer && (
+          <div className="px-6 py-4 border-t border-border flex justify-end gap-3">{footer}</div>
+        )}
       </div>
     </div>
   );

@@ -15,10 +15,11 @@ export function usePushPermission(currentUser: FirebaseUser | null) {
 
   useEffect(() => {
     if (!currentUser || typeof Notification === 'undefined') return;
-    setPermissionState(Notification.permission);
-    if (Notification.permission === 'default') {
-      setShowBanner(true);
-    }
+    const perm = Notification.permission;
+    // Read browser permission state once after login — not a cascade risk
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPermissionState(perm);
+    if (perm === 'default') setShowBanner(true);
   }, [currentUser]);
 
   async function requestPermission() {

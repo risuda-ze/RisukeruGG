@@ -2,6 +2,7 @@
 
 import { useAuthStore } from '@/stores/auth';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { LIGHT_PLAN_LIMITS } from '@/types/entities';
 
 interface PlanStatusProps {
@@ -18,37 +19,30 @@ export function PlanStatus({ monthlyTaskCount, monthlyCollabCount }: PlanStatusP
   const isLight = true; // TODO: Firestoreからプラン情報を取得
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-4">
-      <div className="mb-3 flex items-center gap-2">
-        <Badge variant={isLight ? 'default' : 'purple'}>{isLight ? 'LIGHT' : 'PARTY'}</Badge>
-        <span className="text-sm font-medium text-zinc-700">プラン</span>
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Badge variant={isLight ? 'muted' : 'purple'}>{isLight ? 'LIGHT' : 'PARTY'}</Badge>
+        <span className="text-sm text-muted">現在のプラン</span>
       </div>
 
       {isLight && (
-        <div className="space-y-2 text-sm text-zinc-600">
-          <div className="flex justify-between">
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between text-muted">
             <span>タスク作成（月）</span>
-            <span>
-              {monthlyTaskCount} / {LIGHT_PLAN_LIMITS.monthlyTasks}件
-            </span>
+            <span className="font-num">{monthlyTaskCount} / {LIGHT_PLAN_LIMITS.monthlyTasks}件</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between text-muted">
             <span>コラボ日程（月）</span>
-            <span>
-              {monthlyCollabCount} / {LIGHT_PLAN_LIMITS.monthlyCollabs}件
-            </span>
+            <span className="font-num">{monthlyCollabCount} / {LIGHT_PLAN_LIMITS.monthlyCollabs}件</span>
           </div>
         </div>
       )}
 
       {isLight && signupUrl && (
-        <a
-          href={signupUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 block w-full rounded-lg bg-indigo-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
-        >
-          PARTYプランにアップグレード
+        <a href={signupUrl} target="_blank" rel="noopener noreferrer" className="block">
+          <Button variant="amber" className="w-full">
+            PARTYプランにアップグレード
+          </Button>
         </a>
       )}
     </div>

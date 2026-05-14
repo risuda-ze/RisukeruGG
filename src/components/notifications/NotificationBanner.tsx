@@ -7,9 +7,17 @@ import type { Notification } from '@/types/entities';
 
 const REF_TYPE_PATHS: Record<NonNullable<Notification['refType']>, string> = {
   schedule: '/schedule',
-  task: '/tasks',
-  collab: '/collabs',
-  team: '/team',
+  task:     '/tasks',
+  collab:   '/collabs',
+  team:     '/team',
+};
+
+/* カテゴリ別カラードット */
+const CATEGORY_DOT: Record<Notification['category'], string> = {
+  collab:    'bg-live',
+  tasks:     'bg-amber',
+  reminders: 'bg-purple',
+  system:    'bg-green',
 };
 
 export function NotificationBanner() {
@@ -21,7 +29,6 @@ export function NotificationBanner() {
 
   useEffect(() => {
     const currentIds = new Set(notifications.map((n) => n.id));
-
     for (const notif of notifications) {
       if (!prevNotifIds.current.has(notif.id) && !notif.isRead) {
         setBanner(notif);
@@ -30,7 +37,6 @@ export function NotificationBanner() {
         break;
       }
     }
-
     prevNotifIds.current = currentIds;
   }, [notifications]);
 
@@ -47,12 +53,20 @@ export function NotificationBanner() {
 
   return (
     <div
-      className="fixed top-4 right-4 z-50 max-w-sm w-full bg-white shadow-lg rounded-xl border border-zinc-200 p-4 cursor-pointer hover:shadow-xl transition-shadow"
+      className="fixed top-4 right-4 z-50 max-w-sm w-full bg-card border border-border rounded-[12px] shadow-lg cursor-pointer hover:border-purple/40 transition-colors p-4"
       onClick={handleClick}
       role="alert"
     >
-      <p className="text-sm font-medium text-zinc-900">{banner.title}</p>
-      <p className="text-xs text-zinc-500 mt-0.5">{banner.body}</p>
+      <div className="flex items-start gap-3">
+        <span
+          className={`w-2 h-2 rounded-full shrink-0 mt-1 ${CATEGORY_DOT[banner.category]}`}
+          aria-hidden="true"
+        />
+        <div>
+          <p className="text-sm font-medium text-text">{banner.title}</p>
+          <p className="text-[11px] text-muted mt-0.5">{banner.body}</p>
+        </div>
+      </div>
     </div>
   );
 }

@@ -2,9 +2,12 @@
 
 import { InputHTMLAttributes, forwardRef } from 'react';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  /** 入力欄上部ラベル */
   label?: string;
+  /** エラーメッセージ（表示時はボーダーをliveカラーに変更） */
   error?: string;
+  /** ヒントテキスト */
   hint?: string;
 }
 
@@ -14,20 +17,20 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="flex flex-col gap-1">
         {label && (
-          <label htmlFor={inputId} className="text-sm font-medium text-zinc-700">
+          <label htmlFor={inputId} className="text-sm font-medium text-text">
             {label}
           </label>
         )}
         <input
           ref={ref}
           id={inputId}
-          className={`rounded-lg border px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-zinc-50 ${
-            error ? 'border-red-400' : 'border-zinc-300'
+          className={`rounded-sm border bg-surface px-3 py-2 text-sm text-text placeholder:text-muted transition-colors outline-none focus:ring-1 focus:ring-purple disabled:cursor-not-allowed disabled:opacity-40 ${
+            error ? 'border-live' : 'border-border focus:border-purple'
           } ${className}`}
           {...props}
         />
-        {error && <p className="text-xs text-red-600">{error}</p>}
-        {hint && !error && <p className="text-xs text-zinc-500">{hint}</p>}
+        {error && <p className="text-xs text-live">{error}</p>}
+        {hint && !error && <p className="text-xs text-muted">{hint}</p>}
       </div>
     );
   }

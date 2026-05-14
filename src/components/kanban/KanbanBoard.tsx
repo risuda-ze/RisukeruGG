@@ -4,6 +4,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import { useTasksStore } from '@/stores/tasks';
 import { updateTask } from '@/lib/repositories/tasks';
 import type { KanbanColumn, Task, TeamMember } from '@/types/entities';
+import { Badge } from '@/components/ui/Badge';
 import TaskCard from './TaskCard';
 
 interface KanbanBoardProps {
@@ -34,9 +35,9 @@ export default function KanbanBoard({
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-4 min-h-[60vh]">
+      <div className="flex gap-4 overflow-x-auto pb-4 min-h-[60vh] scrollbar-none">
         {columns.map((column) => (
-          <KanbanColumn
+          <KanbanColumnPanel
             key={column.id}
             column={column}
             tasks={tasks.filter((t) => t.columnId === column.id)}
@@ -52,7 +53,7 @@ export default function KanbanBoard({
   );
 }
 
-interface KanbanColumnProps {
+interface KanbanColumnPanelProps {
   column: KanbanColumn;
   tasks: Task[];
   teamId: string;
@@ -62,23 +63,28 @@ interface KanbanColumnProps {
   onDeleteTask: (taskId: string) => void;
 }
 
-function KanbanColumn({ column, tasks, teamId, members, canEdit, onEditTask, onDeleteTask }: KanbanColumnProps) {
+function KanbanColumnPanel({ column, tasks, teamId, members, canEdit, onEditTask, onDeleteTask }: KanbanColumnPanelProps) {
   return (
-    <div className="flex-shrink-0 w-72">
-      <div
-        className="rounded-t-lg px-3 py-2 flex items-center gap-2"
-        style={{ backgroundColor: column.color }}
-      >
-        <span className="font-semibold text-white text-sm">{column.name}</span>
-        <span className="ml-auto text-white/80 text-xs">{tasks.length}</span>
+    <div className="flex-shrink-0 w-[272px]">
+      {/* カラムヘッダー */}
+      <div className="flex items-center gap-2 mb-2 px-1">
+        <span
+          className="w-2 h-2 rounded-full shrink-0"
+          style={{ backgroundColor: column.color }}
+          aria-hidden="true"
+        />
+        <span className="text-sm font-semibold text-text">{column.name}</span>
+        <Badge variant="muted" className="ml-auto">{tasks.length}</Badge>
       </div>
+
+      {/* カラムボディ */}
       <Droppable droppableId={column.id}>
         {(provided, snapshot) => (
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`min-h-24 rounded-b-lg p-2 flex flex-col gap-2 transition-colors ${
-              snapshot.isDraggingOver ? 'bg-gray-100' : 'bg-gray-50'
+            className={`min-h-24 rounded-[10px] p-3 flex flex-col gap-2 transition-colors ${
+              snapshot.isDraggingOver ? 'bg-purple/8' : 'bg-surface/50'
             }`}
           >
             {tasks.map((task, index) => (

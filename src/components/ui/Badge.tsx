@@ -1,24 +1,26 @@
-type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'purple';
+/* バッジコンポーネント — カラーバリアント定義 */
 
-interface BadgeProps {
-  children: React.ReactNode;
+type BadgeVariant = 'purple' | 'amber' | 'live' | 'green' | 'muted' | 'default';
+
+export interface BadgeProps {
   variant?: BadgeVariant;
+  children: React.ReactNode;
   className?: string;
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: 'bg-zinc-100 text-zinc-700',
-  success: 'bg-green-100 text-green-700',
-  warning: 'bg-yellow-100 text-yellow-700',
-  danger: 'bg-red-100 text-red-700',
-  info: 'bg-blue-100 text-blue-700',
-  purple: 'bg-purple-100 text-purple-700',
+  purple:  'bg-purple/15 text-purple-l',
+  amber:   'bg-amber/15 text-amber-l',
+  live:    'bg-live/15 text-live',
+  green:   'bg-green/15 text-green',
+  muted:   'bg-surface text-muted',
+  default: 'bg-surface border border-border text-text',
 };
 
 export function Badge({ children, variant = 'default', className = '' }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${variantClasses[variant]} ${className}`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide ${variantClasses[variant]} ${className}`}
     >
       {children}
     </span>

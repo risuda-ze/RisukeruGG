@@ -60,21 +60,21 @@ export function TransferOwnershipDialog({
       }
     >
       {done ? (
-        <div className="text-sm text-zinc-700">
+        <div className="text-sm text-text">
           <p>所有権を移譲しました。あなたのロールはEditorになりました。</p>
         </div>
       ) : (
-        <div className="space-y-4 text-sm text-zinc-700">
+        <div className="space-y-4 text-sm text-text">
           <p>移譲先のメンバーを選択してください。選択後、あなたのロールはEditorになります。</p>
           {candidates.length === 0 ? (
-            <p className="text-zinc-500">移譲先のメンバーがいません</p>
+            <p className="text-muted">移譲先のメンバーがいません</p>
           ) : (
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">移譲先</label>
+              <label className="block text-sm font-medium text-text mb-1">移譲先</label>
               <select
                 value={selectedUserId}
                 onChange={(e) => setSelectedUserId(e.target.value)}
-                className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-border rounded-[8px] px-3 py-2 text-sm bg-surface text-text focus:outline-none focus:ring-2 focus:ring-purple"
               >
                 {candidates.map((m) => (
                   <option key={m.userId} value={m.userId}>
@@ -85,11 +85,11 @@ export function TransferOwnershipDialog({
             </div>
           )}
           {selectedMember && (
-            <p className="text-amber-700 bg-amber-50 rounded p-3">
+            <p className="text-amber-l bg-amber/10 border border-amber/30 rounded-[8px] p-3">
               {selectedMember.displayName} に所有権を移譲します。この操作は元に戻せません。
             </p>
           )}
-          {error && <p className="text-red-500">{error}</p>}
+          {error && <p className="text-live">{error}</p>}
         </div>
       )}
     </Modal>

@@ -8,13 +8,14 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { ScheduleForm } from '@/components/calendar/ScheduleForm';
+import { SyncErrorBanner } from '@/components/calendar/SyncErrorBanner';
+import { createSchedule } from '@/lib/repositories/schedules';
+import type { ScheduleEntry } from '@/types/entities';
 
 const CalendarView = dynamic(
   () => import('@/components/calendar/CalendarView').then((m) => ({ default: m.CalendarView })),
   { loading: () => <div className="flex justify-center py-16"><Spinner size="lg" /></div>, ssr: false }
 );
-import { createSchedule } from '@/lib/repositories/schedules';
-import type { ScheduleEntry } from '@/types/entities';
 
 export default function SchedulePage() {
   const { currentUser, currentTeamId, members } = useAuthStore();
@@ -49,23 +50,29 @@ export default function SchedulePage() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex flex-1 items-center justify-center bg-bg">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-zinc-900">スケジュール</h1>
+    <div className="px-4 py-6 md:px-7">
+
+      {/* ── ページヘッダー ─────────────────────────────────── */}
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-text">スケジュール</h2>
         {canEdit && (
-          <Button onClick={() => setShowCreate(true)} aria-label="スケジュールを追加">
+          <Button variant="amber" size="sm" onClick={() => setShowCreate(true)} aria-label="スケジュールを追加">
             + 追加
           </Button>
         )}
       </div>
 
+      {/* Googleカレンダー同期エラーバナー（エラー時のみ表示） */}
+      <SyncErrorBanner error={null} onRetry={() => {}} />
+
+      {/* ── カレンダー ─────────────────────────────────────── */}
       <CalendarView
         schedules={schedules}
         view={currentView}
@@ -76,6 +83,7 @@ export default function SchedulePage() {
         onSelectSlot={canEdit ? handleSelectSlot : undefined}
       />
 
+      {/* ── スケジュール作成モーダル ─────────────────────── */}
       <Modal
         open={showCreate}
         onClose={() => setShowCreate(false)}

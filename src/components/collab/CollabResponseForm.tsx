@@ -5,6 +5,7 @@ import { format, differenceInDays } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { respondToCollab } from '@/lib/repositories/collabs';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import type { CollabSession } from '@/types/entities';
 
 interface CollabResponseFormProps {
@@ -34,6 +35,7 @@ export default function CollabResponseForm({
     setDates((prev) => {
       const key = index.toString();
       if (prev[key] === value) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { [key]: _, ...rest } = prev;
         return rest;
       }
@@ -70,76 +72,81 @@ export default function CollabResponseForm({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="text-sm text-zinc-500">
-        <p className="font-medium text-zinc-700 mb-1">
-          {session.partnerName}さんからのコラボ打診
-        </p>
-        <p className="text-lg font-bold text-zinc-900">{session.title}</p>
+    <div className="space-y-5">
+      {/* セッション情報 */}
+      <div>
+        <p className="text-[11px] text-muted">{session.partnerName}さんからのコラボ打診</p>
+        <p className="text-base font-semibold text-text mt-0.5">{session.title}</p>
         {daysLeft > 0 ? (
-          <p className="mt-1 text-amber-600">回答期限: あと{daysLeft}日</p>
+          <p className="text-[11px] text-amber-l mt-1">回答期限: あと{daysLeft}日</p>
         ) : (
-          <p className="mt-1 text-red-600">有効期限切れ</p>
+          <p className="text-[11px] text-live mt-1">有効期限切れ</p>
         )}
       </div>
 
+      {/* 候補日程リスト */}
       <div>
-        <p className="text-sm font-medium text-zinc-700 mb-3">候補日程</p>
+        <p className="text-sm font-medium text-text mb-2">候補日程</p>
         <div className="space-y-2">
           {session.proposedDates.map((date, index) => {
             const key = index.toString();
             const val = dates[key];
             return (
-              <div key={index} className="flex items-center gap-3 p-3 rounded-lg border border-zinc-200">
-                <span className="flex-1 text-sm">
-                  {format(date, 'M月d日(E) HH:mm', { locale: ja })}
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => toggleDate(index, 'ok')}
-                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                      val === 'ok'
-                        ? 'bg-green-500 text-white'
-                        : 'bg-zinc-100 text-zinc-600 hover:bg-green-100'
-                    }`}
-                    aria-label="OK"
-                  >
-                    ○ OK
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleDate(index, 'ng')}
-                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                      val === 'ng'
-                        ? 'bg-red-500 text-white'
-                        : 'bg-zinc-100 text-zinc-600 hover:bg-red-100'
-                    }`}
-                    aria-label="NG"
-                  >
-                    × NG
-                  </button>
+              <Card key={index} className="flex items-center gap-3 p-3" noPadding>
+                <div className="flex items-center gap-3 px-3 py-3 w-full">
+                  <span className="flex-1 text-sm text-text">
+                    {format(date, 'M月d日(E) HH:mm', { locale: ja })}
+                  </span>
+                  <div className="flex gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => toggleDate(index, 'ok')}
+                      className={`px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
+                        val === 'ok'
+                          ? 'bg-green/15 border border-green/40 text-green'
+                          : 'bg-surface border border-border text-muted hover:text-green hover:border-green/40'
+                      }`}
+                      aria-label="OK"
+                    >
+                      ○ OK
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleDate(index, 'ng')}
+                      className={`px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
+                        val === 'ng'
+                          ? 'bg-live/10 border border-live/30 text-live'
+                          : 'bg-surface border border-border text-muted hover:text-live hover:border-live/30'
+                      }`}
+                      aria-label="NG"
+                    >
+                      × NG
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
       </div>
 
+      {/* 代替日程 */}
       <div>
-        <label className="block text-sm font-medium text-zinc-700 mb-1">
+        <label className="block text-sm font-medium text-text mb-2">
           代替日程の提案（任意）
         </label>
         <input
           type="datetime-local"
           value={alternativeDate}
           onChange={(e) => setAlternativeDate(e.target.value)}
-          className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full border border-border rounded-[6px] px-3 py-2 text-sm bg-surface text-text focus:ring-1 focus:ring-purple focus:border-purple outline-none"
+          aria-label="代替日程"
         />
       </div>
 
+      {/* メモ */}
       <div>
-        <label className="block text-sm font-medium text-zinc-700 mb-1">
+        <label className="block text-sm font-medium text-text mb-2">
           メモ（任意・200文字以内）
         </label>
         <textarea
@@ -147,24 +154,25 @@ export default function CollabResponseForm({
           onChange={(e) => setNote(e.target.value)}
           maxLength={200}
           rows={3}
-          className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          className="w-full border border-border rounded-[6px] px-3 py-2 text-sm bg-surface text-text placeholder:text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none resize-none"
           placeholder="コメントがあればどうぞ"
         />
-        <p className="text-xs text-zinc-400 mt-1 text-right">{note.length}/200</p>
+        <p className="text-[10px] text-muted mt-1 text-right font-num">{note.length}/200</p>
       </div>
 
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {error && <p className="text-live text-sm">{error}</p>}
 
+      {/* 未選択確認 */}
       {showConfirm && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <p className="text-sm text-amber-800 mb-3">
+        <div className="bg-amber/10 border border-amber/30 rounded-[10px] p-4">
+          <p className="text-sm text-amber-l mb-3">
             {unselected.length}件の候補日程が未選択です。このまま送信しますか？
           </p>
           <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => setShowConfirm(false)}>
+            <Button variant="secondary" size="sm" onClick={() => setShowConfirm(false)}>
               戻る
             </Button>
-            <Button onClick={handleSubmit} loading={submitting}>
+            <Button variant="amber" size="sm" onClick={handleSubmit} loading={submitting}>
               このまま送信する
             </Button>
           </div>
@@ -172,7 +180,7 @@ export default function CollabResponseForm({
       )}
 
       {!showConfirm && (
-        <Button onClick={handleSubmitClick} loading={submitting} className="w-full">
+        <Button variant="amber" onClick={handleSubmitClick} loading={submitting} className="w-full">
           回答を送信する
         </Button>
       )}

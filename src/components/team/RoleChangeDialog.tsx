@@ -55,17 +55,17 @@ export function RoleChangeDialog({
         </>
       }
     >
-      <div className="space-y-3 text-sm text-zinc-700">
+      <div className="space-y-3 text-sm text-text">
         <p>
           <span className="font-medium">{member.displayName}</span> のロールを{' '}
           <span className="font-medium">{ROLE_LABELS[newRole]}</span> に変更しますか？
         </p>
         {newRole === 'viewer' && (
-          <p className="text-amber-700 bg-amber-50 rounded p-3">
+          <p className="text-amber-l bg-amber/10 border border-amber/30 rounded-[8px] p-3">
             Viewerになると、スケジュール・タスクの作成・編集ができなくなります。
           </p>
         )}
-        {error && <p className="text-red-500">{error}</p>}
+        {error && <p className="text-live">{error}</p>}
       </div>
     </Modal>
   );

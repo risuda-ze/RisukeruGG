@@ -4,8 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { Spinner } from '@/components/ui/Spinner';
-import { TopBar } from '@/components/layout/TopBar';
-import { BottomNav } from '@/components/layout/BottomNav';
+import { AppShell } from '@/components/layout/AppShell';
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { currentUser, loading } = useAuthStore();
@@ -19,7 +18,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-bg">
         <Spinner size="lg" />
       </div>
     );
@@ -29,13 +28,5 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     return null;
   }
 
-  return (
-    <div className="flex min-h-screen flex-col">
-      <TopBar />
-      <main className="flex-1 pt-12 pb-16">
-        {children}
-      </main>
-      <BottomNav />
-    </div>
-  );
+  return <AppShell>{children}</AppShell>;
 }

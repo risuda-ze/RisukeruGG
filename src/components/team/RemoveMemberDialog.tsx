@@ -49,18 +49,18 @@ export function RemoveMemberDialog({
         </>
       }
     >
-      <div className="space-y-3 text-sm text-zinc-700">
+      <div className="space-y-3 text-sm text-text">
         <p>
           <span className="font-medium">{member.displayName}</span> をチームから削除しますか？
         </p>
         {pendingTaskCount > 0 && (
-          <p className="text-amber-700 bg-amber-50 rounded p-3">
+          <p className="text-amber-l bg-amber/10 border border-amber/30 rounded-[8px] p-3">
             このメンバーが担当する未完タスクが {pendingTaskCount} 件あります。
             削除後、これらのタスクは担当者なし（未アサイン）になります。
           </p>
         )}
-        <p className="text-zinc-500">削除後、このメンバーはソロチームへ移動されます。</p>
-        {error && <p className="text-red-500">{error}</p>}
+        <p className="text-muted">削除後、このメンバーはソロチームへ移動されます。</p>
+        {error && <p className="text-live">{error}</p>}
       </div>
     </Modal>
   );

@@ -6,13 +6,26 @@ import { ja } from 'date-fns/locale';
 import type { Task, TeamMember, KanbanColumn } from '@/types/entities';
 import { useTasksStore } from '@/stores/tasks';
 import { updateTask } from '@/lib/repositories/tasks';
+import { Badge } from '@/components/ui/Badge';
+import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
 
 const CATEGORY_LABELS: Record<Task['category'], string> = {
-  shooting: '撮影',
-  editing: '編集',
-  thumbnail: 'サムネ',
+  shooting:     '撮影',
+  editing:      '編集',
+  thumbnail:    'サムネ',
   announcement: '告知',
-  other: 'その他',
+  other:        'その他',
+};
+
+/* カテゴリ別バッジバリアント */
+type BadgeVariant = 'purple' | 'amber' | 'live' | 'green' | 'muted' | 'default';
+const CATEGORY_BADGE: Record<Task['category'], BadgeVariant> = {
+  shooting:     'purple',
+  editing:      'amber',
+  thumbnail:    'green',
+  announcement: 'live',
+  other:        'muted',
 };
 
 interface TaskCardProps {
@@ -30,7 +43,8 @@ export default function TaskCard({ task, teamId, members, isDragging, canEdit, o
   const [movingColumn, setMovingColumn] = useState(false);
 
   const assignee = members.find((m) => m.userId === task.assigneeId);
-  const assigneeName = assignee ? assignee.displayName : task.assigneeId ? '元メンバー' : null;
+  const assigneeName = assignee?.displayName ?? (task.assigneeId ? '元メンバー' : null);
+  const assigneeInitials = assigneeName ? assigneeName.slice(0, 2) : '';
 
   async function handleColumnChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const newColumnId = e.target.value;
@@ -45,62 +59,75 @@ export default function TaskCard({ task, teamId, members, isDragging, canEdit, o
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm border p-3 flex flex-col gap-1 select-none ${
-        isDragging ? 'shadow-lg rotate-1 border-blue-300' : 'border-gray-200 hover:border-gray-300'
+      className={`bg-surface border rounded-[8px] p-3 flex flex-col gap-2 select-none transition-colors ${
+        isDragging
+          ? 'border-purple shadow-md rotate-1'
+          : 'border-border hover:border-purple'
       }`}
     >
-      <div className="flex items-start justify-between gap-1">
-        <span className="text-sm font-medium text-gray-800 break-words flex-1">{task.title}</span>
+      {/* タスクタイトル + アクションボタン */}
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-sm font-medium text-text break-words flex-1 leading-snug">
+          {task.title}
+        </span>
         {canEdit && (
-          <div className="flex gap-1 flex-shrink-0">
-            <button
+          <div className="flex gap-0.5 shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={onEdit}
-              className="text-gray-400 hover:text-blue-500 text-xs p-0.5"
+              className="px-1.5 py-1 text-muted hover:text-purple-l"
               aria-label="タスクを編集"
             >
-              ✏️
-            </button>
-            <button
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11.013 2.513a1.75 1.75 0 0 1 2.475 2.474L6.226 12.25a2.751 2.751 0 0 1-.892.566l-2.35.864a.75.75 0 0 1-.96-.96l.864-2.35a2.75 2.75 0 0 1 .566-.892l7.56-7.559Z" />
+              </svg>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={onDelete}
-              className="text-gray-400 hover:text-red-500 text-xs p-0.5"
+              className="px-1.5 py-1 text-muted hover:text-live"
               aria-label="タスクを削除"
             >
-              🗑️
-            </button>
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2 4h12M5 4V2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5V4m2 0-1 9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1L3 4" />
+              </svg>
+            </Button>
           </div>
         )}
       </div>
 
-      <div className="flex flex-wrap gap-1 items-center">
-        <span className="text-xs bg-gray-100 text-gray-600 rounded px-1.5 py-0.5">
+      {/* メタ情報（カテゴリ・担当者・期限） */}
+      <div className="flex flex-wrap gap-1.5 items-center">
+        <Badge variant={CATEGORY_BADGE[task.category]}>
           {CATEGORY_LABELS[task.category]}
-        </span>
+        </Badge>
         {assigneeName && (
-          <span className="text-xs text-gray-500 truncate max-w-[100px]" title={assigneeName}>
-            👤 {assigneeName}
-          </span>
+          <div className="flex items-center gap-1">
+            <Avatar initials={assigneeInitials} size="sm" />
+            <span className="text-[10px] text-muted font-num truncate max-w-[80px]">{assigneeName}</span>
+          </div>
         )}
         {task.dueDate && (
-          <span className="text-xs text-gray-500">
-            📅 {format(task.dueDate, 'M/d', { locale: ja })}
+          <span className="text-[10px] text-muted font-num">
+            {format(task.dueDate, 'M/d', { locale: ja })}
           </span>
         )}
       </div>
 
       {/* モバイル向けカラム変更セレクト */}
       {canEdit && (
-        <div className="sm:hidden mt-1">
+        <div className="sm:hidden">
           <select
             value={task.columnId}
             onChange={handleColumnChange}
             disabled={movingColumn}
-            className="text-xs border border-gray-200 rounded px-1 py-0.5 w-full bg-white"
+            className="text-xs border border-border rounded-[6px] px-2 py-1 w-full bg-card text-text"
             aria-label="カラムを変更"
           >
             {columns.map((col: KanbanColumn) => (
-              <option key={col.id} value={col.id}>
-                {col.name}
-              </option>
+              <option key={col.id} value={col.id}>{col.name}</option>
             ))}
           </select>
         </div>

@@ -1,292 +1,201 @@
-# Tasks: リスケるGG MVP
+# Tasks: リスケるGG — 全画面UIデザイン刷新
 
 **Input**: `specs/001-risukeru-gg-app/` の設計ドキュメント群
-**Prerequisites**: plan.md ✅, spec.md ✅, research.md ✅, data-model.md ✅, contracts/ ✅, quickstart.md ✅
+**Prerequisites**: plan.md ✅, spec.md ✅, research.md ✅, data-model.md ✅, contracts/ui-components.md ✅, quickstart.md ✅
 
-**Organization**: ユーザーストーリー単位でタスクを整理し、各ストーリーを独立して実装・テスト可能にする。
+**Tests**: UIコンポーネントのユニットテストは追加しない（Constitution Principle III — 任意扱い）。
+フェーズD終了後に既存E2Eテスト（login・schedule・tasks）のセレクタ修正のみ行う。
+
+**Organization**: タスクはUIデザイン刷新の実装順（デザイン基盤→コンポーネント→画面）と
+spec.md のユーザーストーリー（US1〜US6）にマッピングして整理する。
 
 ## Format: `[ID] [P?] [Story?] Description`
 
-- **[P]**: 並行実行可能（異なるファイル・未完タスクへの依存なし）
-- **[Story]**: どのユーザーストーリーに属するか（US1〜US6）
-- 各タスクに正確なファイルパスを記載
+- **[P]**: 並列実行可能（異なるファイル・依存関係なし）
+- **[Story]**: 対象ユーザーストーリー（US1〜US6）
+- 各タスクに実際のファイルパスを記載
 
 ---
 
-## Phase 1: Setup（プロジェクト初期化）
+## Phase 1: Setup — デザイン基盤構築
 
-**Purpose**: リポジトリ構造の確立と開発環境のセットアップ
+**Purpose**: デザイントークン・フォント・Tailwindカスタムカラーをセットアップし、
+全コンポーネントが参照できる共通スタイル基盤を確立する
 
-- [x] T001 Create Next.js 14 App Router project with TypeScript strict mode via `pnpm create next-app` at repository root
-- [x] T002 [P] Configure Tailwind CSS 3.x (tailwind.config.ts, globals.css)
-- [x] T003 [P] Configure ESLint + Prettier with Next.js recommended rules (.eslintrc.json, .prettierrc)
-- [x] T004 [P] Create `.env.local.example` with all required environment variables per quickstart.md (NEXT_PUBLIC_FIREBASE_*, GOOGLE_CLIENT_ID/SECRET, NEXT_PUBLIC_PARTY_SIGNUP_URL)
-- [x] T005 [P] Initialize Firebase Functions sub-package at `functions/` with `pnpm init` + TypeScript config (functions/tsconfig.json, functions/package.json)
-- [x] T006 [P] Configure pnpm workspace (pnpm-workspace.yaml) to link root and functions/ packages
-- [x] T007 [P] Configure Vitest for unit tests (vitest.config.ts, tests/unit/ structure)
-- [x] T008 [P] Configure Playwright for E2E tests (playwright.config.ts, tests/e2e/ structure)
-- [x] T009 Configure Firebase emulator suite (firebase.json with Auth/Firestore/Functions/Storage emulators)
-- [x] T010 [P] Configure next-pwa in next.config.js with basic PWA manifest (public/manifest.json)
+- [ ] T001 `src/app/globals.css` を全面刷新: `@import "tailwindcss"` + `@theme` ブロックにカスタムカラー（--bg, --surface, --card, --border, --purple, --purple-l, --purple-d, --amber, --amber-l, --amber-d, --text, --muted, --live, --green）・フォント変数・ラウンド変数を定義。`:root` にCSSカスタムプロパティ、`body` にフォント・背景・文字色を設定。`@keyframes pulse`（LIVEバッジ用）を追加
+- [ ] T002 `src/app/layout.tsx` を更新: `next/font/google` で `Zen_Kaku_Gothic_New`（weight: 400/500/700）と `Space_Grotesk`（weight: 400/500/600）を読み込み、`--font-ja` / `--font-num` CSS変数としてhtmlタグに適用。`metadata.themeColor` を `#534AB7` に更新
+- [ ] T003 `public/manifest.json` を更新: `theme_color` を `#534AB7`、`background_color` を `#08081a` に変更。`src/app/layout.tsx` の `viewport.themeColor` も同値に更新
 
-**Checkpoint**: `pnpm dev` が起動し、`firebase emulators:start` が全エミュレータを立ち上げられる状態
+**Checkpoint**: 開発サーバー（`pnpm dev`）を起動し、ページ背景が `#08081a` になっていること、DevToolsのFontsで Zen Kaku Gothic New が読み込まれていることを確認
 
 ---
 
-## Phase 2: Foundational（全ストーリーに必要な基盤）
+## Phase 2: Foundational — 共通UIコンポーネント刷新
 
-**Purpose**: 全ユーザーストーリーが依存するコアインフラ。このフェーズ完了まで各ストーリーの実装を開始しない
+**Purpose**: 全画面で使われるプリミティブ・レイアウトコンポーネントをダークテーマに刷新する。
+この Phase の完了が全画面実装の前提条件。
 
-**⚠️ CRITICAL**: 全ユーザーストーリーの実装はこのフェーズの完了後に開始する
+**⚠️ CRITICAL**: このPhaseが完了するまで画面実装フェーズには進まないこと
 
-- [x] T011 Create TypeScript entity type definitions in `src/types/entities.ts` per data-model.md — UserRole, PlanType, LIGHT_PLAN_LIMITS定数（maxTeamMembers: 2, monthlyTasks: 5, monthlyCollabs: 3）、User（currentTeamId: string | null）、Team（teamCode: string）、TeamMember（plan: PlanType）、ScheduleEntry, Task, CollabSession, Notification等。CollabSessionStatusのUI表示名マッピング定数も含む（open→「回答受付中」, confirmed→「確定」, expired→「期限切れ」, cancelled→「キャンセル」）
-- [x] T012 [P] Initialize Firebase client SDK in `src/lib/firebase/client.ts` (Auth, Firestore, Storage, FCM exports)
-- [x] T013 [P] Initialize Firebase Admin SDK in `functions/src/lib/admin.ts` (admin.initializeApp with env config)
-- [x] T014 [P] Create Zod validation schemas in `src/lib/validations/schedule.ts`, `tasks.ts`, `collab.ts`, `team.ts` per data-model.md — joinTeamSchema（teamCode: z.string().min(1).max(20)）を含む
-- [x] T015 Implement Firestore Security Rules in `firestore.rules` with helper functions (isTeamMember, isTeamOwner, isOwnerOrEditor) per contracts/firestore-rules.md — isProductAdmin は実装しない。teamCodes/{code}（認証済みユーザーread・write=false、CF Admin SDKのみ書き込み可）、tasks/{taskId}（create=false・createTask CF経由のみ）、collabSessions/{sessionId}（create=false・createCollabSession CF経由のみ）、notifications/{notificationId}（isReadフィールドのみクライアント更新可）
-- [x] T016 [P] Implement Firebase Storage security rules in `storage.rules` — MVPスコープはアバター画像のみ（認証済みユーザーが自分のパスに読み書き可。アバターアップロードUIはMVPスコープ外のためルールは最小限に設定し、フェーズ2でアップロード機能追加時に拡張する）
-- [x] T017 Implement Next.js middleware for auth protection in `src/middleware.ts` (redirect unauthenticated to /login, allow /collab/* public access)
-- [x] T018 [P] Create common UI components in `src/components/ui/` — Button.tsx, Input.tsx, Modal.tsx, Badge.tsx, Spinner.tsx
-- [x] T019 [P] Create Cloud Functions entry point `functions/src/index.ts` with shared error handler (HttpsError codes per contracts/cloud-functions-api.md)
-- [x] T020 [P] Create shared Cloud Functions utilities in `functions/src/lib/` — validateAuth.ts (role checks: isOwner, isOwnerOrEditor, isTeamMember)
-- [x] T020a [P] Setup GitHub Actions CI workflow in `.github/workflows/ci.yml` — ESLint・TypeScriptコンパイル・Vitestユニットテスト・Playwrightテストを自動実行（Constitution Governance: PRマージ前必須チェック）
-- [x] T020b Create settings page shell in `src/app/(protected)/settings/page.tsx` — タブまたはセクション構成（Team/Kanban/Calendar/Notifications）の空シェル。US1・US3・US2・US6の各フェーズがここにセクションを追加する
+### プリミティブコンポーネント（並列実行可能）
 
-**Checkpoint**: Security Rules がエミュレータでデプロイされ、型定義とZodスキーマが TypeScript コンパイルを通過する。GitHub Actions CIが空プロジェクトでグリーンになる
+- [ ] T004 [P] `src/components/ui/Button.tsx` を刷新: `contracts/ui-components.md` の仕様通りに variant（primary/secondary/amber/danger/ghost）・size（sm/md/lg）・loading状態を実装。ダークテーマ色（`bg-purple-d text-purple-l`等）・角丸 `rounded-[12px]`・フォーカスリング `focus-visible:ring-2 focus-visible:ring-purple` を適用
+- [ ] T005 [P] `src/components/ui/Badge.tsx` を刷新: variant（purple/amber/live/green/muted/default）を `contracts/ui-components.md` に従い実装。`rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide` のスタイルを適用
+- [ ] T006 [P] `src/components/ui/Input.tsx` を刷新: ダークテーマ対応（`bg-surface border-border text-text placeholder:text-muted`）。フォーカス時 `border-purple`、エラー時 `border-live` を実装。label・error・hint propsを保持
+- [ ] T007 [P] `src/components/ui/Modal.tsx` を刷新: オーバーレイ `bg-black/60 backdrop-blur-sm`、ダイアログ `bg-card border border-border rounded-[14px]`。size（sm=360px/md=480px/lg=640px）対応。Escキーで閉じる挙動を保持
+- [ ] T008 [P] `src/components/ui/Spinner.tsx` を刷新: `text-purple-l` カラー。`border-current border-t-transparent` アニメーションでパープル系スピナー
+- [ ] T009 [P] `src/components/ui/Card.tsx` を新規作成: `bg-card border border-border rounded-[14px] overflow-hidden` の汎用カード。`noPadding` propをfalseのとき `p-[18px]` を内包。`CardHeader` サブコンポーネントを同ファイルにエクスポート（`px-[18px] py-[14px] border-b border-border flex items-center justify-between`）
+- [ ] T010 [P] `src/components/ui/StatCard.tsx` を新規作成: `contracts/ui-components.md` の仕様通り。label（`text-[11px] text-muted`）・value（`text-[26px] font-bold font-num`）・color variant（purple-l/amber-l/live/green）・sub（`text-[11px] text-muted`）を実装
+- [ ] T011 [P] `src/components/ui/Avatar.tsx` を新規作成: イニシャル表示アバター。size（sm=24px/md=34px/lg=42px）・bgClass・textClass・online（グリーンドット `border-2 border-surface`）を実装
 
----
+### レイアウトコンポーネント（プリミティブ完了後）
 
-## Phase 3: User Story 1 — 認証・チーム管理・プラン管理 (Priority: P1) 🎯 MVP Start
+- [ ] T012 `src/components/layout/Sidebar.tsx` を新規作成: `w-[220px] shrink-0 bg-surface border-r border-border flex flex-col py-5 hidden md:flex`。ロゴエリア（SVGマスコット + "リスケるGG"）、ナビセクション（メイン/チーム/連携）、フッター（プランバッジ + Avatar）を実装。アクティブ状態 `border-l-2 border-purple bg-purple/12 text-purple-l`。`useAuthStore` と `usePathname` を使用
+- [ ] T013 `src/components/layout/TopBar.tsx` を刷新: モバイル（ロゴ + LIVEバッジ + 通知ベル）とデスクトップ（タイトル + 日付 + LIVEバッジ + アクションボタン群）の表示切り替え。`h-[56px] bg-surface border-b border-border`。通知ベルは `useNotificationsStore` でバッジ数表示
+- [ ] T014 `src/components/layout/BottomNav.tsx` を刷新: `flex md:hidden bg-surface border-t border-border`。5アイテム（ホーム・スケジュール・＋追加・タスク・チーム）。中央の追加ボタン `bg-amber rounded-[10px]` で視覚的に目立たせる。アクティブ状態 `text-purple-l`
+- [ ] T015 `src/components/layout/AppShell.tsx` を新規作成: モバイル（TopBar + `pt-12 pb-16` main + BottomNav）とデスクトップ（Sidebar + TopBar + スクロール可能main）を `md:` ブレークポイントで切り替えるシェル。`src/app/(protected)/layout.tsx` でこのコンポーネントを使用するように更新
 
-**Goal**: Google OAuth でログイン → LIGHTプラン + ソロチームが自動作成 → チームコードでチームを作成または参加 → プラン制限がバックエンドで強制される
-
-**Independent Test**: ① Googleアカウントでサインイン → ② LIGHTプラン + ソロチームが自動生成される → ③ チームコードを入力してチームに参加（現チームを脱退して参加確認あり）→ ④ Ownerがチームコードをリセット → ⑤ 旧コードで参加不可になる
-
-### チーム管理 Cloud Functions
-
-- [x] T021 [P] [US1] Implement `createTeam` Callable Function in `functions/src/teams/createTeam.ts` — 認証済みユーザー必須、新チームドキュメント作成・英数字8文字teamCode生成（Crypto.randomBytesを使用）・teamCodes/{code}マッピング作成・旧チームから自動脱退（leaveTeamロジックをトランザクションで実行）・users/{uid}/currentTeamIdを更新、{teamId, teamCode}を返す
-- [x] T022 [P] [US1] Implement `joinTeam` Callable Function in `functions/src/teams/joinTeam.ts` — 認証済みユーザー必須、①teamCodes/{teamCode}からteamId取得（not-found: コードが無効）、②メンバー数+プラン確認（LIGHTメンバーが2名いて3人目参加時は既存LIGHTメンバー全員にsystem通知を送ってfailed-precondition）、③旧チームから脱退（トランザクション）、④teams/{teamId}/members/{uid}をeditorロールで作成、⑤users/{uid}/currentTeamIdを更新、{success, teamId}を返す
-- [x] T023 [P] [US1] Implement `leaveTeam` Callable Function in `functions/src/teams/leaveTeam.ts` — 認証済みユーザー必須、role=ownerはfailed-precondition（先に所有権移譲が必要）、members/{uid}削除・未完タスクのassigneeIdをnullに更新・Ownerへ通知・新ソロチームを自動生成・users/{uid}/currentTeamIdを更新、{success, newSoloTeamId}を返す
-- [x] T024 [P] [US1] Implement `transferOwnership` Callable Function in `functions/src/teams/transferOwnership.ts` — Owner認証必須、members/{newOwnerId}/roleをowner・members/{uid}/roleをeditorに更新・teams/{teamId}/ownerIdを更新・旧Owner/新Owner双方に通知、{success}を返す
-- [x] T025 [P] [US1] Implement `resetTeamCode` Callable Function in `functions/src/teams/resetTeamCode.ts` — Owner認証必須、トランザクションで旧teamCodes/{oldCode}削除・新コード生成・teams/{teamId}/teamCode更新・teamCodes/{newCode}作成（旧コードは即時無効化）、{newTeamCode}を返す
-
-### Auth Trigger
-
-- [x] T026 [US1] Implement `onUserCreate` Auth trigger in `functions/src/auth/onUserCreate.ts` — Firebase Auth新規ユーザー作成時に発火、①users/{uid}をLIGHTプランで初期化（plan: "light", monthlyTaskCount: 0, monthlyCollabCount: 0, countResetAt: now, displayName, email, avatarUrl等）、②ソロチーム（teams/{soloTeamId}）を自動生成（name: displayName + "のチーム"）、③Ownerとしてmembers/{uid}を追加、④users/{uid}/currentTeamIdをソロチームIDに設定
-
-### リポジトリ
-
-- [x] T027 [US1] Implement teams repository in `src/lib/repositories/teams.ts` — createTeam（createTeam CF呼び出し）, joinTeam（joinTeam CF呼び出し）, leaveTeam（leaveTeam CF呼び出し）, getTeam, getTeamMembers, subscribeTeam (onSnapshot), subscribeMembers (onSnapshot), updateMemberRole
-
-### 認証ストア
-
-- [x] T028 [US1] Implement Zustand auth store in `src/stores/auth.ts` — onAuthStateChanged + onIdTokenChanged リスナー（FR-003: セッション自動リフレッシュ）、currentUser（currentTeamId: string | null — 1ユーザーは1チームのみ所属）、currentTeam、signIn（signInWithPopup + GoogleAuthProvider）/signOut アクション、idToken期限切れ時の自動再フェッチ処理
-
-### 認証ページ
-
-- [x] T029 [P] [US1] Implement login page in `src/app/(auth)/login/page.tsx` — `signInWithPopup(auth, new GoogleAuthProvider())` を使用したGoogleサインインボタン（FR-001）、ログイン中スピナー、エラー表示（ポップアップブロック等）
-
-### ダッシュボード
-
-- [x] T030 [US1] Implement dashboard page in `src/app/(protected)/dashboard/page.tsx` — 現在のチーム情報表示（チーム名・メンバー数・自分のロール・プランバッジ）、ソロチームユーザー向けオンボーディングUI（「チームを作成する」ボタンと「チームコードで参加する」ボタンの誘導）。TeamSwitcherは実装しない（FR-015: 1ユーザーは1チームのみ所属）
-
-### プラン管理 UI
-
-- [x] T031 [P] [US1] Implement plan status component in `src/components/plan/PlanStatus.tsx` — 現プランバッジ（LIGHT/PARTY）・月次使用量表示（タスク 0/5件、コラボ 0/3件）・PARTYプラン申し込みボタン（NEXT_PUBLIC_PARTY_SIGNUP_URL が設定されている場合のみ表示、外部フォームURLをtarget="_blank"で開く。URL未設定時はボタン非表示）
-- [x] T032 [P] [US1] Implement banner ad placeholder component in `src/components/plan/BannerAd.tsx` — LIGHTプランのみ表示（plan="light"のユーザーに対してisVisible=true）、PARTYプランでは非表示。MVPでは空のバナー枠（適切なaria-label付き）として実装し、フェーズ2で広告実装を追加
-
-### プラン管理 Cloud Function
-
-- [x] T033 [US1] Implement `resetMonthlyPlanCounts` Scheduled Function in `functions/src/plan/resetMonthlyPlanCounts.ts` — Cloud Scheduler `15 0 1 * *` UTC（毎月1日 0:00 JST）、plan=="light"の全ユーザーをバッチ取得・monthlyTaskCount/monthlyCollabCountを0にリセット・countResetAtを現在時刻に更新
-
-### チーム設定・参加 UI
-
-- [x] T034 [US1] Implement team settings section in `src/app/(protected)/settings/page.tsx` (Team section) — チームコード表示（Owner/Editorに表示）・コードリセットボタン（Owner専用・resetTeamCode CF呼び出し）・チーム名変更（Owner専用）・PlanStatus（src/components/plan/PlanStatus.tsx）の組み込み
-- [x] T035 [P] [US1] Implement team join form component in `src/components/team/TeamJoinForm.tsx` — チームコード入力（英数字バリデーション）・joinTeam CF呼び出し・「現在のチームを脱退して参加します」確認ダイアログ・エラー表示（コード無効: not-found / プラン制限: failed-precondition）
-- [x] T035a [US1] Implement leave team confirmation dialog in `src/components/team/LeaveTeamDialog.tsx` — 脱退確認（「ソロチームに自動移行します」の説明）・Ownerの場合は「先に所有権を移譲してください」エラー表示・leaveTeam CF呼び出し
-
-**Checkpoint**: ① Googleアカウントでサインイン → ② LIGHTプラン + ソロチームが自動生成 → ③ チームコードでチームに参加（脱退確認あり）→ ④ チームコードリセットで旧コードが即時無効化される
+**Checkpoint**: `pnpm dev` → `/dashboard` にアクセスし、デスクトップではSidebar（220px）が表示され、モバイル（375px幅）ではBottomNavが表示されることを確認
 
 ---
 
-## Phase 4: User Story 2 — 共有カレンダー・スケジュール管理 (Priority: P1)
+## Phase 3: US1 — 認証画面（ログイン）
 
-**Goal**: チームメンバーがリアルタイム共有カレンダーで配信枠・動画投稿予定をCRUDできる。Googleカレンダーとの同期も設定できる
+**Goal**: Googleログイン画面をダークテーマの没入型UIに刷新する
 
-**Independent Test**: Editorがスケジュールを作成すると別タブ・別デバイスで1秒以内に反映される。Viewerには編集ボタンが表示されない
+**Independent Test**: `/login` にアクセスしてダーク背景・パープルグラデーション・「Googleでサインイン」ボタンが表示される。ボタンクリックで認証フロー（ポップアップ）が起動する
 
-### リポジトリ・ストア
+### Implementation for US1
 
-- [ ] T036 [P] [US2] Implement schedules repository in `src/lib/repositories/schedules.ts` — createSchedule, updateSchedule (楽観的ロック: updatedAt検証 + Firestoreトランザクション), deleteSchedule, subscribeSchedules (onSnapshot)
-- [ ] T037 [P] [US2] Implement schedule Zustand store in `src/stores/schedule.ts` — schedules配列、currentView (week/month)、selectedDate、subscribe/unsubscribeアクション
+- [ ] T016 [US1] `src/app/(auth)/login/page.tsx` を刷新: `docs/risukeru_gg_lp.html` のヒーロービジュアルを参考にダークテーマ化。`min-h-screen bg-bg` 全画面。グリッドオーバーレイ（パープル微透過）+ ラジアルグラデーション背景。中央カード（`bg-surface border border-border rounded-[16px] p-8`）にSVGマスコット・"リスケるGG"ロゴ・キャッチコピー・Googleサインインボタン（`variant="primary"`）・エラーメッセージ（`text-live`）を配置。既存の認証ロジック（`useAuthStore.signIn`）は変更しない
 
-### カレンダーコンポーネント
-
-- [ ] T038 [US2] Implement react-big-calendar wrapper in `src/components/calendar/CalendarView.tsx` — 週/月ビュー切替、エントリクリックで詳細、JST表示設定
-- [ ] T039 [US2] Implement schedule entry form in `src/components/calendar/ScheduleForm.tsx` — 全必須項目（タイトル・開始/終了日時・プラットフォーム・ステータス）、Zodバリデーション、時間帯重複警告。type=videoのとき追加フィールド（linkedTaskIds複数選択）を表示（FR-020: 動画投稿予定エントリの紐付けタスク）
-- [ ] T040 [US2] Implement LIVE status badge with pulse animation in `src/components/calendar/LiveBadge.tsx` — status=liveのエントリに赤バッジ+`animate-pulse`（Tailwind）。LIVEから終了に変わった時点でアニメーション除去。デザイン確認: 常時パルスはLIVE配信中のみ表示しユーザー体験を損なわないこと
-
-### スケジュールページ
-
-- [ ] T041 [US2] Implement schedule page in `src/app/(protected)/schedule/page.tsx` — CalendarView表示、Viewer時は作成ボタン非表示
-- [ ] T042 [US2] Implement schedule detail/edit page in `src/app/(protected)/schedule/[id]/page.tsx` — 楽観的ロック競合時は「再読込して再編集」ダイアログ
-
-### Googleカレンダー同期
-
-- [ ] T043 [US2] Implement `syncGoogleCalendar` Scheduled Cloud Function in `functions/src/calendar/syncGoogleCalendar.ts` — Cloud Scheduler every 5min、Google Calendar API v3でイベント取得、schedules/と照合・差分同期、エラー時はusers/{uid}/googleCalendar.syncErrorに記録
-- [ ] T044 [US2] Implement Google Calendar connection flow in `src/app/(protected)/settings/page.tsx` (Calendar section) — Firebase Authentication の Google OAuthトークンを再利用（追加スコープ `https://www.googleapis.com/auth/calendar` をリクエスト）、取得したaccessToken/refreshTokenをusers/{uid}/googleCalendarに保存、接続/切断ボタン表示。別途のOAuth2.0フローは不要（Firebase Auth Google OAuth2を共用）
-- [ ] T045 [US2] Implement sync error banner + retry button in `src/components/calendar/SyncErrorBanner.tsx` — googleCalendar.syncErrorが存在する場合にエラーバナー表示、再試行ボタンでCloud Function手動呼び出し、認証切れ時は「再認証が必要です」表示
-
-**Checkpoint**: スケジュール作成が1秒以内に全メンバーへリアルタイム反映される。Googleカレンダー連携が設定できる
+**Checkpoint**: ブラウザで `/login` を確認。Googleボタンのクリックでポップアップが開くこと
 
 ---
 
-## Phase 5: User Story 3 — 制作タスク管理（カンバン）(Priority: P1)
+## Phase 4: US2 — スケジュール画面
 
-**Goal**: カスタムカンバンカラムでタスクをCRUDし、PC ではDnD、モバイルではボタン操作でカラム間移動できる。CSVエクスポートも可能
+**Goal**: スケジュール管理画面（カレンダー・詳細）をダークテーマに刷新する
 
-**Independent Test**: タスクをTODO→進行中→完了と移動でき、担当者変更ができる。CSVエクスポートで全タスクが含まれる
+**Independent Test**: `/schedule` にアクセスし、週ビュー/月ビューが正常に表示・切り替えができる。スケジュール追加ボタンからフォームが開き、保存後カレンダーに反映される
 
-### Cloud Functions（プラン制限付きタスク作成）
+### Implementation for US2
 
-- [x] T046a [P] [US3] Implement `createTask` Callable Function in `functions/src/tasks/createTask.ts` — Owner/Editor認証必須、LIGHTプランの場合はmonthlyTaskCount >= 5でfailed-precondition（アップグレード案内を含むエラーメッセージ）、teams/{teamId}/tasks/{taskId}を作成・users/{uid}/monthlyTaskCountをインクリメント・assigneeId設定時は担当者へ通知生成
+- [ ] T017 [P] [US2] `src/components/calendar/CalendarView.tsx` を刷新: react-big-calendar の CSS カスタマイズ（`--bg`/`--card`/`--border`/`--purple` 変数をカレンダーCSSに上書き）。LIVEエントリは `--live` 赤背景、コラボエントリは `--amber` 橙背景、通常配信は `--purple-d` 紫背景で色分け。既存のデータ取得ロジックは変更しない
+- [ ] T018 [P] [US2] `src/components/calendar/SyncErrorBanner.tsx` を刷新: `bg-live/10 border border-live/30 text-live rounded-[12px]` のエラーバナー。「再試行」・「再認証」ボタンを `variant="danger"` の Button で実装
+- [ ] T019 [US2] `src/app/(protected)/schedule/page.tsx` を刷新: `PageHeader`（タイトル + 「配信を追加」Buttonアンバー + 「週/月」ViewToggle）+ SyncErrorBanner + CalendarView のレイアウト。`p-6 md:p-7` のコンテンツパディング
+- [ ] T020 [US2] `src/app/(protected)/schedule/[id]/page.tsx` を刷新: スケジュール詳細をダークカードUIで表示。ステータスバッジ（LIVE/予定/終了）・日時・プラットフォーム・参加メンバーのAvatarリストを `Card` コンポーネントで整理。編集/削除ボタンはロール制御済みの既存ロジックを保持
 
-### リポジトリ・ストア
-
-- [x] T046 [P] [US3] Implement tasks repository in `src/lib/repositories/tasks.ts` — createTask（createTask CF呼び出し・プラン制限エラー failed-precondition をUIに伝播）, updateTask (楽観的ロック), deleteTask, subscribeTasksByTeam (onSnapshot), reassignUnassigned (メンバー削除時用)
-- [x] T047 [P] [US3] Implement kanban columns repository in `src/lib/repositories/kanbanColumns.ts` — createColumn, updateColumn, deleteColumn (最低1カラム制約), reorderColumns, subscribeColumns (onSnapshot)
-- [x] T048 [US3] Implement tasks Zustand store in `src/stores/tasks.ts` — tasks配列、columns配列、subscribe/unsubscribeアクション
-
-### カンバンコンポーネント
-
-- [x] T049 [US3] Implement kanban board with @hello-pangea/dnd in `src/components/kanban/KanbanBoard.tsx` — DragDropContext + Droppable (カラム) + Draggable (タスクカード)、カラム間移動でupdateTask呼び出し
-- [x] T050 [US3] Implement task card in `src/components/kanban/TaskCard.tsx` — PC: ドラッグハンドル表示、モバイル: カラム変更ボタン（ステータス選択ドロップダウン）、担当者アバター表示。createdByがチームメンバーに存在しない場合は「元メンバー」とフォールバック表示（FR-014）
-- [x] T051 [US3] Implement task create/edit form in `src/components/kanban/TaskForm.tsx` — 全項目（タイトル・担当者・締切日・カテゴリ・カラム・紐付けスケジュール）、Zodバリデーション、LIGHTプラン月次制限到達時のアップグレードCTA表示（PlanStatus の使用量が 5/5件になった場合に「タスクの作成上限に達しました」メッセージと申し込みリンクを表示）
-
-### タスクページ
-
-- [x] T052 [US3] Implement tasks page in `src/app/(protected)/tasks/page.tsx` — KanbanBoard表示、Viewer時は追加/編集/削除ボタン非表示、CSVエクスポートボタン
-- [x] T053 [US3] Implement CSV export for tasks in `src/lib/utils/exportTasksCsv.ts` — 全タスクの全項目（タイトル・担当者・カテゴリ・カラム・締切日・作成日・作成者）をCSV文字列生成、ブラウザダウンロードトリガー
-
-### カンバン設定
-
-- [x] T054 [US3] Implement kanban column settings in `src/app/(protected)/settings/page.tsx` (Kanban section) — カラム追加/リネーム/削除/並び替えUI (Owner専用)、削除時に残タスクを先頭カラムへ移行確認ダイアログ
-
-### ユニットテスト
-
-- [x] T055 [US3] Write unit tests for task column transition logic in `tests/unit/tasks/columnTransition.test.ts` — カラム削除時のタスク移行、最低1カラム制約を検証
-
-**Checkpoint**: タスクをカンバンで管理でき、DnD動作確認済み。CSVエクスポートで全タスクが出力される。LIGHTプラン上限到達時にアップグレードCTAが表示される
+**Checkpoint**: `/schedule` を開き、カレンダーのイベントがダークテーマで表示される。LIVE中エントリが赤色で表示されること
 
 ---
 
-## Phase 6: User Story 4 — コラボ日程調整 (Priority: P1)
+## Phase 5: US3 — タスク管理画面（カンバン）
 
-**Goal**: コラボ日程調整セッションを作成し、URLをDiscord等で共有 → コラボ相手が認証なしで回答 → 確定でカレンダー自動登録・URL無効化
+**Goal**: カンバンボード画面をダークテーマに刷新し、モバイル操作に対応する
 
-**Independent Test**: セッション作成→URL生成→公開ページで回答→確定でカレンダーエントリが登録される。期限切れURLは「有効期限切れ」を表示する
+**Independent Test**: `/tasks` にアクセスしカンバンが3カラム表示される。PCではドラッグ&ドロップでカード移動、モバイルではタップでステータス変更できる
 
-### Cloud Functions
+### Implementation for US3
 
-- [x] T056 [P] [US4] Implement `createCollabSession` Callable Function in `functions/src/collab/createCollabSession.ts` — Owner/Editor認証必須、LIGHTプランの場合はmonthlyCollabCount >= 3でfailed-precondition（アップグレード案内）、UUID v4でsessionId生成、`teams/{teamId}/collabSessions/{sessionId}` にレコード作成、users/{uid}/monthlyCollabCountをインクリメント、shareUrlを返す
-- [x] T057 [P] [US4] Implement `respondToCollab` Callable Function in `functions/src/collab/respondToCollab.ts` — 認証不要の公開エンドポイント、セッションがopen＆期限内かをサーバーサイド検証、responsesフィールド更新、チームOwner/Editorへ通知生成
-- [x] T058 [P] [US4] Implement `confirmCollabDate` Callable Function in `functions/src/collab/confirmCollabDate.ts` — Owner/Editor認証、statusをconfirmed・confirmedDateを更新、schedules/にコラボエントリ自動作成、linkedScheduleIdを記録
-- [x] T059 [P] [US4] Implement `cancelCollabSession` Callable Function in `functions/src/collab/cancelCollabSession.ts` — Owner/Editor認証、statusをcancelled、確定済みの場合はlinkedScheduleIdのスケジュールエントリも削除
-- [x] T059a [US4] Implement `expireCollabSessions` Scheduled Function in `functions/src/collab/expireCollabSessions.ts` — Cloud Scheduler毎時実行（`0 * * * *`）、`expiresAt < now()` かつ `status == 'open'` のセッションを一括で `expired` に更新（FR-040: 期限切れステータスの自動更新）
+- [ ] T021 [P] [US3] `src/components/kanban/TaskCard.tsx` を刷新: `bg-surface border border-border rounded-[8px] hover:border-purple` のダークカード。担当者Avatarバッジ・締切日（`font-num text-[10px]`）・カテゴリタグ（`badge variant`）を表示。モバイル用「ステータス変更」ボタン（`variant="ghost" size="sm"`）を追加してカラム変更モーダルを呼び出す
+- [ ] T022 [P] [US3] `src/components/kanban/KanbanBoard.tsx` を刷新: カラムヘッダー（カラム名・タスク数バッジ `variant="muted"`）をダークテーマに。カラムbody `bg-surface/50 rounded-[10px] p-3`。既存の `@hello-pangea/dnd` ドラッグ&ドロップロジックは変更しない
+- [ ] T023 [US3] `src/app/(protected)/tasks/page.tsx` を刷新: PageHeader（タイトル + 「タスクを追加」Button + 「CSVエクスポート」Button `variant="secondary"`）+ カテゴリFilterTabs（`rounded-full px-4 py-1.5` ピルボタン、アクティブ時 `bg-purple-d text-purple-l`）+ KanbanBoard
 
-### リポジトリ
-
-- [x] T060 [P] [US4] Implement collabs repository in `src/lib/repositories/collabs.ts` — getCollabSession (公開取得・認証不要)、subscribeCollabSessions (チーム用・onSnapshot)、updateCollabSession
-
-### 公開コラボ回答ページ
-
-- [x] T061 [US4] Implement public collab response page in `src/app/collab/[token]/page.tsx` — sessionIdでFirestoreからセッション取得、status別表示分岐（open/confirmed/expired/cancelled/notfound）、認証不要・日本語固定・モバイル対応
-- [x] T062 [US4] Implement collab response form in `src/components/collab/CollabResponseForm.tsx` — 候補日程ごとのOK/NGトグル、代替日提案（日付ピッカー）、メモ入力（200文字）、「回答を送信する」ボタン（未選択候補がある場合に確認ダイアログ）、有効期限の残り日数表示（例: 「回答期限: あと3日」、contracts/collab-share-url.md 必須要素6番）
-
-### コラボ管理ページ（認証済みユーザー側）
-
-- [x] T063 [US4] Implement collab create form in `src/components/collab/CollabForm.tsx` — タイトル・相手名・候補日程（最大5件）・有効期限（1〜30日）入力、createCollabSession呼び出し、LIGHTプラン月次制限到達時のアップグレードCTA表示
-- [x] T064 [US4] Implement collabs list page in `src/app/(protected)/collabs/page.tsx` — セッション一覧（ステータスバッジ付き）、URLコピーボタン（navigator.clipboard）
-- [x] T065 [US4] Implement collab detail page in `src/app/(protected)/collabs/[id]/page.tsx` — 回答状況表示（各候補日時のOK/NG）、確定ボタン（confirmCollabDate）、キャンセルボタン
-
-### ユニットテスト
-
-- [x] T066 [US4] Write unit tests for collab URL expiry and status validation in `tests/unit/collab/collabSession.test.ts` — open/expired/confirmed/cancelled各状態のアクセス可否、期限内/期限切れの判定ロジックを検証
-
-**Checkpoint**: コラボセッション作成→URL共有→外部ユーザーが回答→確定でカレンダーに自動登録される。LIGHTプラン上限到達時にアップグレードCTAが表示される
+**Checkpoint**: `/tasks` でカンバンが表示される。PCでカードをドラッグして別カラムに移動できること
 
 ---
 
-## Phase 7: User Story 5 — チームメンバー管理・ロール制御 (Priority: P1)
+## Phase 6: US4 — コラボ日程調整画面
 
-**Goal**: OwnerがメンバーのロールをEditor/Viewer間で変更し、メンバーを削除できる。削除時は未完タスクを未アサインに移行。Ownerは所有権を移譲できる
+**Goal**: コラボ打診・一覧・詳細・外部回答ページをダークテーマに刷新する
 
-**Independent Test**: OwnerがEditorをViewerに変更後、そのメンバーはスケジュール・タスクの作成ボタンが非表示になる
+**Independent Test**: `/collabs` にアクセスし返答待ち/確定済みのタブが切り替わる。「打診する」から新規セッション作成フローが動作する。外部共有URL `/collab/[token]` で候補日程を選択・送信できる
 
-### Cloud Functions
+### Implementation for US4
 
-- [x] T067 [US5] Implement `removeTeamMember` Callable Function in `functions/src/teams/removeTeamMember.ts` — Owner認証必須・自分自身の削除を拒否、members/{targetUserId}削除、未完タスクのassigneeIdをnullに更新、Owner通知生成、users/{targetUserId}/currentTeamIdをソロチームIDに更新（新ソロチームを自動生成してtransaction内で実行）
+- [ ] T024 [P] [US4] `src/components/dashboard/CollabRequests.tsx` を新規作成: ダッシュボード用コラボ打診リスト。各アイテム `bg-surface border border-border rounded-[10px] p-3 flex items-center gap-3`。Avatar（イニシャル・カラー）・名前・詳細テキスト・OK（`variant="primary" size="sm"`）/NG（`variant="danger" size="sm"`）ボタン。確定済みアイテムは `opacity-60` + 「確定」テキスト表示
+- [ ] T025 [P] [US4] `src/components/collab/CollabForm.tsx` を刷新: モーダル内フォームをダークテーマに。Input（刷新済み）・DatePicker互換入力・有効期限選択を `bg-surface` ベースで統一
+- [ ] T026 [P] [US4] `src/components/collab/CollabResponseForm.tsx` を刷新: 外部公開ページ用回答フォーム。候補日程ボタン（OK=`bg-green/15 border-green/40`・NG=`bg-live/10 border-live/30`）を Card で包む。回答送信ボタン `variant="amber"`
+- [ ] T027 [US4] `src/app/(protected)/collabs/page.tsx` を刷新: PageHeader + StatusTabs（返答待ち/確定済み/期限切れ/キャンセル のピルタブ）+ CollabList（各 CollabCard = Avatar + 名前/詳細 + OKNGボタン or ステータスバッジ）
+- [ ] T028 [US4] `src/app/(protected)/collabs/[id]/page.tsx` を刷新: コラボ詳細をCardレイアウトで表示。候補日程・回答状況の視覚化（OK/NG/未回答バッジ）・「確定」「キャンセル」ボタン
+- [ ] T029 [US4] `src/app/collab/[token]/page.tsx` を刷新: 外部公開回答ページ。`bg-bg` ダーク全画面。ロゴヘッダー + CollabResponseForm（Card内）。期限切れ・確定済みの場合は専用メッセージ画面
+
+**Checkpoint**: `/collabs` でリスト表示。「打診する」から作成フロー。生成されたURLで回答フォームが開くこと
+
+---
+
+## Phase 7: US5 — ダッシュボード・チーム管理画面
+
+**Goal**: ダッシュボードをリファレンスデザイン通りのStatsカード+タイムライン+マルチカラムに、
+チーム管理画面をダークカードUIに刷新する
+
+**Independent Test**: `/dashboard` にアクセスし4枚StatCard・今週カレンダーストリップ・タイムライン・コラボ打診・通知・チームメンバーが表示される。`/team` でメンバー一覧・チームコード・ロール変更UIが動作する
+
+### ダッシュボード専用コンポーネント（並列実行可能）
+
+- [ ] T030 [P] [US5] `src/components/dashboard/TodayTimeline.tsx` を新規作成: `contracts/ui-components.md` の仕様通り。タイムライン行（時刻 + 3px縦バー + タイトル + タグ）をリスト表示。各行 `hover:bg-purple/7 rounded-[8px]` のホバーエフェクト
+- [ ] T031 [P] [US5] `src/components/notifications/NotificationBell.tsx` を刷新: `bg-live` の未読バッジ付きベルアイコン。`text-[10px] font-bold` バッジ数表示
+
+### ダッシュボードページ
+
+- [ ] T032 [US5] `src/app/(protected)/dashboard/page.tsx` を全面刷新: `docs/risukeru_gg_dashboard.html` を参考に構成
+  - StatRow: 4枚StatCard（今月配信数/コラボ予定/LIVE視聴者/タスク完了率）を `grid grid-cols-2 md:grid-cols-4 gap-3`
+  - TwoColLayout: `grid grid-cols-1 md:grid-cols-[1fr_340px] gap-4`
+    - 左カラム: 今週スケジュールCard（WeekStrip 7日分 + TodayTimeline）+ タスクボードCard（KanbanPreview 各カラム2件）
+    - 右カラム: コラボ打診Card（CollabRequests）+ 通知Card（最新4件 NotificationList）+ チームメンバーCard（Avatar + 名前 + 活動状態）
+  - BannerAd（`src/components/plan/BannerAd.tsx` をダークテーマに刷新）はLIGHTプランのみページ下部に表示
+  - ソロチーム時はオンボーディングUI（チームコード入力 + チーム作成）をCardレイアウトで表示
+  - データ取得は既存の `useAuthStore` を使用
 
 ### チーム管理ページ
 
-- [x] T068 [US5] Implement team management page in `src/app/(protected)/team/page.tsx` — メンバー一覧（ロールバッジ・プランバッジ付き）、ロール変更セレクト（Owner専用）、削除ボタン（Owner専用・自分自身は無効化）、所有権移譲ボタン（Owner専用）
-- [x] T069 [US5] Implement role change confirmation dialog in `src/components/team/RoleChangeDialog.tsx` — ロール変更内容の確認、確定後にFirestore直接更新（updateMemberRole経由）
-- [x] T070 [US5] Implement member removal confirmation dialog in `src/components/team/RemoveMemberDialog.tsx` — 未完タスクが未アサインになる旨の警告表示、確定後にremoveTeamMember呼び出し
-- [x] T070a [US5] Implement ownership transfer dialog in `src/components/team/TransferOwnershipDialog.tsx` — 移譲先メンバー選択（Editor/Viewerのみ選択可）、確認フォーム、transferOwnership CF呼び出し、完了後に「所有権を移譲しました。あなたのロールはEditorになりました」メッセージ表示
+- [ ] T033 [US5] `src/app/(protected)/team/page.tsx` を刷新: 
+  - TeamInfoCard: チーム名 + チームコード（`font-num`コードフォント）+ 「コードをコピー」ボタン + 「リセット」ボタン
+  - MemberList: 各メンバー行（Avatar + 名前/ロールBadge/プランBadge + ロール変更/削除アクション）
+  - JoinTeamSection（`TeamJoinForm.tsx` をダークテーマに刷新）
+  - DangerZoneCard: 「チームを脱退する」ボタン（`variant="danger"`）
+  - 既存のダイアログコンポーネント（LeaveTeamDialog等）をModalスタイル刷新（T007）に合わせる
 
-**Checkpoint**: ロール変更後に当該メンバーのアクセス権限が即座に変更される。削除後は未完タスクが未アサインになる。所有権移譲が完了する
-
----
-
-## Phase 8: User Story 6 — 通知・PWA対応 (Priority: P2)
-
-**Goal**: プランに応じた通知をアプリ内+プッシュで受け取れる（LIGHTはシステム通知のみ、PARTYは全4カテゴリ）。PWAとしてAndroidホーム画面にインストールできる
-
-**Independent Test**: 配信開始1時間前のCloud Schedulerトリガーで、PARTYプランユーザーにアプリ内通知とプッシュ通知の両方が届く。LIGHTユーザーには届かない
-
-### リポジトリ・ストア
-
-- [x] T071 [P] [US6] Implement notifications repository in `src/lib/repositories/notifications.ts` — subscribeNotifications (onSnapshot・受信者UID絞り込み)、markAsRead、getUnreadCount
-- [x] T072 [P] [US6] Implement notifications Zustand store in `src/stores/notifications.ts` — notifications配列、unreadCount、subscribe/unsubscribeアクション
-
-### Cloud Functions — 通知生成・送信
-
-- [x] T073 [P] [US6] Implement FCM notification sender in `functions/src/notifications/sendFcm.ts` — admin.messaging().sendEachForMulticast、fcmTokens無効時のtoken削除処理
-- [x] T074 [P] [US6] Implement `markNotificationRead` Callable Function in `functions/src/notifications/markNotificationRead.ts` — 受信者本人確認、isReadをtrueに更新
-- [x] T075 [US6] Implement notification generators for all 4 categories in `functions/src/notifications/generators/` — collab.ts (コラボ関係)、tasks.ts (タスク)、system.ts (システム)、各Cloud Function呼び出し時にここから通知レコード作成＋FCM送信。LIGHTプランユーザーはsystem通知のみ生成（FR-041b: collab/tasks/remindersカテゴリはPARTYプランのみ有効、LIGHTユーザーへのそれら通知はスキップ）
-- [x] T076 [US6] Implement `scheduleReminders` Scheduled Function in `functions/src/notifications/scheduleReminders.ts` — Cloud Scheduler毎分実行、startAt -1h/-15min のスケジュールエントリを検出し、participantIdsに予定リマインダー通知生成。LIGHTプランユーザーへのリマインダーはスキップ（PARTYプランのみ有効）
-
-### 通知 UI
-
-- [x] T077 [US6] Implement notification bell + unread badge in `src/components/notifications/NotificationBell.tsx` — ヘッダーに配置、unreadCountが0より大きい場合バッジ表示
-- [x] T078 [US6] Implement in-app notification banner in `src/components/notifications/NotificationBanner.tsx` — 新着通知時に画面上部にトースト表示（3秒後自動消去）、クリックで対象ページへ遷移
-- [x] T079 [US6] Implement notifications list page in `src/app/(protected)/notifications/page.tsx` — 全通知履歴（既読/未読バッジ）、クリックで対象ページへ遷移しmarkNotificationRead呼び出し
-
-### 通知設定・PWA
-
-- [x] T080 [US6] Implement notification preferences section in `src/app/(protected)/settings/page.tsx` (Notifications section) — PARTYプランのみ: 4カテゴリ×2種類（アプリ内/プッシュ）= 8トグル、FirestoreのnotificationPreferencesを更新
-- [x] T080a [US6] Implement LIGHT plan notification restriction UI in `src/app/(protected)/settings/page.tsx` (Notifications section) — LIGHTプランユーザーには「システム通知のみ利用可能」の説明文とPARTYプランへのアップグレードCTAを表示（FR-041b）。通知トグルはsystemカテゴリのみ有効表示し、collab/tasks/remindersはロックアイコン付きで非活性表示
-- [x] T081 [US6] Configure FCM service worker in `public/firebase-messaging-sw.js` with next-pwa — バックグラウンド受信時のOS通知表示
-- [x] T082 [US6] Implement push permission request flow in `src/hooks/usePushPermission.ts` — Notification.requestPermission、FCMトークン取得・users/{uid}/fcmTokensに保存、OS拒否時はアプリ内許可バナー表示
-- [x] T083 [US6] Implement PWA install prompt in `src/hooks/usePwaInstall.ts` — `beforeinstallprompt` イベントハンドリング、インストール促進バナー表示
-
-**Checkpoint**: PARTYプランユーザーに配信1時間前のリマインダーがアプリを閉じていても届く。LIGHTユーザーには通知設定でアップグレードCTAが表示される。Androidでホーム画面へのインストールプロンプトが表示される
+**Checkpoint**: `/dashboard` でStatカード4枚・タイムライン・右カラムが表示される。`/team` でメンバー一覧が確認できること
 
 ---
 
-## Final Phase: Polish & Cross-Cutting Concerns
+## Phase 8: US6 — 通知・設定画面（P2）
 
-**Purpose**: 複数ストーリーにまたがる改善、テスト、セキュリティ強化
+**Goal**: 通知一覧・設定画面をダークテーマに刷新し、PWA通知UIを整備する
 
-- [x] T084 [P] Polish settings page layout in `src/app/(protected)/settings/page.tsx` — T020bで作成したシェルのタブ/セクション切替UXを洗練。Phase 3（Team）・Phase 5（Kanban）・Phase 4（Calendar）・Phase 8（Notifications）の各セクションが正しく統合されていることを確認し、レスポンシブ対応を完成させる
-- [x] T085 [P] Implement offline write error messaging via `src/hooks/useOnlineStatus.ts` — navigator.onLine監視、オフライン時の書き込み操作で「インターネット接続が必要です」トースト表示
-- [x] T086 [P] Write E2E test: login journey in `tests/e2e/login.spec.ts` — Firebase EmulatorのAuthentication UIでテストユーザーを手動作成 → Googleサインインポップアップ（モック）→ ソロチームが自動生成されダッシュボードへ到達 → チームコードを入力してチームに参加できる
-- [x] T087 [P] Write E2E test: schedule creation journey in `tests/e2e/schedule.spec.ts` — スケジュール作成→別タブで反映確認→Viewerが編集できないことを確認
-- [x] T088 [P] Write E2E test: task management journey in `tests/e2e/tasks.spec.ts` — タスク作成→カラム間移動→CSV エクスポートでファイルダウンロード確認
-- [x] T089 Deploy and validate Firestore Security Rules against emulator with all access patterns from contracts/firestore-rules.md — teamCodes/（write=false確認）・tasks/create=false・collabSessions/create=false・notifications/{id}（isReadのみ更新可確認）を含む全パターンを検証
-- [x] T090 Implement WCAG 2.1 AA accessibility across all interactive components — aria-labels (フォーム・ボタン・モーダル)、キーボードフォーカス管理、色コントラスト確認
-- [x] T091 Performance optimization — next/dynamic で重いコンポーネント（CalendarView・KanbanBoard）を遅延読み込み、next/image でアバター最適化（NFR-001: LCP < 3s）。イベントハンドラのyield（scheduler.postTask / setTimeout 0）でINP < 100msを達成（NFR-002）。Chrome DevToolsのPerformanceパネルで実測確認
-- [x] T092 Validate complete quickstart.md flow end-to-end — Firebase Emulator起動→Googleアカウントでサインイン→ソロチーム生成確認→チームコードでメンバー参加→全機能動作確認。主要ブラウザ互換性チェックリスト実施（NFR-008: Chrome/Edge/Firefox最新2版、Android Chrome最新2版）
-- [x] T092a Configure Workbox runtime cache strategy in `next.config.js` (next-pwa runtimeCaching) — スケジュールデータAPIをStale-While-Revalidateでキャッシュ（FR-047: Service Workerによるオフライン閲覧）
+**Independent Test**: `/notifications` で未読・既読の通知が一覧表示される。`/settings` でGoogleカレンダー連携・通知設定の切り替えUIが動作する
+
+### Implementation for US6
+
+- [ ] T034 [P] [US6] `src/components/notifications/NotificationBanner.tsx` を刷新: `bg-purple/12 border border-purple/30 rounded-[12px]` のアプリ内通知バナー。カテゴリ別カラードット（live/amber/purple/green）
+- [ ] T035 [P] [US6] `src/components/plan/PlanStatus.tsx` を刷新: プランバッジ（PARTY=`variant="purple"`/LIGHT=`variant="muted"`）+ アップグレードCTAリンク
+- [ ] T036 [US6] `src/app/(protected)/notifications/page.tsx` を刷新: PageHeader + 「すべて既読」Button `variant="ghost"` + NotificationList（各行: カテゴリ別カラードット + テキスト + 時刻 `font-num text-[10px]`）。未読アイテムは `bg-purple/5` で強調
+- [ ] T037 [US6] `src/app/(protected)/settings/page.tsx` を刷新:
+  - ProfileSection: アバター + 表示名
+  - PlanSection: PlanStatus + アップグレードCTAボタン（`variant="amber"`）
+  - NotificationSection: カテゴリ別通知ON/OFFトグル（PARTYプランのみ有効。LIGHTは `opacity-40` でPARTYへの誘導を表示）
+  - GoogleCalendarSection: SyncErrorBanner + 「連携する/解除する」ボタン
+  - PwaSection: 「ホーム画面に追加」ボタン（インストール済みの場合は非表示）
+
+**Checkpoint**: `/notifications` で通知が一覧表示。`/settings` で各セクションが正しく表示されること
+
+---
+
+## Phase 9: Polish & Cross-Cutting Concerns
+
+**Purpose**: レスポンシブ品質確認・アクセシビリティ確認・既存テストの整合性修正
+
+- [ ] T038 既存E2Eテスト `tests/e2e/login.spec.ts` のセレクタをダークテーマ後のDOM構造に合わせて修正（必要な場合のみ）
+- [ ] T039 [P] 既存E2Eテスト `tests/e2e/schedule.spec.ts` のセレクタを更新（必要な場合のみ）
+- [ ] T040 [P] 既存E2Eテスト `tests/e2e/tasks.spec.ts` のセレクタを更新（必要な場合のみ）
+- [ ] T041 レスポンシブ動作確認: Chrome DevToolsで375px（モバイル）・768px（タブレット）・1280px（デスクトップ）の3サイズで全画面を確認。Sidebar/BottomNav切り替え・統計カードの折り返し・カンバンの横スクロールが正常動作すること
+- [ ] T042 WCAG 2.1 AA 確認: ChromeDevTools Accessibilityパネルで主要インタラクティブ要素（Button・Input・Link・Badge）のコントラスト比が4.5:1以上であることを確認。`--muted` 使用箇所が補助テキストのみであることを確認
+- [ ] T043 [P] `src/components/calendar/LiveBadge.tsx` を刷新: `bg-live/15 border border-live/40 text-live rounded-full` + `live-dot`（`animate-pulse bg-live`）アニメーション
+- [ ] T044 [P] `src/components/team/` 以下の全ダイアログコンポーネント（LeaveTeamDialog, RemoveMemberDialog, RoleChangeDialog, TransferOwnershipDialog）をダークテーマModal（T007刷新済み）に統一
+- [ ] T045 [P] `src/components/team/TeamJoinForm.tsx` をダークテーマInput・Buttonで刷新
+- [ ] T046 `pnpm typecheck && pnpm lint` を実行し、全エラー・警告をゼロにする
 
 ---
 
@@ -294,109 +203,107 @@
 
 ### Phase Dependencies
 
-```
-Phase 1: Setup           → 依存なし。即座に開始可能
-Phase 2: Foundational    → Phase 1 完了後。全ユーザーストーリーをブロック
-Phase 3: US1             → Phase 2 完了後
-Phase 4: US2             → Phase 2 完了後（US1と並行可能、ただしUS1で作成したauth store・teamsリポジトリを利用）
-Phase 5: US3             → Phase 2 完了後（US1と並行可能）
-Phase 6: US4             → Phase 2 完了後（US1と並行可能）
-Phase 7: US5             → Phase 2 完了後（US1のleaveTeam/transferOwnership/removeTeamMemberに依存）
-Phase 8: US6             → Phase 2 完了後（US2〜US5完了後が実態的に安全）
-Final Phase              → 全ユーザーストーリー完了後
-```
+- **Setup (Phase 1)**: 依存なし — 即座に開始可能
+- **Foundational (Phase 2)**: Phase 1 完了後に開始 — **全画面実装フェーズをブロック**
+- **画面実装 (Phase 3〜8)**: Phase 2 完了後に開始。各Phaseは独立しており並列実行可能
+- **Polish (Phase 9)**: 全Phase完了後に開始
 
 ### User Story Dependencies
 
-- **US1 (P1)**: Phase 2完了後に開始。他ストーリーへの依存なし。**全ストーリーが auth/team インフラに依存するため最優先**
-- **US2 (P1)**: Phase 2完了後に開始可能。US1のauth storeを利用するため、実際はUS1完了後が安全
-- **US3 (P1)**: Phase 2完了後に開始可能。US1のteamsリポジトリ・auth storeを利用
-- **US4 (P1)**: Phase 2完了後に開始可能。confirmCollabDateがUS2のschedules作成を内部で行う
-- **US5 (P1)**: US1のleaveTeam/transferOwnership/removeTeamMember CF が存在することを前提とする
-- **US6 (P2)**: US2〜US5完了後に実装するのが安全（通知はそれらのイベントに依存するため）
+- **US1 (Phase 3)**: Phase 2 完了後 — 他ストーリーと独立
+- **US2 (Phase 4)**: Phase 2 完了後 — US1と並列実行可能
+- **US3 (Phase 5)**: Phase 2 完了後 — US1/US2と並列実行可能
+- **US4 (Phase 6)**: Phase 2 完了後。T024（CollabRequests）はPhase 7のDashboardでも使用
+- **US5 (Phase 7)**: Phase 2 完了後。T024が完了していること（T032が依存）
+- **US6 (Phase 8)**: Phase 2 完了後 — US1〜US5と並列実行可能
 
-### Within Each User Story
+### Within Each Phase
 
-- Cloud Functions（並行実装可能 [P] タスク）→ リポジトリ → ストア → コンポーネント → ページの順
-- 同一ストーリー内で [P] マークのあるタスクは異なるファイルを扱うため並行実行可能
+- `[P]` マークのタスクは同一フェーズ内で並列実行可能（異なるファイル）
+- `[P]` なしのタスクは前のタスクの完了後に開始
+- 各フェーズ末尾のCheckpointで動作確認してから次フェーズへ進む
 
 ---
 
-## Parallel Example: User Story 1
+## Parallel Example: Phase 2 (Foundational)
 
 ```bash
-# Team Management Cloud Functions — 並行実装可能:
-T021: createTeam (functions/src/teams/createTeam.ts)
-T022: joinTeam (functions/src/teams/joinTeam.ts)
-T023: leaveTeam (functions/src/teams/leaveTeam.ts)
-T024: transferOwnership (functions/src/teams/transferOwnership.ts)
-T025: resetTeamCode (functions/src/teams/resetTeamCode.ts)
+# プリミティブコンポーネント群はすべて並列実行可能（別ファイル）:
+Task T004: src/components/ui/Button.tsx
+Task T005: src/components/ui/Badge.tsx
+Task T006: src/components/ui/Input.tsx
+Task T007: src/components/ui/Modal.tsx
+Task T008: src/components/ui/Spinner.tsx
+Task T009: src/components/ui/Card.tsx
+Task T010: src/components/ui/StatCard.tsx
+Task T011: src/components/ui/Avatar.tsx
 
-# Plan/Team UI — 並行実装可能:
-T029: login page (src/app/(auth)/login/page.tsx)
-T031: PlanStatus component (src/components/plan/PlanStatus.tsx)
-T032: BannerAd component (src/components/plan/BannerAd.tsx)
-T035: TeamJoinForm component (src/components/team/TeamJoinForm.tsx)
+# 上記完了後、レイアウトコンポーネントを順番に実装:
+Task T012: Sidebar.tsx  → T013: TopBar.tsx → T014: BottomNav.tsx → T015: AppShell.tsx
 ```
 
-## Parallel Example: User Story 4
+## Parallel Example: Phase 3〜8 (User Stories)
 
 ```bash
-# Cloud Functions — 全て並行実装可能:
-T056: createCollabSession
-T057: respondToCollab
-T058: confirmCollabDate
-T059: cancelCollabSession
-T060: collabs repository
+# Phase 2 完了後、以下を並列実行可能:
+Phase 3 (US1): src/app/(auth)/login/page.tsx
+Phase 4 (US2): CalendarView.tsx, SyncErrorBanner.tsx → schedule/page.tsx
+Phase 5 (US3): TaskCard.tsx, KanbanBoard.tsx → tasks/page.tsx
+Phase 8 (US6): NotificationBanner.tsx, PlanStatus.tsx → notifications/page.tsx, settings/page.tsx
+
+# Phase 6 (US4) の CollabRequests (T024) が完了後:
+Phase 7 (US5): TodayTimeline.tsx, NotificationBell.tsx → dashboard/page.tsx, team/page.tsx
 ```
 
 ---
 
 ## Implementation Strategy
 
-### MVP First（US1のみ）
+### MVP First (Phase 1 + 2 + US5 Dashboard)
 
-1. Phase 1: Setup完了
-2. Phase 2: Foundational完了（重要 — 全ストーリーをブロック）
-3. Phase 3: US1完了
-4. **STOP & VALIDATE**: Google OAuth → LIGHTプラン初期化 → ソロチーム生成 → チームコードで参加 → コードリセット を端から端までテスト
-5. LIGHTプラン制限（タスク5件・コラボ3件・メンバー2名）とPARTYプランアップグレードCTAが正しく機能することを確認
+1. Phase 1 完了 → デザイントークン確立
+2. Phase 2 完了 → 共通コンポーネント完成（ここが最大の作業量）
+3. Phase 7 のダッシュボードを完成 → アプリの第一印象が確定
+4. **STOP and VALIDATE**: デスクトップ・モバイルの両方でダッシュボードを確認
+5. 残りフェーズを優先度順に進める
 
 ### Incremental Delivery
 
-1. Setup + Foundational → 基盤完成
-2. US1（認証・チーム・プラン管理） → 動作確認 → **MVP Demo 1**
-3. US2（カレンダー）+ US3（カンバン） → 動作確認 → **MVP Demo 2**（コアバリュー達成）
-4. US4（コラボ）+ US5（チーム管理） → 動作確認 → **MVP Demo 3**（差別化機能）
-5. US6（通知・PWA） → 動作確認 → **Phase 1 Complete**
-
-### Parallel Team Strategy（複数開発者の場合）
-
-1. Phase 1 + Phase 2 をチーム全員で完了
-2. 分担:
-   - 開発者A: US1（認証・チーム基盤）← 最優先
-   - 開発者B: US2（カレンダー）
-   - 開発者C: US3（カンバン）
-3. US1完了後:
-   - 開発者A: US4（コラボ）
-   - 開発者B: US5（チーム管理）
-4. US6（通知・PWA）はフロントエンド完成後に着手
+1. Phase 1 → 2: デザイン基盤完成
+2. Phase 7 (Dashboard): 最もインパクトの大きい画面でUI方向性を確認
+3. Phase 3 (Login) + Phase 4 (Schedule): コア機能画面
+4. Phase 5 (Tasks) + Phase 6 (Collabs): チーム協作機能画面
+5. Phase 8 (通知・設定): 補助機能画面
+6. Phase 9 (Polish): 品質確認
 
 ---
 
-## Summary
+## Notes
 
-| Phase | User Story | Tasks | Parallel [P] | Independent Test |
-|-------|-----------|-------|-------------|-----------------|
-| 1 | Setup | T001–T010 | 9/10 | pnpm dev + emulator起動 |
-| 2 | Foundational | T011–T020b | 8/12 | TypeScript compile + Rules deploy + CI green |
-| 3 | US1 認証・チーム・プラン | T021–T035a | 9/16 | Google OAuth→LIGHTプラン→チームコード参加→コードリセット |
-| 4 | US2 カレンダー | T036–T045 | 4/10 | リアルタイム反映1秒以内 |
-| 5 | US3 カンバン | T046a, T046–T055 | 4/11 | DnD + CSV出力 + LIGHTプラン制限CTA |
-| 6 | US4 コラボ | T056–T066 | 6/12 | URL生成〜確定〜カレンダー登録・期限切れ自動更新 |
-| 7 | US5 チーム管理 | T067–T070a | 0/5 | ロール変更→権限即時反映・所有権移譲完了 |
-| 8 | US6 通知・PWA | T071–T083 | 4/14 | リマインダープッシュ通知（PARTYのみ）・LIGHT制限表示 |
-| Final | Polish | T084–T092a | 5/10 | E2E全ジャーニー通過・主要ブラウザ確認 |
-| **Total** | | **100 tasks** | **49 [P]** | |
+- `[P]` タスクは異なるファイルへの変更で依存関係なし
+- `[Story]` ラベルで対象ユーザーストーリーをトレース可能
+- 各フェーズ末のCheckpointで独立検証を実施
+- データ取得ロジック（Firestoreリポジトリ・Zustandストア・Cloud Functions）は変更しない
+- 色値のハードコード禁止 — `contracts/ui-components.md` のトークン使用ルールを遵守
+- コメントは全て日本語で記述（Constitution Principle V）
 
-**MVP Scope（推奨）**: Phase 1 + Phase 2 + Phase 3（US1）→ Demo → Phase 4（US2）+ Phase 5（US3）で実用的なMVP完成
+---
+
+## タスク統計
+
+| Phase | ストーリー | タスク数 |
+|-------|---------|-------|
+| Phase 1: Setup | — | 3 |
+| Phase 2: Foundational | — | 12 |
+| Phase 3 | US1（認証） | 1 |
+| Phase 4 | US2（スケジュール） | 4 |
+| Phase 5 | US3（タスク） | 3 |
+| Phase 6 | US4（コラボ） | 6 |
+| Phase 7 | US5（チーム・ダッシュボード） | 4 |
+| Phase 8 | US6（通知・設定） | 4 |
+| Phase 9: Polish | — | 9 |
+| **合計** | | **46** |
+
+**並列実行可能タスク**: 27件（[P]マーク付き）
+**独立テスト可能**: 全6ユーザーストーリー（各Phase末のCheckpointで確認）
+**推奨MVPスコープ**: Phase 1 + Phase 2 + Phase 7（Dashboard）

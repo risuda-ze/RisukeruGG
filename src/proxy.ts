@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
 
 // 認証ガードはクライアントコンポーネント（(protected)/layout.tsx）で行う。
 // Proxy は静的アセットを除いたすべてのリクエストを素通しする。
-export function proxy(request: NextRequest) {
+export function proxy() {
   return NextResponse.next();
 }
 

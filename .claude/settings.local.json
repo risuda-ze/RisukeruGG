@@ -33,7 +33,19 @@
       "mcp__plugin_playwright_playwright__browser_tabs",
       "PowerShell(docker compose logs app --tail 40 2>&1)",
       "PowerShell(docker compose logs app --tail 20 2>&1)",
-      "PowerShell(docker compose logs app --tail 15 2>&1)"
+      "PowerShell(docker compose logs app --tail 15 2>&1)",
+      "Bash(Test-Path \"c:\\\\dev\\\\RisukeruGG\\\\specs\\\\001-risukeru-gg-app\\\\research.md\")",
+      "Bash(pnpm typecheck *)",
+      "PowerShell(cd \"c:\\\\dev\\\\RisukeruGG\" && pnpm dev 2>&1 &)",
+      "PowerShell(netstat -ano)",
+      "mcp__plugin_playwright_playwright__browser_resize",
+      "mcp__plugin_playwright_playwright__browser_fill_form",
+      "mcp__plugin_playwright_playwright__browser_type",
+      "PowerShell(java -version 2>&1)",
+      "PowerShell(Get-Command java -ErrorAction SilentlyContinue)",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "Bash(bash .specify/extensions/git/scripts/bash/auto-commit.sh after_implement)",
+      "Bash(git add *)"
     ]
   }
 }

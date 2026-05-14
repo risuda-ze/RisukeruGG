@@ -71,12 +71,13 @@ export default function CollabForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* LIGHTプラン上限時の案内 */}
       {isLightPlanFull && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
-          <p className="font-medium text-amber-800">コラボ作成の月次上限に達しました（月3件）</p>
-          <p className="text-amber-700 mt-1">
+        <div className="bg-amber/10 border border-amber/30 rounded-[10px] p-3 text-sm">
+          <p className="font-medium text-amber-l">コラボ作成の月次上限に達しました（月3件）</p>
+          <p className="text-muted mt-1">
             PARTYプランにアップグレードすると無制限で作成できます。
-            <a href="/settings" className="underline ml-1">アップグレードする</a>
+            <a href="/settings" className="underline ml-1 text-amber-l">アップグレードする</a>
           </p>
         </div>
       )}
@@ -99,8 +100,9 @@ export default function CollabForm({
         disabled={isLightPlanFull}
       />
 
+      {/* 候補日程 */}
       <div>
-        <p className="block text-sm font-medium text-zinc-700 mb-1">候補日程 * （最大5件）</p>
+        <p className="text-sm font-medium text-text mb-2">候補日程 * （最大5件）</p>
         <div className="space-y-2">
           {proposedDates.map((date, index) => (
             <div key={index} className="flex gap-2 items-center">
@@ -108,15 +110,16 @@ export default function CollabForm({
                 type="datetime-local"
                 value={date}
                 onChange={(e) => updateDate(index, e.target.value)}
-                className="flex-1 border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 border border-border rounded-[6px] px-3 py-2 text-sm bg-surface text-text focus:ring-1 focus:ring-purple focus:border-purple outline-none"
                 disabled={isLightPlanFull}
+                aria-label={`候補日程 ${index + 1}`}
               />
               {proposedDates.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removeDate(index)}
-                  className="text-zinc-400 hover:text-red-500 text-sm"
-                  aria-label="削除"
+                  className="text-muted hover:text-live text-sm px-1"
+                  aria-label="この候補日程を削除"
                 >
                   ✕
                 </button>
@@ -128,36 +131,36 @@ export default function CollabForm({
           <button
             type="button"
             onClick={addDate}
-            className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+            className="mt-2 text-sm text-purple-l hover:text-purple transition-colors"
           >
             + 候補日を追加
           </button>
         )}
       </div>
 
+      {/* 有効期限 */}
       <div>
-        <label className="block text-sm font-medium text-zinc-700 mb-1">有効期限</label>
+        <label className="block text-sm font-medium text-text mb-2">有効期限</label>
         <select
           value={expiresInDays}
           onChange={(e) => setExpiresInDays(Number(e.target.value))}
-          className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full border border-border rounded-[6px] px-3 py-2 text-sm bg-surface text-text focus:ring-1 focus:ring-purple outline-none"
           disabled={isLightPlanFull}
+          aria-label="有効期限を選択"
         >
           {[1, 3, 7, 14, 30].map((d) => (
-            <option key={d} value={d}>
-              {d}日間
-            </option>
+            <option key={d} value={d}>{d}日間</option>
           ))}
         </select>
       </div>
 
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {error && <p className="text-live text-sm">{error}</p>}
 
       <div className="flex gap-2 justify-end">
         <Button type="button" variant="secondary" onClick={onCancel}>
           キャンセル
         </Button>
-        <Button type="submit" loading={submitting} disabled={isLightPlanFull}>
+        <Button type="submit" variant="primary" loading={submitting} disabled={isLightPlanFull}>
           作成する
         </Button>
       </div>

@@ -1,26 +1,138 @@
+/* ============================================================
+   リスケるGG — グローバルスタイル & デザイントークン
+   参照: specs/001-risukeru-gg-app/research.md
+   ============================================================ */
+
 @import "tailwindcss";
 
+/* ── Tailwind v4 カスタムトークン定義 ───────────────────────── */
+@theme {
+  /* カラー */
+  --color-bg:       #08081a;
+  --color-surface:  #10102a;
+  --color-card:     #16163a;
+  --color-border:   #28285a;
+
+  /* プライマリ（パープル） */
+  --color-purple:   #7F77DD;
+  --color-purple-l: #a0a0ff;
+  --color-purple-d: #534AB7;
+
+  /* セカンダリ（アンバー） */
+  --color-amber:    #EF9F27;
+  --color-amber-l:  #FAC775;
+  --color-amber-d:  #BA7517;
+
+  /* テキスト */
+  --color-text:     #eeeeff;
+  --color-muted:    #6666aa;
+
+  /* セマンティック */
+  --color-live:     #ff4d6d;
+  --color-green:    #3fcf7f;
+
+  /* フォント変数（layout.tsx で next/font/google を通じてセット） */
+  --font-ja:  'Zen Kaku Gothic New', sans-serif;
+  --font-num: 'Space Grotesk', sans-serif;
+
+  /* 角丸 */
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   14px;
+  --radius-full: 9999px;
+}
+
+/* ── CSS カスタムプロパティ（デザイントークン） ────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg:       #08081a;
+  --surface:  #10102a;
+  --card:     #16163a;
+  --border:   #28285a;
+
+  --purple:   #7F77DD;
+  --purple-l: #a0a0ff;
+  --purple-d: #534AB7;
+
+  --amber:    #EF9F27;
+  --amber-l:  #FAC775;
+  --amber-d:  #BA7517;
+
+  --text:     #eeeeff;
+  --muted:    #6666aa;
+
+  --live:     #ff4d6d;
+  --green:    #3fcf7f;
+
+  /* シャドウ */
+  --shadow-sm: 0 1px 2px 0 rgba(0,0,0,.24);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,.32), 0 2px 4px -2px rgba(0,0,0,.32);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,.4);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ── ベーススタイル ─────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  height: 100%;
+  /* スクロールバーを常に表示してレイアウトシフトを防ぐ */
+  overflow-y: scroll;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ja, 'Zen Kaku Gothic New', sans-serif);
+  line-height: 1.58;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 数値・英字は Space Grotesk を使用するクラス */
+.font-num {
+  font-family: var(--font-num, 'Space Grotesk', sans-serif);
+}
+
+/* ── LIVEバッジ アニメーション ──────────────────────────────── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+.animate-live-pulse {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+/* ── スクロールバー スタイリング ────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* ── ユーティリティ ─────────────────────────────────────────── */
+/* スクロールバーを隠す（カレンダーストリップ・タスクスクロールで使用） */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }

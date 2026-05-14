@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { getCollabSession } from '@/lib/repositories/collabs';
 import CollabResponseForm from '@/components/collab/CollabResponseForm';
+import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import type { CollabSession } from '@/types/entities';
 
@@ -15,126 +16,124 @@ export default function CollabPublicPage() {
   const params = useParams();
   const token = params.token as string;
 
-  // token format: {teamId}__{sessionId}
-  // We embed teamId in the token to avoid exposing all teams
-  // Actual format from contract: /collab/{sessionId} but we need teamId too
-  // Use query param for teamId or embed in path — using path segment for simplicity
-  // Since the URL is /collab/{sessionId} and we need teamId, we store teamId in Firestore
-  // as a field on collabSessions and do a collection group query
   const [pageState, setPageState] = useState<PageState>('loading');
   const [session, setSession] = useState<CollabSession | null>(null);
   const [teamId, setTeamId] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
-      if (!token) {
-        setPageState('notfound');
-        return;
-      }
+      if (!token) { setPageState('notfound'); return; }
 
       try {
-        // token is "{teamId}__{sessionId}"
         const parts = token.split('__');
-        if (parts.length !== 2) {
-          setPageState('notfound');
-          return;
-        }
+        if (parts.length !== 2) { setPageState('notfound'); return; }
+
         const [tid, sid] = parts;
         const result = await getCollabSession(tid, sid);
 
-        if (!result) {
-          setPageState('notfound');
-          return;
-        }
+        if (!result) { setPageState('notfound'); return; }
 
         setSession(result);
         setTeamId(tid);
 
         const now = new Date();
-        if (result.status === 'confirmed') {
-          setPageState('confirmed');
-        } else if (result.status === 'cancelled') {
-          setPageState('cancelled');
-        } else if (result.status === 'expired' || result.expiresAt < now) {
-          setPageState('expired');
-        } else {
-          setPageState('form');
-        }
+        if (result.status === 'confirmed')          setPageState('confirmed');
+        else if (result.status === 'cancelled')     setPageState('cancelled');
+        else if (result.status === 'expired' || result.expiresAt < now) setPageState('expired');
+        else setPageState('form');
       } catch {
         setPageState('notfound');
       }
     }
-
     load();
   }, [token]);
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-sm border border-zinc-200 p-6">
-        {pageState === 'loading' && (
-          <div className="flex justify-center py-8">
-            <Spinner size="lg" />
-          </div>
-        )}
+    /* ── 全画面ダークテーマ ────────────────────────────────── */
+    <div className="min-h-screen bg-bg flex flex-col">
+      {/* ロゴヘッダー */}
+      <header className="h-[56px] border-b border-border bg-surface flex items-center px-6">
+        <div className="flex items-center gap-2">
+          <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7 shrink-0">
+            <rect width="32" height="32" rx="8" fill="var(--purple-d)" />
+            <rect x="13" y="12" width="2" height="6" rx="1" fill="var(--purple-l)"/>
+            <rect x="11" y="14" width="6" height="2" rx="1" fill="var(--purple-l)"/>
+            <circle cx="22" cy="14" r="1.2" fill="var(--amber)"/>
+            <circle cx="19" cy="17" r="1.2" fill="var(--amber)"/>
+          </svg>
+          <span className="text-sm font-bold text-text">リスケるGG</span>
+        </div>
+      </header>
 
-        {pageState === 'notfound' && (
-          <div className="text-center py-8">
-            <p className="text-2xl mb-2">🔍</p>
-            <h1 className="text-lg font-bold text-zinc-900 mb-2">リンクが見つかりません</h1>
-            <p className="text-sm text-zinc-500">URLが正しいか確認してください</p>
-          </div>
-        )}
+      {/* コンテンツ */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-lg">
 
-        {pageState === 'expired' && (
-          <div className="text-center py-8">
-            <p className="text-2xl mb-2">⏰</p>
-            <h1 className="text-lg font-bold text-zinc-900 mb-2">
-              このリンクは有効期限切れです
-            </h1>
-            <p className="text-sm text-zinc-500">コラボ打診者に再送をお願いしてください</p>
-          </div>
-        )}
+          {pageState === 'loading' && (
+            <div className="flex justify-center py-16">
+              <Spinner size="lg" />
+            </div>
+          )}
 
-        {pageState === 'confirmed' && session && (
-          <div className="text-center py-8">
-            <p className="text-2xl mb-2">✅</p>
-            <h1 className="text-lg font-bold text-zinc-900 mb-2">日程が確定しました</h1>
-            {session.confirmedDate && (
-              <p className="text-sm text-zinc-600">
-                {format(session.confirmedDate, 'M月d日(E) HH:mm', { locale: ja })}
-              </p>
-            )}
-          </div>
-        )}
+          {pageState === 'notfound' && (
+            <Card className="text-center py-10">
+              <p className="text-3xl mb-3">🔍</p>
+              <h1 className="text-base font-semibold text-text mb-2">リンクが見つかりません</h1>
+              <p className="text-sm text-muted">URLが正しいか確認してください</p>
+            </Card>
+          )}
 
-        {pageState === 'cancelled' && (
-          <div className="text-center py-8">
-            <p className="text-2xl mb-2">❌</p>
-            <h1 className="text-lg font-bold text-zinc-900 mb-2">
-              このコラボ調整はキャンセルされました
-            </h1>
-          </div>
-        )}
+          {pageState === 'expired' && (
+            <Card className="text-center py-10">
+              <p className="text-3xl mb-3">⏰</p>
+              <h1 className="text-base font-semibold text-text mb-2">このリンクは有効期限切れです</h1>
+              <p className="text-sm text-muted">コラボ打診者に再送をお願いしてください</p>
+            </Card>
+          )}
 
-        {pageState === 'form' && session && teamId && (
-          <>
-            <h1 className="text-xl font-bold text-zinc-900 mb-6">コラボ日程の回答</h1>
-            <CollabResponseForm
-              session={session}
-              teamId={teamId}
-              sessionId={session.id}
-              onSuccess={() => setPageState('done')}
-            />
-          </>
-        )}
+          {pageState === 'confirmed' && session && (
+            <Card className="text-center py-10">
+              <p className="text-3xl mb-3">✅</p>
+              <h1 className="text-base font-semibold text-text mb-2">日程が確定しました</h1>
+              {session.confirmedDate && (
+                <p className="text-sm text-purple-l font-num">
+                  {format(session.confirmedDate, 'M月d日(E) HH:mm', { locale: ja })}
+                </p>
+              )}
+            </Card>
+          )}
 
-        {pageState === 'done' && (
-          <div className="text-center py-8">
-            <p className="text-2xl mb-2">🎉</p>
-            <h1 className="text-lg font-bold text-zinc-900 mb-2">回答を送信しました</h1>
-            <p className="text-sm text-zinc-500">ご回答ありがとうございます</p>
-          </div>
-        )}
+          {pageState === 'cancelled' && (
+            <Card className="text-center py-10">
+              <p className="text-3xl mb-3">❌</p>
+              <h1 className="text-base font-semibold text-text mb-2">このコラボ調整はキャンセルされました</h1>
+            </Card>
+          )}
+
+          {pageState === 'done' && (
+            <Card className="text-center py-10">
+              <p className="text-3xl mb-3">🎉</p>
+              <h1 className="text-base font-semibold text-text mb-2">回答を送信しました</h1>
+              <p className="text-sm text-muted">ご回答ありがとうございます</p>
+            </Card>
+          )}
+
+          {pageState === 'form' && session && teamId && (
+            <Card noPadding>
+              <div className="px-[18px] py-[14px] border-b border-border">
+                <h1 className="text-base font-semibold text-text">コラボ日程の回答</h1>
+              </div>
+              <div className="p-[18px]">
+                <CollabResponseForm
+                  session={session}
+                  teamId={teamId}
+                  sessionId={session.id}
+                  onSuccess={() => setPageState('done')}
+                />
+              </div>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );
