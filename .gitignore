@@ -63,3 +63,9 @@ public/workbox-*.js.map
 # test results
 test-results/
 playwright-report/
+
+# ログインファイル（必要に応じてコミットする）
+*.log
+
+# playwrightのテスト結果
+.playwright-mcp/

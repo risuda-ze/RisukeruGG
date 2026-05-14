@@ -21,7 +21,19 @@
       "PowerShell(npm view react-hook-form version 2>$null)",
       "PowerShell(npm view @testing-library/jest-dom version time.modified 2>$null)",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Node:', d.get\\('engines',{}\\).get\\('node','?'\\)\\); print\\('Scripts:', list\\(d.get\\('scripts',{}\\).keys\\(\\)\\)\\)\")",
-      "Bash(docker compose *)"
+      "Bash(docker compose *)",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "PowerShell(docker compose exec app cat /workspace/src/proxy.ts 2>&1)",
+      "PowerShell(docker compose logs app --tail 30 2>&1)",
+      "PowerShell(docker compose restart app 2>&1)",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "PowerShell(docker compose up -d --build app 2>&1)",
+      "mcp__plugin_playwright_playwright__browser_tabs",
+      "PowerShell(docker compose logs app --tail 40 2>&1)",
+      "PowerShell(docker compose logs app --tail 20 2>&1)",
+      "PowerShell(docker compose logs app --tail 15 2>&1)"
     ]
   }
 }

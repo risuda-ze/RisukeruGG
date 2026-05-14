@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 
 export default function LoginPage() {
   const { signIn } = useAuthStore();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,6 +17,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await signIn();
+      router.push('/dashboard');
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'code' in err) {
         const code = (err as { code: string }).code;

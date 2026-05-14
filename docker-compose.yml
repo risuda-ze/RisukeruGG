@@ -53,7 +53,7 @@ services:
       - .env.docker
     environment:
       NEXT_PUBLIC_USE_EMULATORS: "true"
-      NEXT_PUBLIC_EMULATOR_HOST: emulator
+      NEXT_PUBLIC_EMULATOR_HOST: localhost
     depends_on:
       emulator:
         condition: service_healthy
