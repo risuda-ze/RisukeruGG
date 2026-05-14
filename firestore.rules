@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isTeamMember(teamId) {
+      return request.auth != null &&
+             exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid));
+    }
+
+    function isTeamOwner(teamId) {
+      return isTeamMember(teamId) &&
+             get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role == 'owner';
+    }
+
+    function isOwnerOrEditor(teamId) {
+      return isTeamMember(teamId) &&
+             get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role in ['owner', 'editor'];
+    }
+
+    // ユーザードキュメント（自分のみ読み書き）
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // チームコード（認証済みユーザーが読み取り可、書き込みはCloud Functionsのみ）
+    match /teamCodes/{code} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /teams/{teamId} {
+      allow read: if isTeamMember(teamId);
+      allow create: if request.auth != null;
+      allow update, delete: if isTeamOwner(teamId);
+
+      match /members/{memberId} {
+        allow read: if isTeamMember(teamId);
+        allow write: if isTeamOwner(teamId) ||
+                        (request.auth != null && request.auth.uid == memberId);
+      }
+
+      match /kanbanColumns/{columnId} {
+        allow read: if isTeamMember(teamId);
+        allow write: if isTeamOwner(teamId);
+      }
+
+      match /schedules/{scheduleId} {
+        allow read: if isTeamMember(teamId);
+        allow write: if isOwnerOrEditor(teamId);
+      }
+
+      match /tasks/{taskId} {
+        allow read: if isTeamMember(teamId);
+        allow update, delete: if isOwnerOrEditor(teamId);
+        allow create: if false;
+      }
+
+      match /collabSessions/{sessionId} {
+        // URLトークン（UUID v4）が事実上の認証となるため公開読み取りOK
+        allow read: if true;
+        allow update, delete: if isOwnerOrEditor(teamId);
+        allow create: if false;
+      }
+
+      match /notifications/{notificationId} {
+        allow read: if request.auth != null &&
+                       request.auth.uid == resource.data.recipientId;
+        // isReadフィールドのみクライアントから更新可
+        allow update: if request.auth != null &&
+                         request.auth.uid == resource.data.recipientId &&
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+        allow create, delete: if false;
+      }
+    }
+  }
+}

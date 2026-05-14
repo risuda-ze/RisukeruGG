@@ -1,0 +1,50 @@
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getStorage, connectStorageEmulator } from 'firebase/storage';
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
+import { getMessaging, isSupported } from 'firebase/messaging';
+
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+};
+
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+
+// エミュレータへの接続（開発環境のみ・ブラウザ側で一度だけ実行）
+declare global {
+  interface Window { __firebaseEmulatorsConnected?: boolean }
+}
+
+if (
+  process.env.NEXT_PUBLIC_USE_EMULATORS === 'true' &&
+  typeof window !== 'undefined' &&
+  !window.__firebaseEmulatorsConnected
+) {
+  window.__firebaseEmulatorsConnected = true;
+  const emulatorHost = process.env.NEXT_PUBLIC_EMULATOR_HOST ?? 'localhost';
+  connectAuthEmulator(auth, `http://${emulatorHost}:9099`, { disableWarnings: false });
+  connectFirestoreEmulator(db, emulatorHost, 8080);
+  connectStorageEmulator(storage, emulatorHost, 9199);
+  const functions = getFunctions(app, 'asia-northeast1');
+  connectFunctionsEmulator(functions, emulatorHost, 5001);
+}
+
+// FCMはブラウザ環境かつServiceWorker対応時のみ利用可能
+export const getMessagingIfSupported = async () => {
+  const supported = await isSupported();
+  if (!supported) return null;
+  return getMessaging(app);
+};
+
+export default app;

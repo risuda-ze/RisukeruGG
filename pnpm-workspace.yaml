@@ -1,0 +1,9 @@
+packages:
+  - "."
+  - "functions"
+
+allowBuilds:
+  sharp: true
+  unrs-resolver: true
+  '@firebase/util': true
+  protobufjs: true

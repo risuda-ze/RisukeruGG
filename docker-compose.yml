@@ -1,0 +1,65 @@
+services:
+  emulator:
+    build:
+      context: .
+      dockerfile: docker/emulator/Dockerfile
+    ports:
+      - "4000:4000"   # Emulator UI
+      - "9099:9099"   # Auth
+      - "5001:5001"   # Functions
+      - "8080:8080"   # Firestore
+      - "9199:9199"   # Storage
+    volumes:
+      - ./firebase.json:/workspace/firebase.json:ro
+      - ./firestore.rules:/workspace/firestore.rules:ro
+      - ./firestore.indexes.json:/workspace/firestore.indexes.json:ro
+      - ./storage.rules:/workspace/storage.rules:ro
+      - ./functions/src:/workspace/functions/src:ro
+      - ./functions/package.json:/workspace/functions/package.json:ro
+      - ./functions/tsconfig.json:/workspace/functions/tsconfig.json:ro
+      - ./pnpm-lock.yaml:/workspace/pnpm-lock.yaml:ro
+      - ./pnpm-workspace.yaml:/workspace/pnpm-workspace.yaml:ro
+      - ./package.json:/workspace/package.json:ro
+      - emulator_data:/workspace/.emulator-data
+      - functions_modules:/workspace/functions/node_modules
+    environment:
+      FIREBASE_PROJECT_ID: demo-risukeru
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000"]
+      interval: 10s
+      timeout: 5s
+      start_period: 90s
+      retries: 12
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/workspace/src
+      - ./public:/workspace/public
+      - ./next.config.ts:/workspace/next.config.ts:ro
+      - ./tsconfig.json:/workspace/tsconfig.json:ro
+      - ./postcss.config.mjs:/workspace/postcss.config.mjs:ro
+      - ./package.json:/workspace/package.json:ro
+      - ./pnpm-lock.yaml:/workspace/pnpm-lock.yaml:ro
+      - ./pnpm-workspace.yaml:/workspace/pnpm-workspace.yaml:ro
+      - ./functions/package.json:/workspace/functions/package.json:ro
+      - app_modules:/workspace/node_modules
+      - app_next:/workspace/.next
+    env_file:
+      - .env.docker
+    environment:
+      NEXT_PUBLIC_USE_EMULATORS: "true"
+      NEXT_PUBLIC_EMULATOR_HOST: emulator
+    depends_on:
+      emulator:
+        condition: service_healthy
+
+volumes:
+  emulator_data:
+  functions_modules:
+  app_modules:
+  app_next:

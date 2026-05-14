@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(pnpm --version)",
+      "PowerShell(firebase --version 2>&1)",
+      "PowerShell(New-Item -ItemType Directory -Force \"c:\\\\dev\\\\RisukeruGG\\\\functions\\\\src\")"
+    ]
+  }
+}

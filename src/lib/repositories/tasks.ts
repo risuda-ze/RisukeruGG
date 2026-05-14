@@ -1,0 +1,81 @@
+import {
+  doc,
+  collection,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  Unsubscribe,
+  Timestamp,
+  runTransaction,
+  serverTimestamp,
+} from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { db } from '@/lib/firebase/client';
+import type { Task } from '@/types/entities';
+
+const functions = getFunctions(undefined, 'asia-northeast1');
+
+function toTask(id: string, data: Record<string, unknown>): Task {
+  return {
+    id,
+    title: data.title as string,
+    columnId: data.columnId as string,
+    category: data.category as Task['category'],
+    assigneeId: (data.assigneeId as string | null) ?? null,
+    dueDate: data.dueDate ? (data.dueDate as Timestamp).toDate() : null,
+    linkedScheduleId: (data.linkedScheduleId as string | null) ?? null,
+    updatedAt: (data.updatedAt as Timestamp).toDate(),
+    createdBy: data.createdBy as string,
+    createdAt: (data.createdAt as Timestamp).toDate(),
+  };
+}
+
+export const createTask = httpsCallable<
+  {
+    teamId: string;
+    title: string;
+    columnId: string;
+    category: string;
+    assigneeId?: string | null;
+    dueDate?: string | null;
+    linkedScheduleId?: string | null;
+  },
+  { taskId: string }
+>(functions, 'createTask');
+
+/** 楽観的ロック: updatedAt が一致しない場合はエラー */
+export async function updateTask(
+  teamId: string,
+  taskId: string,
+  data: Partial<Task>,
+  expectedUpdatedAt?: Date
+): Promise<void> {
+  const ref = doc(db, 'teams', teamId, 'tasks', taskId);
+
+  if (expectedUpdatedAt) {
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists()) throw new Error('タスクが見つかりません');
+      const currentUpdatedAt = (snap.data().updatedAt as Timestamp).toDate();
+      if (currentUpdatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+        throw new Error('CONFLICT');
+      }
+      tx.update(ref, { ...data, updatedAt: serverTimestamp() });
+    });
+  } else {
+    await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
+  }
+}
+
+export async function deleteTask(teamId: string, taskId: string): Promise<void> {
+  await deleteDoc(doc(db, 'teams', teamId, 'tasks', taskId));
+}
+
+export function subscribeTasksByTeam(
+  teamId: string,
+  callback: (tasks: Task[]) => void
+): Unsubscribe {
+  return onSnapshot(collection(db, 'teams', teamId, 'tasks'), (snap) => {
+    callback(snap.docs.map((d) => toTask(d.id, d.data() as Record<string, unknown>)));
+  });
+}
