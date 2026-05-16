@@ -33,9 +33,7 @@ function simulateDeleteColumn(
   const fallback = columns.find((c) => c.id !== columnId);
   if (!fallback) throw new Error('移行先カラムが見つかりません');
 
-  const movedTaskIds = tasks
-    .filter((t) => t.columnId === columnId)
-    .map((t) => t.id);
+  const movedTaskIds = tasks.filter((t) => t.columnId === columnId).map((t) => t.id);
 
   return { fallbackColumnId: fallback.id, movedTaskIds };
 }
@@ -44,9 +42,7 @@ describe('カラム削除時のタスク移行ロジック', () => {
   it('カラムが1つのとき削除できない', () => {
     const columns = [buildColumn('col1', 0)];
     const tasks: Task[] = [];
-    expect(() => simulateDeleteColumn(columns, 'col1', tasks)).toThrow(
-      '最低1つのカラムが必要です'
-    );
+    expect(() => simulateDeleteColumn(columns, 'col1', tasks)).toThrow('最低1つのカラムが必要です');
   });
 
   it('カラムが2つ以上あれば削除できる', () => {
@@ -59,11 +55,7 @@ describe('カラム削除時のタスク移行ロジック', () => {
 
   it('削除対象カラムのタスクが全て移行先へ移動される', () => {
     const columns = [buildColumn('col1', 0), buildColumn('col2', 1), buildColumn('col3', 2)];
-    const tasks = [
-      buildTask('t1', 'col2'),
-      buildTask('t2', 'col2'),
-      buildTask('t3', 'col1'),
-    ];
+    const tasks = [buildTask('t1', 'col2'), buildTask('t2', 'col2'), buildTask('t3', 'col1')];
     const result = simulateDeleteColumn(columns, 'col2', tasks);
     expect(result.movedTaskIds).toHaveLength(2);
     expect(result.movedTaskIds).toContain('t1');

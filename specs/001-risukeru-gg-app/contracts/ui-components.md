@@ -42,24 +42,25 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 ```
 
 **スタイル仕様**:
+
 - 角丸: `--radius-md` (12px)
 - フォント: `font-medium`
 - フォーカスリング: `focus-visible:ring-2 focus-visible:ring-purple`
 - disabled: `opacity-40 cursor-not-allowed`
 
-| variant | 背景色 | テキスト色 | hover背景 |
-|---------|------|---------|--------|
-| primary | `bg-purple-d` | `text-purple-l` | `bg-purple` |
-| secondary | `bg-surface` border `border-border` | `text-text` | `bg-card` |
-| amber | `bg-amber-d` | `text-white` | `bg-amber` |
-| danger | `bg-live/10` border `border-live/30` | `text-live` | `bg-live/20` |
-| ghost | transparent | `text-muted` | `bg-surface` |
+| variant   | 背景色                               | テキスト色      | hover背景    |
+| --------- | ------------------------------------ | --------------- | ------------ |
+| primary   | `bg-purple-d`                        | `text-purple-l` | `bg-purple`  |
+| secondary | `bg-surface` border `border-border`  | `text-text`     | `bg-card`    |
+| amber     | `bg-amber-d`                         | `text-white`    | `bg-amber`   |
+| danger    | `bg-live/10` border `border-live/30` | `text-live`     | `bg-live/20` |
+| ghost     | transparent                          | `text-muted`    | `bg-surface` |
 
-| size | padding | font-size |
-|------|---------|-----------|
-| sm | `px-3 py-1.5` | `text-xs` |
-| md | `px-4 py-2` | `text-sm` |
-| lg | `px-6 py-3` | `text-base` |
+| size | padding       | font-size   |
+| ---- | ------------- | ----------- |
+| sm   | `px-3 py-1.5` | `text-xs`   |
+| md   | `px-4 py-2`   | `text-sm`   |
+| lg   | `px-6 py-3`   | `text-base` |
 
 ---
 
@@ -77,18 +78,19 @@ export interface BadgeProps {
 ```
 
 **スタイル仕様**:
+
 - 角丸: `rounded-full`
 - padding: `px-2 py-0.5`
 - font-size: `text-[10px] font-bold tracking-wide`
 
-| variant | 背景色 | テキスト色 |
-|---------|------|---------|
-| purple | `bg-purple/15` | `text-purple-l` |
-| amber | `bg-amber/15` | `text-amber-l` |
-| live | `bg-live/15` | `text-live` |
-| green | `bg-green/15` | `text-green` |
-| muted | `bg-surface` | `text-muted` |
-| default | `bg-surface` border `border-border` | `text-text` |
+| variant | 背景色                              | テキスト色      |
+| ------- | ----------------------------------- | --------------- |
+| purple  | `bg-purple/15`                      | `text-purple-l` |
+| amber   | `bg-amber/15`                       | `text-amber-l`  |
+| live    | `bg-live/15`                        | `text-live`     |
+| green   | `bg-green/15`                       | `text-green`    |
+| muted   | `bg-surface`                        | `text-muted`    |
+| default | `bg-surface` border `border-border` | `text-text`     |
 
 ---
 
@@ -108,6 +110,7 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 ```
 
 **スタイル仕様**:
+
 - 背景: `bg-surface`
 - ボーダー: `border border-border` → focus: `border-purple`
 - 角丸: `rounded-sm` (6px)
@@ -138,6 +141,7 @@ export interface CardHeaderProps {
 ```
 
 **スタイル仕様**:
+
 - 背景: `bg-card`
 - ボーダー: `border border-border`
 - 角丸: `rounded-lg` (14px)
@@ -166,18 +170,19 @@ export interface StatCardProps {
 ```
 
 **スタイル仕様**:
+
 - 外観: Card と同一（bg-card, border, rounded-lg）
 - padding: `px-[18px] py-[16px]`
 - label: `text-[11px] text-muted mb-1.5 tracking-wide`
 - value: `text-[26px] font-bold leading-none font-num`
 - sub: `text-[11px] text-muted mt-1.5`
 
-| color | valueテキスト色 |
-|-------|-------------|
+| color  | valueテキスト色 |
+| ------ | --------------- |
 | purple | `text-purple-l` |
-| amber | `text-amber-l` |
-| live | `text-live` |
-| green | `text-green` |
+| amber  | `text-amber-l`  |
+| live   | `text-live`     |
+| green  | `text-green`    |
 
 ---
 
@@ -204,11 +209,11 @@ export interface AvatarProps {
 
 **スタイル仕様**:
 
-| size | width/height | font-size |
-|------|---------|-----------|
-| sm | 24px | text-[9px] |
-| md | 34px | text-[13px] |
-| lg | 42px | text-[15px] |
+| size | width/height | font-size   |
+| ---- | ------------ | ----------- |
+| sm   | 24px         | text-[9px]  |
+| md   | 34px         | text-[13px] |
+| lg   | 42px         | text-[15px] |
 
 - 形状: `rounded-full`
 - online dot: 幅9px, 高さ9px, `bg-green`, `border-2 border-surface`, absolute bottom-0 right-0
@@ -236,6 +241,7 @@ export interface ModalProps {
 ```
 
 **スタイル仕様**:
+
 - オーバーレイ: `bg-black/60 backdrop-blur-sm`
 - ダイアログ: `bg-card border border-border rounded-lg`
 - size別width: sm=360px, md=480px, lg=640px
@@ -253,6 +259,7 @@ export interface SpinnerProps {
 ```
 
 **スタイル仕様**:
+
 - カラー: `text-purple-l`（`border-current border-t-transparent` アニメーション）
 
 ---
@@ -270,6 +277,7 @@ export interface AppShellProps {
 ```
 
 **レスポンシブ構造**:
+
 ```
 <!-- モバイル (< md) -->
 <div class="flex flex-col min-h-screen bg-bg">
@@ -304,13 +312,16 @@ export interface AppShellProps {
 - アクティブナビアイテム: `border-l-2 border-purple bg-purple/12 text-purple-l`
 
 **ナビアイテム定義**:
+
 ```typescript
 // メイン
-[ダッシュボード, スケジュール, タスク管理, コラボ調整]
-// チーム
-[メンバー, チャンネル設定, 通知]
-// 連携
-[YouTube, Twitch]
+[ダッシュボード, スケジュール, タスク管理, コラボ調整][
+  // チーム
+  (メンバー, チャンネル設定, 通知)
+][
+  // 連携
+  (YouTube, Twitch)
+];
 ```
 
 ---

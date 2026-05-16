@@ -7,18 +7,18 @@
 
 ## アクセス制御マトリクス
 
-| コレクション | 未認証 | 認証済み（自分） | Owner | Editor | Viewer |
-|-------------|--------|----------------|-------|--------|--------|
-| users/{自分} | ✗ | CRUD | CRUD | CRUD | CRUD |
-| teamCodes/{code} | ✗ | R | ✗（CF経由） | ✗（CF経由） | ✗（CF経由） |
-| teams/{所属外} | ✗ | ✗ | ✗ | ✗ | ✗ |
-| teams/{所属}/members | ✗ | ✗ | CRUD | R | R |
-| teams/{所属}/schedules | ✗ | ✗ | CRUD | CRUD | R |
-| teams/{所属}/tasks | ✗ | ✗ | CRUD（CF経由） | CRUD（CF経由） | R |
-| teams/{所属}/kanbanColumns | ✗ | ✗ | CRUD | R | R |
-| teams/{所属}/collabSessions | ✗ | ✗ | CRUD（CF経由） | CRUD（CF経由） | R |
-| collabSessions（公開） | R | R | - | - | - |
-| teams/{所属}/notifications | ✗ | ✗ | R（自分宛） | R（自分宛） | R（自分宛） |
+| コレクション                | 未認証 | 認証済み（自分） | Owner          | Editor         | Viewer      |
+| --------------------------- | ------ | ---------------- | -------------- | -------------- | ----------- |
+| users/{自分}                | ✗      | CRUD             | CRUD           | CRUD           | CRUD        |
+| teamCodes/{code}            | ✗      | R                | ✗（CF経由）    | ✗（CF経由）    | ✗（CF経由） |
+| teams/{所属外}              | ✗      | ✗                | ✗              | ✗              | ✗           |
+| teams/{所属}/members        | ✗      | ✗                | CRUD           | R              | R           |
+| teams/{所属}/schedules      | ✗      | ✗                | CRUD           | CRUD           | R           |
+| teams/{所属}/tasks          | ✗      | ✗                | CRUD（CF経由） | CRUD（CF経由） | R           |
+| teams/{所属}/kanbanColumns  | ✗      | ✗                | CRUD           | R              | R           |
+| teams/{所属}/collabSessions | ✗      | ✗                | CRUD（CF経由） | CRUD（CF経由） | R           |
+| collabSessions（公開）      | R      | R                | -              | -              | -           |
+| teams/{所属}/notifications  | ✗      | ✗                | R（自分宛）    | R（自分宛）    | R（自分宛） |
 
 **CF経由**: タスク作成・コラボ作成はプラン制限チェックのため Cloud Functions 経由必須。
 チーム参加・脱退・コード管理も Cloud Functions 経由（`teamCodes`の整合性維持のため）。
