@@ -7,7 +7,9 @@ import type { ScheduleEntry } from '@/types/entities';
 
 interface ScheduleFormProps {
   initialData?: Partial<ScheduleEntry>;
-  onSubmit: (data: Omit<ScheduleEntry, 'id' | 'updatedAt' | 'createdAt' | 'createdBy'>) => Promise<void>;
+  onSubmit: (
+    data: Omit<ScheduleEntry, 'id' | 'updatedAt' | 'createdAt' | 'createdBy'>
+  ) => Promise<void>;
   onCancel: () => void;
   teamMemberIds?: string[];
 }
@@ -15,9 +17,7 @@ interface ScheduleFormProps {
 export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormProps) {
   const [title, setTitle] = useState(initialData?.title ?? '');
   const [type, setType] = useState<'stream' | 'video'>(initialData?.type ?? 'stream');
-  const [startAt, setStartAt] = useState(
-    initialData?.startAt?.toISOString().slice(0, 16) ?? ''
-  );
+  const [startAt, setStartAt] = useState(initialData?.startAt?.toISOString().slice(0, 16) ?? '');
   const [endAt, setEndAt] = useState(initialData?.endAt?.toISOString().slice(0, 16) ?? '');
   const [platform, setPlatform] = useState<'youtube' | 'twitch' | 'both' | ''>(
     initialData?.platform ?? ''
@@ -84,8 +84,20 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
         </select>
       </div>
 
-      <Input label="開始日時" type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} required />
-      <Input label="終了日時" type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} required />
+      <Input
+        label="開始日時"
+        type="datetime-local"
+        value={startAt}
+        onChange={(e) => setStartAt(e.target.value)}
+        required
+      />
+      <Input
+        label="終了日時"
+        type="datetime-local"
+        value={endAt}
+        onChange={(e) => setEndAt(e.target.value)}
+        required
+      />
 
       <div className="flex flex-col gap-1">
         <label className="text-sm font-medium text-zinc-700">プラットフォーム</label>

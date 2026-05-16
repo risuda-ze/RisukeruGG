@@ -132,9 +132,7 @@ export default function CollabResponseForm({
 
       {/* 代替日程 */}
       <div>
-        <label className="block text-sm font-medium text-text mb-2">
-          代替日程の提案（任意）
-        </label>
+        <label className="block text-sm font-medium text-text mb-2">代替日程の提案（任意）</label>
         <input
           type="datetime-local"
           value={alternativeDate}

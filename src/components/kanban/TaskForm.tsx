@@ -93,7 +93,9 @@ export default function TaskForm({
           <p className="font-medium text-amber-800">タスクの作成上限に達しました（月5件）</p>
           <p className="text-amber-700 mt-1">
             PARTYプランにアップグレードすると無制限でタスクを作成できます。
-            <a href="/settings" className="underline ml-1">アップグレードする</a>
+            <a href="/settings" className="underline ml-1">
+              アップグレードする
+            </a>
           </p>
         </div>
       )}
@@ -176,9 +178,7 @@ export default function TaskForm({
         </select>
       </div>
 
-      {submitError && (
-        <p className="text-red-500 text-sm">{submitError}</p>
-      )}
+      {submitError && <p className="text-red-500 text-sm">{submitError}</p>}
 
       <div className="flex gap-2 justify-end">
         <Button type="button" variant="secondary" onClick={onCancel}>

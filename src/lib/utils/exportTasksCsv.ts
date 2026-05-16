@@ -36,9 +36,7 @@ export function exportTasksCsv(
     memberMap.get(task.createdBy) ?? task.createdBy,
   ]);
 
-  const csv = [headers, ...rows]
-    .map((row) => row.map(escapeCsv).join(','))
-    .join('\n');
+  const csv = [headers, ...rows].map((row) => row.map(escapeCsv).join(',')).join('\n');
 
   const bom = '﻿';
   const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });

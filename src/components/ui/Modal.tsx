@@ -45,7 +45,9 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className={`w-full ${sizeClasses[size]} rounded-lg bg-card border border-border shadow-lg`}>
+      <div
+        className={`w-full ${sizeClasses[size]} rounded-lg bg-card border border-border shadow-lg`}
+      >
         {title && (
           <div className="px-6 py-4 border-b border-border">
             <h2 className="text-base font-semibold text-text">{title}</h2>

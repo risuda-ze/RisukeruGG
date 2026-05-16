@@ -14,32 +14,32 @@ import type { Notification } from '@/types/entities';
 
 const REF_PATHS: Record<NonNullable<Notification['refType']>, string> = {
   schedule: '/schedule',
-  task:     '/tasks',
-  collab:   '/collabs',
-  team:     '/team',
+  task: '/tasks',
+  collab: '/collabs',
+  team: '/team',
 };
 
 const CATEGORY_LABELS: Record<Notification['category'], string> = {
-  collab:    'コラボ',
-  tasks:     'タスク',
+  collab: 'コラボ',
+  tasks: 'タスク',
   reminders: 'リマインダー',
-  system:    'システム',
+  system: 'システム',
 };
 
 type BadgeVariant = 'purple' | 'amber' | 'live' | 'green' | 'muted' | 'default';
 const CATEGORY_BADGE: Record<Notification['category'], BadgeVariant> = {
-  collab:    'live',
-  tasks:     'amber',
+  collab: 'live',
+  tasks: 'amber',
   reminders: 'purple',
-  system:    'muted',
+  system: 'muted',
 };
 
 /* カテゴリカラードット */
 const CATEGORY_DOT: Record<Notification['category'], string> = {
-  collab:    'bg-live',
-  tasks:     'bg-amber',
+  collab: 'bg-live',
+  tasks: 'bg-amber',
   reminders: 'bg-purple',
-  system:    'bg-green',
+  system: 'bg-green',
 };
 
 export default function NotificationsPage() {
@@ -79,7 +79,6 @@ export default function NotificationsPage() {
 
   return (
     <div className="px-4 py-6 md:px-7 max-w-2xl">
-
       {/* ── ページヘッダー ─────────────────────────────────── */}
       <div className="flex items-center justify-between mb-5 gap-3">
         <h2 className="text-base font-semibold text-text">通知</h2>
@@ -120,7 +119,10 @@ export default function NotificationsPage() {
                   <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                     <span className="text-[13px] font-medium text-text">{notif.title}</span>
                     {!notif.isRead && (
-                      <span className="w-1.5 h-1.5 bg-purple-l rounded-full shrink-0" aria-label="未読" />
+                      <span
+                        className="w-1.5 h-1.5 bg-purple-l rounded-full shrink-0"
+                        aria-label="未読"
+                      />
                     )}
                   </div>
                   <p className="text-[12px] text-muted leading-relaxed">{notif.body}</p>

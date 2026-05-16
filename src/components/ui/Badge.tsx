@@ -9,11 +9,11 @@ export interface BadgeProps {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  purple:  'bg-purple/15 text-purple-l',
-  amber:   'bg-amber/15 text-amber-l',
-  live:    'bg-live/15 text-live',
-  green:   'bg-green/15 text-green',
-  muted:   'bg-surface text-muted',
+  purple: 'bg-purple/15 text-purple-l',
+  amber: 'bg-amber/15 text-amber-l',
+  live: 'bg-live/15 text-live',
+  green: 'bg-green/15 text-green',
+  muted: 'bg-surface text-muted',
   default: 'bg-surface border border-border text-text',
 };
 

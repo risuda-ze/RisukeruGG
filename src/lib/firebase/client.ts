@@ -23,7 +23,9 @@ export const storage = getStorage(app);
 
 // エミュレータへの接続（開発環境のみ・ブラウザ側で一度だけ実行）
 declare global {
-  interface Window { __firebaseEmulatorsConnected?: boolean }
+  interface Window {
+    __firebaseEmulatorsConnected?: boolean;
+  }
 }
 
 if (

@@ -18,21 +18,21 @@ import type { CollabSession } from '@/types/entities';
 /* ステータス → バッジバリアント */
 type BadgeVariant = 'purple' | 'amber' | 'live' | 'green' | 'muted' | 'default';
 const STATUS_BADGE: Record<string, BadgeVariant> = {
-  open:      'purple',
+  open: 'purple',
   confirmed: 'green',
-  expired:   'muted',
+  expired: 'muted',
   cancelled: 'live',
 };
 
 /* ステータスタブ定義 */
 const STATUS_TABS = [
-  { value: 'open',      label: '返答待ち' },
+  { value: 'open', label: '返答待ち' },
   { value: 'confirmed', label: '確定済み' },
-  { value: 'expired',   label: '期限切れ' },
+  { value: 'expired', label: '期限切れ' },
   { value: 'cancelled', label: 'キャンセル' },
 ] as const;
 
-type StatusFilter = typeof STATUS_TABS[number]['value'] | 'all';
+type StatusFilter = (typeof STATUS_TABS)[number]['value'] | 'all';
 
 export default function CollabsPage() {
   const { currentUser, currentTeam, members } = useAuthStore();
@@ -78,12 +78,16 @@ export default function CollabsPage() {
 
   return (
     <div className="px-4 py-6 md:px-7 max-w-3xl">
-
       {/* ── ページヘッダー ─────────────────────────────────── */}
       <div className="flex items-center justify-between mb-5 gap-3">
         <h2 className="text-base font-semibold text-text">コラボ調整</h2>
         {canEdit && (
-          <Button variant="amber" size="sm" onClick={() => setShowCreate(true)} disabled={isLightPlanFull}>
+          <Button
+            variant="amber"
+            size="sm"
+            onClick={() => setShowCreate(true)}
+            disabled={isLightPlanFull}
+          >
             + 打診する
           </Button>
         )}
@@ -125,7 +129,12 @@ export default function CollabsPage() {
                 key={session.id}
                 className="bg-card border border-border rounded-[12px] p-4 flex items-center gap-3"
               >
-                <Avatar initials={initials} bgClass="bg-amber-d/30" textClass="text-amber-l" size="md" />
+                <Avatar
+                  initials={initials}
+                  bgClass="bg-amber-d/30"
+                  textClass="text-amber-l"
+                  size="md"
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                     <Link
@@ -139,7 +148,8 @@ export default function CollabsPage() {
                     </Badge>
                   </div>
                   <p className="text-[11px] text-muted font-num">
-                    {session.partnerName}さんと · {format(session.createdAt, 'M/d', { locale: ja })}作成
+                    {session.partnerName}さんと · {format(session.createdAt, 'M/d', { locale: ja })}
+                    作成
                   </p>
                 </div>
                 {session.status === 'open' && (
@@ -176,7 +186,9 @@ export default function CollabsPage() {
         onClose={() => setCreatedShareUrl(null)}
         title="コラボURLを共有しましょう"
         footer={
-          <Button variant="secondary" onClick={() => setCreatedShareUrl(null)}>閉じる</Button>
+          <Button variant="secondary" onClick={() => setCreatedShareUrl(null)}>
+            閉じる
+          </Button>
         }
       >
         <div className="space-y-3">
@@ -184,9 +196,13 @@ export default function CollabsPage() {
           <div className="bg-surface border border-border rounded-[8px] p-3 break-all text-[12px] font-num text-text">
             {createdShareUrl}
           </div>
-          <Button variant="amber" className="w-full" onClick={() => {
-            if (createdShareUrl) copyUrl(createdShareUrl);
-          }}>
+          <Button
+            variant="amber"
+            className="w-full"
+            onClick={() => {
+              if (createdShareUrl) copyUrl(createdShareUrl);
+            }}
+          >
             {copied ? '✓ コピーしました' : 'URLをコピーする'}
           </Button>
         </div>

@@ -17,15 +17,15 @@ import type { ScheduleEntry } from '@/types/entities';
 /* ステータスバッジバリアントのマッピング */
 type BadgeVariant = 'live' | 'muted' | 'green' | 'purple' | 'amber' | 'default';
 const STATUS_BADGE: Record<string, BadgeVariant> = {
-  live:      'live',
+  live: 'live',
   scheduled: 'purple',
-  ended:     'muted',
+  ended: 'muted',
   cancelled: 'muted',
 };
 const STATUS_LABEL: Record<string, string> = {
-  live:      'LIVE中',
+  live: 'LIVE中',
   scheduled: '予定',
-  ended:     '終了',
+  ended: '終了',
   cancelled: 'キャンセル',
 };
 
@@ -76,7 +76,6 @@ export default function ScheduleDetailPage() {
 
   return (
     <div className="px-4 py-6 md:px-7 max-w-2xl">
-
       {/* ── ページヘッダー ─────────────────────────────────── */}
       <div className="mb-6 flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
@@ -122,9 +121,7 @@ export default function ScheduleDetailPage() {
                 {STATUS_LABEL[schedule.status] ?? schedule.status}
               </Badge>
             </InfoRow>
-            {schedule.description && (
-              <InfoRow label="説明">{schedule.description}</InfoRow>
-            )}
+            {schedule.description && <InfoRow label="説明">{schedule.description}</InfoRow>}
           </dl>
         </Card>
       )}
@@ -135,12 +132,19 @@ export default function ScheduleDetailPage() {
         onClose={() => setShowConflict(false)}
         title="編集が競合しました"
         footer={
-          <Button onClick={() => { setShowConflict(false); router.refresh(); }}>
+          <Button
+            onClick={() => {
+              setShowConflict(false);
+              router.refresh();
+            }}
+          >
             最新版を読み込む
           </Button>
         }
       >
-        <p className="text-muted">他のユーザーが同時に編集しました。最新版を読み込んで再度編集してください。</p>
+        <p className="text-muted">
+          他のユーザーが同時に編集しました。最新版を読み込んで再度編集してください。
+        </p>
       </Modal>
     </div>
   );

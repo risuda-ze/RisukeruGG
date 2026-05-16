@@ -22,14 +22,14 @@ type DialogState =
   | null;
 
 const ROLE_LABELS: Record<UserRole, string> = {
-  owner:  'Owner',
+  owner: 'Owner',
   editor: 'Editor',
   viewer: 'Viewer',
 };
 
 type BadgeVariant = 'purple' | 'amber' | 'muted' | 'green' | 'live' | 'default';
 const ROLE_BADGE: Record<UserRole, BadgeVariant> = {
-  owner:  'purple',
+  owner: 'purple',
   editor: 'amber',
   viewer: 'muted',
 };
@@ -100,7 +100,12 @@ export default function TeamPage() {
                 {currentTeam.teamCode}
               </p>
             </div>
-            <Button variant="secondary" size="sm" onClick={copyTeamCode} aria-label="チームコードをコピー">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={copyTeamCode}
+              aria-label="チームコードをコピー"
+            >
               {copied ? '✓ コピー済み' : 'コピー'}
             </Button>
           </div>
@@ -169,11 +174,7 @@ export default function TeamPage() {
       {/* ── 危険ゾーン ───────────────────────────────────── */}
       <Card className="border-live/20">
         <p className="text-[11px] text-muted uppercase tracking-wide mb-3">退出</p>
-        <Button
-          variant="danger"
-          size="sm"
-          onClick={() => setDialog({ type: 'leave' })}
-        >
+        <Button variant="danger" size="sm" onClick={() => setDialog({ type: 'leave' })}>
           チームを脱退する
         </Button>
       </Card>

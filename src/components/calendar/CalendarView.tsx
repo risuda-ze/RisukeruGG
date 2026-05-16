@@ -36,8 +36,8 @@ interface CalendarViewProps {
 
 /* ステータス別イベント背景色（デザイントークンに準拠） */
 function getEventBgColor(status: string): string {
-  if (status === 'live')      return 'var(--live)';
-  if (status === 'ended')     return 'var(--muted)';
+  if (status === 'live') return 'var(--live)';
+  if (status === 'ended') return 'var(--muted)';
   if (status === 'cancelled') return 'var(--border)';
   return 'var(--purple-d)';
 }

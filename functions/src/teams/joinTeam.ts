@@ -53,7 +53,10 @@ export const joinTeam = onCall(
             });
           }
         }
-        throw new HttpsError('failed-precondition', '全員がPARTYプランにアップグレードする必要があります');
+        throw new HttpsError(
+          'failed-precondition',
+          '全員がPARTYプランにアップグレードする必要があります'
+        );
       }
 
       const now = FieldValue.serverTimestamp();

@@ -71,7 +71,10 @@ export async function updateCollabSession(
   sessionId: string,
   data: Partial<CollabSession>
 ): Promise<void> {
-  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), data as Record<string, unknown>);
+  await updateDoc(
+    doc(db, 'teams', teamId, 'collabSessions', sessionId),
+    data as Record<string, unknown>
+  );
 }
 
 export const createCollabSession = httpsCallable<

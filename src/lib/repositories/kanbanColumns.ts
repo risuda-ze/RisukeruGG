@@ -22,7 +22,10 @@ function toColumn(id: string, data: Record<string, unknown>): KanbanColumn {
   };
 }
 
-export async function createColumn(teamId: string, data: Omit<KanbanColumn, 'id' | 'createdAt'>): Promise<string> {
+export async function createColumn(
+  teamId: string,
+  data: Omit<KanbanColumn, 'id' | 'createdAt'>
+): Promise<string> {
   const ref = await addDoc(collection(db, 'teams', teamId, 'kanbanColumns'), {
     ...data,
     createdAt: serverTimestamp(),
@@ -30,7 +33,11 @@ export async function createColumn(teamId: string, data: Omit<KanbanColumn, 'id'
   return ref.id;
 }
 
-export async function updateColumn(teamId: string, columnId: string, data: Partial<KanbanColumn>): Promise<void> {
+export async function updateColumn(
+  teamId: string,
+  columnId: string,
+  data: Partial<KanbanColumn>
+): Promise<void> {
   await updateDoc(doc(db, 'teams', teamId, 'kanbanColumns', columnId), data);
 }
 
@@ -59,7 +66,10 @@ export async function deleteColumn(
   await batch.commit();
 }
 
-export async function reorderColumns(teamId: string, columns: { id: string; order: number }[]): Promise<void> {
+export async function reorderColumns(
+  teamId: string,
+  columns: { id: string; order: number }[]
+): Promise<void> {
   const batch = writeBatch(db);
   for (const col of columns) {
     batch.update(doc(db, 'teams', teamId, 'kanbanColumns', col.id), { order: col.order });
@@ -67,7 +77,10 @@ export async function reorderColumns(teamId: string, columns: { id: string; orde
   await batch.commit();
 }
 
-export function subscribeColumns(teamId: string, callback: (columns: KanbanColumn[]) => void): Unsubscribe {
+export function subscribeColumns(
+  teamId: string,
+  callback: (columns: KanbanColumn[]) => void
+): Unsubscribe {
   return onSnapshot(collection(db, 'teams', teamId, 'kanbanColumns'), (snap) => {
     const cols = snap.docs
       .map((d) => toColumn(d.id, d.data() as Record<string, unknown>))

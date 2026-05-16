@@ -63,7 +63,15 @@ interface KanbanColumnPanelProps {
   onDeleteTask: (taskId: string) => void;
 }
 
-function KanbanColumnPanel({ column, tasks, teamId, members, canEdit, onEditTask, onDeleteTask }: KanbanColumnPanelProps) {
+function KanbanColumnPanel({
+  column,
+  tasks,
+  teamId,
+  members,
+  canEdit,
+  onEditTask,
+  onDeleteTask,
+}: KanbanColumnPanelProps) {
   return (
     <div className="flex-shrink-0 w-[272px]">
       {/* カラムヘッダー */}
@@ -74,7 +82,9 @@ function KanbanColumnPanel({ column, tasks, teamId, members, canEdit, onEditTask
           aria-hidden="true"
         />
         <span className="text-sm font-semibold text-text">{column.name}</span>
-        <Badge variant="muted" className="ml-auto">{tasks.length}</Badge>
+        <Badge variant="muted" className="ml-auto">
+          {tasks.length}
+        </Badge>
       </div>
 
       {/* カラムボディ */}
@@ -88,7 +98,12 @@ function KanbanColumnPanel({ column, tasks, teamId, members, canEdit, onEditTask
             }`}
           >
             {tasks.map((task, index) => (
-              <Draggable key={task.id} draggableId={task.id} index={index} isDragDisabled={!canEdit}>
+              <Draggable
+                key={task.id}
+                draggableId={task.id}
+                index={index}
+                isDragDisabled={!canEdit}
+              >
                 {(provided, snapshot) => (
                   <div
                     ref={provided.innerRef}

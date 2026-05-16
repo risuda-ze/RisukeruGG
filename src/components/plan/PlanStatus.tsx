@@ -29,11 +29,15 @@ export function PlanStatus({ monthlyTaskCount, monthlyCollabCount }: PlanStatusP
         <div className="space-y-2 text-sm">
           <div className="flex justify-between text-muted">
             <span>タスク作成（月）</span>
-            <span className="font-num">{monthlyTaskCount} / {LIGHT_PLAN_LIMITS.monthlyTasks}件</span>
+            <span className="font-num">
+              {monthlyTaskCount} / {LIGHT_PLAN_LIMITS.monthlyTasks}件
+            </span>
           </div>
           <div className="flex justify-between text-muted">
             <span>コラボ日程（月）</span>
-            <span className="font-num">{monthlyCollabCount} / {LIGHT_PLAN_LIMITS.monthlyCollabs}件</span>
+            <span className="font-num">
+              {monthlyCollabCount} / {LIGHT_PLAN_LIMITS.monthlyCollabs}件
+            </span>
           </div>
         </div>
       )}

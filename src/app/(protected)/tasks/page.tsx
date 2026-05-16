@@ -13,21 +13,25 @@ import type { Task } from '@/types/entities';
 import { LIGHT_PLAN_LIMITS } from '@/types/entities';
 
 const KanbanBoard = dynamic(() => import('@/components/kanban/KanbanBoard'), {
-  loading: () => <div className="flex justify-center py-16"><Spinner size="lg" /></div>,
+  loading: () => (
+    <div className="flex justify-center py-16">
+      <Spinner size="lg" />
+    </div>
+  ),
   ssr: false,
 });
 const TaskForm = dynamic(() => import('@/components/kanban/TaskForm'));
 
 /* カテゴリフィルタ定義 */
 const FILTER_TABS = [
-  { value: 'all',          label: 'すべて' },
-  { value: 'shooting',     label: '撮影' },
-  { value: 'editing',      label: '編集' },
-  { value: 'thumbnail',    label: 'サムネ' },
+  { value: 'all', label: 'すべて' },
+  { value: 'shooting', label: '撮影' },
+  { value: 'editing', label: '編集' },
+  { value: 'thumbnail', label: 'サムネ' },
   { value: 'announcement', label: '告知' },
 ] as const;
 
-type FilterValue = typeof FILTER_TABS[number]['value'];
+type FilterValue = (typeof FILTER_TABS)[number]['value'];
 
 export default function TasksPage() {
   const { currentUser, currentTeam, members } = useAuthStore();
@@ -78,12 +82,15 @@ export default function TasksPage() {
 
   return (
     <div className="flex flex-col h-full">
-
       {/* ── ページヘッダー ─────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 py-4 md:px-7 border-b border-border gap-3 flex-wrap">
         <h2 className="text-base font-semibold text-text">タスク管理</h2>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => exportTasksCsv(tasks, columns, members)}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => exportTasksCsv(tasks, columns, members)}
+          >
             CSVエクスポート
           </Button>
           {canEdit && (
