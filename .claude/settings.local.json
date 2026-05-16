@@ -45,7 +45,30 @@
       "PowerShell(Get-Command java -ErrorAction SilentlyContinue)",
       "mcp__plugin_playwright_playwright__browser_evaluate",
       "Bash(bash .specify/extensions/git/scripts/bash/auto-commit.sh after_implement)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'chore: Playwrightスクリーンショット・.playwright-mcpを.gitignoreに追加 *)",
+      "Read(//mnt/c/dev/**)",
+      "Bash(dir \"c:\\\\dev\\\\RisukeruGG\")",
+      "PowerShell(head)",
+      "PowerShell(docker exec risukerugg-app-1 env)",
+      "PowerShell(grep -i firebase)",
+      "Bash(docker exec *)",
+      "PowerShell(New-Item -ItemType Directory -Path \"c:\\\\dev\\\\RisukeruGG\\\\tests\\\\helpers\" -Force)",
+      "Bash(bash c:/dev/RisukeruGG/.specify/scripts/bash/create-new-feature.sh \"002-ui-redesign\")",
+      "Bash(mkdir -p c:/dev/RisukeruGG/specs/002-ui-redesign)",
+      "Bash(cp c:/dev/RisukeruGG/.specify/templates/plan-template.md c:/dev/RisukeruGG/specs/002-ui-redesign/plan.md)",
+      "Bash(rm -rf c:/dev/RisukeruGG/specs/002-002-redesign)",
+      "Bash(bash c:/dev/RisukeruGG/.specify/scripts/bash/setup-tasks.sh --json)",
+      "Bash(pnpm lint *)",
+      "Bash(pnpm format *)",
+      "Bash(pnpm dev *)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(firebase emulators:start --only auth,firestore --project demo-risukeru --export-on-exit /tmp/emulator-data)",
+      "Bash(curl -s http://localhost:9099)",
+      "Bash(curl -s -X POST http://localhost:9099/identitytoolkit.googleapis.com/v1/projects/demo-risukeru/accounts -H 'Content-Type: application/json' -d '{\"email\":\"test@example.com\",\"password\":\"password123\",\"displayName\":\"テストユーザー\"}')",
+      "Bash(curl -s -X POST http://localhost:9099/identitytoolkit.googleapis.com/v1/projects/demo-risukeru/accounts -H 'Authorization: Bearer owner' -H 'Content-Type: application/json' -d '{\"email\":\"test@example.com\",\"password\":\"password123\",\"displayName\":\"テストユーザー\"}')"
     ]
   }
 }

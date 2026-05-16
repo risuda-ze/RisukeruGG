@@ -94,15 +94,18 @@ Firebaseエコシステムを活用し、セキュリティはFirebase Security 
 プロジェクトで使用する技術スタックは以下に固定する。新規の主要依存関係の追加はチーム合意が必要。
 
 **フロントエンド**:
+
 - Next.js 14（App Router）、TypeScript、Tailwind CSS
 - Zustand（状態管理）、react-big-calendar（カレンダーUI）
 - @hello-pangea/dnd（ドラッグ&ドロップ）、next-pwa（PWA対応）
 
 **バックエンド（BaaS）**:
+
 - Firebase Authentication、Cloud Firestore、Firebase Storage
 - Firebase Cloud Functions、Firebase Cloud Messaging（FCM）
 
 **インフラ・ツール**:
+
 - Vercel（ホスティング）、GitHub Actions（CI/CD）
 - pnpm（パッケージマネージャー）、ESLint + Prettier（Linter/Formatter）
 - Vitest（ユニットテスト）、Playwright（E2Eテスト）

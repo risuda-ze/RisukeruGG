@@ -43,6 +43,7 @@ next-env.d.ts
 # playwright test screenshots
 *.png
 .playwright-mcp/
+screenshot/
 
 # firebase
 .firebase/
@@ -66,10 +67,6 @@ public/workbox-*.js.map
 
 # test results
 test-results/
-playwright-report/
 
 # ログインファイル（必要に応じてコミットする）
 *.log
-
-# playwrightのテスト結果
-.playwright-mcp/
