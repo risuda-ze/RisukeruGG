@@ -71,6 +71,7 @@ export default function TeamPage() {
   const [showDissolve, setShowDissolve] = useState(false);
   const [dissolving, setDissolving] = useState(false);
   const [dissolveError, setDissolveError] = useState<string | null>(null);
+  const [dissolveConfirmName, setDissolveConfirmName] = useState('');
 
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
@@ -90,6 +91,12 @@ export default function TeamPage() {
     } finally {
       setSavingName(false);
     }
+  }
+
+  function openDissolveModal() {
+    setDissolveConfirmName('');
+    setDissolveError(null);
+    setShowDissolve(true);
   }
 
   async function handleDissolve() {
@@ -333,25 +340,34 @@ export default function TeamPage() {
           </div>
         )}
 
-        {/* 脱退 / 解散 */}
-        <div className="mt-4 max-w-sm flex items-center gap-4">
-          {!isOwner && (
+        {/* 脱退 */}
+        {!isOwner && (
+          <div className="mt-4 max-w-sm">
             <button
               onClick={() => setDialog({ type: 'leave' })}
               className="text-[12px] text-muted hover:text-live transition-colors"
             >
               チームを脱退する
             </button>
-          )}
-          {isOwner && (
+          </div>
+        )}
+
+        {/* 危険ゾーン（オーナーのみ） */}
+        {isOwner && (
+          <div className="mt-6 max-w-sm border border-live/30 rounded-[18px] p-5">
+            <p className="text-[11px] font-bold text-live uppercase tracking-wide mb-1">危険ゾーン</p>
+            <p className="text-[12px] text-muted mb-4">
+              この操作は元に戻せません。チームを解散すると全メンバーがソロ状態に戻ります。
+            </p>
             <button
-              onClick={() => setShowDissolve(true)}
-              className="text-[12px] text-muted hover:text-live transition-colors"
+              onClick={openDissolveModal}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold transition-colors border border-live/40 text-live hover:bg-live/10"
             >
+              <span className="material-icons text-[18px]">group_remove</span>
               チームを解散する
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* ── チーム名編集モーダル ──────────────────────────────── */}
@@ -395,19 +411,38 @@ export default function TeamPage() {
             <Button
               loading={dissolving}
               onClick={handleDissolve}
-              style={{ background: 'var(--live)', color: '#fff' }}
+              disabled={dissolveConfirmName !== currentTeam?.name}
+              style={
+                dissolveConfirmName === currentTeam?.name
+                  ? { background: 'var(--live)', color: '#fff' }
+                  : undefined
+              }
             >
               解散する
             </Button>
           </>
         }
       >
-        <p className="text-[13px] text-text mb-3">
-          チームを解散すると、全メンバーがソロ状態に戻ります。この操作は元に戻せません。
-        </p>
-        {dissolveError && (
-          <p className="text-[12px] text-live mt-2">{dissolveError}</p>
-        )}
+        <div className="space-y-4">
+          <div
+            className="rounded-[10px] p-3 border text-[12px]"
+            style={{ background: 'rgba(226,53,57,0.08)', borderColor: 'rgba(226,53,57,0.3)', color: 'var(--live)' }}
+          >
+            <strong>注意：</strong>この操作は元に戻せません。チーム内のすべてのデータが削除され、全メンバーがソロ状態に戻ります。
+          </div>
+          <div>
+            <p className="text-[12px] text-muted mb-1.5">
+              確認のため、チーム名「<strong className="text-text">{currentTeam?.name}</strong>」を入力してください。
+            </p>
+            <Input
+              label=""
+              value={dissolveConfirmName}
+              onChange={(e) => setDissolveConfirmName(e.target.value)}
+              placeholder={currentTeam?.name ?? ''}
+              error={dissolveError ?? undefined}
+            />
+          </div>
+        </div>
       </Modal>
 
       {/* ── ダイアログ ─────────────────────────────────────── */}
