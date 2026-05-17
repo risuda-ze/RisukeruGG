@@ -1,661 +1,1154 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>リスケるGG — Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg:       #0a0a18;
-  --surface:  #11112a;
-  --card:     #16163a;
-  --border:   #2a2a55;
-  --purple:   #7F77DD;
-  --purple-l: #a0a0ff;
-  --purple-d: #534AB7;
-  --amber:    #EF9F27;
-  --amber-l:  #FAC775;
-  --amber-d:  #BA7517;
-  --text:     #e8e8ff;
-  --muted:    #6666aa;
-  --live:     #ff4d6d;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'Zen Kaku Gothic New', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  display: flex;
-}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>リスケるGG — Dashboard</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0a18;
+        --surface: #11112a;
+        --card: #16163a;
+        --border: #2a2a55;
+        --purple: #7f77dd;
+        --purple-l: #a0a0ff;
+        --purple-d: #534ab7;
+        --amber: #ef9f27;
+        --amber-l: #fac775;
+        --amber-d: #ba7517;
+        --text: #e8e8ff;
+        --muted: #6666aa;
+        --live: #ff4d6d;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: 'Zen Kaku Gothic New', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+      }
 
-/* ── Sidebar ── */
-.sidebar {
-  width: 220px;
-  flex-shrink: 0;
-  background: var(--surface);
-  border-right: 0.5px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  padding: 20px 0;
-}
-.sidebar-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 20px 24px;
-  border-bottom: 0.5px solid var(--border);
-  margin-bottom: 16px;
-}
-.logo-icon {
-  width: 38px; height: 38px;
-  background: var(--purple-d);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-}
-.logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.03em; }
-.logo-text span { color: var(--amber); }
-.nav-section { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; padding: 0 20px 8px; }
-.nav-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 20px;
-  font-size: 13px; color: var(--muted);
-  cursor: pointer;
-  border-left: 2px solid transparent;
-  transition: all .15s;
-}
-.nav-item:hover { color: var(--text); background: rgba(127,119,221,.08); }
-.nav-item.active { color: var(--purple-l); border-color: var(--purple); background: rgba(127,119,221,.12); }
-.nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
-.nav-gap { height: 20px; }
-.sidebar-footer {
-  margin-top: auto;
-  padding: 16px 20px 0;
-  border-top: 0.5px solid var(--border);
-}
-.streamer-card {
-  display: flex; align-items: center; gap: 10px;
-}
-.avatar {
-  width: 34px; height: 34px; border-radius: 50%;
-  background: var(--purple-d);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 700; color: var(--purple-l);
-  position: relative;
-}
-.avatar::after {
-  content: '';
-  width: 9px; height: 9px; border-radius: 50%;
-  background: #22c55e;
-  border: 2px solid var(--surface);
-  position: absolute; bottom: 0; right: 0;
-}
-.streamer-name { font-size: 13px; font-weight: 500; }
-.streamer-role { font-size: 11px; color: var(--muted); }
+      /* ── Sidebar ── */
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        background: var(--surface);
+        border-right: 0.5px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        padding: 20px 0;
+      }
+      .sidebar-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 20px 24px;
+        border-bottom: 0.5px solid var(--border);
+        margin-bottom: 16px;
+      }
+      .logo-icon {
+        width: 38px;
+        height: 38px;
+        background: var(--purple-d);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .logo-text {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+      }
+      .logo-text span {
+        color: var(--amber);
+      }
+      .nav-section {
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        padding: 0 20px 8px;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 20px;
+        font-size: 13px;
+        color: var(--muted);
+        cursor: pointer;
+        border-left: 2px solid transparent;
+        transition: all 0.15s;
+      }
+      .nav-item:hover {
+        color: var(--text);
+        background: rgba(127, 119, 221, 0.08);
+      }
+      .nav-item.active {
+        color: var(--purple-l);
+        border-color: var(--purple);
+        background: rgba(127, 119, 221, 0.12);
+      }
+      .nav-item .icon {
+        font-size: 15px;
+        width: 18px;
+        text-align: center;
+      }
+      .nav-gap {
+        height: 20px;
+      }
+      .sidebar-footer {
+        margin-top: auto;
+        padding: 16px 20px 0;
+        border-top: 0.5px solid var(--border);
+      }
+      .streamer-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--purple-d);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--purple-l);
+        position: relative;
+      }
+      .avatar::after {
+        content: '';
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #22c55e;
+        border: 2px solid var(--surface);
+        position: absolute;
+        bottom: 0;
+        right: 0;
+      }
+      .streamer-name {
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .streamer-role {
+        font-size: 11px;
+        color: var(--muted);
+      }
 
-/* ── Main ── */
-.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+      /* ── Main ── */
+      .main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
 
-/* ── Topbar ── */
-.topbar {
-  height: 56px; flex-shrink: 0;
-  background: var(--surface);
-  border-bottom: 0.5px solid var(--border);
-  display: flex; align-items: center;
-  padding: 0 28px;
-  gap: 16px;
-}
-.topbar-title { font-size: 16px; font-weight: 700; flex: 1; }
-.topbar-title span { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 8px; }
-.live-badge {
-  display: flex; align-items: center; gap: 6px;
-  background: rgba(255,77,109,.15);
-  border: 0.5px solid rgba(255,77,109,.4);
-  color: var(--live);
-  font-size: 11px; font-weight: 700;
-  padding: 4px 10px; border-radius: 99px;
-  letter-spacing: 0.05em;
-}
-.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--live); animation: pulse 1.2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-.topbar-btn {
-  background: var(--purple-d); color: var(--purple-l);
-  border: none; border-radius: 8px;
-  font-size: 12px; font-weight: 600;
-  padding: 7px 14px; cursor: pointer;
-  font-family: inherit;
-  transition: background .15s;
-}
-.topbar-btn:hover { background: var(--purple); }
-.topbar-btn.amber { background: var(--amber-d); color: #fff; }
-.topbar-btn.amber:hover { background: var(--amber); }
+      /* ── Topbar ── */
+      .topbar {
+        height: 56px;
+        flex-shrink: 0;
+        background: var(--surface);
+        border-bottom: 0.5px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 28px;
+        gap: 16px;
+      }
+      .topbar-title {
+        font-size: 16px;
+        font-weight: 700;
+        flex: 1;
+      }
+      .topbar-title span {
+        color: var(--muted);
+        font-weight: 400;
+        font-size: 13px;
+        margin-left: 8px;
+      }
+      .live-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 77, 109, 0.15);
+        border: 0.5px solid rgba(255, 77, 109, 0.4);
+        color: var(--live);
+        font-size: 11px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 99px;
+        letter-spacing: 0.05em;
+      }
+      .live-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--live);
+        animation: pulse 1.2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+      .topbar-btn {
+        background: var(--purple-d);
+        color: var(--purple-l);
+        border: none;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 7px 14px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: background 0.15s;
+      }
+      .topbar-btn:hover {
+        background: var(--purple);
+      }
+      .topbar-btn.amber {
+        background: var(--amber-d);
+        color: #fff;
+      }
+      .topbar-btn.amber:hover {
+        background: var(--amber);
+      }
 
-/* ── Content ── */
-.content { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; }
+      /* ── Content ── */
+      .content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
 
-/* ── Stat row ── */
-.stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-.stat-card {
-  background: var(--card);
-  border: 0.5px solid var(--border);
-  border-radius: 12px;
-  padding: 16px 18px;
-}
-.stat-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.04em; }
-.stat-value { font-size: 26px; font-weight: 700; line-height: 1; font-family: 'Space Grotesk', sans-serif; }
-.stat-value.purple { color: var(--purple-l); }
-.stat-value.amber  { color: var(--amber-l); }
-.stat-value.live   { color: var(--live); }
-.stat-value.green  { color: #4ade80; }
-.stat-sub { font-size: 11px; color: var(--muted); margin-top: 5px; }
+      /* ── Stat row ── */
+      .stat-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+      }
+      .stat-card {
+        background: var(--card);
+        border: 0.5px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 18px;
+      }
+      .stat-label {
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 6px;
+        letter-spacing: 0.04em;
+      }
+      .stat-value {
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1;
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .stat-value.purple {
+        color: var(--purple-l);
+      }
+      .stat-value.amber {
+        color: var(--amber-l);
+      }
+      .stat-value.live {
+        color: var(--live);
+      }
+      .stat-value.green {
+        color: #4ade80;
+      }
+      .stat-sub {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 5px;
+      }
 
-/* ── Two-col layout ── */
-.two-col { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+      /* ── Two-col layout ── */
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 16px;
+      }
 
-/* ── Section card ── */
-.section-card {
-  background: var(--card);
-  border: 0.5px solid var(--border);
-  border-radius: 14px;
-  overflow: hidden;
-}
-.section-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 18px;
-  border-bottom: 0.5px solid var(--border);
-}
-.section-title { font-size: 13px; font-weight: 700; }
-.section-action { font-size: 11px; color: var(--purple); cursor: pointer; }
+      /* ── Section card ── */
+      .section-card {
+        background: var(--card);
+        border: 0.5px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+        border-bottom: 0.5px solid var(--border);
+      }
+      .section-title {
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .section-action {
+        font-size: 11px;
+        color: var(--purple);
+        cursor: pointer;
+      }
 
-/* ── Calendar strip ── */
-.cal-strip { display: flex; gap: 6px; padding: 14px 18px; overflow-x: auto; }
-.cal-day {
-  flex-shrink: 0;
-  width: 52px;
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 4px;
-  text-align: center;
-  cursor: pointer;
-  transition: all .15s;
-}
-.cal-day:hover { border-color: var(--purple); }
-.cal-day.today { background: var(--purple-d); border-color: var(--purple); }
-.cal-day.has-event { border-color: var(--amber-d); }
-.cal-dow { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
-.cal-day.today .cal-dow { color: var(--purple-l); }
-.cal-date { font-size: 16px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; }
-.cal-dot { width: 5px; height: 5px; border-radius: 50%; margin: 4px auto 0; }
+      /* ── Calendar strip ── */
+      .cal-strip {
+        display: flex;
+        gap: 6px;
+        padding: 14px 18px;
+        overflow-x: auto;
+      }
+      .cal-day {
+        flex-shrink: 0;
+        width: 52px;
+        background: var(--surface);
+        border: 0.5px solid var(--border);
+        border-radius: 10px;
+        padding: 8px 4px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .cal-day:hover {
+        border-color: var(--purple);
+      }
+      .cal-day.today {
+        background: var(--purple-d);
+        border-color: var(--purple);
+      }
+      .cal-day.has-event {
+        border-color: var(--amber-d);
+      }
+      .cal-dow {
+        font-size: 10px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .cal-day.today .cal-dow {
+        color: var(--purple-l);
+      }
+      .cal-date {
+        font-size: 16px;
+        font-weight: 700;
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .cal-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        margin: 4px auto 0;
+      }
 
-/* ── Timeline ── */
-.timeline { padding: 0 18px 14px; display: flex; flex-direction: column; gap: 0; }
-.tl-row {
-  display: flex; gap: 14px; align-items: flex-start;
-  padding: 10px 0;
-  border-bottom: 0.5px solid var(--border);
-  cursor: pointer;
-  transition: background .12s;
-  border-radius: 8px;
-  padding-left: 6px; padding-right: 6px;
-}
-.tl-row:last-child { border-bottom: none; }
-.tl-row:hover { background: rgba(127,119,221,.07); }
-.tl-time { font-size: 12px; color: var(--muted); min-width: 46px; padding-top: 2px; font-family: 'Space Grotesk', sans-serif; }
-.tl-bar { width: 3px; border-radius: 99px; min-height: 40px; flex-shrink: 0; margin-top: 2px; }
-.tl-body { flex: 1; }
-.tl-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
-.tl-meta { font-size: 11px; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.tl-tag {
-  font-size: 10px; padding: 2px 7px; border-radius: 99px;
-  font-weight: 600; letter-spacing: 0.04em;
-}
+      /* ── Timeline ── */
+      .timeline {
+        padding: 0 18px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .tl-row {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 10px 0;
+        border-bottom: 0.5px solid var(--border);
+        cursor: pointer;
+        transition: background 0.12s;
+        border-radius: 8px;
+        padding-left: 6px;
+        padding-right: 6px;
+      }
+      .tl-row:last-child {
+        border-bottom: none;
+      }
+      .tl-row:hover {
+        background: rgba(127, 119, 221, 0.07);
+      }
+      .tl-time {
+        font-size: 12px;
+        color: var(--muted);
+        min-width: 46px;
+        padding-top: 2px;
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .tl-bar {
+        width: 3px;
+        border-radius: 99px;
+        min-height: 40px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .tl-body {
+        flex: 1;
+      }
+      .tl-title {
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 3px;
+      }
+      .tl-meta {
+        font-size: 11px;
+        color: var(--muted);
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .tl-tag {
+        font-size: 10px;
+        padding: 2px 7px;
+        border-radius: 99px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
 
-/* ── Kanban ── */
-.kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px 18px; }
-.kb-col-title { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 0.06em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-.kb-count { background: var(--surface); color: var(--muted); font-size: 10px; padding: 1px 6px; border-radius: 99px; }
-.kb-card {
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 7px;
-  cursor: grab;
-  transition: border-color .15s;
-}
-.kb-card:hover { border-color: var(--purple); }
-.kb-card-title { font-size: 12px; font-weight: 500; margin-bottom: 6px; line-height: 1.4; }
-.kb-card-meta { display: flex; align-items: center; justify-content: space-between; }
-.kb-assign { width: 20px; height: 20px; border-radius: 50%; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-.kb-due { font-size: 10px; color: var(--muted); font-family: 'Space Grotesk', sans-serif; }
+      /* ── Kanban ── */
+      .kanban {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        padding: 14px 18px;
+      }
+      .kb-col-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .kb-count {
+        background: var(--surface);
+        color: var(--muted);
+        font-size: 10px;
+        padding: 1px 6px;
+        border-radius: 99px;
+      }
+      .kb-card {
+        background: var(--surface);
+        border: 0.5px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin-bottom: 7px;
+        cursor: grab;
+        transition: border-color 0.15s;
+      }
+      .kb-card:hover {
+        border-color: var(--purple);
+      }
+      .kb-card-title {
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 6px;
+        line-height: 1.4;
+      }
+      .kb-card-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .kb-assign {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        font-size: 9px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .kb-due {
+        font-size: 10px;
+        color: var(--muted);
+        font-family: 'Space Grotesk', sans-serif;
+      }
 
-/* ── Right col ── */
-.right-col { display: flex; flex-direction: column; gap: 16px; }
+      /* ── Right col ── */
+      .right-col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
 
-/* ── Collab requests ── */
-.collab-list { padding: 0 18px 14px; display: flex; flex-direction: column; gap: 8px; }
-.collab-item {
-  display: flex; align-items: center; gap: 10px;
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 12px;
-}
-.collab-av { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
-.collab-info { flex: 1; }
-.collab-name { font-size: 12px; font-weight: 500; }
-.collab-date { font-size: 10px; color: var(--muted); }
-.collab-actions { display: flex; gap: 5px; }
-.cb { border: none; border-radius: 6px; font-size: 11px; font-weight: 600; padding: 5px 10px; cursor: pointer; font-family: inherit; }
-.cb-ok  { background: rgba(127,119,221,.2); color: var(--purple-l); }
-.cb-ng  { background: rgba(255,77,109,.1); color: #ff4d6d; }
+      /* ── Collab requests ── */
+      .collab-list {
+        padding: 0 18px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .collab-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--surface);
+        border: 0.5px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+      .collab-av {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .collab-info {
+        flex: 1;
+      }
+      .collab-name {
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .collab-date {
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .collab-actions {
+        display: flex;
+        gap: 5px;
+      }
+      .cb {
+        border: none;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 5px 10px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .cb-ok {
+        background: rgba(127, 119, 221, 0.2);
+        color: var(--purple-l);
+      }
+      .cb-ng {
+        background: rgba(255, 77, 109, 0.1);
+        color: #ff4d6d;
+      }
 
-/* ── Notification list ── */
-.notif-list { padding: 0 18px 14px; display: flex; flex-direction: column; gap: 6px; }
-.notif-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
-.notif-item:last-child { border-bottom: none; }
-.notif-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
-.notif-text { font-size: 12px; line-height: 1.5; color: var(--muted); }
-.notif-text strong { color: var(--text); font-weight: 500; }
-.notif-time { font-size: 10px; color: var(--muted); margin-top: 2px; font-family: 'Space Grotesk', sans-serif; }
+      /* ── Notification list ── */
+      .notif-list {
+        padding: 0 18px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .notif-item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 8px 0;
+        border-bottom: 0.5px solid var(--border);
+      }
+      .notif-item:last-child {
+        border-bottom: none;
+      }
+      .notif-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        margin-top: 5px;
+        flex-shrink: 0;
+      }
+      .notif-text {
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+      .notif-text strong {
+        color: var(--text);
+        font-weight: 500;
+      }
+      .notif-time {
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 2px;
+        font-family: 'Space Grotesk', sans-serif;
+      }
 
-/* ── Bottom row ── */
-.bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      /* ── Bottom row ── */
+      .bottom-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
 
-/* scroll */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-</style>
-</head>
-<body>
-
-<!-- Sidebar -->
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-icon">
-      <svg width="24" height="24" viewBox="0 0 56 56" fill="none">
-        <path d="M30 44 Q16 40 13 25 Q10 12 18 9 Q15 18 20 25 Q24 32 30 35 Q36 38 34 46Z" fill="#AFA9EC" opacity="0.7"/>
-        <ellipse cx="32" cy="37" rx="11" ry="9" fill="#EEEDFE"/>
-        <ellipse cx="33" cy="23" rx="9" ry="8" fill="#EEEDFE"/>
-        <ellipse cx="27" cy="14" rx="3.5" ry="5" fill="#EEEDFE"/>
-        <ellipse cx="27" cy="14" rx="2" ry="3" fill="#CECBF6"/>
-        <ellipse cx="38" cy="12" rx="3.5" ry="5" fill="#EEEDFE"/>
-        <ellipse cx="38" cy="12" rx="2" ry="3" fill="#CECBF6"/>
-        <circle cx="30" cy="22" r="1.8" fill="#26215C"/>
-        <circle cx="37" cy="22" r="1.8" fill="#26215C"/>
-        <ellipse cx="33" cy="26" rx="1.5" ry="1" fill="#534AB7"/>
-        <ellipse cx="28" cy="25" rx="2.5" ry="1.5" fill="#EF9F27" opacity="0.5"/>
-        <ellipse cx="38" cy="25" rx="2.5" ry="1.5" fill="#EF9F27" opacity="0.5"/>
-        <ellipse cx="33" cy="38" rx="3" ry="2" fill="#EF9F27" opacity="0.8"/>
-      </svg>
-    </div>
-    <div class="logo-text">リスケる<span> GG</span></div>
-  </div>
-
-  <div class="nav-section">メイン</div>
-  <div class="nav-item active"><span class="icon">▦</span> ダッシュボード</div>
-  <div class="nav-item"><span class="icon">◷</span> スケジュール</div>
-  <div class="nav-item"><span class="icon">▤</span> タスク管理</div>
-  <div class="nav-item"><span class="icon">⊕</span> コラボ調整</div>
-
-  <div class="nav-gap"></div>
-  <div class="nav-section">チーム</div>
-  <div class="nav-item"><span class="icon">◎</span> メンバー</div>
-  <div class="nav-item"><span class="icon">◈</span> チャンネル設定</div>
-  <div class="nav-item"><span class="icon">⊙</span> 通知</div>
-
-  <div class="nav-gap"></div>
-  <div class="nav-section">連携</div>
-  <div class="nav-item"><span class="icon">▷</span> YouTube</div>
-  <div class="nav-item"><span class="icon">◉</span> Twitch</div>
-
-  <div class="sidebar-footer">
-    <div style="background:rgba(239,159,39,.1);border:0.5px solid rgba(239,159,39,.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
-      <div>
-        <div style="font-size:10px;color:var(--amber);font-weight:700;letter-spacing:.06em;">PARTY プラン</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:1px;">¥1,500 / 人・月</div>
+      /* scroll */
+      ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 56 56" fill="none">
+            <path
+              d="M30 44 Q16 40 13 25 Q10 12 18 9 Q15 18 20 25 Q24 32 30 35 Q36 38 34 46Z"
+              fill="#AFA9EC"
+              opacity="0.7"
+            />
+            <ellipse cx="32" cy="37" rx="11" ry="9" fill="#EEEDFE" />
+            <ellipse cx="33" cy="23" rx="9" ry="8" fill="#EEEDFE" />
+            <ellipse cx="27" cy="14" rx="3.5" ry="5" fill="#EEEDFE" />
+            <ellipse cx="27" cy="14" rx="2" ry="3" fill="#CECBF6" />
+            <ellipse cx="38" cy="12" rx="3.5" ry="5" fill="#EEEDFE" />
+            <ellipse cx="38" cy="12" rx="2" ry="3" fill="#CECBF6" />
+            <circle cx="30" cy="22" r="1.8" fill="#26215C" />
+            <circle cx="37" cy="22" r="1.8" fill="#26215C" />
+            <ellipse cx="33" cy="26" rx="1.5" ry="1" fill="#534AB7" />
+            <ellipse cx="28" cy="25" rx="2.5" ry="1.5" fill="#EF9F27" opacity="0.5" />
+            <ellipse cx="38" cy="25" rx="2.5" ry="1.5" fill="#EF9F27" opacity="0.5" />
+            <ellipse cx="33" cy="38" rx="3" ry="2" fill="#EF9F27" opacity="0.8" />
+          </svg>
+        </div>
+        <div class="logo-text">リスケる<span> GG</span></div>
       </div>
-      <div style="font-size:10px;color:var(--amber);cursor:pointer;">管理 →</div>
-    </div>
-    <div class="streamer-card">
-      <div class="avatar">RK</div>
-      <div>
-        <div class="streamer-name">リスケるch</div>
-        <div class="streamer-role">配信者 / オーナー</div>
-      </div>
-    </div>
-  </div>
-</aside>
 
-<!-- Main -->
-<div class="main">
-  <!-- Topbar -->
-  <div class="topbar">
-    <div class="topbar-title">ダッシュボード <span>2026年5月12日（火）</span></div>
-    <div class="live-badge"><div class="live-dot"></div>LIVE中</div>
-    <button class="topbar-btn">＋ 配信枠を追加</button>
-    <button class="topbar-btn amber">コラボ打診</button>
-  </div>
+      <div class="nav-section">メイン</div>
+      <div class="nav-item active"><span class="icon">▦</span> ダッシュボード</div>
+      <div class="nav-item"><span class="icon">◷</span> スケジュール</div>
+      <div class="nav-item"><span class="icon">▤</span> タスク管理</div>
+      <div class="nav-item"><span class="icon">⊕</span> コラボ調整</div>
 
-  <!-- Content -->
-  <div class="content">
+      <div class="nav-gap"></div>
+      <div class="nav-section">チーム</div>
+      <div class="nav-item"><span class="icon">◎</span> メンバー</div>
+      <div class="nav-item"><span class="icon">◈</span> チャンネル設定</div>
+      <div class="nav-item"><span class="icon">⊙</span> 通知</div>
 
-    <!-- Stats -->
-    <div class="stat-row">
-      <div class="stat-card">
-        <div class="stat-label">今月の配信数</div>
-        <div class="stat-value purple">18</div>
-        <div class="stat-sub">先月比 +3</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">コラボ予定</div>
-        <div class="stat-value amber">4</div>
-        <div class="stat-sub">今月残り 2件 調整中</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">LIVE視聴者（現在）</div>
-        <div class="stat-value live">1,204</div>
-        <div class="stat-sub">ピーク 1,580</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">タスク完了率</div>
-        <div class="stat-value green">72%</div>
-        <div class="stat-sub">残り 8件</div>
-      </div>
-    </div>
+      <div class="nav-gap"></div>
+      <div class="nav-section">連携</div>
+      <div class="nav-item"><span class="icon">▷</span> YouTube</div>
+      <div class="nav-item"><span class="icon">◉</span> Twitch</div>
 
-    <!-- Calendar + Timeline / Right col -->
-    <div class="two-col">
-      <div style="display:flex;flex-direction:column;gap:16px;">
-
-        <!-- Calendar strip -->
-        <div class="section-card">
-          <div class="section-header">
-            <div class="section-title">今週のスケジュール</div>
-            <div class="section-action">月カレンダーを見る →</div>
+      <div class="sidebar-footer">
+        <div
+          style="
+            background: rgba(239, 159, 39, 0.1);
+            border: 0.5px solid rgba(239, 159, 39, 0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <div>
+            <div
+              style="font-size: 10px; color: var(--amber); font-weight: 700; letter-spacing: 0.06em"
+            >
+              PARTY プラン
+            </div>
+            <div style="font-size: 10px; color: var(--muted); margin-top: 1px">¥1,500 / 人・月</div>
           </div>
-          <div class="cal-strip">
-            <div class="cal-day">
-              <div class="cal-dow">月</div>
-              <div class="cal-date">11</div>
-              <div class="cal-dot" style="background:var(--purple)"></div>
-            </div>
-            <div class="cal-day today">
-              <div class="cal-dow">火</div>
-              <div class="cal-date">12</div>
-              <div class="cal-dot" style="background:var(--amber)"></div>
-            </div>
-            <div class="cal-day has-event">
-              <div class="cal-dow">水</div>
-              <div class="cal-date">13</div>
-              <div class="cal-dot" style="background:var(--amber-d)"></div>
-            </div>
-            <div class="cal-day">
-              <div class="cal-dow">木</div>
-              <div class="cal-date">14</div>
-              <div class="cal-dot" style="background:transparent"></div>
-            </div>
-            <div class="cal-day has-event">
-              <div class="cal-dow">金</div>
-              <div class="cal-date">15</div>
-              <div class="cal-dot" style="background:var(--purple)"></div>
-            </div>
-            <div class="cal-day">
-              <div class="cal-dow">土</div>
-              <div class="cal-date">16</div>
-              <div class="cal-dot" style="background:var(--live)"></div>
-            </div>
-            <div class="cal-day">
-              <div class="cal-dow">日</div>
-              <div class="cal-date">17</div>
-              <div class="cal-dot" style="background:transparent"></div>
-            </div>
+          <div style="font-size: 10px; color: var(--amber); cursor: pointer">管理 →</div>
+        </div>
+        <div class="streamer-card">
+          <div class="avatar">RK</div>
+          <div>
+            <div class="streamer-name">リスケるch</div>
+            <div class="streamer-role">配信者 / オーナー</div>
           </div>
+        </div>
+      </div>
+    </aside>
 
-          <!-- Today timeline -->
-          <div class="section-header" style="border-top:0.5px solid var(--border);">
-            <div class="section-title">本日のタイムライン</div>
+    <!-- Main -->
+    <div class="main">
+      <!-- Topbar -->
+      <div class="topbar">
+        <div class="topbar-title">ダッシュボード <span>2026年5月12日（火）</span></div>
+        <div class="live-badge">
+          <div class="live-dot"></div>
+          LIVE中
+        </div>
+        <button class="topbar-btn">＋ 配信枠を追加</button>
+        <button class="topbar-btn amber">コラボ打診</button>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+        <!-- Stats -->
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-label">今月の配信数</div>
+            <div class="stat-value purple">18</div>
+            <div class="stat-sub">先月比 +3</div>
           </div>
-          <div class="timeline">
-            <div class="tl-row">
-              <div class="tl-time">20:00</div>
-              <div class="tl-bar" style="background:var(--live)"></div>
-              <div class="tl-body">
-                <div class="tl-title">LIVE配信 — Apex Legends ランク戦</div>
-                <div class="tl-meta">
-                  <span class="tl-tag" style="background:rgba(255,77,109,.15);color:var(--live);">LIVE</span>
-                  <span>YouTube / Twitch 同時配信</span>
-                  <span>予定3h</span>
+          <div class="stat-card">
+            <div class="stat-label">コラボ予定</div>
+            <div class="stat-value amber">4</div>
+            <div class="stat-sub">今月残り 2件 調整中</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">LIVE視聴者（現在）</div>
+            <div class="stat-value live">1,204</div>
+            <div class="stat-sub">ピーク 1,580</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">タスク完了率</div>
+            <div class="stat-value green">72%</div>
+            <div class="stat-sub">残り 8件</div>
+          </div>
+        </div>
+
+        <!-- Calendar + Timeline / Right col -->
+        <div class="two-col">
+          <div style="display: flex; flex-direction: column; gap: 16px">
+            <!-- Calendar strip -->
+            <div class="section-card">
+              <div class="section-header">
+                <div class="section-title">今週のスケジュール</div>
+                <div class="section-action">月カレンダーを見る →</div>
+              </div>
+              <div class="cal-strip">
+                <div class="cal-day">
+                  <div class="cal-dow">月</div>
+                  <div class="cal-date">11</div>
+                  <div class="cal-dot" style="background: var(--purple)"></div>
+                </div>
+                <div class="cal-day today">
+                  <div class="cal-dow">火</div>
+                  <div class="cal-date">12</div>
+                  <div class="cal-dot" style="background: var(--amber)"></div>
+                </div>
+                <div class="cal-day has-event">
+                  <div class="cal-dow">水</div>
+                  <div class="cal-date">13</div>
+                  <div class="cal-dot" style="background: var(--amber-d)"></div>
+                </div>
+                <div class="cal-day">
+                  <div class="cal-dow">木</div>
+                  <div class="cal-date">14</div>
+                  <div class="cal-dot" style="background: transparent"></div>
+                </div>
+                <div class="cal-day has-event">
+                  <div class="cal-dow">金</div>
+                  <div class="cal-date">15</div>
+                  <div class="cal-dot" style="background: var(--purple)"></div>
+                </div>
+                <div class="cal-day">
+                  <div class="cal-dow">土</div>
+                  <div class="cal-date">16</div>
+                  <div class="cal-dot" style="background: var(--live)"></div>
+                </div>
+                <div class="cal-day">
+                  <div class="cal-dow">日</div>
+                  <div class="cal-date">17</div>
+                  <div class="cal-dot" style="background: transparent"></div>
+                </div>
+              </div>
+
+              <!-- Today timeline -->
+              <div class="section-header" style="border-top: 0.5px solid var(--border)">
+                <div class="section-title">本日のタイムライン</div>
+              </div>
+              <div class="timeline">
+                <div class="tl-row">
+                  <div class="tl-time">20:00</div>
+                  <div class="tl-bar" style="background: var(--live)"></div>
+                  <div class="tl-body">
+                    <div class="tl-title">LIVE配信 — Apex Legends ランク戦</div>
+                    <div class="tl-meta">
+                      <span
+                        class="tl-tag"
+                        style="background: rgba(255, 77, 109, 0.15); color: var(--live)"
+                        >LIVE</span
+                      >
+                      <span>YouTube / Twitch 同時配信</span>
+                      <span>予定3h</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tl-row">
+                  <div class="tl-time">14:00</div>
+                  <div class="tl-bar" style="background: var(--amber)"></div>
+                  <div class="tl-body">
+                    <div class="tl-title">コラボ打ち合わせ — ぺこらch</div>
+                    <div class="tl-meta">
+                      <span
+                        class="tl-tag"
+                        style="background: rgba(239, 159, 39, 0.15); color: var(--amber)"
+                        >コラボ</span
+                      >
+                      <span>Discord 通話</span>
+                      <span>30分</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tl-row">
+                  <div class="tl-time">11:00</div>
+                  <div class="tl-bar" style="background: var(--purple)"></div>
+                  <div class="tl-body">
+                    <div class="tl-title">サムネイル確認 — 先週分3本</div>
+                    <div class="tl-meta">
+                      <span
+                        class="tl-tag"
+                        style="background: rgba(127, 119, 221, 0.15); color: var(--purple-l)"
+                        >編集</span
+                      >
+                      <span>担当: 編集スタッフA</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tl-row">
+                  <div class="tl-time">09:30</div>
+                  <div class="tl-bar" style="background: #4ade80"></div>
+                  <div class="tl-body">
+                    <div class="tl-title">撮影素材チェック — Short動画 2本</div>
+                    <div class="tl-meta">
+                      <span
+                        class="tl-tag"
+                        style="background: rgba(74, 222, 128, 0.15); color: #4ade80"
+                        >撮影</span
+                      >
+                      <span>完了</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="tl-row">
-              <div class="tl-time">14:00</div>
-              <div class="tl-bar" style="background:var(--amber)"></div>
-              <div class="tl-body">
-                <div class="tl-title">コラボ打ち合わせ — ぺこらch</div>
-                <div class="tl-meta">
-                  <span class="tl-tag" style="background:rgba(239,159,39,.15);color:var(--amber);">コラボ</span>
-                  <span>Discord 通話</span>
-                  <span>30分</span>
+
+            <!-- Kanban -->
+            <div class="section-card">
+              <div class="section-header">
+                <div class="section-title">タスクボード</div>
+                <div class="section-action">全タスクを見る →</div>
+              </div>
+              <div class="kanban">
+                <div>
+                  <div class="kb-col-title" style="color: var(--muted)">
+                    TODO <span class="kb-count">4</span>
+                  </div>
+                  <div class="kb-card">
+                    <div class="kb-card-title">概要欄テンプレ更新</div>
+                    <div class="kb-card-meta">
+                      <div
+                        class="kb-assign"
+                        style="background: rgba(127, 119, 221, 0.3); color: var(--purple-l)"
+                      >
+                        RK
+                      </div>
+                      <div class="kb-due">5/14</div>
+                    </div>
+                  </div>
+                  <div class="kb-card">
+                    <div class="kb-card-title">コラボ企画書 v2 作成</div>
+                    <div class="kb-card-meta">
+                      <div
+                        class="kb-assign"
+                        style="background: rgba(239, 159, 39, 0.3); color: var(--amber-l)"
+                      >
+                        MG
+                      </div>
+                      <div class="kb-due">5/15</div>
+                    </div>
+                  </div>
+                  <div class="kb-card">
+                    <div class="kb-card-title">Shorts 台本 3本分</div>
+                    <div class="kb-card-meta">
+                      <div
+                        class="kb-assign"
+                        style="background: rgba(127, 119, 221, 0.3); color: var(--purple-l)"
+                      >
+                        RK
+                      </div>
+                      <div class="kb-due">5/16</div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div class="kb-col-title" style="color: var(--amber)">
+                    進行中 <span class="kb-count">3</span>
+                  </div>
+                  <div class="kb-card" style="border-color: var(--amber-d)">
+                    <div class="kb-card-title">4月振り返り動画 編集</div>
+                    <div class="kb-card-meta">
+                      <div
+                        class="kb-assign"
+                        style="background: rgba(74, 222, 128, 0.3); color: #4ade80"
+                      >
+                        SA
+                      </div>
+                      <div class="kb-due">5/13</div>
+                    </div>
+                  </div>
+                  <div class="kb-card" style="border-color: var(--amber-d)">
+                    <div class="kb-card-title">サムネイル3本 デザイン</div>
+                    <div class="kb-card-meta">
+                      <div
+                        class="kb-assign"
+                        style="background: rgba(239, 159, 39, 0.3); color: var(--amber-l)"
+                      >
+                        MG
+                      </div>
+                      <div class="kb-due">5/12</div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div class="kb-col-title" style="color: #4ade80">
+                    完了 <span class="kb-count">5</span>
+                  </div>
+                  <div class="kb-card" style="opacity: 0.6">
+                    <div class="kb-card-title">先週のLIVEアーカイブ公開</div>
+                    <div class="kb-card-meta">
+                      <div
+                        class="kb-assign"
+                        style="background: rgba(127, 119, 221, 0.3); color: var(--purple-l)"
+                      >
+                        RK
+                      </div>
+                      <div class="kb-due">5/11</div>
+                    </div>
+                  </div>
+                  <div class="kb-card" style="opacity: 0.6">
+                    <div class="kb-card-title">Short素材撮影 2本</div>
+                    <div class="kb-card-meta">
+                      <div
+                        class="kb-assign"
+                        style="background: rgba(127, 119, 221, 0.3); color: var(--purple-l)"
+                      >
+                        RK
+                      </div>
+                      <div class="kb-due">5/12</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="tl-row">
-              <div class="tl-time">11:00</div>
-              <div class="tl-bar" style="background:var(--purple)"></div>
-              <div class="tl-body">
-                <div class="tl-title">サムネイル確認 — 先週分3本</div>
-                <div class="tl-meta">
-                  <span class="tl-tag" style="background:rgba(127,119,221,.15);color:var(--purple-l);">編集</span>
-                  <span>担当: 編集スタッフA</span>
+          </div>
+
+          <!-- Right col -->
+          <div class="right-col">
+            <!-- Collab requests -->
+            <div class="section-card">
+              <div class="section-header">
+                <div class="section-title">
+                  コラボ打診
+                  <span
+                    style="
+                      font-size: 11px;
+                      background: rgba(239, 159, 39, 0.2);
+                      color: var(--amber);
+                      padding: 2px 7px;
+                      border-radius: 99px;
+                      margin-left: 6px;
+                    "
+                    >2件 未返信</span
+                  >
+                </div>
+              </div>
+              <div class="collab-list">
+                <div class="collab-item">
+                  <div
+                    class="collab-av"
+                    style="background: rgba(255, 77, 109, 0.2); color: #ff4d6d"
+                  >
+                    KZ
+                  </div>
+                  <div class="collab-info">
+                    <div class="collab-name">カズくんGames</div>
+                    <div class="collab-date">Apex コラボ希望 — 5/18 20:00〜</div>
+                  </div>
+                  <div class="collab-actions">
+                    <button class="cb cb-ok">OK</button>
+                    <button class="cb cb-ng">NG</button>
+                  </div>
+                </div>
+                <div class="collab-item">
+                  <div
+                    class="collab-av"
+                    style="background: rgba(127, 119, 221, 0.2); color: var(--purple-l)"
+                  >
+                    HN
+                  </div>
+                  <div class="collab-info">
+                    <div class="collab-name">ひなたch</div>
+                    <div class="collab-date">雑談コラボ — 日程調整中</div>
+                  </div>
+                  <div class="collab-actions">
+                    <button class="cb cb-ok">OK</button>
+                    <button class="cb cb-ng">NG</button>
+                  </div>
+                </div>
+                <div class="collab-item" style="opacity: 0.6">
+                  <div
+                    class="collab-av"
+                    style="background: rgba(74, 222, 128, 0.2); color: #4ade80"
+                  >
+                    PK
+                  </div>
+                  <div class="collab-info">
+                    <div class="collab-name">ぺこらch</div>
+                    <div class="collab-date">確定済 — 5/22 21:00〜</div>
+                  </div>
+                  <div style="font-size: 11px; color: #4ade80; font-weight: 600">確定</div>
                 </div>
               </div>
             </div>
-            <div class="tl-row">
-              <div class="tl-time">09:30</div>
-              <div class="tl-bar" style="background:#4ade80"></div>
-              <div class="tl-body">
-                <div class="tl-title">撮影素材チェック — Short動画 2本</div>
-                <div class="tl-meta">
-                  <span class="tl-tag" style="background:rgba(74,222,128,.15);color:#4ade80;">撮影</span>
-                  <span>完了</span>
+
+            <!-- Notifications -->
+            <div class="section-card">
+              <div class="section-header">
+                <div class="section-title">通知</div>
+                <div class="section-action">すべて見る →</div>
+              </div>
+              <div class="notif-list">
+                <div class="notif-item">
+                  <div class="notif-dot" style="background: var(--live)"></div>
+                  <div>
+                    <div class="notif-text">
+                      <strong>LIVE開始まで1時間</strong>です。配信タイトルを確認してください。
+                    </div>
+                    <div class="notif-time">19:00に通知 · システム通知</div>
+                  </div>
+                </div>
+                <div class="notif-item">
+                  <div class="notif-dot" style="background: var(--amber)"></div>
+                  <div>
+                    <div class="notif-text">
+                      <strong>サムネイルデザイン</strong>がMGさんから提出されました。
+                    </div>
+                    <div class="notif-time">2時間前 · タスク更新</div>
+                  </div>
+                </div>
+                <div class="notif-item">
+                  <div class="notif-dot" style="background: var(--purple)"></div>
+                  <div>
+                    <div class="notif-text">
+                      <strong>カズくんGames</strong>からコラボ打診が届きました。
+                    </div>
+                    <div class="notif-time">3時間前 · コラボ返答</div>
+                  </div>
+                </div>
+                <div class="notif-item">
+                  <div class="notif-dot" style="background: #4ade80"></div>
+                  <div>
+                    <div class="notif-text">
+                      タスク「Short素材撮影」が<strong>完了</strong>しました。
+                    </div>
+                    <div class="notif-time">今日 09:45 · タスク更新</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Team status -->
+            <div class="section-card">
+              <div class="section-header">
+                <div class="section-title">チームメンバー</div>
+              </div>
+              <div style="padding: 12px 18px; display: flex; flex-direction: column; gap: 10px">
+                <div style="display: flex; align-items: center; gap: 10px">
+                  <div
+                    class="avatar"
+                    style="
+                      width: 28px;
+                      height: 28px;
+                      font-size: 11px;
+                      background: rgba(74, 222, 128, 0.2);
+                      color: #4ade80;
+                    "
+                  >
+                    SA
+                  </div>
+                  <div style="flex: 1">
+                    <div style="font-size: 12px; font-weight: 500">スタッフA（編集）</div>
+                    <div style="font-size: 10px; color: var(--muted)">4月振り返り動画を編集中</div>
+                  </div>
+                  <div
+                    style="width: 7px; height: 7px; border-radius: 50%; background: #4ade80"
+                  ></div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px">
+                  <div
+                    class="avatar"
+                    style="
+                      width: 28px;
+                      height: 28px;
+                      font-size: 11px;
+                      background: rgba(239, 159, 39, 0.2);
+                      color: var(--amber-l);
+                    "
+                  >
+                    MG
+                  </div>
+                  <div style="flex: 1">
+                    <div style="font-size: 12px; font-weight: 500">マネージャー（MG）</div>
+                    <div style="font-size: 10px; color: var(--muted)">サムネイル確認待ち</div>
+                  </div>
+                  <div
+                    style="width: 7px; height: 7px; border-radius: 50%; background: #4ade80"
+                  ></div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px">
+                  <div
+                    class="avatar"
+                    style="
+                      width: 28px;
+                      height: 28px;
+                      font-size: 11px;
+                      background: rgba(127, 119, 221, 0.2);
+                      color: var(--purple-l);
+                    "
+                  >
+                    TK
+                  </div>
+                  <div style="flex: 1">
+                    <div style="font-size: 12px; font-weight: 500">台本ライター（TK）</div>
+                    <div style="font-size: 10px; color: var(--muted)">Shorts 台本執筆中</div>
+                  </div>
+                  <div
+                    style="width: 7px; height: 7px; border-radius: 50%; background: var(--muted)"
+                  ></div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Kanban -->
-        <div class="section-card">
-          <div class="section-header">
-            <div class="section-title">タスクボード</div>
-            <div class="section-action">全タスクを見る →</div>
-          </div>
-          <div class="kanban">
-            <div>
-              <div class="kb-col-title" style="color:var(--muted);">TODO <span class="kb-count">4</span></div>
-              <div class="kb-card">
-                <div class="kb-card-title">概要欄テンプレ更新</div>
-                <div class="kb-card-meta">
-                  <div class="kb-assign" style="background:rgba(127,119,221,.3);color:var(--purple-l);">RK</div>
-                  <div class="kb-due">5/14</div>
-                </div>
-              </div>
-              <div class="kb-card">
-                <div class="kb-card-title">コラボ企画書 v2 作成</div>
-                <div class="kb-card-meta">
-                  <div class="kb-assign" style="background:rgba(239,159,39,.3);color:var(--amber-l);">MG</div>
-                  <div class="kb-due">5/15</div>
-                </div>
-              </div>
-              <div class="kb-card">
-                <div class="kb-card-title">Shorts 台本 3本分</div>
-                <div class="kb-card-meta">
-                  <div class="kb-assign" style="background:rgba(127,119,221,.3);color:var(--purple-l);">RK</div>
-                  <div class="kb-due">5/16</div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div class="kb-col-title" style="color:var(--amber);">進行中 <span class="kb-count">3</span></div>
-              <div class="kb-card" style="border-color:var(--amber-d);">
-                <div class="kb-card-title">4月振り返り動画 編集</div>
-                <div class="kb-card-meta">
-                  <div class="kb-assign" style="background:rgba(74,222,128,.3);color:#4ade80;">SA</div>
-                  <div class="kb-due">5/13</div>
-                </div>
-              </div>
-              <div class="kb-card" style="border-color:var(--amber-d);">
-                <div class="kb-card-title">サムネイル3本 デザイン</div>
-                <div class="kb-card-meta">
-                  <div class="kb-assign" style="background:rgba(239,159,39,.3);color:var(--amber-l);">MG</div>
-                  <div class="kb-due">5/12</div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div class="kb-col-title" style="color:#4ade80;">完了 <span class="kb-count">5</span></div>
-              <div class="kb-card" style="opacity:.6;">
-                <div class="kb-card-title">先週のLIVEアーカイブ公開</div>
-                <div class="kb-card-meta">
-                  <div class="kb-assign" style="background:rgba(127,119,221,.3);color:var(--purple-l);">RK</div>
-                  <div class="kb-due">5/11</div>
-                </div>
-              </div>
-              <div class="kb-card" style="opacity:.6;">
-                <div class="kb-card-title">Short素材撮影 2本</div>
-                <div class="kb-card-meta">
-                  <div class="kb-assign" style="background:rgba(127,119,221,.3);color:var(--purple-l);">RK</div>
-                  <div class="kb-due">5/12</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right col -->
-      <div class="right-col">
-
-        <!-- Collab requests -->
-        <div class="section-card">
-          <div class="section-header">
-            <div class="section-title">コラボ打診 <span style="font-size:11px;background:rgba(239,159,39,.2);color:var(--amber);padding:2px 7px;border-radius:99px;margin-left:6px;">2件 未返信</span></div>
-          </div>
-          <div class="collab-list">
-            <div class="collab-item">
-              <div class="collab-av" style="background:rgba(255,77,109,.2);color:#ff4d6d;">KZ</div>
-              <div class="collab-info">
-                <div class="collab-name">カズくんGames</div>
-                <div class="collab-date">Apex コラボ希望 — 5/18 20:00〜</div>
-              </div>
-              <div class="collab-actions">
-                <button class="cb cb-ok">OK</button>
-                <button class="cb cb-ng">NG</button>
-              </div>
-            </div>
-            <div class="collab-item">
-              <div class="collab-av" style="background:rgba(127,119,221,.2);color:var(--purple-l);">HN</div>
-              <div class="collab-info">
-                <div class="collab-name">ひなたch</div>
-                <div class="collab-date">雑談コラボ — 日程調整中</div>
-              </div>
-              <div class="collab-actions">
-                <button class="cb cb-ok">OK</button>
-                <button class="cb cb-ng">NG</button>
-              </div>
-            </div>
-            <div class="collab-item" style="opacity:.6;">
-              <div class="collab-av" style="background:rgba(74,222,128,.2);color:#4ade80;">PK</div>
-              <div class="collab-info">
-                <div class="collab-name">ぺこらch</div>
-                <div class="collab-date">確定済 — 5/22 21:00〜</div>
-              </div>
-              <div style="font-size:11px;color:#4ade80;font-weight:600;">確定</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Notifications -->
-        <div class="section-card">
-          <div class="section-header">
-            <div class="section-title">通知</div>
-            <div class="section-action">すべて見る →</div>
-          </div>
-          <div class="notif-list">
-            <div class="notif-item">
-              <div class="notif-dot" style="background:var(--live)"></div>
-              <div>
-                <div class="notif-text"><strong>LIVE開始まで1時間</strong>です。配信タイトルを確認してください。</div>
-                <div class="notif-time">19:00に通知 · システム通知</div>
-              </div>
-            </div>
-            <div class="notif-item">
-              <div class="notif-dot" style="background:var(--amber)"></div>
-              <div>
-                <div class="notif-text"><strong>サムネイルデザイン</strong>がMGさんから提出されました。</div>
-                <div class="notif-time">2時間前 · タスク更新</div>
-              </div>
-            </div>
-            <div class="notif-item">
-              <div class="notif-dot" style="background:var(--purple)"></div>
-              <div>
-                <div class="notif-text"><strong>カズくんGames</strong>からコラボ打診が届きました。</div>
-                <div class="notif-time">3時間前 · コラボ返答</div>
-              </div>
-            </div>
-            <div class="notif-item">
-              <div class="notif-dot" style="background:#4ade80"></div>
-              <div>
-                <div class="notif-text">タスク「Short素材撮影」が<strong>完了</strong>しました。</div>
-                <div class="notif-time">今日 09:45 · タスク更新</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Team status -->
-        <div class="section-card">
-          <div class="section-header">
-            <div class="section-title">チームメンバー</div>
-          </div>
-          <div style="padding:12px 18px;display:flex;flex-direction:column;gap:10px;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <div class="avatar" style="width:28px;height:28px;font-size:11px;background:rgba(74,222,128,.2);color:#4ade80;">SA</div>
-              <div style="flex:1;">
-                <div style="font-size:12px;font-weight:500;">スタッフA（編集）</div>
-                <div style="font-size:10px;color:var(--muted);">4月振り返り動画を編集中</div>
-              </div>
-              <div style="width:7px;height:7px;border-radius:50%;background:#4ade80;"></div>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <div class="avatar" style="width:28px;height:28px;font-size:11px;background:rgba(239,159,39,.2);color:var(--amber-l);">MG</div>
-              <div style="flex:1;">
-                <div style="font-size:12px;font-weight:500;">マネージャー（MG）</div>
-                <div style="font-size:10px;color:var(--muted);">サムネイル確認待ち</div>
-              </div>
-              <div style="width:7px;height:7px;border-radius:50%;background:#4ade80;"></div>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <div class="avatar" style="width:28px;height:28px;font-size:11px;background:rgba(127,119,221,.2);color:var(--purple-l);">TK</div>
-              <div style="flex:1;">
-                <div style="font-size:12px;font-weight:500;">台本ライター（TK）</div>
-                <div style="font-size:10px;color:var(--muted);">Shorts 台本執筆中</div>
-              </div>
-              <div style="width:7px;height:7px;border-radius:50%;background:var(--muted);"></div>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
-
-  </div>
-</div>
-
-</body>
+  </body>
 </html>

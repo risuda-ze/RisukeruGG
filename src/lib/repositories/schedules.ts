@@ -16,18 +16,16 @@ function toSchedule(id: string, data: Record<string, unknown>): ScheduleEntry {
   return {
     id,
     title: data.title as string,
-    type: data.type as ScheduleEntry['type'],
+    categoryId: (data.categoryId as string | null) ?? null,
     startAt: (data.startAt as Timestamp).toDate(),
     endAt: (data.endAt as Timestamp).toDate(),
-    platform: (data.platform as ScheduleEntry['platform']) ?? null,
-    status: data.status as ScheduleEntry['status'],
     description: (data.description as string) ?? '',
     participantIds: (data.participantIds as string[]) ?? [],
     collabPartnerName: (data.collabPartnerName as string | null) ?? null,
     linkedTaskIds: (data.linkedTaskIds as string[]) ?? [],
-    updatedAt: (data.updatedAt as Timestamp).toDate(),
+    updatedAt: (data.updatedAt as Timestamp | null)?.toDate() ?? new Date(),
     createdBy: data.createdBy as string,
-    createdAt: (data.createdAt as Timestamp).toDate(),
+    createdAt: (data.createdAt as Timestamp | null)?.toDate() ?? new Date(),
   };
 }
 

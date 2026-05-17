@@ -5,7 +5,8 @@ import { db } from '../lib/admin';
 interface RespondToCollabData {
   teamId: string;
   sessionId: string;
-  dates: Record<string, 'ok' | 'ng'>;
+  respondentName?: string;
+  dates: Record<string, 'ok' | 'ng' | 'pending'>;
   alternativeDates?: string[];
   note?: string | null;
 }
@@ -13,7 +14,7 @@ interface RespondToCollabData {
 export const respondToCollab = onCall(
   { region: 'asia-northeast1' },
   async (request: CallableRequest<RespondToCollabData>) => {
-    const { teamId, sessionId, dates, alternativeDates, note } = request.data;
+    const { teamId, sessionId, respondentName, dates, alternativeDates, note } = request.data;
 
     if (!teamId || !sessionId || !dates) {
       throw new HttpsError('invalid-argument', '必須項目が不足しています');
@@ -39,17 +40,38 @@ export const respondToCollab = onCall(
 
     const now = FieldValue.serverTimestamp();
 
-    await db.runTransaction(async (tx) => {
-      tx.update(sessionRef, {
-        responses: {
-          dates,
-          alternativeDates: (alternativeDates ?? []).map((d) => new Date(d)),
-          respondedAt: now,
-          note: note ?? null,
-        },
-      });
+    /* participantResponses 用のキーを生成（特殊文字をアンダースコアに変換） */
+    const respondentKey = (respondentName ?? 'anonymous').replace(/[.#$[\]/]/g, '_');
 
-      // チームのOwner/Editorへ通知
+    /* 'ok' / 'ng' のみを responses.dates に保存（'pending' は除外） */
+    const datesForResponse: Record<string, 'ok' | 'ng'> = {};
+    for (const [k, v] of Object.entries(dates)) {
+      if (v === 'ok' || v === 'ng') datesForResponse[k] = v;
+    }
+
+    /* 代替日程を Timestamp に変換 */
+    const altTimestamps = (alternativeDates ?? []).map((d) => Timestamp.fromDate(new Date(d)));
+
+    const updatePayload: Record<string, unknown> = {
+      responses: {
+        dates: datesForResponse,
+        alternativeDates: altTimestamps,
+        respondedAt: now,
+        note: note ?? null,
+      },
+      /* 回答者ごとの回答を participantResponses に記録 */
+      [`participantResponses.${respondentKey}`]: dates,
+    };
+
+    /* 代替日程があれば proposedDates に追加 */
+    if (altTimestamps.length > 0) {
+      updatePayload['proposedDates'] = FieldValue.arrayUnion(...altTimestamps);
+    }
+
+    await db.runTransaction(async (tx) => {
+      tx.update(sessionRef, updatePayload);
+
+      /* チームの Owner/Editor へ通知 */
       const membersSnap = await db.collection(`teams/${teamId}/members`).get();
       for (const memberDoc of membersSnap.docs) {
         const member = memberDoc.data();
@@ -60,7 +82,7 @@ export const respondToCollab = onCall(
             category: 'collab',
             type: 'collab_responded',
             title: 'コラボ日程の回答が届きました',
-            body: `「${session.title}」への回答が届きました`,
+            body: `「${session.title}」${respondentName ? `（${respondentName}）` : ''}への回答が届きました`,
             refType: 'collab',
             refId: sessionId,
             isRead: false,

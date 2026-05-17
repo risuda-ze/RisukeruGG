@@ -3,7 +3,8 @@ import { z } from 'zod';
 export const taskSchema = z.object({
   title: z.string().min(1).max(200),
   columnId: z.string().min(1),
-  category: z.enum(['shooting', 'editing', 'thumbnail', 'announcement', 'other']),
+  categoryId: z.string().nullable().default(null),
+  description: z.string().max(2000).nullable().default(null),
   assigneeId: z.string().nullable().default(null),
   dueDate: z.date().nullable().default(null),
   linkedScheduleId: z.string().nullable().default(null),

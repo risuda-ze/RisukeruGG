@@ -1,9 +1,7 @@
 export type UserRole = 'owner' | 'editor' | 'viewer';
 export type PlanType = 'light' | 'party';
-export type ScheduleType = 'stream' | 'video';
-export type ScheduleStatus = 'planned' | 'live' | 'ended' | 'cancelled';
-export type Platform = 'youtube' | 'twitch' | 'both';
-export type TaskCategory = 'shooting' | 'editing' | 'thumbnail' | 'announcement' | 'other';
+/** @deprecated 新規コードでは TaskCategory インターフェースと categoryId を使用すること */
+export type TaskCategoryKey = 'shooting' | 'editing' | 'thumbnail' | 'announcement' | 'other';
 export type CollabStatus = 'open' | 'confirmed' | 'expired' | 'cancelled';
 export type NotificationCategory = 'collab' | 'tasks' | 'reminders' | 'system';
 
@@ -15,10 +13,10 @@ export const LIGHT_PLAN_LIMITS = {
 
 // CollabSessionStatusのUI表示名マッピング
 export const COLLAB_STATUS_LABELS: Record<CollabStatus, string> = {
-  open: '回答受付中',
-  confirmed: '確定',
-  expired: '期限切れ',
-  cancelled: 'キャンセル',
+  open: '調整中',
+  confirmed: '予定決定',
+  expired: '終了',
+  cancelled: '終了',
 } as const;
 
 export interface NotificationPreferences {
@@ -71,17 +69,35 @@ export interface KanbanColumn {
   name: string;
   order: number;
   color: string;
+  /** 完了ステータスとしてマークされたカラムは 'done'、それ以外は null */
+  role: 'done' | null;
+  createdAt: Date;
+}
+
+/** Firestore バック: teams/{teamId}/taskCategories/{categoryId} */
+export interface TaskCategory {
+  id: string;
+  name: string;
+  color: string;
+  order: number;
+  createdAt: Date;
+}
+
+export interface ScheduleCategory {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  order: number;
   createdAt: Date;
 }
 
 export interface ScheduleEntry {
   id: string;
   title: string;
-  type: ScheduleType;
+  categoryId: string | null;
   startAt: Date;
   endAt: Date;
-  platform: Platform | null;
-  status: ScheduleStatus;
   description: string;
   participantIds: string[];
   collabPartnerName: string | null;
@@ -95,12 +111,33 @@ export interface Task {
   id: string;
   title: string;
   columnId: string;
-  category: TaskCategory;
+  /** Firestore カテゴリID。TaskCategory インターフェース参照。未設定は null */
+  categoryId: string | null;
+  /** タスク詳細説明。既存ドキュメントは null にフォールバック */
+  description: string | null;
   assigneeId: string | null;
   dueDate: Date | null;
   linkedScheduleId: string | null;
+  /** チーム内コメント（CollabComment と同一構造） */
+  comments?: CollabComment[];
   updatedAt: Date;
   createdBy: string;
+  createdAt: Date;
+}
+
+// コラボ調整の参加者（チームメンバーまたは外部）
+export interface CollabParticipant {
+  id: string;
+  name: string;
+  type: 'member' | 'external';
+}
+
+// コラボ調整内のチームコメント
+export interface CollabComment {
+  id: string;
+  authorId: string;
+  authorName: string;
+  text: string;
   createdAt: Date;
 }
 
@@ -122,6 +159,11 @@ export interface CollabSession {
   confirmedDate: Date | null;
   linkedScheduleId: string | null;
   createdAt: Date;
+  // 拡張フィールド（任意）
+  content?: string | null;
+  participants?: CollabParticipant[];
+  participantResponses?: Record<string, Record<string, 'ok' | 'ng' | 'pending'>>;
+  comments?: CollabComment[];
 }
 
 export interface Notification {

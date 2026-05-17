@@ -2,10 +2,10 @@
 
 ## セットアップ方法の選択
 
-| 方法 | 必要なもの | 特徴 |
-|------|-----------|------|
-| **Docker（推奨）** | Docker Desktop のみ | Firebase アカウント不要・環境汚染なし |
-| ローカル | Node.js / pnpm / Firebase CLI | 直接実行・デバッグしやすい |
+| 方法               | 必要なもの                    | 特徴                                  |
+| ------------------ | ----------------------------- | ------------------------------------- |
+| **Docker（推奨）** | Docker Desktop のみ           | Firebase アカウント不要・環境汚染なし |
+| ローカル           | Node.js / pnpm / Firebase CLI | 直接実行・デバッグしやすい            |
 
 ---
 
@@ -52,9 +52,9 @@ docker compose up -d
 
 **4. 動作確認**
 
-| URL | 内容 |
-|-----|------|
-| http://localhost:3000 | Next.js アプリ |
+| URL                   | 内容                 |
+| --------------------- | -------------------- |
+| http://localhost:3000 | Next.js アプリ       |
 | http://localhost:4000 | Firebase Emulator UI |
 
 `app` コンテナは `emulator` コンテナのヘルスチェック通過後に起動します（最大90秒）。
@@ -209,16 +209,16 @@ npx vercel --prod
 
 ## ディレクトリ構造
 
-| パス | 用途 |
-|------|------|
-| `src/app/` | Next.js App Router ページ |
+| パス                    | 用途                                                        |
+| ----------------------- | ----------------------------------------------------------- |
+| `src/app/`              | Next.js App Router ページ                                   |
 | `src/lib/repositories/` | Firestore アクセス（コンポーネントから直接SDK呼び出し禁止） |
-| `src/lib/validations/` | Zod スキーマ（フォームとAPIバウンダリで使用） |
-| `src/stores/` | Zustand ストア（Firestore リスナーを管理） |
-| `src/proxy.ts` | Next.js リクエストプロキシ（ルーティング・認証ガード） |
-| `functions/src/` | Firebase Cloud Functions |
-| `tests/unit/` | Vitest ユニットテスト（コアロジックのみ） |
-| `tests/e2e/` | Playwright E2E テスト |
-| `firestore.rules` | Firestore Security Rules |
-| `docker/` | Docker ビルド設定 |
-| `.env.docker` | Docker 環境用の設定テンプレート |
+| `src/lib/validations/`  | Zod スキーマ（フォームとAPIバウンダリで使用）               |
+| `src/stores/`           | Zustand ストア（Firestore リスナーを管理）                  |
+| `src/proxy.ts`          | Next.js リクエストプロキシ（ルーティング・認証ガード）      |
+| `functions/src/`        | Firebase Cloud Functions                                    |
+| `tests/unit/`           | Vitest ユニットテスト（コアロジックのみ）                   |
+| `tests/e2e/`            | Playwright E2E テスト                                       |
+| `firestore.rules`       | Firestore Security Rules                                    |
+| `docker/`               | Docker ビルド設定                                           |
+| `.env.docker`           | Docker 環境用の設定テンプレート                             |

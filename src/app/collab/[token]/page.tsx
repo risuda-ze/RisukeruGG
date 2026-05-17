@@ -22,23 +22,32 @@ export default function CollabPublicPage() {
 
   useEffect(() => {
     async function load() {
-      if (!token) { setPageState('notfound'); return; }
+      if (!token) {
+        setPageState('notfound');
+        return;
+      }
 
       try {
         const parts = token.split('__');
-        if (parts.length !== 2) { setPageState('notfound'); return; }
+        if (parts.length !== 2) {
+          setPageState('notfound');
+          return;
+        }
 
         const [tid, sid] = parts;
         const result = await getCollabSession(tid, sid);
 
-        if (!result) { setPageState('notfound'); return; }
+        if (!result) {
+          setPageState('notfound');
+          return;
+        }
 
         setSession(result);
         setTeamId(tid);
 
         const now = new Date();
-        if (result.status === 'confirmed')          setPageState('confirmed');
-        else if (result.status === 'cancelled')     setPageState('cancelled');
+        if (result.status === 'confirmed') setPageState('confirmed');
+        else if (result.status === 'cancelled') setPageState('cancelled');
         else if (result.status === 'expired' || result.expiresAt < now) setPageState('expired');
         else setPageState('form');
       } catch {
@@ -56,10 +65,10 @@ export default function CollabPublicPage() {
         <div className="flex items-center gap-2">
           <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7 shrink-0">
             <rect width="32" height="32" rx="8" fill="var(--purple-d)" />
-            <rect x="13" y="12" width="2" height="6" rx="1" fill="var(--purple-l)"/>
-            <rect x="11" y="14" width="6" height="2" rx="1" fill="var(--purple-l)"/>
-            <circle cx="22" cy="14" r="1.2" fill="var(--amber)"/>
-            <circle cx="19" cy="17" r="1.2" fill="var(--amber)"/>
+            <rect x="13" y="12" width="2" height="6" rx="1" fill="var(--purple-l)" />
+            <rect x="11" y="14" width="6" height="2" rx="1" fill="var(--purple-l)" />
+            <circle cx="22" cy="14" r="1.2" fill="var(--amber)" />
+            <circle cx="19" cy="17" r="1.2" fill="var(--amber)" />
           </svg>
           <span className="text-sm font-bold text-text">リスケるGG</span>
         </div>
@@ -68,7 +77,6 @@ export default function CollabPublicPage() {
       {/* コンテンツ */}
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-lg">
-
           {pageState === 'loading' && (
             <div className="flex justify-center py-16">
               <Spinner size="lg" />
@@ -86,8 +94,10 @@ export default function CollabPublicPage() {
           {pageState === 'expired' && (
             <Card className="text-center py-10">
               <p className="text-3xl mb-3">⏰</p>
-              <h1 className="text-base font-semibold text-text mb-2">このリンクは有効期限切れです</h1>
-              <p className="text-sm text-muted">コラボ打診者に再送をお願いしてください</p>
+              <h1 className="text-base font-semibold text-text mb-2">
+                このリンクは有効期限切れです
+              </h1>
+              <p className="text-sm text-muted">コラボ調整者に再送をお願いしてください</p>
             </Card>
           )}
 
@@ -106,7 +116,9 @@ export default function CollabPublicPage() {
           {pageState === 'cancelled' && (
             <Card className="text-center py-10">
               <p className="text-3xl mb-3">❌</p>
-              <h1 className="text-base font-semibold text-text mb-2">このコラボ調整はキャンセルされました</h1>
+              <h1 className="text-base font-semibold text-text mb-2">
+                このコラボ調整はキャンセルされました
+              </h1>
             </Card>
           )}
 

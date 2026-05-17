@@ -16,7 +16,7 @@ export interface AvatarProps {
 }
 
 const sizeClasses: Record<AvatarSize, { wrap: string; text: string }> = {
-  sm: { wrap: 'w-6 h-6',   text: 'text-[9px]'  },
+  sm: { wrap: 'w-6 h-6', text: 'text-[9px]' },
   md: { wrap: 'w-[34px] h-[34px]', text: 'text-[13px]' },
   lg: { wrap: 'w-[42px] h-[42px]', text: 'text-[15px]' },
 };
@@ -30,7 +30,9 @@ export function Avatar({
 }: AvatarProps) {
   const { wrap, text } = sizeClasses[size];
   return (
-    <div className={`relative inline-flex items-center justify-center rounded-full shrink-0 ${wrap} ${bgClass}`}>
+    <div
+      className={`relative inline-flex items-center justify-center rounded-full shrink-0 ${wrap} ${bgClass}`}
+    >
       <span className={`font-semibold leading-none select-none ${text} ${textClass}`}>
         {initials.slice(0, 2).toUpperCase()}
       </span>

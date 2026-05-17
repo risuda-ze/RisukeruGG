@@ -150,7 +150,7 @@ spec.md のユーザーストーリー（US1〜US6）にマッピングして整
 
 ### チーム管理ページ
 
-- [ ] T033 [US5] `src/app/(protected)/team/page.tsx` を刷新: 
+- [ ] T033 [US5] `src/app/(protected)/team/page.tsx` を刷新:
   - TeamInfoCard: チーム名 + チームコード（`font-num`コードフォント）+ 「コードをコピー」ボタン + 「リセット」ボタン
   - MemberList: 各メンバー行（Avatar + 名前/ロールBadge/プランBadge + ロール変更/削除アクション）
   - JoinTeamSection（`TeamJoinForm.tsx` をダークテーマに刷新）
@@ -291,18 +291,18 @@ Phase 7 (US5): TodayTimeline.tsx, NotificationBell.tsx → dashboard/page.tsx, t
 
 ## タスク統計
 
-| Phase | ストーリー | タスク数 |
-|-------|---------|-------|
-| Phase 1: Setup | — | 3 |
-| Phase 2: Foundational | — | 12 |
-| Phase 3 | US1（認証） | 1 |
-| Phase 4 | US2（スケジュール） | 4 |
-| Phase 5 | US3（タスク） | 3 |
-| Phase 6 | US4（コラボ） | 6 |
-| Phase 7 | US5（チーム・ダッシュボード） | 4 |
-| Phase 8 | US6（通知・設定） | 4 |
-| Phase 9: Polish | — | 9 |
-| **合計** | | **46** |
+| Phase                 | ストーリー                    | タスク数 |
+| --------------------- | ----------------------------- | -------- |
+| Phase 1: Setup        | —                             | 3        |
+| Phase 2: Foundational | —                             | 12       |
+| Phase 3               | US1（認証）                   | 1        |
+| Phase 4               | US2（スケジュール）           | 4        |
+| Phase 5               | US3（タスク）                 | 3        |
+| Phase 6               | US4（コラボ）                 | 6        |
+| Phase 7               | US5（チーム・ダッシュボード） | 4        |
+| Phase 8               | US6（通知・設定）             | 4        |
+| Phase 9: Polish       | —                             | 9        |
+| **合計**              |                               | **46**   |
 
 **並列実行可能タスク**: 27件（[P]マーク付き）
 **独立テスト可能**: 全6ユーザーストーリー（各Phase末のCheckpointで確認）

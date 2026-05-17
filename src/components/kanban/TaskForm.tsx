@@ -5,25 +5,17 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { taskSchema, type TaskInput, type TaskFormInput } from '@/lib/validations/tasks';
-import { createTask, updateTask } from '@/lib/repositories/tasks';
+import { createTask } from '@/lib/repositories/tasks';
 import { useTasksStore } from '@/stores/tasks';
+import { useTaskCategoryStore } from '@/stores/taskCategories';
 import { useScheduleStore } from '@/stores/schedule';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import type { Task, TeamMember } from '@/types/entities';
-
-const CATEGORY_OPTIONS = [
-  { value: 'shooting', label: '撮影' },
-  { value: 'editing', label: '編集' },
-  { value: 'thumbnail', label: 'サムネ' },
-  { value: 'announcement', label: '告知' },
-  { value: 'other', label: 'その他' },
-] as const;
+import type { TeamMember } from '@/types/entities';
 
 interface TaskFormProps {
   teamId: string;
   members: TeamMember[];
-  task?: Task;
   isLightPlanFull?: boolean;
   onSuccess: () => void;
   onCancel: () => void;
@@ -32,12 +24,12 @@ interface TaskFormProps {
 export default function TaskForm({
   teamId,
   members,
-  task,
   isLightPlanFull,
   onSuccess,
   onCancel,
 }: TaskFormProps) {
   const { columns } = useTasksStore();
+  const { taskCategories } = useTaskCategoryStore();
   const { schedules } = useScheduleStore();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -48,31 +40,28 @@ export default function TaskForm({
   } = useForm<TaskFormInput, unknown, TaskInput>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
-      title: task?.title ?? '',
-      columnId: task?.columnId ?? columns[0]?.id ?? '',
-      category: task?.category ?? 'other',
-      assigneeId: task?.assigneeId ?? null,
-      dueDate: task?.dueDate ?? null,
-      linkedScheduleId: task?.linkedScheduleId ?? null,
+      title: '',
+      columnId: columns[0]?.id ?? '',
+      categoryId: null,
+      description: null,
+      assigneeId: null,
+      dueDate: null,
+      linkedScheduleId: null,
     },
   });
 
   async function onSubmit(data: TaskInput) {
     setSubmitError(null);
     try {
-      if (task) {
-        await updateTask(teamId, task.id, { ...data }, task.updatedAt);
-      } else {
-        await createTask({
-          teamId,
-          title: data.title,
-          columnId: data.columnId,
-          category: data.category,
-          assigneeId: data.assigneeId ?? null,
-          dueDate: data.dueDate ? data.dueDate.toISOString() : null,
-          linkedScheduleId: data.linkedScheduleId ?? null,
-        });
-      }
+      await createTask({
+        teamId,
+        title: data.title,
+        columnId: data.columnId,
+        categoryId: data.categoryId ?? null,
+        assigneeId: data.assigneeId ?? null,
+        dueDate: data.dueDate ? data.dueDate.toISOString() : null,
+        linkedScheduleId: data.linkedScheduleId ?? null,
+      });
       onSuccess();
     } catch (err) {
       const message = err instanceof Error ? err.message : '予期しないエラーが発生しました';
@@ -84,16 +73,16 @@ export default function TaskForm({
     }
   }
 
-  const isEdit = Boolean(task);
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-      {isLightPlanFull && !isEdit && (
+      {isLightPlanFull && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
           <p className="font-medium text-amber-800">タスクの作成上限に達しました（月5件）</p>
           <p className="text-amber-700 mt-1">
             PARTYプランにアップグレードすると無制限でタスクを作成できます。
-            <a href="/settings" className="underline ml-1">アップグレードする</a>
+            <a href="/settings" className="underline ml-1">
+              アップグレードする
+            </a>
           </p>
         </div>
       )}
@@ -102,29 +91,32 @@ export default function TaskForm({
         label="タイトル *"
         error={errors.title?.message}
         {...register('title')}
-        disabled={isLightPlanFull && !isEdit}
+        disabled={isLightPlanFull}
       />
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">カテゴリ *</label>
+        <label className="block text-sm font-medium text-muted mb-1">カテゴリ</label>
         <select
-          {...register('category')}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          {...register('categoryId')}
+          className="w-full border border-border rounded-[8px] px-3 py-2 text-sm bg-card text-text"
         >
-          {CATEGORY_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
+          <option value="">なし</option>
+          {taskCategories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
             </option>
           ))}
         </select>
-        {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
+        {errors.categoryId && (
+          <p className="text-red-500 text-xs mt-1">{errors.categoryId.message}</p>
+        )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">カラム *</label>
+        <label className="block text-sm font-medium text-muted mb-1">カラム *</label>
         <select
           {...register('columnId')}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full border border-border rounded-[8px] px-3 py-2 text-sm bg-card text-text"
         >
           {columns.map((col) => (
             <option key={col.id} value={col.id}>
@@ -135,10 +127,10 @@ export default function TaskForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">担当者</label>
+        <label className="block text-sm font-medium text-muted mb-1">担当者</label>
         <select
           {...register('assigneeId')}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full border border-border rounded-[8px] px-3 py-2 text-sm bg-card text-text"
         >
           <option value="">なし</option>
           {members.map((m) => (
@@ -150,22 +142,21 @@ export default function TaskForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">締切日</label>
+        <label className="block text-sm font-medium text-muted mb-1">締切日</label>
         <input
           type="date"
           {...register('dueDate', {
             setValueAs: (v: string) => (v ? new Date(v) : null),
           })}
-          defaultValue={task?.dueDate ? format(task.dueDate, 'yyyy-MM-dd') : ''}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full border border-border rounded-[8px] px-3 py-2 text-sm bg-card text-text"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">紐付けスケジュール</label>
+        <label className="block text-sm font-medium text-muted mb-1">紐付けスケジュール</label>
         <select
           {...register('linkedScheduleId')}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full border border-border rounded-[8px] px-3 py-2 text-sm bg-card text-text"
         >
           <option value="">なし</option>
           {schedules.map((s) => (
@@ -176,16 +167,14 @@ export default function TaskForm({
         </select>
       </div>
 
-      {submitError && (
-        <p className="text-red-500 text-sm">{submitError}</p>
-      )}
+      {submitError && <p className="text-red-500 text-sm">{submitError}</p>}
 
       <div className="flex gap-2 justify-end">
         <Button type="button" variant="secondary" onClick={onCancel}>
           キャンセル
         </Button>
-        <Button type="submit" loading={isSubmitting} disabled={isLightPlanFull && !isEdit}>
-          {isEdit ? '更新する' : '作成する'}
+        <Button type="submit" loading={isSubmitting} disabled={isLightPlanFull}>
+          作成する
         </Button>
       </div>
     </form>

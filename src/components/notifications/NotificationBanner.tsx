@@ -7,17 +7,17 @@ import type { Notification } from '@/types/entities';
 
 const REF_TYPE_PATHS: Record<NonNullable<Notification['refType']>, string> = {
   schedule: '/schedule',
-  task:     '/tasks',
-  collab:   '/collabs',
-  team:     '/team',
+  task: '/tasks',
+  collab: '/collabs',
+  team: '/team',
 };
 
 /* カテゴリ別カラードット */
 const CATEGORY_DOT: Record<Notification['category'], string> = {
-  collab:    'bg-live',
-  tasks:     'bg-amber',
+  collab: 'bg-live',
+  tasks: 'bg-amber',
   reminders: 'bg-purple',
-  system:    'bg-green',
+  system: 'bg-green',
 };
 
 export function NotificationBanner() {
