@@ -234,17 +234,17 @@ function ScheduleCategorySettings() {
                       setEditColor(cat.color);
                       setEditIcon(cat.icon);
                     }}
-                    className="p-1 text-muted hover:text-purple-l text-xs"
+                    className="p-1 rounded-[6px] text-text hover:text-purple-l transition-colors"
                     aria-label="編集"
                   >
-                    ✏️
+                    <span className="material-icons text-[16px]">edit</span>
                   </button>
                   <button
                     onClick={() => setDeleteConfirm(cat)}
-                    className="p-1 text-muted hover:text-live text-xs"
+                    className="p-1 rounded-[6px] text-text hover:text-live transition-colors"
                     aria-label="削除"
                   >
-                    🗑️
+                    <span className="material-icons text-[16px]">delete</span>
                   </button>
                 </div>
               )}
@@ -638,18 +638,18 @@ function KanbanSettings() {
                   <button
                     onClick={() => handleMoveUp(index)}
                     disabled={index === 0}
-                    className="p-1 text-muted hover:text-text disabled:opacity-30 text-[11px]"
+                    className="p-1 rounded-[6px] text-text hover:text-text disabled:opacity-30 transition-colors"
                     aria-label="上へ移動"
                   >
-                    ▲
+                    <span className="material-icons text-[16px]">keyboard_arrow_up</span>
                   </button>
                   <button
                     onClick={() => handleMoveDown(index)}
                     disabled={index === columns.length - 1}
-                    className="p-1 text-muted hover:text-text disabled:opacity-30 text-[11px]"
+                    className="p-1 rounded-[6px] text-text hover:text-text disabled:opacity-30 transition-colors"
                     aria-label="下へ移動"
                   >
-                    ▼
+                    <span className="material-icons text-[16px]">keyboard_arrow_down</span>
                   </button>
                   <button
                     onClick={() => {
@@ -657,18 +657,18 @@ function KanbanSettings() {
                       setEditName(col.name);
                       setEditColor(col.color);
                     }}
-                    className="p-1 text-muted hover:text-purple-l text-xs"
+                    className="p-1 rounded-[6px] text-text hover:text-purple-l transition-colors"
                     aria-label="編集"
                   >
-                    ✏️
+                    <span className="material-icons text-[16px]">edit</span>
                   </button>
                   <button
                     onClick={() => setDeleteConfirmColumn(col)}
                     disabled={columns.length <= 1}
-                    className="p-1 text-muted hover:text-live disabled:opacity-30 text-xs"
+                    className="p-1 rounded-[6px] text-text hover:text-live disabled:opacity-30 transition-colors"
                     aria-label="削除"
                   >
-                    🗑️
+                    <span className="material-icons text-[16px]">delete</span>
                   </button>
                 </div>
               )}
@@ -894,17 +894,17 @@ function TaskCategorySettings() {
                       setEditName(cat.name);
                       setEditColor(cat.color);
                     }}
-                    className="p-1 text-muted hover:text-purple-l text-xs"
+                    className="p-1 rounded-[6px] text-text hover:text-purple-l transition-colors"
                     aria-label="編集"
                   >
-                    ✏️
+                    <span className="material-icons text-[16px]">edit</span>
                   </button>
                   <button
                     onClick={() => setDeleteConfirm(cat)}
-                    className="p-1 text-muted hover:text-live text-xs"
+                    className="p-1 rounded-[6px] text-text hover:text-live transition-colors"
                     aria-label="削除"
                   >
-                    🗑️
+                    <span className="material-icons text-[16px]">delete</span>
                   </button>
                 </div>
               )}

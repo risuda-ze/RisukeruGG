@@ -3,23 +3,16 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { updateTask, deleteTask } from '@/lib/repositories/tasks';
+import { Timestamp } from 'firebase/firestore';
+import { updateTask, deleteTask, addTaskComment } from '@/lib/repositories/tasks';
 import { useAuthStore } from '@/stores/auth';
-import type { Task, TeamMember, TaskCategory, KanbanColumn } from '@/types/entities';
+import type { Task, TeamMember, TaskCategory, KanbanColumn, CollabComment } from '@/types/entities';
 
 interface LocalReply {
   id: string;
   authorName: string;
   text: string;
   time: string;
-}
-
-interface LocalComment {
-  id: string;
-  authorName: string;
-  text: string;
-  time: string;
-  replies: LocalReply[];
 }
 
 interface TaskDetailModalProps {
@@ -64,9 +57,13 @@ export function TaskDetailModal({
   const [description, setDescription] = useState(task.description ?? '');
   const [savingDesc, setSavingDesc] = useState(false);
 
-  /* コメント（ローカル状態のみ） */
-  const [comments, setComments] = useState<LocalComment[]>([]);
+  /* コメント（Firestore 永続化） */
+  const [comments, setComments] = useState<CollabComment[]>(task.comments ?? []);
   const [commentText, setCommentText] = useState('');
+  const [sendingComment, setSendingComment] = useState(false);
+
+  /* 返信（ローカル状態のみ） */
+  const [localReplies, setLocalReplies] = useState<Record<string, LocalReply[]>>({});
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
 
@@ -75,7 +72,7 @@ export function TaskDetailModal({
   const currentColumn = columns.find((c) => c.id === columnId);
   const currentAssignee = members.find((m) => m.userId === assigneeId);
 
-  /* タイトル保存（楽観的ロックなし） */
+  /* タイトル保存 */
   async function handleSaveTitle() {
     if (!titleValue.trim() || titleValue.trim() === task.title) {
       setEditingTitle(false);
@@ -150,43 +147,42 @@ export function TaskDetailModal({
     }
   }
 
-  /* コメント追加（ローカルのみ） */
-  function addComment() {
-    if (!commentText.trim()) return;
-    setComments((prev) => [
-      ...prev,
-      {
-        id: `c-${Date.now()}`,
-        authorName: myName,
-        text: commentText.trim(),
-        time: format(new Date(), 'HH:mm', { locale: ja }),
-        replies: [],
-      },
-    ]);
-    setCommentText('');
+  /* コメント追加（Firestore 永続化 + 楽観的ローカル更新） */
+  async function addComment() {
+    if (!commentText.trim() || !currentUser || sendingComment) return;
+    const newComment = {
+      id: `${Date.now()}`,
+      authorId: currentUser.uid,
+      authorName: myName,
+      text: commentText.trim(),
+      createdAt: Timestamp.now(),
+    };
+    setSendingComment(true);
+    try {
+      await addTaskComment(teamId, task.id, newComment);
+      setComments((prev) => [
+        ...prev,
+        { ...newComment, createdAt: newComment.createdAt.toDate() },
+      ]);
+      setCommentText('');
+    } finally {
+      setSendingComment(false);
+    }
   }
 
   /* 返信追加（ローカルのみ） */
   function addReply(commentId: string) {
     if (!replyText.trim()) return;
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === commentId
-          ? {
-              ...c,
-              replies: [
-                ...c.replies,
-                {
-                  id: `r-${Date.now()}`,
-                  authorName: myName,
-                  text: replyText.trim(),
-                  time: format(new Date(), 'HH:mm', { locale: ja }),
-                },
-              ],
-            }
-          : c
-      )
-    );
+    const reply: LocalReply = {
+      id: `r-${Date.now()}`,
+      authorName: myName,
+      text: replyText.trim(),
+      time: format(new Date(), 'HH:mm', { locale: ja }),
+    };
+    setLocalReplies((prev) => ({
+      ...prev,
+      [commentId]: [...(prev[commentId] ?? []), reply],
+    }));
     setReplyText('');
     setReplyingTo(null);
   }
@@ -215,10 +211,14 @@ export function TaskDetailModal({
       onClick={onClose}
     >
       <div
-        className="w-full flex flex-col overflow-hidden rounded-[20px]"
+        className="flex flex-col overflow-hidden rounded-[20px]"
         style={{
-          maxWidth: '850px',
+          width: 'min(850px, calc(100vw - 32px))',
+          minWidth: '320px',
           height: 'min(700px, 92vh)',
+          minHeight: '400px',
+          maxHeight: 'calc(100vh - 32px)',
+          resize: 'both',
           background: 'var(--card-2)',
           border: '1px solid var(--border-l)',
           boxShadow: 'var(--shadow-xl)',
@@ -284,10 +284,13 @@ export function TaskDetailModal({
           </div>
         </div>
 
-        {/* ボディ — 2カラムレイアウト */}
-        <div className="flex-1 overflow-hidden flex">
+        {/* ボディ — レスポンシブ2カラムレイアウト (600px 未満は縦積み) */}
+        <div className="flex-1 overflow-hidden flex flex-col min-[600px]:flex-row">
           {/* 左カラム: フィールド + 詳細 */}
-          <div className="flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-5 border-r" style={{ borderColor: 'var(--border)' }}>
+          <div
+            className="flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-5 border-b min-[600px]:border-b-0 min-[600px]:border-r"
+            style={{ borderColor: 'var(--border)' }}
+          >
             {/* フィールドグリッド */}
             <div className="grid grid-cols-2 gap-4">
               {/* ステータス */}
@@ -416,105 +419,109 @@ export function TaskDetailModal({
             </div>
           </div>
 
-          {/* 右カラム: コメント */}
-          <div className="w-[320px] shrink-0 flex flex-col overflow-hidden">
+          {/* 右カラム: コメント（600px 未満では最大高さ 260px の縦積み） */}
+          <div className="min-[600px]:w-[300px] min-[600px]:shrink-0 max-[599px]:max-h-[260px] flex flex-col overflow-hidden border-t min-[600px]:border-t-0" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex flex-col flex-1 overflow-hidden min-h-0">
             <div className="px-6 py-4 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
               <p className="text-[11px] font-semibold text-muted tracking-[0.06em] uppercase">コメント / メモ</p>
             </div>
 
             {/* コメントリスト */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
+            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4" style={{ minHeight: 0 }}>
               {comments.length === 0 && (
                 <p className="text-[12px] text-muted italic text-center mt-4">まだコメントはありません</p>
               )}
-              {comments.map((c) => (
-                <div key={c.id}>
-                  {/* コメント本体 */}
-                  <div className="flex gap-2.5">
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
-                      style={{ background: avatarBg(c.authorName), color: avatarColor(c.authorName) }}
-                    >
-                      {c.authorName.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="flex-1">
+              {comments.map((c) => {
+                const replies = localReplies[c.id] ?? [];
+                return (
+                  <div key={c.id}>
+                    {/* コメント本体 */}
+                    <div className="flex gap-2.5">
                       <div
-                        className="rounded-[0_10px_10px_10px] px-3 py-2"
-                        style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
+                        style={{ background: avatarBg(c.authorName), color: avatarColor(c.authorName) }}
                       >
-                        <div className="flex justify-between mb-1 text-[11px] text-muted">
-                          <strong className="text-text font-semibold">{c.authorName}</strong>
-                          <span>{c.time}</span>
-                        </div>
-                        <div className="text-[13px] text-text leading-relaxed">{c.text}</div>
+                        {c.authorName.slice(0, 2).toUpperCase()}
                       </div>
-                      <button
-                        onClick={() => { setReplyingTo(c.id); setReplyText(''); }}
-                        className="mt-1 text-[11px] text-muted hover:text-purple-l transition-colors ml-1"
-                      >
-                        返信
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 返信リスト */}
-                  {c.replies.length > 0 && (
-                    <div className="ml-9 mt-2 flex flex-col gap-2 border-l-2 pl-3" style={{ borderColor: 'var(--border)' }}>
-                      {c.replies.map((r) => (
-                        <div key={r.id} className="flex gap-2">
-                          <div
-                            className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5"
-                            style={{ background: avatarBg(r.authorName), color: avatarColor(r.authorName) }}
-                          >
-                            {r.authorName.slice(0, 2).toUpperCase()}
-                          </div>
-                          <div
-                            className="flex-1 rounded-[0_8px_8px_8px] px-2.5 py-1.5"
-                            style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
-                          >
-                            <div className="flex justify-between mb-0.5 text-[10px] text-muted">
-                              <strong className="text-text font-semibold">{r.authorName}</strong>
-                              <span>{r.time}</span>
-                            </div>
-                            <div className="text-[12px] text-text leading-relaxed">{r.text}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* 返信入力 */}
-                  {replyingTo === c.id && (
-                    <div className="ml-9 mt-2 flex flex-col gap-1.5 border-l-2 pl-3" style={{ borderColor: 'var(--purple)' }}>
-                      <textarea
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addReply(c.id); }}
-                        placeholder="返信を入力..."
-                        rows={2}
-                        className="w-full bg-bg border border-border text-text px-2.5 py-2 rounded-[8px] text-[12px] outline-none focus:border-purple resize-none"
-                        autoFocus
-                      />
-                      <div className="flex gap-1.5 justify-end">
-                        <button
-                          onClick={() => setReplyingTo(null)}
-                          className="px-2.5 py-1 rounded-[6px] text-[11px] font-semibold border border-border text-muted"
+                      <div className="flex-1 min-w-0">
+                        <div
+                          className="rounded-[0_10px_10px_10px] px-3 py-2"
+                          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
                         >
-                          キャンセル
-                        </button>
+                          <div className="flex justify-between mb-1 text-[11px] text-muted">
+                            <strong className="text-text font-semibold">{c.authorName}</strong>
+                            <span>{format(c.createdAt, 'HH:mm', { locale: ja })}</span>
+                          </div>
+                          <div className="text-[13px] text-text leading-relaxed">{c.text}</div>
+                        </div>
                         <button
-                          onClick={() => addReply(c.id)}
-                          disabled={!replyText.trim()}
-                          className="px-2.5 py-1 rounded-[6px] text-[11px] font-semibold disabled:opacity-40"
-                          style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+                          onClick={() => { setReplyingTo(c.id); setReplyText(''); }}
+                          className="mt-1 text-[11px] text-muted hover:text-purple-l transition-colors ml-1"
                         >
                           返信
                         </button>
                       </div>
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {/* 返信リスト */}
+                    {replies.length > 0 && (
+                      <div className="ml-9 mt-2 flex flex-col gap-2 border-l-2 pl-3" style={{ borderColor: 'var(--border)' }}>
+                        {replies.map((r) => (
+                          <div key={r.id} className="flex gap-2">
+                            <div
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5"
+                              style={{ background: avatarBg(r.authorName), color: avatarColor(r.authorName) }}
+                            >
+                              {r.authorName.slice(0, 2).toUpperCase()}
+                            </div>
+                            <div
+                              className="flex-1 rounded-[0_8px_8px_8px] px-2.5 py-1.5"
+                              style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+                            >
+                              <div className="flex justify-between mb-0.5 text-[10px] text-muted">
+                                <strong className="text-text font-semibold">{r.authorName}</strong>
+                                <span>{r.time}</span>
+                              </div>
+                              <div className="text-[12px] text-text leading-relaxed">{r.text}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 返信入力 */}
+                    {replyingTo === c.id && (
+                      <div className="ml-9 mt-2 flex flex-col gap-1.5 border-l-2 pl-3" style={{ borderColor: 'var(--purple)' }}>
+                        <textarea
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addReply(c.id); }}
+                          placeholder="返信を入力..."
+                          rows={2}
+                          className="w-full bg-bg border border-border text-text px-2.5 py-2 rounded-[8px] text-[12px] outline-none focus:border-purple resize-none"
+                          autoFocus
+                        />
+                        <div className="flex gap-1.5 justify-end">
+                          <button
+                            onClick={() => setReplyingTo(null)}
+                            className="px-2.5 py-1 rounded-[6px] text-[11px] font-semibold border border-border text-muted"
+                          >
+                            キャンセル
+                          </button>
+                          <button
+                            onClick={() => addReply(c.id)}
+                            disabled={!replyText.trim()}
+                            className="px-2.5 py-1 rounded-[6px] text-[11px] font-semibold disabled:opacity-40"
+                            style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+                          >
+                            返信
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* コメント入力 */}
@@ -528,23 +535,24 @@ export function TaskDetailModal({
                 className="w-full bg-bg border border-border text-text px-3 py-2 rounded-[10px] text-[12px] outline-none transition-colors focus:border-purple resize-none"
               />
               <div className="flex justify-between items-center">
-                <span className="text-[10px] text-muted">⌘+Enter で送信</span>
+                <span className="text-[10px] text-muted">Ctrl+Enter で送信</span>
                 <button
                   onClick={addComment}
-                  disabled={!commentText.trim()}
+                  disabled={!commentText.trim() || sendingComment}
                   className="px-3 py-1.5 rounded-[8px] text-[11px] font-semibold transition-colors disabled:opacity-40"
                   style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
                 >
-                  送信
+                  {sendingComment ? '送信中...' : '送信'}
                 </button>
               </div>
+            </div>
             </div>
           </div>
         </div>
 
         {/* フッター */}
         <div
-          className="px-8 py-4 shrink-0 flex items-center gap-3"
+          className="px-8 py-4 pr-10 shrink-0 flex items-center gap-3"
           style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}
         >
           {canEdit && (

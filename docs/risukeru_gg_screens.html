@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>risukeru_gg_screens_修正03.html</title>
+    <title>risukeru_gg_screens_修正07.html</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
       rel="stylesheet"
@@ -35,6 +35,7 @@
         --live: #ff4d6d;
         --live-xs: rgba(255, 77, 109, 0.15);
         --green: #4ade80;
+        --green-xs: rgba(74, 222, 128, 0.15);
 
         --text: #e8e8ff;
         --text-2: #c0c0e8;
@@ -114,6 +115,7 @@
         padding: 5px 14px;
         border-radius: var(--r-full);
         cursor: pointer;
+        white-space: nowrap;
       }
       .mnav-btn.active {
         background: var(--purple-d);
@@ -559,6 +561,115 @@
       }
 
       /* ══════════════════════════════════════════
+               KANBAN BOARD (TASKS)
+            ══════════════════════════════════════════ */
+      .kanban-layout {
+        display: flex;
+        gap: 24px;
+        padding: 24px;
+        height: 100%;
+        overflow-x: auto;
+        align-items: flex-start;
+      }
+      .kb-col {
+        flex: 1;
+        min-width: 280px;
+        display: flex;
+        flex-direction: column;
+        background: var(--surface);
+        border-radius: var(--r-lg);
+        padding: 16px;
+        border: 1px solid var(--border);
+        max-height: calc(100vh - 120px);
+      }
+      .kb-col-header {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .kb-count {
+        background: var(--bg);
+        color: var(--text-2);
+        padding: 2px 8px;
+        border-radius: var(--r-full);
+        font-size: 11px;
+      }
+      .kb-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow-y: auto;
+        padding-right: 4px;
+        padding-bottom: 16px;
+      }
+      .kb-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--r-md);
+        padding: 16px 20px;
+        cursor: grab;
+        transition: 0.2s;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .kb-card:hover {
+        border-color: var(--purple);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+      }
+      .kb-card-tags {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .kb-tag {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 4px;
+      }
+      .kb-tag.purple {
+        background: var(--purple-sm);
+        color: var(--purple-l);
+      }
+      .kb-tag.amber {
+        background: rgba(239, 159, 39, 0.15);
+        color: var(--amber-l);
+      }
+      .kb-tag.green {
+        background: var(--green-xs);
+        color: var(--green);
+      }
+      .kb-card-title {
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.4;
+        color: var(--text);
+      }
+      .kb-card-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 4px;
+      }
+      .kb-due {
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .kb-due .material-icons {
+        font-size: 14px;
+      }
+
+      /* ══════════════════════════════════════════
                COLLAB SCREEN
             ══════════════════════════════════════════ */
       .collab-layout {
@@ -576,7 +687,7 @@
         gap: 16px;
       }
       .collab-side {
-        width: 360px;
+        width: 380px;
         flex-shrink: 0;
         display: flex;
         flex-direction: column;
@@ -597,6 +708,7 @@
         align-items: center;
         gap: 8px;
       }
+      
       .collab-item-lg {
         background: var(--card);
         border: 1px solid var(--border);
@@ -612,17 +724,6 @@
         box-shadow: 0 8px 24px rgba(127, 119, 221, 0.15);
         transform: translateY(-2px);
       }
-      .collab-av-xl {
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        font-weight: 700;
-        flex-shrink: 0;
-      }
       .collab-item-info {
         flex: 1;
       }
@@ -635,6 +736,10 @@
         font-size: 13px;
         color: var(--text-2);
         line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
       }
 
       .tag-live {
@@ -671,6 +776,120 @@
       }
       .form-control:focus {
         border-color: var(--purple);
+      }
+
+      /* Avatar Utils */
+      .av {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+
+      /* アバターグループ */
+      .av-group {
+        display: flex;
+        align-items: center;
+      }
+      .av-group .av {
+        width: 48px;
+        height: 48px;
+        font-size: 16px;
+        border: 2px solid var(--card);
+        margin-left: -12px;
+      }
+      .av-group .av:first-child {
+        margin-left: 0;
+      }
+
+      /* 参加者チップ（横長） */
+      .participant-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r-full);
+        padding: 4px 12px 4px 4px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .participant-chip .av {
+        width: 24px;
+        height: 24px;
+        font-size: 10px;
+      }
+      .remove-icon {
+        font-size: 14px;
+        color: var(--muted);
+        cursor: pointer;
+        margin-left: 4px;
+      }
+      .remove-icon:hover {
+        color: #ff6b70;
+      }
+
+      /* 回答状況アイコン */
+      .status-ok { color: var(--green); }
+      .status-ng { color: var(--live); }
+      .status-pending { color: var(--amber); }
+
+      /* ツールチップ付きステータスグループ */
+      .status-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: default;
+      }
+      .status-group .tooltip {
+        visibility: hidden;
+        opacity: 0;
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--card-2);
+        border: 1px solid var(--border-l);
+        color: var(--text);
+        padding: 6px 10px;
+        border-radius: var(--r-sm);
+        font-size: 11px;
+        white-space: nowrap;
+        box-shadow: var(--shadow-md);
+        transition: opacity 0.2s;
+        margin-bottom: 6px;
+        z-index: 10;
+        pointer-events: none;
+      }
+      /* 下向きの三角形（矢印） */
+      .status-group .tooltip::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -4px;
+        border-width: 4px;
+        border-style: solid;
+        border-color: var(--border-l) transparent transparent transparent;
+      }
+      .status-group:hover .tooltip {
+        visibility: visible;
+        opacity: 1;
+      }
+      .status-count {
+        font-size: 13px;
+        font-weight: 700;
+        font-family: 'Space Grotesk', sans-serif;
+        color: var(--text-2);
+      }
+      .status-count.muted {
+        color: var(--muted);
       }
 
       /* ══════════════════════════════════════════
@@ -796,19 +1015,6 @@
         color: var(--purple-l);
       }
 
-      /* Avatar Utils */
-      .av {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 11px;
-        font-weight: 700;
-        flex-shrink: 0;
-      }
-
       /* ══════════════════════════════════════════
                COMMENT TREE
             ══════════════════════════════════════════ */
@@ -831,7 +1037,6 @@
         margin-left: 40px;
         position: relative;
       }
-      /* Reply line indicator */
       .comment-node.reply::before {
         content: '';
         position: absolute;
@@ -893,7 +1098,6 @@
         color: var(--purple-l);
       }
 
-      /* Comment Input */
       .comment-input-wrapper {
         display: flex;
         gap: 12px;
@@ -1053,11 +1257,14 @@
     <nav class="mockup-nav">
       <span class="mockup-nav-label">🐿 MOCK NAV</span>
       <button class="mnav-btn" onclick="switchScreen('dashboard')">🏠 ダッシュボード</button>
-      <button class="mnav-btn active" onclick="switchScreen('schedule')">📅 スケジュール</button>
+      <button class="mnav-btn" onclick="switchScreen('schedule')">📅 スケジュール</button>
       <button class="mnav-btn" onclick="switchScreen('schedule-detail')">📝 予定詳細</button>
-      <button class="mnav-btn" onclick="switchScreen('collab')">🤝 コラボ一覧</button>
+      <button class="mnav-btn" onclick="switchScreen('tasks')">✅ タスク管理</button>
+      <button class="mnav-btn" onclick="switchScreen('task-detail')">📝 タスク詳細</button>
+      <button class="mnav-btn active" onclick="switchScreen('collab')">🤝 コラボ一覧</button>
       <button class="mnav-btn" onclick="switchScreen('collab-detail')">🤝 コラボ詳細</button>
       <button class="mnav-btn" onclick="switchScreen('members')">👥 メンバー</button>
+      <button class="mnav-btn" onclick="switchScreen('settings-task')">⚙️ 設定(タスク)</button>
     </nav>
 
     <div class="app-layout">
@@ -1080,11 +1287,13 @@
               </a>
               <div class="sidebar-submenu" style="display: block">
                 <ul>
-                  <li class="sub-schedule active" onclick="switchScreen('schedule')">
+                  <li class="sub-schedule" onclick="switchScreen('schedule')">
                     <a href="#">スケジュール</a>
                   </li>
-                  <li class="sub-task"><a href="#">タスク管理</a></li>
-                  <li class="sub-collab" onclick="switchScreen('collab')">
+                  <li class="sub-task" onclick="switchScreen('tasks')">
+                    <a href="#">タスク管理</a>
+                  </li>
+                  <li class="sub-collab active" onclick="switchScreen('collab')">
                     <a href="#" style="display: flex; align-items: center; width: 100%"
                       >コラボ調整 <span class="badge">2</span></a
                     >
@@ -1120,6 +1329,19 @@
                 </ul>
               </div>
             </li>
+            <li class="sidebar-dropdown">
+              <a href="#">
+                <i class="material-icons">settings</i><span>設定</span
+                ><i class="material-icons arrow">chevron_right</i>
+              </a>
+              <div class="sidebar-submenu">
+                <ul>
+                  <li class="sub-settings-task" onclick="switchScreen('settings-task')">
+                    <a href="#">タスク管理</a>
+                  </li>
+                </ul>
+              </div>
+            </li>
           </ul>
         </div>
       </aside>
@@ -1141,7 +1363,7 @@
           </div>
         </div>
 
-        <div class="screen active" id="screen-schedule">
+        <div class="screen" id="screen-schedule">
           <div class="topbar">
             <div class="topbar-title">スケジュール <small>2026年5月</small></div>
             <div class="topbar-actions">
@@ -1495,7 +1717,244 @@
           </div>
         </div>
 
-        <div class="screen" id="screen-collab">
+        <div class="screen" id="screen-tasks">
+          <div class="topbar">
+            <div class="topbar-title">タスク管理 <small>全10件</small></div>
+            <div class="topbar-actions">
+              <button class="btn btn-primary" style="font-size: 12px">
+                <i class="material-icons" style="font-size: 16px">add</i>タスクを追加
+              </button>
+              <div style="width: 1px; height: 24px; background: var(--border); margin: 0 8px"></div>
+              <button class="notif-btn" onclick="toggleNotif()">
+                <i class="material-icons">notifications</i><span class="notif-badge"></span>
+              </button>
+            </div>
+          </div>
+
+          <div class="kanban-layout">
+            <div class="kb-col">
+              <div class="kb-col-header">TODO <span class="kb-count">3</span></div>
+              <div class="kb-list">
+                <div class="kb-card" onclick="switchScreen('task-detail')">
+                  <div class="kb-card-tags"><span class="kb-tag purple">編集</span></div>
+                  <div class="kb-card-title">概要欄テンプレ更新</div>
+                  <div class="kb-card-meta">
+                    <div class="av" style="background: var(--purple-d); color: var(--purple-l)">RK</div>
+                    <div class="kb-due"><i class="material-icons">event</i> 5/14</div>
+                  </div>
+                </div>
+                <div class="kb-card">
+                  <div class="kb-card-tags"><span class="kb-tag amber">企画</span></div>
+                  <div class="kb-card-title">コラボ企画書 v2 作成</div>
+                  <div class="kb-card-meta">
+                    <div class="av" style="background: rgba(239, 159, 39, 0.2); color: var(--amber-l)">MG</div>
+                    <div class="kb-due"><i class="material-icons">event</i> 5/15</div>
+                  </div>
+                </div>
+                <div class="kb-card">
+                  <div class="kb-card-tags"><span class="kb-tag purple">台本</span></div>
+                  <div class="kb-card-title">Shorts 台本 3本分</div>
+                  <div class="kb-card-meta">
+                    <div class="av" style="background: rgba(127, 119, 221, 0.2); color: var(--purple-l)">TK</div>
+                    <div class="kb-due"><i class="material-icons">event</i> 5/16</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="kb-col">
+              <div class="kb-col-header" style="color: var(--amber-l)">進行中 <span class="kb-count">2</span></div>
+              <div class="kb-list">
+                <div class="kb-card" style="border-color: var(--amber-d);">
+                  <div class="kb-card-tags"><span class="kb-tag green">動画編集</span></div>
+                  <div class="kb-card-title">4月振り返り動画 編集</div>
+                  <div class="kb-card-meta">
+                    <div class="av" style="background: rgba(74, 222, 128, 0.2); color: #4ade80">SA</div>
+                    <div class="kb-due"><i class="material-icons">event</i> 5/13</div>
+                  </div>
+                </div>
+                <div class="kb-card" style="border-color: var(--amber-d);">
+                  <div class="kb-card-tags"><span class="kb-tag amber">サムネ</span></div>
+                  <div class="kb-card-title">サムネイル3本 デザイン</div>
+                  <div class="kb-card-meta">
+                    <div class="av" style="background: rgba(239, 159, 39, 0.2); color: var(--amber-l)">MG</div>
+                    <div class="kb-due"><i class="material-icons">event</i> 5/12</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="kb-col">
+              <div class="kb-col-header" style="color: var(--green)">完了 <span class="kb-count">2</span></div>
+              <div class="kb-list">
+                <div class="kb-card" style="opacity: 0.6;">
+                  <div class="kb-card-tags"><span class="kb-tag purple">アップロード</span></div>
+                  <div class="kb-card-title">先週のLIVEアーカイブ公開</div>
+                  <div class="kb-card-meta">
+                    <div class="av" style="background: var(--purple-d); color: var(--purple-l)">RK</div>
+                    <div class="kb-due"><i class="material-icons">event</i> 5/11</div>
+                  </div>
+                </div>
+                <div class="kb-card" style="opacity: 0.6;">
+                  <div class="kb-card-tags"><span class="kb-tag green">撮影</span></div>
+                  <div class="kb-card-title">Short素材撮影 2本</div>
+                  <div class="kb-card-meta">
+                    <div class="av" style="background: rgba(74, 222, 128, 0.2); color: #4ade80">SA</div>
+                    <div class="kb-due"><i class="material-icons">event</i> 5/12</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen" id="screen-task-detail">
+          <div style="flex: 1; background: var(--surface); opacity: 0.5">
+            <div class="topbar"><div class="topbar-title">タスク管理</div></div>
+            <div style="height: 100%; background: var(--bg)"></div>
+          </div>
+
+          <div class="overlay">
+            <div class="popup-lg">
+              <div
+                style="
+                  height: 6px;
+                  background: linear-gradient(90deg, var(--purple-d), var(--purple-l));
+                  flex-shrink: 0;
+                "
+              ></div>
+              <div class="popup-lg-header">
+                <div class="popup-lg-icon"><i class="material-icons">task_alt</i></div>
+                <div style="flex: 1">
+                  <div class="popup-lg-title" style="display:flex; align-items:center; gap:8px;">
+                    Shorts 台本 3本分 <i class="material-icons edit-icon" style="font-size:18px;">edit</i>
+                  </div>
+                  <div style="display: flex; gap: 10px; flex-wrap: wrap">
+                    <span class="kb-tag purple">台本</span>
+                  </div>
+                </div>
+                <button class="popup-lg-close" onclick="switchScreen('tasks')">
+                  <i class="material-icons">close</i>
+                </button>
+              </div>
+              <div class="popup-lg-body">
+                <div class="popup-row-lg">
+                  <div class="popup-row-lg-icon"><i class="material-icons">flag</i></div>
+                  <div style="flex: 1">
+                    <div class="popup-row-lg-label">ステータス</div>
+                    <select class="form-control" style="width: 200px; padding: 8px 12px">
+                      <option selected>TODO</option>
+                      <option>進行中</option>
+                      <option>完了</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="popup-row-lg">
+                  <div class="popup-row-lg-icon"><i class="material-icons">local_offer</i></div>
+                  <div style="flex: 1">
+                    <div class="popup-row-lg-label">タスクカテゴリ</div>
+                    <select class="form-control" style="width: 200px; padding: 8px 12px">
+                      <option selected>台本</option>
+                      <option>動画編集</option>
+                      <option>企画</option>
+                      <option>サムネ</option>
+                      <option>撮影</option>
+                      <option>アップロード</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="popup-row-lg">
+                  <div class="popup-row-lg-icon"><i class="material-icons">person</i></div>
+                  <div style="flex: 1">
+                    <div class="popup-row-lg-label">担当者</div>
+                    <div style="display: flex; align-items:center; gap:12px; margin-top:4px;">
+                      <div class="av" style="background: rgba(127, 119, 221, 0.2); color: var(--purple-l); width:32px; height:32px; font-size:12px;">TK</div>
+                      <div style="font-size:14px; font-weight:600;">台本ライター（TK）</div>
+                      <i class="material-icons edit-icon">edit</i>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="popup-row-lg">
+                  <div class="popup-row-lg-icon"><i class="material-icons">event</i></div>
+                  <div style="flex: 1">
+                    <div class="popup-row-lg-label">期限</div>
+                    <div
+                      class="popup-row-lg-val"
+                      style="font-family: 'Space Grotesk', sans-serif; color: var(--text)"
+                    >
+                      <div style="font-size: 18px;">2026年 05月 16日（土）</div>
+                      <i class="material-icons edit-icon">calendar_month</i>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="popup-row-lg">
+                  <div class="popup-row-lg-icon"><i class="material-icons">description</i></div>
+                  <div style="flex: 1">
+                    <div class="popup-row-lg-label">タスク説明</div>
+                    <textarea class="form-control" rows="4" style="resize:vertical;">・新シーズンの武器解説（30秒）
+・面白いキル集まとめ用（セリフのみ）
+・雑談の切り抜き用</textarea>
+                  </div>
+                </div>
+
+                <div class="comment-section">
+                  <div class="popup-row-lg-label" style="margin-bottom: 16px">コメント / メモ</div>
+
+                  <div class="comment-list">
+                    <div class="comment-node">
+                      <div
+                        class="av"
+                        style="background: var(--purple-d); color: var(--purple-l)"
+                      >
+                        RK
+                      </div>
+                      <div class="comment-content">
+                        <div class="comment-meta">
+                          <strong>リスケるch (あなた)</strong><span>11:00</span>
+                        </div>
+                        <div class="comment-text">TKさん、武器解説は新しいアサルトライフルメインでお願いします！</div>
+                        <div class="comment-actions">
+                          <button class="comment-action-btn">返信する</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="comment-input-wrapper">
+                    <div class="av" style="background: var(--purple-d); color: var(--purple-l)">
+                      RK
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+                      <textarea
+                        class="comment-input"
+                        placeholder="コメントを入力..."
+                      ></textarea>
+                      <div style="align-self: flex-end">
+                        <button class="btn btn-primary" style="font-size: 13px; padding: 6px 14px">
+                          送信
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="popup-lg-footer">
+                <button class="btn btn-danger" style="margin-right: auto">
+                  <i class="material-icons" style="font-size: 16px">delete</i> 削除
+                </button>
+                <button class="btn btn-primary" onclick="switchScreen('tasks')">
+                  <i class="material-icons" style="font-size: 16px">save</i> 保存
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen active" id="screen-collab">
           <div class="topbar">
             <div class="topbar-title">コラボ調整 <small>受信 2件・送信 1件</small></div>
             <div class="topbar-actions">
@@ -1521,11 +1980,9 @@
                 class="collab-item-lg"
                 style="border-color: var(--purple); box-shadow: 0 0 0 1px var(--purple)"
               >
-                <div
-                  class="collab-av-xl"
-                  style="background: linear-gradient(135deg, #3a1a6a, #6a2a9a); color: #cc88ff"
-                >
-                  NA
+                <div class="av-group">
+                  <div class="av" style="background: var(--purple-d); color: var(--purple-l)">RK</div>
+                  <div class="av" style="background: linear-gradient(135deg, #3a1a6a, #6a2a9a); color: #cc88ff">NA</div>
                 </div>
                 <div class="collab-item-info">
                   <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px">
@@ -1536,12 +1993,12 @@
                         color: var(--muted);
                         font-family: 'Space Grotesk', sans-serif;
                       "
-                      >2時間前 受信</span
+                      >2時間前 更新</span
                     >
                   </div>
-                  <div class="collab-item-name">NanaStream からのコラボ打診</div>
+                  <div class="collab-item-name">NanaStreamとのApexコラボ</div>
                   <div class="collab-item-sub">
-                    「一緒にApexかモンハンでコラボしたい！視聴者参加型で楽しくやりたいです。」
+                    一緒にApexかモンハンでコラボしたい！視聴者参加型で...
                   </div>
                 </div>
                 <button
@@ -1554,11 +2011,9 @@
               </div>
 
               <div class="collab-item-lg">
-                <div
-                  class="collab-av-xl"
-                  style="background: linear-gradient(135deg, #1a3a1a, #2a6a2a); color: #66cc66"
-                >
-                  YK
+                <div class="av-group">
+                  <div class="av" style="background: var(--purple-d); color: var(--purple-l)">RK</div>
+                  <div class="av" style="background: linear-gradient(135deg, #1a3a1a, #2a6a2a); color: #66cc66">YK</div>
                 </div>
                 <div class="collab-item-info">
                   <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px">
@@ -1569,11 +2024,11 @@
                         color: var(--muted);
                         font-family: 'Space Grotesk', sans-serif;
                       "
-                      >1日前 受信</span
+                      >1日前 更新</span
                     >
                   </div>
-                  <div class="collab-item-name">Yuki_GG からのコラボ打診</div>
-                  <div class="collab-item-sub">Apex 大会に向けた練習コラボのお誘い</div>
+                  <div class="collab-item-name">Apex 大会に向けた練習コラボ</div>
+                  <div class="collab-item-sub">来週あたり、一緒にApexかモンハンでコラボしませんか...</div>
                 </div>
                 <button class="btn btn-ghost" style="margin-left: auto; flex-shrink: 0">
                   詳細を見る
@@ -1587,17 +2042,31 @@
                   <i class="material-icons">handshake</i>新規コラボ打診
                 </div>
                 <div class="form-group">
-                  <label class="form-label">コラボ先</label>
-                  <input type="text" class="form-control" placeholder="例: Yuki_GG" />
+                  <label class="form-label">タイトル <span style="color:var(--live)">*</span></label>
+                  <input type="text" class="form-control" placeholder="例: Apex大会練習" />
                 </div>
                 <div class="form-group">
                   <label class="form-label">内容</label>
                   <textarea
                     class="form-control"
-                    placeholder="コラボ内容..."
+                    placeholder="コラボ内容詳細..."
                     rows="2"
                     style="resize: vertical; min-height: 60px"
                   ></textarea>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">参加者</label>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                      <div class="participant-chip">
+                          <div class="av" style="background: var(--purple-d); color: var(--purple-l);">RK</div>
+                          リスケるch
+                      </div>
+                      <button class="btn btn-ghost" style="padding: 4px 8px; border-radius: var(--r-full); border-style: dashed;"><i class="material-icons" style="font-size:16px;">person_add</i> メンバー</button>
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                      <input type="text" class="form-control" placeholder="外部参加者の名前" style="flex:1;" />
+                      <button class="btn btn-ghost" style="background: var(--surface);">追加</button>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label class="form-label">希望日時</label>
@@ -1698,36 +2167,9 @@
               ></div>
               <div class="popup-lg-header" style="border-bottom: none; padding-bottom: 12px">
                 <div style="flex: 1">
-                  <div
-                    style="
-                      font-size: 13px;
-                      font-weight: 700;
-                      color: var(--amber);
-                      letter-spacing: 0.05em;
-                      margin-bottom: 12px;
-                    "
-                  >
-                    <i
-                      class="material-icons"
-                      style="font-size: 14px; vertical-align: middle; margin-right: 4px"
-                      >move_to_inbox</i
-                    >受信したコラボ打診
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 20px">
-                    <div
-                      class="collab-av-xl"
-                      style="background: linear-gradient(135deg, #3a1a6a, #6a2a9a); color: #cc88ff"
-                    >
-                      NA
-                    </div>
-                    <div>
-                      <div style="font-size: 24px; font-weight: 700; margin-bottom: 4px">
-                        NanaStream
-                      </div>
-                      <div style="font-size: 13px; color: var(--muted)">
-                        登録者 28,400人 · Twitchメイン配信者
-                      </div>
-                    </div>
+                  <input type="text" class="form-control" value="Apex 大会に向けた練習コラボ" style="font-size: 18px; font-weight: 700; background: transparent; border-color: transparent; padding: 4px 8px; margin-left: -8px;" />
+                  <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px;">
+                      <span class="tag-live">⏳ 返答待ち</span>
                   </div>
                 </div>
                 <button class="popup-lg-close" onclick="switchScreen('collab')">
@@ -1735,136 +2177,93 @@
                 </button>
               </div>
 
-              <div class="popup-lg-body" style="padding-top: 0">
-                <div>
-                  <div
-                    style="
-                      font-size: 13px;
-                      color: var(--muted);
-                      margin-bottom: 10px;
-                      font-weight: 600;
-                    "
-                  >
-                    内容
-                  </div>
-                  <div
-                    style="
-                      background: var(--surface);
-                      border: 1px solid var(--border);
-                      border-radius: var(--r-lg);
-                      padding: 16px;
-                      font-size: 14px;
-                      line-height: 1.7;
-                    "
-                  >
-                    お疲れ様です！NanaStreamです。<br />
-                    来週あたり、一緒にApexかモンハンでコラボしませんか？<br />
-                    視聴者参加型でワイワイ楽しくやりたいと考えています。初見さんも来やすい企画を準備予定です！
-                  </div>
+              <div class="popup-lg-body">
+                <div class="popup-row-lg">
+                    <div class="popup-row-lg-icon"><i class="material-icons">description</i></div>
+                    <div style="flex: 1;">
+                        <div class="popup-row-lg-label">内容</div>
+                        <textarea class="form-control" rows="3" style="resize:vertical;">来週あたり、一緒にApexかモンハンでコラボしませんか？
+視聴者参加型でワイワイ楽しくやりたいと考えています。初見さんも来やすい企画を準備予定です！</textarea>
+                    </div>
                 </div>
 
-                <div>
-                  <div
-                    style="
-                      font-size: 13px;
-                      color: var(--muted);
-                      margin-bottom: 10px;
-                      font-weight: 600;
-                      margin-top: 24px;
-                    "
-                  >
-                    候補日程
-                  </div>
-
-                  <div
-                    style="
-                      display: flex;
-                      align-items: center;
-                      justify-content: space-between;
-                      background: var(--bg);
-                      border: 1px solid var(--border);
-                      border-radius: var(--r-md);
-                      padding: 14px 18px;
-                      margin-bottom: 12px;
-                    "
-                  >
-                    <div style="display: flex; align-items: center; gap: 12px">
-                      <i class="material-icons" style="color: var(--muted)">event</i>
-                      <div
-                        style="
-                          font-size: 15px;
-                          font-weight: 700;
-                          font-family: 'Space Grotesk', sans-serif;
-                        "
-                      >
-                        5月 22日（金） 19:00 〜
-                      </div>
+                <div class="popup-row-lg">
+                    <div class="popup-row-lg-icon"><i class="material-icons">group</i></div>
+                    <div style="flex: 1;">
+                        <div class="popup-row-lg-label">参加者</div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                            <div class="participant-chip">
+                                <div class="av" style="background: var(--purple-d); color: var(--purple-l);">RK</div>
+                                リスケるch<i class="material-icons remove-icon">close</i>
+                            </div>
+                            <div class="participant-chip">
+                                <div class="av" style="background: rgba(74, 222, 128, 0.2); color: #4ade80;">SA</div>
+                                スタッフA<i class="material-icons remove-icon">close</i>
+                            </div>
+                            <div class="participant-chip">
+                                <div class="av" style="background: linear-gradient(135deg, #3a1a6a, #6a2a9a); color: #cc88ff;">NA</div>
+                                NanaStream<i class="material-icons remove-icon">close</i>
+                            </div>
+                            <button class="btn btn-ghost" style="padding: 4px 8px; border-radius: var(--r-full); border-style: dashed; font-size: 12px;"><i class="material-icons" style="font-size:16px;">person_add</i> メンバー追加</button>
+                        </div>
+                        <div style="display: flex; gap: 8px; max-width: 300px;">
+                            <input type="text" class="form-control" placeholder="外部参加者の名前" style="padding: 6px 12px; font-size: 13px;" />
+                            <button class="btn btn-ghost" style="padding: 6px 12px; font-size: 13px; background: var(--surface);">追加</button>
+                        </div>
                     </div>
-                    <button
-                      class="btn"
-                      style="
-                        background: var(--purple-sm);
-                        color: var(--purple-l);
-                        border: 1px solid var(--purple);
-                        padding: 8px 12px;
-                        font-size: 12px;
-                      "
-                    >
-                      <i class="material-icons" style="font-size: 16px">check</i>承諾
-                    </button>
-                  </div>
+                </div>
 
-                  <div
-                    style="
-                      display: flex;
-                      align-items: center;
-                      justify-content: space-between;
-                      background: var(--bg);
-                      border: 1px solid var(--border);
-                      border-radius: var(--r-md);
-                      padding: 14px 18px;
-                      margin-bottom: 12px;
-                    "
-                  >
-                    <div style="display: flex; align-items: center; gap: 12px">
-                      <i class="material-icons" style="color: var(--muted)">event</i>
-                      <div
-                        style="
-                          font-size: 15px;
-                          font-weight: 700;
-                          font-family: 'Space Grotesk', sans-serif;
-                        "
-                      >
-                        5月 24日（日） 20:00 〜
-                      </div>
+                <div class="popup-row-lg">
+                    <div class="popup-row-lg-icon"><i class="material-icons">event</i></div>
+                    <div style="flex: 1;">
+                        <div class="popup-row-lg-label">候補日程</div>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 12px 16px;">
+                                <div style="font-size: 15px; font-weight: 700; font-family: 'Space Grotesk', sans-serif;">5月 22日（金） 19:00 〜</div>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <div class="status-group">
+                                        <i class="material-icons status-ok" style="font-size: 18px;">check_circle</i>
+                                        <span class="status-count">2</span>
+                                        <div class="tooltip">リスケるch, スタッフA</div>
+                                    </div>
+                                    <div class="status-group">
+                                        <i class="material-icons status-ng" style="font-size: 18px;">cancel</i>
+                                        <span class="status-count muted">0</span>
+                                    </div>
+                                    <div class="status-group">
+                                        <i class="material-icons status-pending" style="font-size: 18px;">help</i>
+                                        <span class="status-count">1</span>
+                                        <div class="tooltip">NanaStream</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 12px 16px;">
+                                <div style="font-size: 15px; font-weight: 700; font-family: 'Space Grotesk', sans-serif;">5月 24日（日） 20:00 〜</div>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <div class="status-group">
+                                        <i class="material-icons status-ok" style="font-size: 18px;">check_circle</i>
+                                        <span class="status-count">2</span>
+                                        <div class="tooltip">リスケるch, NanaStream</div>
+                                    </div>
+                                    <div class="status-group">
+                                        <i class="material-icons status-ng" style="font-size: 18px;">cancel</i>
+                                        <span class="status-count">1</span>
+                                        <div class="tooltip">スタッフA</div>
+                                    </div>
+                                    <div class="status-group">
+                                        <i class="material-icons status-pending" style="font-size: 18px;">help</i>
+                                        <span class="status-count muted">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-ghost" style="width: 100%; border-style: dashed; color: var(--amber-l); font-size: 13px;" onclick="openDatePicker()">
+                            <i class="material-icons" style="font-size: 16px;">edit_calendar</i>別の日程を提案する
+                        </button>
                     </div>
-                    <button
-                      class="btn"
-                      style="
-                        background: var(--purple-sm);
-                        color: var(--purple-l);
-                        border: 1px solid var(--purple);
-                        padding: 8px 12px;
-                        font-size: 12px;
-                      "
-                    >
-                      <i class="material-icons" style="font-size: 16px">check</i>承諾
-                    </button>
-                  </div>
-
-                  <button
-                    class="btn btn-ghost"
-                    style="
-                      width: 100%;
-                      border-style: dashed;
-                      color: var(--amber-l);
-                      font-size: 13px;
-                    "
-                    onclick="openDatePicker()"
-                  >
-                    <i class="material-icons" style="font-size: 16px">edit_calendar</i
-                    >別の日程を提案する
-                  </button>
                 </div>
 
                 <div class="comment-section">
@@ -1989,6 +2388,80 @@
                   台本ライター（TK）
                 </div>
                 <div style="font-size: 12px; color: var(--muted)">台本・企画立案 (オフライン)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen" id="screen-settings-task">
+          <div class="topbar">
+            <div class="topbar-title">設定 <small>タスク管理</small></div>
+            <div class="topbar-actions">
+              <button class="notif-btn" onclick="toggleNotif()">
+                <i class="material-icons">notifications</i><span class="notif-badge"></span>
+              </button>
+            </div>
+          </div>
+          <div style="padding: 24px; max-width: 800px; margin: 0 auto; width: 100%; overflow-y: auto;">
+            <div class="c-card">
+              <div class="c-card-title" style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <i class="material-icons">local_offer</i> タスクカテゴリ設定
+                </div>
+                <button class="btn btn-primary" style="font-size:12px; padding:6px 12px;">
+                  <i class="material-icons" style="font-size:16px;">add</i>カテゴリを追加
+                </button>
+              </div>
+              
+              <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">
+                タスクに設定できるカテゴリ（タグ）を管理します。色はランダムまたは指定して追加できます。
+              </p>
+
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md);">
+                  <div style="display:flex; align-items:center; gap:16px;">
+                    <span class="kb-tag purple" style="font-size:12px; padding:4px 10px;">編集</span>
+                    <span style="font-size:14px; font-weight:600;">編集</span>
+                  </div>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn-ghost" style="padding:6px;"><i class="material-icons" style="font-size:18px;">edit</i></button>
+                    <button class="btn btn-ghost" style="padding:6px; color:#ff6b70;"><i class="material-icons" style="font-size:18px;">delete</i></button>
+                  </div>
+                </div>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md);">
+                  <div style="display:flex; align-items:center; gap:16px;">
+                    <span class="kb-tag amber" style="font-size:12px; padding:4px 10px;">企画</span>
+                    <span style="font-size:14px; font-weight:600;">企画</span>
+                  </div>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn-ghost" style="padding:6px;"><i class="material-icons" style="font-size:18px;">edit</i></button>
+                    <button class="btn btn-ghost" style="padding:6px; color:#ff6b70;"><i class="material-icons" style="font-size:18px;">delete</i></button>
+                  </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md);">
+                  <div style="display:flex; align-items:center; gap:16px;">
+                    <span class="kb-tag purple" style="font-size:12px; padding:4px 10px;">台本</span>
+                    <span style="font-size:14px; font-weight:600;">台本</span>
+                  </div>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn-ghost" style="padding:6px;"><i class="material-icons" style="font-size:18px;">edit</i></button>
+                    <button class="btn btn-ghost" style="padding:6px; color:#ff6b70;"><i class="material-icons" style="font-size:18px;">delete</i></button>
+                  </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md);">
+                  <div style="display:flex; align-items:center; gap:16px;">
+                    <span class="kb-tag green" style="font-size:12px; padding:4px 10px;">動画編集</span>
+                    <span style="font-size:14px; font-weight:600;">動画編集</span>
+                  </div>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn-ghost" style="padding:6px;"><i class="material-icons" style="font-size:18px;">edit</i></button>
+                    <button class="btn btn-ghost" style="padding:6px; color:#ff6b70;"><i class="material-icons" style="font-size:18px;">delete</i></button>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
@@ -2123,8 +2596,10 @@
 
         let subClass = '';
         if (id.startsWith('schedule')) subClass = '.sub-schedule';
+        else if (id.startsWith('task')) subClass = '.sub-task';
         else if (id.startsWith('collab')) subClass = '.sub-collab';
         else if (id === 'members') subClass = '.sub-members';
+        else if (id.startsWith('settings-task')) subClass = '.sub-settings-task';
 
         if (subClass) {
           const li = document.querySelector(subClass);

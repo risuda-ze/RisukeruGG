@@ -118,6 +118,8 @@ export interface Task {
   assigneeId: string | null;
   dueDate: Date | null;
   linkedScheduleId: string | null;
+  /** チーム内コメント（CollabComment と同一構造） */
+  comments?: CollabComment[];
   updatedAt: Date;
   createdBy: string;
   createdAt: Date;

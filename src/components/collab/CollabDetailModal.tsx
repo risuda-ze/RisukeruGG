@@ -45,11 +45,7 @@ function StatusBadge({ status }: { status: CollabSession['status'] }) {
     return (
       <span
         className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border"
-        style={{
-          background: 'var(--live-xs)',
-          color: 'var(--live)',
-          borderColor: 'rgba(255,77,109,0.3)',
-        }}
+        style={{ background: 'var(--live-xs)', color: 'var(--live)', borderColor: 'rgba(255,77,109,0.3)' }}
       >
         ⏳ {label}
       </span>
@@ -59,11 +55,7 @@ function StatusBadge({ status }: { status: CollabSession['status'] }) {
     return (
       <span
         className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border"
-        style={{
-          background: 'rgba(74,222,128,0.15)',
-          color: 'var(--green)',
-          borderColor: 'rgba(74,222,128,0.3)',
-        }}
+        style={{ background: 'rgba(74,222,128,0.15)', color: 'var(--green)', borderColor: 'rgba(74,222,128,0.3)' }}
       >
         ✓ {label}
       </span>
@@ -103,23 +95,12 @@ function ResponseAggregate({
       {names.length > 0 && (
         <div
           className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-[6px] text-[11px] whitespace-nowrap pointer-events-none z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{
-            background: 'var(--card-2)',
-            border: '1px solid var(--border-l)',
-            color: 'var(--text)',
-            boxShadow: 'var(--shadow-md)',
-          }}
+          style={{ background: 'var(--card-2)', border: '1px solid var(--border-l)', color: 'var(--text)', boxShadow: 'var(--shadow-md)' }}
         >
           {names.join(', ')}
           <div
             className="absolute top-full left-1/2 -translate-x-1/2 -mt-px"
-            style={{
-              width: 0,
-              height: 0,
-              borderLeft: '4px solid transparent',
-              borderRight: '4px solid transparent',
-              borderTop: '4px solid var(--border-l)',
-            }}
+            style={{ width: 0, height: 0, borderLeft: '4px solid transparent', borderRight: '4px solid transparent', borderTop: '4px solid var(--border-l)' }}
           />
         </div>
       )}
@@ -152,15 +133,13 @@ export function CollabDetailModal({
 
   /* 候補日程 */
   const [proposedDates, setProposedDates] = useState<Date[]>(session.proposedDates);
-  const [participantResponses, setParticipantResponses] = useState(
-    session.participantResponses ?? {}
-  );
+  const [participantResponses, setParticipantResponses] = useState(session.participantResponses ?? {});
   const [showAddDate, setShowAddDate] = useState(false);
   const [newDateValue, setNewDateValue] = useState('');
   const [addingDate, setAddingDate] = useState(false);
 
-  /* コメント */
-  const [comments, setComments] = useState<import('@/types/entities').CollabComment[]>(session.comments ?? []);
+  /* コメント（Firestore 永続化） */
+  const [comments, setComments] = useState<CollabComment[]>(session.comments ?? []);
   const [commentText, setCommentText] = useState('');
   const [sendingComment, setSendingComment] = useState(false);
 
@@ -197,7 +176,7 @@ export function CollabDetailModal({
     if (editingContent) contentRef.current?.focus();
   }, [editingContent]);
 
-  /* Firestoreのリアルタイム更新（回答・候補日程の追加を即時反映） */
+  /* Firestoreのリアルタイム更新（回答・候補日程・コメントを即時反映） */
   useEffect(() => {
     if (!teamId) return;
     const ref = doc(db, 'teams', teamId, 'collabSessions', session.id);
@@ -208,6 +187,15 @@ export function CollabDetailModal({
       if (rawResponses) setParticipantResponses(rawResponses);
       const rawDates = data.proposedDates as Timestamp[] | null;
       if (rawDates) setProposedDates(rawDates.map((t) => t.toDate()));
+      /* コメントも onSnapshot で同期（手動更新は楽観的更新のみ） */
+      const rawComments = (data.comments as Array<Record<string, unknown>> | null) ?? [];
+      setComments(rawComments.map((c) => ({
+        id: c.id as string,
+        authorId: c.authorId as string,
+        authorName: c.authorName as string,
+        text: c.text as string,
+        createdAt: (c.createdAt as Timestamp).toDate(),
+      })));
     });
     return unsub;
   }, [teamId, session.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -272,25 +260,14 @@ export function CollabDetailModal({
     updateCollabParticipants(teamId, session.id, updated);
   }
 
-  /* 回答状況の集計（明示的な回答のみカウント、未回答は除外） */
+  /* 回答状況の集計 */
   function getDateAggregates(dateIndex: number) {
-    const okNames: string[] = [];
-    const ngNames: string[] = [];
-    const pendingNames: string[] = [];
-    for (const [, responses] of Object.entries(participantResponses)) {
-      const resp = responses[dateIndex.toString()];
-      if (resp === 'ok') okNames.push('');
-      else if (resp === 'ng') ngNames.push('');
-      else if (resp === 'pending') pendingNames.push('');
-    }
-    /* 名前を解決：participantResponses のキーと participants リストを照合 */
     const keyToName: Record<string, string> = {};
     for (const p of participants) {
       keyToName[p.id] = p.name;
       keyToName[p.name.replace(/[.#$[\]/]/g, '_')] = p.name;
     }
     const resolve = (key: string) => keyToName[key] ?? key;
-
     const ok: string[] = [];
     const ng: string[] = [];
     const pending: string[] = [];
@@ -303,14 +280,14 @@ export function CollabDetailModal({
     return { okNames: ok, ngNames: ng, pendingNames: pending };
   }
 
-  /* 候補日程を追加（ローカル状態も即時更新） */
+  /* 候補日程を追加（onSnapshot で反映） */
   async function handleAddDate() {
     if (!newDateValue || addingDate) return;
     setAddingDate(true);
     const newDate = new Date(newDateValue);
     try {
       await addCollabProposedDate(teamId, session.id, newDate);
-      /* onSnapshot が Firestore の更新を受信して proposedDates を更新するため、ここでは手動更新しない */
+      /* onSnapshot が更新を受信するため手動更新しない */
       setNewDateValue('');
       setShowAddDate(false);
     } finally {
@@ -318,9 +295,35 @@ export function CollabDetailModal({
     }
   }
 
+  /* コメント送信（Firestore + 楽観的ローカル更新） */
+  async function sendComment() {
+    if (!commentText.trim() || !currentUser || sendingComment) return;
+    const myMember = members.find((m) => m.userId === currentUser.uid);
+    setSendingComment(true);
+    try {
+      const newComment = {
+        id: `${Date.now()}`,
+        authorId: currentUser.uid,
+        authorName: myMember?.displayName ?? currentUser.displayName ?? 'あなた',
+        text: commentText.trim(),
+        createdAt: Timestamp.now(),
+      };
+      await addCollabComment(teamId, session.id, newComment);
+      /* onSnapshot が同期するが、楽観的に先行表示 */
+      setComments((prev: CollabComment[]) => [
+        ...prev,
+        { ...newComment, createdAt: newComment.createdAt.toDate() },
+      ]);
+      setCommentText('');
+    } finally {
+      setSendingComment(false);
+    }
+  }
+
   /* 返信追加（ローカルのみ） */
   function addReply(commentId: string) {
     if (!replyText.trim()) return;
+    const myMember = members.find((m) => m.userId === currentUser?.uid);
     const reply: LocalReply = {
       id: `r-${Date.now()}`,
       authorName: myMember?.displayName ?? 'あなた',
@@ -335,31 +338,7 @@ export function CollabDetailModal({
     setReplyingTo(null);
   }
 
-  /* コメント送信 */
-  async function sendComment() {
-    if (!commentText.trim() || !currentUser || sendingComment) return;
-    const myMember = members.find((m) => m.userId === currentUser.uid);
-    setSendingComment(true);
-    try {
-      const newComment = {
-        id: `${Date.now()}`,
-        authorId: currentUser.uid,
-        authorName: myMember?.displayName ?? currentUser.displayName ?? 'あなた',
-        text: commentText.trim(),
-        createdAt: Timestamp.now(),
-      };
-      await addCollabComment(teamId, session.id, newComment);
-      setComments((prev: CollabComment[]) => [
-        ...prev,
-        { ...newComment, createdAt: newComment.createdAt.toDate() },
-      ]);
-      setCommentText('');
-    } finally {
-      setSendingComment(false);
-    }
-  }
-
-  /* 日程確定（選択された最初の日程を確定） */
+  /* 日程確定 */
   async function handleConfirm() {
     if (selectedDateIdxs.length === 0 || !teamId) return;
     const idx = selectedDateIdxs[0];
@@ -398,15 +377,21 @@ export function CollabDetailModal({
   const myMember = members.find((m) => m.userId === currentUser?.uid);
 
   return (
-    /* オーバーレイ */
+    /* オーバーレイ（fixed に変更） */
     <div
-      className="absolute inset-0 z-[290] flex items-center justify-center p-10"
+      className="fixed inset-0 z-[290] flex items-center justify-center p-4"
       style={{ background: 'rgba(6,6,16,0.85)', backdropFilter: 'blur(6px)' }}
       onClick={onClose}
     >
       <div
-        className="w-[720px] max-h-[90vh] flex flex-col overflow-hidden rounded-[24px]"
+        className="flex flex-col overflow-hidden rounded-[24px]"
         style={{
+          width: 'min(900px, calc(100vw - 32px))',
+          minWidth: '320px',
+          height: 'min(720px, 92vh)',
+          minHeight: '400px',
+          maxHeight: 'calc(100vh - 32px)',
+          resize: 'both',
           background: 'var(--card-2)',
           border: '1px solid var(--border-l)',
           boxShadow: 'var(--shadow-xl)',
@@ -415,7 +400,7 @@ export function CollabDetailModal({
       >
         {/* アンバーグラデーションバー */}
         <div
-          className="h-2 shrink-0"
+          className="h-1.5 shrink-0"
           style={{ background: 'linear-gradient(90deg, var(--amber-d), var(--amber))' }}
         />
 
@@ -426,7 +411,6 @@ export function CollabDetailModal({
         >
           <div className="flex items-start gap-3">
             <div className="flex-1 min-w-0">
-              {/* インライン編集可能なタイトル */}
               {editingTitle ? (
                 <input
                   ref={titleRef}
@@ -444,7 +428,9 @@ export function CollabDetailModal({
                       onClick={() => setEditingTitle(true)}
                       className="shrink-0 text-muted hover:text-purple-l transition-colors"
                     >
-                      <span className="material-icons text-[16px]">edit</span>
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.013 2.513a1.75 1.75 0 0 1 2.475 2.474L6.226 12.25a2.751 2.751 0 0 1-.892.566l-2.35.864a.75.75 0 0 1-.96-.96l.864-2.35a2.75 2.75 0 0 1 .566-.892l7.56-7.559Z" />
+                      </svg>
                     </button>
                   )}
                 </div>
@@ -455,41 +441,48 @@ export function CollabDetailModal({
               onClick={onClose}
               className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center border border-border text-muted hover:text-text transition-colors"
               style={{ background: 'var(--surface)' }}
+              aria-label="閉じる"
             >
-              <span className="material-icons text-[20px]">close</span>
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l8 8M12 4l-8 8" />
+              </svg>
             </button>
           </div>
         </div>
 
-        {/* ボディ */}
-        <div className="flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-6">
-          {/* 確定日 */}
-          {session.status === 'confirmed' && session.confirmedDate && (
-            <div
-              className="rounded-[12px] p-4 border"
-              style={{ background: 'rgba(74,222,128,0.1)', borderColor: 'rgba(74,222,128,0.3)' }}
-            >
-              <div className="text-[11px] font-semibold text-green mb-1">確定日時</div>
-              <div className="text-[16px] font-bold text-text font-num">
-                {format(session.confirmedDate, 'M月d日（E） HH:mm', { locale: ja })}
-              </div>
-            </div>
-          )}
+        {/* ボディ — レスポンシブ2カラムレイアウト (600px 未満は縦積み) */}
+        <div className="flex-1 overflow-hidden flex flex-col min-[600px]:flex-row">
 
-          {/* 内容 */}
-          <div className="flex gap-4">
-            <span className="material-icons text-muted text-[22px] pt-0.5 w-7 text-center shrink-0">
-              description
-            </span>
-            <div className="flex-1">
+          {/* 左カラム: コラボ情報 */}
+          <div
+            className="flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-6 border-b min-[600px]:border-b-0 min-[600px]:border-r"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            {/* 確定日 */}
+            {session.status === 'confirmed' && session.confirmedDate && (
+              <div
+                className="rounded-[12px] p-4 border"
+                style={{ background: 'rgba(74,222,128,0.1)', borderColor: 'rgba(74,222,128,0.3)' }}
+              >
+                <div className="text-[11px] font-semibold text-green mb-1">確定日時</div>
+                <div className="text-[16px] font-bold text-text font-num">
+                  {format(session.confirmedDate, 'M月d日（E） HH:mm', { locale: ja })}
+                </div>
+              </div>
+            )}
+
+            {/* 内容 */}
+            <div>
               <div className="flex items-center justify-between mb-2">
-                <div className="text-[13px] font-semibold text-muted tracking-[0.05em]">内容</div>
+                <label className="text-[11px] font-semibold text-muted tracking-[0.06em] uppercase">内容</label>
                 {isOpen && canEdit && !editingContent && (
                   <button
                     onClick={() => setEditingContent(true)}
                     className="text-muted hover:text-purple-l transition-colors"
                   >
-                    <span className="material-icons text-[16px]">edit</span>
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.013 2.513a1.75 1.75 0 0 1 2.475 2.474L6.226 12.25a2.751 2.751 0 0 1-.892.566l-2.35.864a.75.75 0 0 1-.96-.96l.864-2.35a2.75 2.75 0 0 1 .566-.892l7.56-7.559Z" />
+                    </svg>
                   </button>
                 )}
               </div>
@@ -524,23 +517,15 @@ export function CollabDetailModal({
                   onClick={isOpen && canEdit ? () => setEditingContent(true) : undefined}
                 >
                   {contentValue || (
-                    <span className="text-muted italic">内容が入力されていません</span>
+                    <span className="text-muted italic text-[13px]">内容が入力されていません{isOpen && canEdit ? '（クリックして編集）' : ''}</span>
                   )}
                 </div>
               )}
             </div>
-          </div>
 
-          {/* 参加者 */}
-          <div className="flex gap-4">
-            <span className="material-icons text-muted text-[22px] pt-0.5 w-7 text-center shrink-0">
-              group
-            </span>
-            <div className="flex-1">
-              <div className="text-[13px] font-semibold text-muted tracking-[0.05em] mb-3">
-                参加者
-              </div>
-              {/* 参加者チップ */}
+            {/* 参加者 */}
+            <div>
+              <div className="text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-3">参加者</div>
               <div className="flex flex-wrap gap-2 mb-3">
                 {participants.map((p) => {
                   const style = avatarStyle(p.name);
@@ -562,13 +547,14 @@ export function CollabDetailModal({
                           onClick={() => removeParticipant(p.id)}
                           className="text-muted hover:text-live transition-colors"
                         >
-                          <span className="material-icons text-[14px]">close</span>
+                          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3 h-3">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l8 8M12 4l-8 8" />
+                          </svg>
                         </button>
                       )}
                     </div>
                   );
                 })}
-                {/* メンバー追加ボタン */}
                 {isOpen && canEdit && (
                   <div className="relative">
                     <button
@@ -582,10 +568,7 @@ export function CollabDetailModal({
                     {showMemberPicker && availableMembers.length > 0 && (
                       <div
                         className="absolute top-9 left-0 z-20 rounded-[12px] p-2 min-w-[200px] shadow-xl"
-                        style={{
-                          background: 'var(--card)',
-                          border: '1px solid var(--border-l)',
-                        }}
+                        style={{ background: 'var(--card)', border: '1px solid var(--border-l)' }}
                       >
                         {availableMembers.map((m) => {
                           const s = avatarStyle(m.displayName);
@@ -610,7 +593,6 @@ export function CollabDetailModal({
                   </div>
                 )}
               </div>
-              {/* 外部参加者追加 */}
               {isOpen && canEdit && (
                 <div className="flex gap-2 max-w-xs">
                   <input
@@ -631,17 +613,10 @@ export function CollabDetailModal({
                 </div>
               )}
             </div>
-          </div>
 
-          {/* 候補日程 */}
-          <div className="flex gap-4">
-            <span className="material-icons text-muted text-[22px] pt-0.5 w-7 text-center shrink-0">
-              event
-            </span>
-            <div className="flex-1">
-              <div className="text-[13px] font-semibold text-muted tracking-[0.05em] mb-3">
-                候補日程
-              </div>
+            {/* 候補日程 */}
+            <div>
+              <div className="text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-3">候補日程</div>
               <div className="flex flex-col gap-2 mb-3">
                 {proposedDates.map((date, i) => {
                   const { okNames, ngNames, pendingNames } = getDateAggregates(i);
@@ -650,38 +625,18 @@ export function CollabDetailModal({
                     <div
                       key={i}
                       className="flex items-center justify-between rounded-[12px] px-4 py-3 border transition-colors"
-                      style={{
-                        background: 'var(--surface)',
-                        borderColor: isSelected ? 'var(--purple)' : 'var(--border)',
-                      }}
+                      style={{ background: 'var(--surface)', borderColor: isSelected ? 'var(--purple)' : 'var(--border)' }}
                     >
                       <div
-                        className="text-[15px] font-bold font-num text-text"
+                        className="text-[14px] font-bold font-num text-text"
                         style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                       >
                         {format(date, 'M月 dd日（E） HH:mm 〜', { locale: ja })}
                       </div>
-                      <div className="flex items-center gap-4 shrink-0">
-                        {/* 回答集計 */}
-                        <ResponseAggregate
-                          icon="check_circle"
-                          iconClass="text-green"
-                          count={okNames.length}
-                          names={okNames}
-                        />
-                        <ResponseAggregate
-                          icon="cancel"
-                          iconClass="text-live"
-                          count={ngNames.length}
-                          names={ngNames}
-                        />
-                        <ResponseAggregate
-                          icon="help"
-                          iconClass="text-amber"
-                          count={pendingNames.length}
-                          names={pendingNames}
-                        />
-                        {/* 承諾（複数選択可） */}
+                      <div className="flex items-center gap-3 shrink-0">
+                        <ResponseAggregate icon="check_circle" iconClass="text-green" count={okNames.length} names={okNames} />
+                        <ResponseAggregate icon="cancel" iconClass="text-live" count={ngNames.length} names={ngNames} />
+                        <ResponseAggregate icon="help" iconClass="text-amber" count={pendingNames.length} names={pendingNames} />
                         {isOpen && canEdit && (
                           <button
                             onClick={() => toggleDateSelection(i)}
@@ -703,83 +658,81 @@ export function CollabDetailModal({
                   );
                 })}
               </div>
-
-              {/* 別の日程を提案する */}
               {isOpen && canEdit && (
-                <div>
-                  {showAddDate ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="datetime-local"
-                        value={newDateValue}
-                        onChange={(e) => setNewDateValue(e.target.value)}
-                        className="flex-1 bg-bg border border-border text-text px-3 py-2 rounded-[10px] text-[13px] outline-none focus:border-purple"
-                      />
-                      <button
-                        onClick={handleAddDate}
-                        disabled={!newDateValue || addingDate}
-                        className="px-3 py-2 rounded-[10px] text-[13px] font-semibold transition-colors disabled:opacity-40"
-                        style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
-                      >
-                        追加
-                      </button>
-                      <button
-                        onClick={() => setShowAddDate(false)}
-                        className="px-3 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-muted"
-                      >
-                        取消
-                      </button>
-                    </div>
-                  ) : (
+                showAddDate ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="datetime-local"
+                      value={newDateValue}
+                      onChange={(e) => setNewDateValue(e.target.value)}
+                      className="flex-1 bg-bg border border-border text-text px-3 py-2 rounded-[10px] text-[13px] outline-none focus:border-purple"
+                    />
                     <button
-                      onClick={() => setShowAddDate(true)}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-[12px] text-[13px] font-semibold border border-dashed transition-colors"
-                      style={{
-                        borderColor: 'var(--border)',
-                        color: 'var(--amber-l)',
-                      }}
+                      onClick={handleAddDate}
+                      disabled={!newDateValue || addingDate}
+                      className="px-3 py-2 rounded-[10px] text-[13px] font-semibold transition-colors disabled:opacity-40"
+                      style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
                     >
-                      <span className="material-icons text-[16px]">edit_calendar</span>
-                      別の日程を提案する
+                      追加
                     </button>
-                  )}
-                </div>
+                    <button
+                      onClick={() => setShowAddDate(false)}
+                      className="px-3 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-muted"
+                    >
+                      取消
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowAddDate(true)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-[12px] text-[13px] font-semibold border border-dashed transition-colors"
+                    style={{ borderColor: 'var(--border)', color: 'var(--amber-l)' }}
+                  >
+                    <span className="material-icons text-[16px]">edit_calendar</span>
+                    別の日程を提案する
+                  </button>
+                )
               )}
             </div>
           </div>
 
-          {/* コメント */}
-          <div className="border-t pt-6" style={{ borderColor: 'var(--border)' }}>
-            <div className="text-[13px] font-semibold text-muted tracking-[0.05em] mb-4">
-              コメント / メモ
-            </div>
+          {/* 右カラム: コメント（600px 未満では最大高さ 260px の縦積み） */}
+          <div
+            className="min-[600px]:w-[300px] min-[600px]:shrink-0 max-[599px]:max-h-[260px] flex flex-col overflow-hidden border-t min-[600px]:border-t-0"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <div className="flex flex-col flex-1 overflow-hidden min-h-0">
+              <div className="px-6 py-4 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
+                <p className="text-[11px] font-semibold text-muted tracking-[0.06em] uppercase">コメント / メモ</p>
+              </div>
 
-            {/* コメントリスト */}
-            {comments.length > 0 && (
-              <div className="flex flex-col gap-4 mb-4">
+              {/* コメントリスト */}
+              <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4" style={{ minHeight: 0 }}>
+                {comments.length === 0 && (
+                  <p className="text-[12px] text-muted italic text-center mt-4">まだコメントはありません</p>
+                )}
                 {comments.map((c) => {
                   const style = avatarStyle(c.authorName);
                   const replies = localReplies[c.id] ?? [];
                   return (
                     <div key={c.id}>
-                      {/* コメント本体 */}
-                      <div className="flex gap-3">
+                      <div className="flex gap-2.5">
                         <div
                           className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
                           style={{ background: style.bg, color: style.text }}
                         >
                           {c.authorName.slice(0, 2).toUpperCase()}
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div
-                            className="rounded-[0_12px_12px_12px] p-3"
+                            className="rounded-[0_10px_10px_10px] px-3 py-2"
                             style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
                           >
-                            <div className="flex justify-between mb-1.5 text-[12px] text-muted">
+                            <div className="flex justify-between mb-1 text-[11px] text-muted">
                               <strong className="text-text font-semibold">{c.authorName}</strong>
                               <span>{format(c.createdAt, 'HH:mm', { locale: ja })}</span>
                             </div>
-                            <div className="text-[14px] text-text leading-relaxed">{c.text}</div>
+                            <div className="text-[13px] text-text leading-relaxed">{c.text}</div>
                           </div>
                           <button
                             onClick={() => { setReplyingTo(c.id); setReplyText(''); }}
@@ -792,7 +745,7 @@ export function CollabDetailModal({
 
                       {/* 返信リスト */}
                       {replies.length > 0 && (
-                        <div className="ml-10 mt-2 flex flex-col gap-2 border-l-2 pl-3" style={{ borderColor: 'var(--border)' }}>
+                        <div className="ml-9 mt-2 flex flex-col gap-2 border-l-2 pl-3" style={{ borderColor: 'var(--border)' }}>
                           {replies.map((r) => {
                             const rs = avatarStyle(r.authorName);
                             return (
@@ -804,14 +757,14 @@ export function CollabDetailModal({
                                   {r.authorName.slice(0, 2).toUpperCase()}
                                 </div>
                                 <div
-                                  className="flex-1 rounded-[0_10px_10px_10px] px-3 py-2"
+                                  className="flex-1 rounded-[0_8px_8px_8px] px-2.5 py-1.5"
                                   style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
                                 >
-                                  <div className="flex justify-between mb-1 text-[11px] text-muted">
+                                  <div className="flex justify-between mb-0.5 text-[10px] text-muted">
                                     <strong className="text-text font-semibold">{r.authorName}</strong>
                                     <span>{r.time}</span>
                                   </div>
-                                  <div className="text-[13px] text-text leading-relaxed">{r.text}</div>
+                                  <div className="text-[12px] text-text leading-relaxed">{r.text}</div>
                                 </div>
                               </div>
                             );
@@ -821,17 +774,17 @@ export function CollabDetailModal({
 
                       {/* 返信入力 */}
                       {replyingTo === c.id && (
-                        <div className="ml-10 mt-2 flex flex-col gap-1.5 border-l-2 pl-3" style={{ borderColor: 'var(--purple)' }}>
+                        <div className="ml-9 mt-2 flex flex-col gap-1.5 border-l-2 pl-3" style={{ borderColor: 'var(--purple)' }}>
                           <textarea
                             value={replyText}
                             onChange={(e) => setReplyText(e.target.value)}
                             onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addReply(c.id); }}
                             placeholder="返信を入力..."
                             rows={2}
-                            className="w-full bg-bg border border-border text-text px-3 py-2 rounded-[10px] text-[13px] outline-none focus:border-purple resize-none"
+                            className="w-full bg-bg border border-border text-text px-2.5 py-2 rounded-[8px] text-[12px] outline-none focus:border-purple resize-none"
                             autoFocus
                           />
-                          <div className="flex gap-2 justify-end">
+                          <div className="flex gap-1.5 justify-end">
                             <button
                               onClick={() => setReplyingTo(null)}
                               className="px-2.5 py-1 rounded-[6px] text-[11px] font-semibold border border-border text-muted"
@@ -853,32 +806,26 @@ export function CollabDetailModal({
                   );
                 })}
               </div>
-            )}
 
-            {/* コメント入力 */}
-            <div className="flex gap-3 items-start">
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
-                style={(() => { const s = avatarStyle(myMember?.displayName ?? 'あ'); return { background: s.bg, color: s.text }; })()}
-              >
-                {(myMember?.displayName ?? 'あ').slice(0, 2).toUpperCase()}
-              </div>
-              <div className="flex-1 flex flex-col gap-2">
+              {/* コメント入力 */}
+              <div className="px-4 py-3 border-t shrink-0 flex flex-col gap-2" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
                 <textarea
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="この調整に関するチーム内への申し送り事項などを入力..."
+                  onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendComment(); }}
+                  placeholder="チーム内メモを入力..."
                   rows={2}
-                  className="w-full bg-bg border border-border text-text px-4 py-3 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple resize-y min-h-[70px]"
+                  className="w-full bg-bg border border-border text-text px-3 py-2 rounded-[10px] text-[12px] outline-none transition-colors focus:border-purple resize-none"
                 />
-                <div className="self-end">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] text-muted">Ctrl+Enter で送信</span>
                   <button
                     onClick={sendComment}
                     disabled={!commentText.trim() || sendingComment}
-                    className="px-3.5 py-1.5 rounded-[10px] text-[13px] font-semibold transition-colors disabled:opacity-40"
+                    className="px-3 py-1.5 rounded-[8px] text-[11px] font-semibold transition-colors disabled:opacity-40"
                     style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
                   >
-                    送信
+                    {sendingComment ? '送信中...' : '送信'}
                   </button>
                 </div>
               </div>
@@ -888,7 +835,7 @@ export function CollabDetailModal({
 
         {/* フッター */}
         <div
-          className="px-8 py-5 shrink-0 flex flex-col gap-3"
+          className="px-8 py-4 pr-10 shrink-0 flex flex-col gap-3"
           style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}
         >
           {/* 複数選択時の確定日程ヒント */}
@@ -908,11 +855,7 @@ export function CollabDetailModal({
                 onClick={handleCancel}
                 disabled={cancelling}
                 className="flex items-center gap-1.5 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold mr-auto border transition-colors"
-                style={{
-                  background: 'rgba(226,53,57,0.15)',
-                  color: '#ff6b70',
-                  borderColor: 'rgba(226,53,57,0.3)',
-                }}
+                style={{ background: 'rgba(226,53,57,0.15)', color: '#ff6b70', borderColor: 'rgba(226,53,57,0.3)' }}
               >
                 <span className="material-icons text-[16px]">delete</span>
                 削除
@@ -921,32 +864,22 @@ export function CollabDetailModal({
             <button
               onClick={copyUrl}
               className="flex items-center gap-1.5 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold border transition-colors"
-              style={{
-                background: 'transparent',
-                color: 'var(--muted)',
-                borderColor: 'var(--border)',
-              }}
+              style={{ background: 'transparent', color: 'var(--muted)', borderColor: 'var(--border)' }}
             >
               <span className="material-icons text-[16px]">link</span>
               {copied ? '✓ コピー済み' : 'URLをコピー'}
             </button>
-            {/* 変更を確定ボタン（isDirtyのとき表示） */}
             {canEdit && isOpen && isDirty && (
               <button
                 onClick={handleSaveChanges}
                 disabled={saving}
                 className="flex items-center gap-1.5 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold border transition-colors disabled:opacity-40"
-                style={{
-                  background: 'var(--amber-d)',
-                  color: 'var(--amber-l)',
-                  borderColor: 'var(--amber)',
-                }}
+                style={{ background: 'var(--amber-d)', color: 'var(--amber-l)', borderColor: 'var(--amber)' }}
               >
                 <span className="material-icons text-[16px]">save</span>
                 {saving ? '保存中...' : '変更を確定'}
               </button>
             )}
-            {/* 調整を確定ボタン */}
             {canEdit && isOpen && (
               <button
                 onClick={handleConfirm}
