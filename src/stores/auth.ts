@@ -18,6 +18,7 @@ interface AuthState {
   members: TeamMember[];
   loading: boolean;
   idToken: string | null;
+  googleAccessToken: string | null;
 
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -34,16 +35,26 @@ export const useAuthStore = create<AuthState>((set) => ({
   members: [],
   loading: true,
   idToken: null,
+  googleAccessToken: null,
 
   signIn: async () => {
     const provider = new GoogleAuthProvider();
     provider.addScope('https://www.googleapis.com/auth/calendar');
-    await signInWithPopup(auth, provider);
+    const result = await signInWithPopup(auth, provider);
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    if (credential?.accessToken) {
+      const expiresAt = Date.now() + 3500 * 1000;
+      try {
+        sessionStorage.setItem('gcal_token', JSON.stringify({ token: credential.accessToken, expiresAt }));
+      } catch {}
+      set({ googleAccessToken: credential.accessToken });
+    }
   },
 
   signOut: async () => {
     await firebaseSignOut(auth);
-    set({ currentUser: null, currentTeamId: null, currentTeam: null, members: [], idToken: null });
+    try { sessionStorage.removeItem('gcal_token'); } catch {}
+    set({ currentUser: null, currentTeamId: null, currentTeam: null, members: [], idToken: null, googleAccessToken: null });
   },
 
   _setUser: (user) => set({ currentUser: user }),
@@ -52,7 +63,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   _setLoading: (loading) => set({ loading }),
 }));
 
-// チーム購読のアンサブスクライバーを保持
+// 各種購読のアンサブスクライバーを保持
+let unsubUser: (() => void) | null = null;
 let unsubTeam: (() => void) | null = null;
 let unsubMembers: (() => void) | null = null;
 
@@ -69,33 +81,59 @@ export function initAuthListener() {
   });
 
   return onAuthStateChanged(auth, async (user) => {
-    const store = useAuthStore.getState();
-
     if (user) {
       useAuthStore.setState({ currentUser: user, loading: false });
 
-      // Firestoreからユーザーデータを取得してcurrentTeamIdを設定
-      const { getDoc, doc } = await import('firebase/firestore');
+      // sessionStorageからGoogleアクセストークンを復元
+      try {
+        const stored = sessionStorage.getItem('gcal_token');
+        if (stored) {
+          const { token, expiresAt } = JSON.parse(stored) as { token: string; expiresAt: number };
+          if (Date.now() < expiresAt) {
+            useAuthStore.setState({ googleAccessToken: token });
+          } else {
+            sessionStorage.removeItem('gcal_token');
+          }
+        }
+      } catch {}
+
+      const { doc, onSnapshot } = await import('firebase/firestore');
       const { db } = await import('@/lib/firebase/client');
-      const userSnap = await getDoc(doc(db, 'users', user.uid));
 
-      if (userSnap.exists()) {
-        const teamId = userSnap.data().currentTeamId as string | null;
-        useAuthStore.setState({ currentTeamId: teamId });
+      // 古いユーザードキュメント購読を解除して再設定
+      unsubUser?.();
 
-        if (teamId) {
-          // 古いサブスクリプションを解除
+      // users/{uid} をリアルタイム購読 → currentTeamId の変化に追従
+      unsubUser = onSnapshot(doc(db, 'users', user.uid), (snap) => {
+        if (!snap.exists()) return;
+        const newTeamId = snap.data().currentTeamId as string | null;
+        const prev = useAuthStore.getState().currentTeamId;
+
+        useAuthStore.setState({ currentTeamId: newTeamId });
+
+        if (newTeamId !== prev) {
           unsubTeam?.();
           unsubMembers?.();
+          unsubTeam = null;
+          unsubMembers = null;
 
-          // チームとメンバーをリアルタイム購読
-          unsubTeam = subscribeTeam(teamId, (team) => store._setTeam(team));
-          unsubMembers = subscribeMembers(teamId, (members) => store._setMembers(members));
+          if (newTeamId) {
+            unsubTeam = subscribeTeam(newTeamId, (team) =>
+              useAuthStore.setState({ currentTeam: team })
+            );
+            unsubMembers = subscribeMembers(newTeamId, (members) =>
+              useAuthStore.setState({ members })
+            );
+          } else {
+            useAuthStore.setState({ currentTeam: null, members: [] });
+          }
         }
-      }
+      });
     } else {
+      unsubUser?.();
       unsubTeam?.();
       unsubMembers?.();
+      unsubUser = null;
       unsubTeam = null;
       unsubMembers = null;
       useAuthStore.setState({

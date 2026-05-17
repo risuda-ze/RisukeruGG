@@ -15,11 +15,19 @@ interface WeekCalendarProps {
 const DOW_LABELS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
 const DEFAULT_EVENT_COLOR = '#7F77DD';
+const GCAL_EVENT_COLOR = '#4ade80';
 
 function getEventStyle(
   categoryId: string | null,
-  categories: ScheduleCategory[]
+  categories: ScheduleCategory[],
+  source?: 'google'
 ): { background: string; borderLeftColor: string } {
+  if (source === 'google') {
+    return {
+      background: `${GCAL_EVENT_COLOR}28`,
+      borderLeftColor: GCAL_EVENT_COLOR,
+    };
+  }
   const cat = categories.find((c) => c.id === categoryId);
   const color = cat?.color ?? DEFAULT_EVENT_COLOR;
   return {
@@ -139,7 +147,7 @@ export function WeekCalendar({
                   onClick={() => onDateClick?.(day)}
                 >
                   {daySchedules.map((s) => {
-                    const style = getEventStyle(s.categoryId, categories);
+                    const style = getEventStyle(s.categoryId, categories, s.source);
                     return (
                       <button
                         key={s.id}
@@ -196,7 +204,7 @@ export function WeekCalendar({
                 </div>
               ) : (
                 daySchedules.map((s) => {
-                  const style = getEventStyle(s.categoryId, categories);
+                  const style = getEventStyle(s.categoryId, categories, s.source);
                   return (
                     <button
                       key={s.id}

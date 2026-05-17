@@ -1,12 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { addMonths, subMonths, addWeeks, subWeeks, format, startOfWeek } from 'date-fns';
+import {
+  addMonths, subMonths, addWeeks, subWeeks, format, startOfWeek,
+  startOfMonth, endOfMonth, endOfWeek,
+} from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useAuthStore } from '@/stores/auth';
 import { useScheduleStore } from '@/stores/schedule';
 import { useScheduleCategoryStore } from '@/stores/scheduleCategories';
 import { createSchedule } from '@/lib/repositories/schedules';
+import { fetchGCalEvents } from '@/lib/googleCalendar';
+import type { GCalFetchError } from '@/lib/googleCalendar';
 import { TopBar } from '@/components/layout/TopBar';
 import { MonthCalendar } from '@/components/calendar/MonthCalendar';
 import { WeekCalendar } from '@/components/calendar/WeekCalendar';
@@ -17,13 +22,15 @@ import { ScheduleForm } from '@/components/calendar/ScheduleForm';
 import type { ScheduleEntry } from '@/types/entities';
 
 export default function SchedulePage() {
-  const { currentUser, currentTeamId, members } = useAuthStore();
+  const { currentUser, currentTeamId, members, googleAccessToken } = useAuthStore();
   const { schedules, loading, subscribe } = useScheduleStore();
   const { categories, subscribe: subscribeCategories } = useScheduleCategoryStore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week'>('month');
   const [showCreate, setShowCreate] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleEntry | null>(null);
+  const [gcalEvents, setGcalEvents] = useState<ScheduleEntry[]>([]);
+  const [gcalError, setGcalError] = useState<GCalFetchError>(null);
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const canEdit = myMember?.role === 'owner' || myMember?.role === 'editor';
@@ -37,6 +44,25 @@ export default function SchedulePage() {
       u2();
     };
   }, [currentTeamId, subscribe, subscribeCategories]);
+
+  // Googleカレンダーの個人予定を取得
+  useEffect(() => {
+    if (!googleAccessToken) {
+      setGcalEvents([]);
+      return;
+    }
+    const timeMin = view === 'month'
+      ? startOfMonth(currentDate)
+      : startOfWeek(currentDate, { weekStartsOn: 1 });
+    const timeMax = view === 'month'
+      ? endOfMonth(currentDate)
+      : endOfWeek(currentDate, { weekStartsOn: 1 });
+
+    fetchGCalEvents(googleAccessToken, timeMin, timeMax).then(({ events, error }) => {
+      setGcalEvents(events);
+      setGcalError(error);
+    });
+  }, [googleAccessToken, currentDate, view]);
 
   /* Firestore購読が更新したらselectedScheduleを同期 */
   useEffect(() => {
@@ -144,6 +170,14 @@ export default function SchedulePage() {
         </div>
       </div>
 
+      {/* Googleカレンダー認証期限切れバナー */}
+      {gcalError === 'auth_expired' && (
+        <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-amber/10 border-b border-amber/30 text-[12px] text-amber-l">
+          <span className="material-icons text-[16px]">warning</span>
+          Googleカレンダーの認証が切れています。再ログインすると個人予定が再表示されます。
+        </div>
+      )}
+
       {/* カレンダー */}
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
@@ -153,7 +187,7 @@ export default function SchedulePage() {
         <MonthCalendar
           year={year}
           month={month}
-          schedules={schedules}
+          schedules={[...schedules, ...gcalEvents]}
           categories={categories}
           onEventClick={setSelectedSchedule}
           onDateClick={canEdit ? () => setShowCreate(true) : undefined}
@@ -161,7 +195,7 @@ export default function SchedulePage() {
       ) : (
         <WeekCalendar
           currentDate={currentDate}
-          schedules={schedules}
+          schedules={[...schedules, ...gcalEvents]}
           categories={categories}
           onEventClick={setSelectedSchedule}
           onDateClick={canEdit ? () => setShowCreate(true) : undefined}
@@ -172,7 +206,7 @@ export default function SchedulePage() {
       {!loading && (
         <div className="shrink-0 border-t border-border bg-card px-4 md:px-6 py-2 flex items-center justify-between">
           <span className="text-[11px] text-muted">
-            {schedules.filter((s) => {
+            {[...schedules, ...gcalEvents].filter((s) => {
               if (view === 'month') {
                 return (
                   s.startAt.getFullYear() === year && s.startAt.getMonth() + 1 === month
@@ -188,8 +222,8 @@ export default function SchedulePage() {
         </div>
       )}
 
-      {/* スケジュール詳細オーバーレイ */}
-      {selectedSchedule && currentTeamId && (
+      {/* スケジュール詳細オーバーレイ（チーム予定） */}
+      {selectedSchedule && !selectedSchedule.source && currentTeamId && (
         <ScheduleDetailModal
           schedule={selectedSchedule}
           teamId={currentTeamId}
@@ -198,6 +232,39 @@ export default function SchedulePage() {
           onClose={() => setSelectedSchedule(null)}
           onDeleted={() => setSelectedSchedule(null)}
         />
+      )}
+
+      {/* Googleカレンダー予定の詳細（読み取り専用） */}
+      {selectedSchedule?.source === 'google' && (
+        <div
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+          onClick={() => setSelectedSchedule(null)}
+        >
+          <div className="absolute inset-0 bg-black/50" />
+          <div
+            className="relative z-10 w-full md:max-w-md bg-card border border-border rounded-t-[20px] md:rounded-[20px] p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2">
+                <span className="material-icons text-[18px]" style={{ color: 'var(--green)' }}>event</span>
+                <span className="text-[11px] font-semibold" style={{ color: 'var(--green)' }}>Googleカレンダー</span>
+              </div>
+              <button onClick={() => setSelectedSchedule(null)} className="text-muted hover:text-text">
+                <span className="material-icons text-[20px]">close</span>
+              </button>
+            </div>
+            <h3 className="text-[17px] font-bold text-text mb-3">{selectedSchedule.title}</h3>
+            <p className="text-[13px] text-muted mb-1">
+              {format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja })}
+              {' – '}
+              {format(selectedSchedule.endAt, 'HH:mm')}
+            </p>
+            {selectedSchedule.description && (
+              <p className="text-[12px] text-muted mt-3 whitespace-pre-wrap">{selectedSchedule.description}</p>
+            )}
+          </div>
+        </div>
       )}
 
       {/* スケジュール作成モーダル */}

@@ -105,6 +105,8 @@ export interface ScheduleEntry {
   updatedAt: Date;
   createdBy: string;
   createdAt: Date;
+  /** Googleカレンダーから取得した予定は 'google'、チーム予定は undefined */
+  source?: 'google';
 }
 
 export interface Task {
