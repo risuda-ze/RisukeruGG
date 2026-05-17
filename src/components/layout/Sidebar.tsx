@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
@@ -33,12 +34,13 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    label: 'チーム管理',
-    icon: 'groups',
+    label: '設定',
+    icon: 'settings',
     items: [
-      { href: '/team', label: 'メンバー', icon: 'person' },
-      { href: '/notifications', label: '通知設定', icon: 'notifications' },
+      { href: '/team', label: 'チーム管理', icon: 'groups' },
+      { href: '/notifications', label: '通知', icon: 'notifications' },
       { href: '/settings', label: 'チャンネル設定', icon: 'settings' },
+      { href: '/settings/profile', label: '個人設定', icon: 'manage_accounts' },
     ],
   },
   {
@@ -75,18 +77,14 @@ export function Sidebar() {
       <div className={`py-4 border-b border-border flex items-center min-w-0 ${collapsed ? 'px-2 justify-between' : 'px-4 gap-3'}`}>
         {/* ロゴアイコン（クリックでダッシュボードへ） */}
         <Link href="/dashboard" className="shrink-0" aria-label="ダッシュボードへ">
-          <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7">
-            <rect width="32" height="32" rx="8" fill="var(--purple-d)" />
-            <path
-              d="M8 16c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8-8-3.6-8-8Z"
-              fill="var(--purple)"
-              opacity=".3"
-            />
-            <rect x="13" y="12" width="2" height="6" rx="1" fill="var(--purple-l)" />
-            <rect x="11" y="14" width="6" height="2" rx="1" fill="var(--purple-l)" />
-            <circle cx="22" cy="14" r="1.2" fill="var(--amber)" />
-            <circle cx="19" cy="17" r="1.2" fill="var(--amber)" />
-          </svg>
+          <Image
+            src="/icon-192x192.png"
+            alt="リスケるGG"
+            width={32}
+            height={26}
+            className="h-7 w-auto rounded-[6px]"
+            priority
+          />
         </Link>
 
         {/* アプリ名（折りたたみ時は非表示） */}

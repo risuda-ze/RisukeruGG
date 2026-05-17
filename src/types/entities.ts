@@ -162,6 +162,7 @@ export interface CollabSession {
   linkedScheduleId: string | null;
   createdAt: Date;
   // 拡張フィールド（任意）
+  icon?: string | null;
   content?: string | null;
   participants?: CollabParticipant[];
   participantResponses?: Record<string, Record<string, 'ok' | 'ng' | 'pending'>>;

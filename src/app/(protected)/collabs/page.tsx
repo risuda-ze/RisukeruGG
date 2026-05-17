@@ -4,12 +4,18 @@ import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useAuthStore } from '@/stores/auth';
-import { subscribeCollabSessions, createCollabSession } from '@/lib/repositories/collabs';
+import { subscribeCollabSessions, createCollabSession, updateCollabSession } from '@/lib/repositories/collabs';
 import { TopBar } from '@/components/layout/TopBar';
 import { CollabDetailModal } from '@/components/collab/CollabDetailModal';
 import { Spinner } from '@/components/ui/Spinner';
 import { LIGHT_PLAN_LIMITS, COLLAB_STATUS_LABELS } from '@/types/entities';
 import type { CollabSession, CollabParticipant } from '@/types/entities';
+
+/* コラボアイコン候補 */
+const COLLAB_ICONS = [
+  'sports_esports', 'live_tv', 'mic', 'handshake', 'music_note',
+  'movie', 'star', 'group', 'campaign', 'video_library', 'celebration',
+];
 
 /* アバター背景色セット */
 const AVATAR_COLORS = [
@@ -75,6 +81,7 @@ export default function CollabsPage() {
 
   /* 新規コラボ調整フォーム */
   const [formTitle, setFormTitle] = useState('');
+  const [formIcon, setFormIcon] = useState('sports_esports');
   const [content, setContent] = useState('');
   const [proposedDate, setProposedDate] = useState('');
   const [formParticipants, setFormParticipants] = useState<CollabParticipant[]>([]);
@@ -140,12 +147,15 @@ export default function CollabsPage() {
         proposedDates: proposedDate ? [new Date(proposedDate).toISOString()] : [],
         expiresInDays: 14,
       });
+      /* アイコンをFirestoreに保存（Cloud Functionは受け取らないため直接write） */
+      await updateCollabSession(teamId, result.data.sessionId, { icon: formIcon });
       /* shareUrlが返されればそれを使用、なければ手動生成 */
       const url =
         result.data.shareUrl ||
         `${window.location.origin}/collab/${teamId}__${result.data.sessionId}`;
       setCreatedUrl(url);
       setFormTitle('');
+      setFormIcon('sports_esports');
       setContent('');
       setProposedDate('');
       setFormParticipants(
@@ -233,10 +243,12 @@ export default function CollabsPage() {
                     style={{ boxShadow: 'none' }}
                   >
                     <div
-                      className="w-12 h-12 rounded-full flex items-center justify-center text-[16px] font-bold shrink-0"
+                      className="w-12 h-12 rounded-full flex items-center justify-center text-[18px] font-bold shrink-0"
                       style={{ background: avatarColor.bg, color: avatarColor.text }}
                     >
-                      {initials}
+                      {session.icon
+                        ? <span className="material-icons text-[22px]">{session.icon}</span>
+                        : initials}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
@@ -295,6 +307,29 @@ export default function CollabsPage() {
                     disabled={isLightPlanFull}
                     className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple"
                   />
+                </div>
+
+                {/* アイコン */}
+                <div>
+                  <label className="block text-[12px] font-semibold text-muted mb-2">アイコン</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {COLLAB_ICONS.map((icon) => (
+                      <button
+                        key={icon}
+                        type="button"
+                        onClick={() => setFormIcon(icon)}
+                        disabled={isLightPlanFull}
+                        className={`w-9 h-9 rounded-[8px] flex items-center justify-center border-2 transition-all ${
+                          formIcon === icon
+                            ? 'border-amber bg-amber/10 text-amber-l'
+                            : 'border-transparent bg-bg text-muted hover:bg-surface hover:text-text'
+                        }`}
+                        title={icon}
+                      >
+                        <span className="material-icons text-[18px]">{icon}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* 内容 */}

@@ -49,6 +49,7 @@ function toCollabSession(id: string, data: Record<string, unknown>): CollabSessi
     confirmedDate: data.confirmedDate ? (data.confirmedDate as Timestamp).toDate() : null,
     linkedScheduleId: (data.linkedScheduleId as string | null) ?? null,
     createdAt: (data.createdAt as Timestamp).toDate(),
+    icon: (data.icon as string | null) ?? null,
     content: (data.content as string | null) ?? null,
     participants: (data.participants as CollabParticipant[] | null) ?? [],
     participantResponses:

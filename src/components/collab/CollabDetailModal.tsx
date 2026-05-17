@@ -9,6 +9,7 @@ import {
   updateCollabContent,
   updateCollabTitle,
   updateCollabParticipants,
+  updateCollabSession,
   addCollabProposedDate,
   addCollabComment,
   updateParticipantResponse,
@@ -25,6 +26,12 @@ interface CollabDetailModalProps {
   onClose: () => void;
   onDeleted: () => void;
 }
+
+/* コラボアイコン候補 */
+const COLLAB_ICONS = [
+  'sports_esports', 'live_tv', 'mic', 'handshake', 'music_note',
+  'movie', 'star', 'group', 'campaign', 'video_library', 'celebration',
+];
 
 /* アバター背景色 */
 const AVATAR_COLORS = [
@@ -118,6 +125,10 @@ export function CollabDetailModal({
   const teamId = currentTeam?.id ?? '';
   const isOpen = session.status === 'open';
 
+  /* アイコン */
+  const [iconValue, setIconValue] = useState(session.icon ?? 'sports_esports');
+  const [showIconPicker, setShowIconPicker] = useState(false);
+
   /* タイトル編集 */
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState(session.title);
@@ -175,6 +186,14 @@ export function CollabDetailModal({
   useEffect(() => {
     if (editingContent) contentRef.current?.focus();
   }, [editingContent]);
+
+  /* アイコンピッカー外クリックで閉じる */
+  useEffect(() => {
+    if (!showIconPicker) return;
+    function handleClick() { setShowIconPicker(false); }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showIconPicker]);
 
   /* Firestoreのリアルタイム更新（回答・候補日程・コメントを即時反映） */
   useEffect(() => {
@@ -410,6 +429,49 @@ export function CollabDetailModal({
           style={{ borderColor: 'var(--border)' }}
         >
           <div className="flex items-start gap-3">
+            {/* アイコン（クリックでピッカー表示） */}
+            <div className="relative shrink-0">
+              <button
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={() => isOpen && canEdit && setShowIconPicker((v) => !v)}
+                className={`w-12 h-12 rounded-[12px] flex items-center justify-center transition-colors ${
+                  isOpen && canEdit ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
+                }`}
+                style={{ background: 'var(--amber-d)', color: 'var(--amber-l)' }}
+                aria-label="アイコンを変更"
+              >
+                <span className="material-icons text-[24px]">{iconValue}</span>
+              </button>
+              {showIconPicker && (
+                <div
+                  className="absolute top-14 left-0 z-20 rounded-[12px] p-2 shadow-xl"
+                  style={{ background: 'var(--card)', border: '1px solid var(--border-l)', minWidth: '220px' }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                >
+                  <div className="flex flex-wrap gap-1.5 p-1">
+                    {COLLAB_ICONS.map((icon) => (
+                      <button
+                        key={icon}
+                        onClick={async () => {
+                          setIconValue(icon);
+                          setShowIconPicker(false);
+                          await updateCollabSession(teamId, session.id, { icon });
+                        }}
+                        className={`w-9 h-9 rounded-[8px] flex items-center justify-center border-2 transition-all ${
+                          iconValue === icon
+                            ? 'border-amber bg-amber/10 text-amber-l'
+                            : 'border-transparent text-muted hover:bg-surface hover:text-text'
+                        }`}
+                        title={icon}
+                      >
+                        <span className="material-icons text-[18px]">{icon}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex-1 min-w-0">
               {editingTitle ? (
                 <input

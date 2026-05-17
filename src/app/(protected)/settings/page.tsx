@@ -1,14 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { useTasksStore } from '@/stores/tasks';
 import { useTaskCategoryStore } from '@/stores/taskCategories';
 import { useScheduleCategoryStore } from '@/stores/scheduleCategories';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
-import type { NotificationPreferences, KanbanColumn, ScheduleCategory, TaskCategory } from '@/types/entities';
+import type { KanbanColumn, ScheduleCategory, TaskCategory } from '@/types/entities';
 import {
   createColumn,
   updateColumn,
@@ -25,19 +22,17 @@ import {
   updateTaskCategory,
   deleteTaskCategory,
 } from '@/lib/repositories/taskCategories';
-import { deleteAccount } from '@/lib/repositories/teams';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Card } from '@/components/ui/Card';
 import { TopBar } from '@/components/layout/TopBar';
 
-type Tab = 'tasks' | 'calendar' | 'notifications';
+type Tab = 'calendar' | 'tasks';
 
 const TAB_LABELS: Record<Tab, string> = {
-  tasks: 'タスク管理',
   calendar: 'スケジュール',
-  notifications: '通知',
+  tasks: 'タスク管理',
 };
 
 const DEFAULT_COLORS = [
@@ -68,45 +63,11 @@ const ICON_OPTIONS = [
 ];
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('tasks');
-  const router = useRouter();
-  const { currentUser, members, signOut } = useAuthStore();
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const isOwnerWithMembers = myMember?.role === 'owner' && members.length > 1;
-
-  async function handleDeleteAccount() {
-    setDeleting(true);
-    setDeleteError(null);
-    try {
-      await deleteAccount();
-      await signOut();
-      router.replace('/login');
-    } catch (err: unknown) {
-      const code =
-        err && typeof err === 'object' && 'code' in err
-          ? String((err as { code: unknown }).code)
-          : 'unknown';
-      const message =
-        err && typeof err === 'object' && 'message' in err
-          ? String((err as { message: unknown }).message)
-          : '';
-      if (code === 'functions/failed-precondition') {
-        setDeleteError(message || '先に所有権を移譲してください');
-      } else {
-        setDeleteError(`削除に失敗しました（${code}）`);
-      }
-    } finally {
-      setDeleting(false);
-    }
-  }
+  const [activeTab, setActiveTab] = useState<Tab>('calendar');
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      <TopBar title="設定" />
+      <TopBar title="チャンネル設定" />
 
       <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 max-w-3xl">
         {/* ── タブナビゲーション ─────────────────────────────── */}
@@ -130,91 +91,8 @@ export default function SettingsPage() {
         <div>
           {activeTab === 'tasks' && <TaskManagementSettings />}
           {activeTab === 'calendar' && <ScheduleCategorySettings />}
-          {activeTab === 'notifications' && <NotificationSettings />}
-        </div>
-
-        {/* ── 危険ゾーン ─────────────────────────────────────── */}
-        <div className="mt-10 border-t border-border pt-6">
-          <h3 className="text-sm font-semibold text-live mb-1">危険ゾーン</h3>
-          <p className="text-[12px] text-muted mb-4">
-            一度削除したアカウントは復元できません。
-          </p>
-          <Card className="border-live/20">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-text mb-0.5">アカウントを削除する</p>
-                <p className="text-[12px] text-muted">
-                  {isOwnerWithMembers
-                    ? '先にチームの所有権を別のメンバーに移譲してください。'
-                    : 'アカウント・チームデータ・スケジュールがすべて削除されます。'}
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setDeleteError(null);
-                  setShowDeleteDialog(true);
-                }}
-                disabled={isOwnerWithMembers}
-                className="shrink-0 px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-live/40 text-live hover:bg-live/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                削除する
-              </button>
-            </div>
-            {isOwnerWithMembers && (
-              <div className="mt-3 flex items-center gap-2 text-[11px] text-amber-l">
-                <span className="material-icons text-[14px]">info</span>
-                <a href="/team" className="underline hover:no-underline">
-                  チームページ
-                </a>
-                から所有権を移譲してください。
-              </div>
-            )}
-          </Card>
         </div>
       </div>
-
-      {/* アカウント削除確認ダイアログ */}
-      <Modal
-        open={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-        title="アカウントを削除する"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setShowDeleteDialog(false)} disabled={deleting}>
-              キャンセル
-            </Button>
-            <Button variant="danger" loading={deleting} onClick={handleDeleteAccount}>
-              削除する
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-3 text-sm">
-          <p className="text-text">以下のデータが完全に削除されます：</p>
-          <ul className="space-y-1 text-[13px] text-muted list-none">
-            <li className="flex items-center gap-2">
-              <span className="material-icons text-[14px] text-live">remove_circle_outline</span>
-              アカウント情報（名前・メールアドレス）
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="material-icons text-[14px] text-live">remove_circle_outline</span>
-              チームとすべてのスケジュール
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="material-icons text-[14px] text-live">remove_circle_outline</span>
-              タスク・通知などのアプリデータ
-            </li>
-          </ul>
-          <p className="text-[12px] text-live font-semibold pt-1">
-            この操作は取り消せません。
-          </p>
-          {deleteError && (
-            <p className="text-[12px] text-live bg-live/10 border border-live/30 rounded-[8px] px-3 py-2">
-              {deleteError}
-            </p>
-          )}
-        </div>
-      </Modal>
     </div>
   );
 }
@@ -590,6 +468,7 @@ function KanbanSettings() {
   const [editingColumn, setEditingColumn] = useState<KanbanColumn | null>(null);
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState('');
+  const [editIsDone, setEditIsDone] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
 
   const [deleteConfirmColumn, setDeleteConfirmColumn] = useState<KanbanColumn | null>(null);
@@ -626,7 +505,16 @@ function KanbanSettings() {
     if (!editingColumn || !teamId) return;
     setEditSaving(true);
     try {
-      await updateColumn(teamId, editingColumn.id, { name: editName, color: editColor });
+      if (editIsDone && editingColumn.role !== 'done') {
+        /* 既存の完了列を解除してから新しい完了列を設定 */
+        const prevDone = columns.find((c) => c.role === 'done');
+        if (prevDone) await updateColumn(teamId, prevDone.id, { role: null });
+      }
+      await updateColumn(teamId, editingColumn.id, {
+        name: editName,
+        color: editColor,
+        role: editIsDone ? 'done' : null,
+      });
       setEditingColumn(null);
     } finally {
       setEditSaving(false);
@@ -674,62 +562,14 @@ function KanbanSettings() {
     ? tasks.filter((t) => t.columnId === deleteConfirmColumn.id).length
     : 0;
 
-  async function handleToggleDoneRole(colId: string) {
-    if (!teamId || !isOwner) return;
-    const col = columns.find((c) => c.id === colId);
-    if (!col) return;
-    if (col.role === 'done') {
-      /* 解除 */
-      await updateColumn(teamId, colId, { role: null });
-    } else {
-      /* 現在のdoneカラムを解除してから新しいカラムをdoneに */
-      const prevDone = columns.find((c) => c.role === 'done');
-      if (prevDone) await updateColumn(teamId, prevDone.id, { role: null });
-      await updateColumn(teamId, colId, { role: 'done' });
-    }
-  }
-
   return (
     <div className="space-y-5">
       <div>
-        <h3 className="text-sm font-semibold text-text">列の管理</h3>
-        <p className="text-[12px] text-muted mt-0.5">カンバンボードのステータス列を管理します。</p>
-      </div>
-
-      {/* ステータスの管理（完了列の指定） */}
-      <div>
-        <h4 className="text-[12px] font-semibold text-muted mb-2">ステータスの管理</h4>
-        <Card noPadding>
-          <div className="px-[18px] py-2.5 border-b border-border bg-surface/50">
-            <p className="text-[11px] text-muted">「完了」とみなす列をひとつ選択してください。ダッシュボードの達成率計算に使用されます。</p>
-          </div>
-          {columns.map((col) => (
-            <div key={col.id} className="flex items-center gap-3 px-[18px] py-2.5 border-b border-border last:border-0">
-              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: col.color }} />
-              <span className="flex-1 text-sm text-text">{col.name}</span>
-              {col.role === 'done' && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(74,222,128,0.15)', color: 'var(--green)' }}>完了列</span>
-              )}
-              {isOwner && (
-                <button
-                  onClick={() => handleToggleDoneRole(col.id)}
-                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-colors ${
-                    col.role === 'done'
-                      ? 'border-green/30 text-green hover:bg-red-500/10 hover:text-live hover:border-live/30'
-                      : 'border-border text-muted hover:text-text hover:border-border-l'
-                  }`}
-                >
-                  {col.role === 'done' ? '解除' : '完了列に設定'}
-                </button>
-              )}
-            </div>
-          ))}
-        </Card>
+        <h3 className="text-sm font-semibold text-text">カラムの管理</h3>
+        <p className="text-[12px] text-muted mt-0.5">「完了」とみなす列をひとつ選択してください。ダッシュボードの達成率計算に使用されます。</p>
       </div>
 
       {/* カラム一覧 */}
-      <div>
-        <h4 className="text-[12px] font-semibold text-muted mb-2">カラム一覧</h4>
       <Card noPadding>
         {columns.length === 0 && (
           <p className="px-[18px] py-3 text-sm text-muted">カラムがありません</p>
@@ -742,7 +582,15 @@ function KanbanSettings() {
                 style={{ backgroundColor: col.color }}
               />
               <span className="flex-1 text-sm text-text">{col.name}</span>
-              <span className="text-[11px] text-muted font-num">
+              {col.role === 'done' && (
+                <span
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
+                  style={{ background: 'rgba(74,222,128,0.15)', color: 'var(--green)' }}
+                >
+                  完了列
+                </span>
+              )}
+              <span className="text-[11px] text-muted font-num shrink-0">
                 {tasks.filter((t) => t.columnId === col.id).length}件
               </span>
               {isOwner && (
@@ -768,6 +616,7 @@ function KanbanSettings() {
                       setEditingColumn(col);
                       setEditName(col.name);
                       setEditColor(col.color);
+                      setEditIsDone(col.role === 'done');
                     }}
                     className="p-1 rounded-[6px] text-text hover:text-purple-l transition-colors"
                     aria-label="編集"
@@ -788,7 +637,6 @@ function KanbanSettings() {
           ))}
         </div>
       </Card>
-      </div>
 
       {/* カラム追加 */}
       {isOwner && (
@@ -859,6 +707,29 @@ function KanbanSettings() {
                     aria-label={`色 ${color}`}
                   />
                 ))}
+              </div>
+            </div>
+            {/* 完了列の設定トグル */}
+            <div
+              className={`flex items-center justify-between rounded-[10px] px-4 py-3 border cursor-pointer transition-all select-none ${
+                editIsDone ? 'border-green/30 bg-green/5' : 'border-border bg-surface/50'
+              }`}
+              onClick={() => setEditIsDone((v) => !v)}
+            >
+              <div>
+                <p className="text-sm font-medium text-text">完了列に設定</p>
+                <p className="text-[11px] text-muted mt-0.5">この列を「完了」とみなし、達成率計算に使用します</p>
+              </div>
+              <div
+                className={`w-10 h-6 rounded-full relative transition-all shrink-0 ${
+                  editIsDone ? 'bg-green/50' : 'bg-muted/30'
+                }`}
+              >
+                <div
+                  className={`absolute top-1 w-4 h-4 rounded-full transition-all ${
+                    editIsDone ? 'right-1 bg-green' : 'left-1 bg-muted'
+                  }`}
+                />
               </div>
             </div>
           </div>
@@ -1143,109 +1014,3 @@ function TaskCategorySettings() {
   );
 }
 
-/* ── 通知設定コンポーネント ─────────────────────────────────── */
-type NotifCategory = keyof NotificationPreferences;
-type NotifChannel = 'inApp' | 'push';
-
-const NOTIF_CATEGORY_LABELS: Record<NotifCategory, string> = {
-  collab: 'コラボ',
-  tasks: 'タスク',
-  reminders: 'リマインダー',
-  system: 'システム',
-};
-
-const DEFAULT_PREFS: NotificationPreferences = {
-  collab: { inApp: true, push: true },
-  tasks: { inApp: true, push: true },
-  reminders: { inApp: true, push: true },
-  system: { inApp: true, push: false },
-};
-
-function NotificationSettings() {
-  const { currentUser, members } = useAuthStore();
-  const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const isParty = myMember?.plan === 'party';
-  const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_PREFS);
-  const [saving, setSaving] = useState(false);
-
-  async function togglePref(category: NotifCategory, channel: NotifChannel) {
-    if (!currentUser) return;
-    const newPrefs = {
-      ...prefs,
-      [category]: { ...prefs[category], [channel]: !prefs[category][channel] },
-    };
-    setPrefs(newPrefs);
-    setSaving(true);
-    try {
-      await updateDoc(doc(db, 'users', currentUser.uid), { notificationPreferences: newPrefs });
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  const categories: NotifCategory[] = ['collab', 'tasks', 'reminders', 'system'];
-
-  return (
-    <div className="space-y-5">
-      <h3 className="text-sm font-semibold text-text">通知設定</h3>
-
-      {/* LIGHTプラン案内 */}
-      {!isParty && (
-        <Card className="border-amber/20">
-          <p className="text-sm font-medium text-amber-l mb-1">
-            LIGHTプランではシステム通知のみ利用可能です
-          </p>
-          <p className="text-[12px] text-muted">
-            PARTYプランにアップグレードすると全4カテゴリの通知を設定できます。
-            <a href="/settings" className="underline ml-1 text-amber-l">
-              アップグレードする
-            </a>
-          </p>
-        </Card>
-      )}
-
-      <Card noPadding>
-        {/* ヘッダー行 */}
-        <div className="grid grid-cols-3 gap-0 border-b border-border px-[18px] py-2 bg-surface/50">
-          <span className="text-[11px] font-medium text-muted">カテゴリ</span>
-          <span className="text-[11px] font-medium text-muted text-center">アプリ内</span>
-          <span className="text-[11px] font-medium text-muted text-center">プッシュ</span>
-        </div>
-        {categories.map((category) => {
-          const isLocked = !isParty && category !== 'system';
-          return (
-            <div
-              key={category}
-              className={`grid grid-cols-3 gap-0 px-[18px] py-3 border-b border-border last:border-0 ${isLocked ? 'opacity-40' : ''}`}
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-text">{NOTIF_CATEGORY_LABELS[category]}</span>
-              </div>
-              {(['inApp', 'push'] as NotifChannel[]).map((channel) => (
-                <div key={channel} className="flex justify-center items-center">
-                  <button
-                    type="button"
-                    onClick={() => !isLocked && togglePref(category, channel)}
-                    disabled={isLocked || saving}
-                    className={`relative w-10 h-6 rounded-full transition-colors ${
-                      !isLocked && prefs[category][channel] ? 'bg-purple' : 'bg-border'
-                    } ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                    aria-label={`${NOTIF_CATEGORY_LABELS[category]}の${channel === 'inApp' ? 'アプリ内' : 'プッシュ'}通知`}
-                    aria-checked={prefs[category][channel]}
-                    role="switch"
-                  >
-                    <span
-                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-text rounded-full shadow transition-transform ${
-                        !isLocked && prefs[category][channel] ? 'translate-x-4' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-              ))}
-            </div>
-          );
-        })}
-      </Card>
-    </div>
-  );
-}
