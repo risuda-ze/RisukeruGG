@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
@@ -34,11 +34,13 @@ export default function TaskForm({
   const { schedules } = useScheduleStore();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showAssigneePicker, setShowAssigneePicker] = useState(false);
+  /* assigneeId は RHF の外で管理（unregistered field の挙動を避けるため） */
+  const [selectedAssigneeId, setSelectedAssigneeId] = useState<string | null>(null);
+  const currentAssignee = members.find((m) => m.userId === selectedAssigneeId) ?? null;
 
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<TaskFormInput, unknown, TaskInput>({
@@ -54,8 +56,14 @@ export default function TaskForm({
     },
   });
 
-  const assigneeId = watch('assigneeId');
-  const currentAssignee = members.find((m) => m.userId === assigneeId) ?? null;
+  /* カラムが遅れてロードされた場合に defaultValues が '' のまま残るのを防ぐ */
+  useEffect(() => {
+    if (columns.length > 0) {
+      setValue('columnId', columns[0].id, { shouldDirty: false, shouldValidate: false });
+    }
+  // columns が変わるたびに実行しないよう初回のみ想定（useEffect の deps は columns[0]?.id）
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columns[0]?.id]);
 
   async function onSubmit(data: TaskInput) {
     setSubmitError(null);
@@ -66,7 +74,7 @@ export default function TaskForm({
         columnId: data.columnId,
         /* select の空文字選択は null として送信する */
         categoryId: data.categoryId || null,
-        assigneeId: data.assigneeId || null,
+        assigneeId: selectedAssigneeId,
         dueDate: data.dueDate ? data.dueDate.toISOString() : null,
         linkedScheduleId: data.linkedScheduleId || null,
       });
@@ -172,24 +180,24 @@ export default function TaskForm({
           <div className="mt-1 border border-border rounded-[10px] overflow-hidden">
             <button
               type="button"
-              onClick={() => { setValue('assigneeId', null); setShowAssigneePicker(false); }}
+              onClick={() => { setSelectedAssigneeId(null); setShowAssigneePicker(false); }}
               className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors text-left ${
-                !assigneeId ? 'bg-purple/10 text-purple-l' : 'hover:bg-surface text-muted'
+                !selectedAssigneeId ? 'bg-purple/10 text-purple-l' : 'hover:bg-surface text-muted'
               }`}
             >
               <div className="w-6 h-6 rounded-full border border-dashed border-border flex items-center justify-center shrink-0">
                 <span className="material-icons text-[12px]">person_off</span>
               </div>
               <span className="flex-1">なし</span>
-              {!assigneeId && <span className="material-icons text-[14px]">check</span>}
+              {!selectedAssigneeId && <span className="material-icons text-[14px]">check</span>}
             </button>
             {members.map((m) => (
               <button
                 type="button"
                 key={m.userId}
-                onClick={() => { setValue('assigneeId', m.userId); setShowAssigneePicker(false); }}
+                onClick={() => { setSelectedAssigneeId(m.userId); setShowAssigneePicker(false); }}
                 className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors text-left border-t border-border ${
-                  assigneeId === m.userId ? 'bg-purple/10' : 'hover:bg-surface'
+                  selectedAssigneeId === m.userId ? 'bg-purple/10' : 'hover:bg-surface'
                 }`}
               >
                 <Avatar
@@ -199,10 +207,10 @@ export default function TaskForm({
                   textClass="text-purple-l"
                   size="sm"
                 />
-                <span className={`flex-1 truncate ${assigneeId === m.userId ? 'text-purple-l font-semibold' : 'text-text'}`}>
+                <span className={`flex-1 truncate ${selectedAssigneeId === m.userId ? 'text-purple-l font-semibold' : 'text-text'}`}>
                   {m.displayName}
                 </span>
-                {assigneeId === m.userId && (
+                {selectedAssigneeId === m.userId && (
                   <span className="material-icons text-[14px] text-purple-l">check</span>
                 )}
               </button>
