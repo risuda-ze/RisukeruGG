@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Avatar } from '@/components/ui/Avatar';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Timestamp } from 'firebase/firestore';
@@ -41,6 +42,9 @@ export function TaskDetailModal({
   onDeleted,
 }: TaskDetailModalProps) {
   const { currentUser } = useAuthStore();
+
+  /* 担当者ピッカー */
+  const [showAssigneePicker, setShowAssigneePicker] = useState(false);
 
   /* タイトル編集 */
   const [editingTitle, setEditingTitle] = useState(false);
@@ -342,12 +346,74 @@ export function TaskDetailModal({
                   担当者
                 </label>
                 {canEdit ? (
-                  <select value={assigneeId} onChange={(e) => handleAssigneeChange(e.target.value)} className={selectClass}>
-                    <option value="">なし</option>
-                    {members.map((m) => (
-                      <option key={m.userId} value={m.userId}>{m.displayName}</option>
-                    ))}
-                  </select>
+                  <>
+                    {/* 選択中担当者表示ボタン */}
+                    <button
+                      type="button"
+                      onClick={() => setShowAssigneePicker((v) => !v)}
+                      className="w-full flex items-center gap-2 px-3 py-2 border border-border rounded-[8px] bg-bg text-left text-[13px] outline-none hover:border-border-l transition-colors"
+                    >
+                      {currentAssignee ? (
+                        <>
+                          <Avatar
+                            initials={currentAssignee.displayName.slice(0, 2)}
+                            src={currentAssignee.avatarUrl}
+                            bgClass="bg-purple-d/30"
+                            textClass="text-purple-l"
+                            size="sm"
+                          />
+                          <span className="flex-1 text-text truncate">{currentAssignee.displayName}</span>
+                        </>
+                      ) : (
+                        <span className="flex-1 text-muted">なし</span>
+                      )}
+                      <span className="material-icons text-[14px] text-muted">
+                        {showAssigneePicker ? 'expand_less' : 'expand_more'}
+                      </span>
+                    </button>
+                    {/* メンバーピッカー（インライン展開） */}
+                    {showAssigneePicker && (
+                      <div className="mt-1 border border-border rounded-[10px] overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => { handleAssigneeChange(''); setShowAssigneePicker(false); }}
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] transition-colors text-left ${
+                            !assigneeId ? 'bg-purple/10 text-purple-l' : 'hover:bg-surface text-muted'
+                          }`}
+                        >
+                          <div className="w-6 h-6 rounded-full border border-dashed border-border flex items-center justify-center shrink-0">
+                            <span className="material-icons text-[12px]">person_off</span>
+                          </div>
+                          <span className="flex-1">なし</span>
+                          {!assigneeId && <span className="material-icons text-[14px]">check</span>}
+                        </button>
+                        {members.map((m) => (
+                          <button
+                            type="button"
+                            key={m.userId}
+                            onClick={() => { handleAssigneeChange(m.userId); setShowAssigneePicker(false); }}
+                            className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] transition-colors text-left border-t border-border ${
+                              assigneeId === m.userId ? 'bg-purple/10' : 'hover:bg-surface'
+                            }`}
+                          >
+                            <Avatar
+                              initials={m.displayName.slice(0, 2)}
+                              src={m.avatarUrl}
+                              bgClass="bg-purple-d/30"
+                              textClass="text-purple-l"
+                              size="sm"
+                            />
+                            <span className={`flex-1 truncate ${assigneeId === m.userId ? 'text-purple-l font-semibold' : 'text-text'}`}>
+                              {m.displayName}
+                            </span>
+                            {assigneeId === m.userId && (
+                              <span className="material-icons text-[14px] text-purple-l">check</span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <span className="text-[13px] text-text py-2 block">{currentAssignee?.displayName ?? '—'}</span>
                 )}

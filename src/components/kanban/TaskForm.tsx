@@ -11,6 +11,7 @@ import { useTaskCategoryStore } from '@/stores/taskCategories';
 import { useScheduleStore } from '@/stores/schedule';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { Avatar } from '@/components/ui/Avatar';
 import type { TeamMember } from '@/types/entities';
 
 interface TaskFormProps {
@@ -32,10 +33,13 @@ export default function TaskForm({
   const { taskCategories } = useTaskCategoryStore();
   const { schedules } = useScheduleStore();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showAssigneePicker, setShowAssigneePicker] = useState(false);
 
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<TaskFormInput, unknown, TaskInput>({
     resolver: zodResolver(taskSchema),
@@ -49,6 +53,9 @@ export default function TaskForm({
       linkedScheduleId: null,
     },
   });
+
+  const assigneeId = watch('assigneeId');
+  const currentAssignee = members.find((m) => m.userId === assigneeId) ?? null;
 
   async function onSubmit(data: TaskInput) {
     setSubmitError(null);
@@ -136,21 +143,71 @@ export default function TaskForm({
 
       <div>
         <label className="block text-sm font-medium text-muted mb-1">担当者</label>
-        <select
-          {...register('assigneeId')}
-          className={`w-full border rounded-[8px] px-3 py-2 text-sm bg-card text-text outline-none transition-colors ${
-            errors.assigneeId ? 'border-live' : 'border-border'
-          }`}
+        {/* 選択中担当者表示ボタン */}
+        <button
+          type="button"
+          onClick={() => setShowAssigneePicker((v) => !v)}
+          className="w-full flex items-center gap-2.5 px-3 py-2 border border-border rounded-[8px] bg-card text-left hover:border-border-l transition-colors"
         >
-          <option value="">なし</option>
-          {members.map((m) => (
-            <option key={m.userId} value={m.userId}>
-              {m.displayName}
-            </option>
-          ))}
-        </select>
-        {errors.assigneeId && (
-          <p className="text-live text-[12px] mt-1">必須項目です。</p>
+          {currentAssignee ? (
+            <>
+              <Avatar
+                initials={currentAssignee.displayName.slice(0, 2)}
+                src={currentAssignee.avatarUrl}
+                bgClass="bg-purple-d/30"
+                textClass="text-purple-l"
+                size="sm"
+              />
+              <span className="flex-1 text-sm text-text truncate">{currentAssignee.displayName}</span>
+            </>
+          ) : (
+            <span className="flex-1 text-sm text-muted">なし</span>
+          )}
+          <span className="material-icons text-[16px] text-muted">
+            {showAssigneePicker ? 'expand_less' : 'expand_more'}
+          </span>
+        </button>
+        {/* メンバーピッカー（インライン展開） */}
+        {showAssigneePicker && (
+          <div className="mt-1 border border-border rounded-[10px] overflow-hidden">
+            <button
+              type="button"
+              onClick={() => { setValue('assigneeId', null); setShowAssigneePicker(false); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors text-left ${
+                !assigneeId ? 'bg-purple/10 text-purple-l' : 'hover:bg-surface text-muted'
+              }`}
+            >
+              <div className="w-6 h-6 rounded-full border border-dashed border-border flex items-center justify-center shrink-0">
+                <span className="material-icons text-[12px]">person_off</span>
+              </div>
+              <span className="flex-1">なし</span>
+              {!assigneeId && <span className="material-icons text-[14px]">check</span>}
+            </button>
+            {members.map((m) => (
+              <button
+                type="button"
+                key={m.userId}
+                onClick={() => { setValue('assigneeId', m.userId); setShowAssigneePicker(false); }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors text-left border-t border-border ${
+                  assigneeId === m.userId ? 'bg-purple/10' : 'hover:bg-surface'
+                }`}
+              >
+                <Avatar
+                  initials={m.displayName.slice(0, 2)}
+                  src={m.avatarUrl}
+                  bgClass="bg-purple-d/30"
+                  textClass="text-purple-l"
+                  size="sm"
+                />
+                <span className={`flex-1 truncate ${assigneeId === m.userId ? 'text-purple-l font-semibold' : 'text-text'}`}>
+                  {m.displayName}
+                </span>
+                {assigneeId === m.userId && (
+                  <span className="material-icons text-[14px] text-purple-l">check</span>
+                )}
+              </button>
+            ))}
+          </div>
         )}
       </div>
 

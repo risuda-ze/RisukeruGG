@@ -13,6 +13,7 @@ import { RemoveMemberDialog } from '@/components/team/RemoveMemberDialog';
 import { TransferOwnershipDialog } from '@/components/team/TransferOwnershipDialog';
 import { LeaveTeamDialog } from '@/components/team/LeaveTeamDialog';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
+import { Card, CardHeader } from '@/components/ui/Card';
 import { createTeam, dissolveTeam } from '@/lib/repositories/teams';
 import type { TeamMember, UserRole } from '@/types/entities';
 
@@ -236,141 +237,151 @@ export default function TeamPage() {
         )}
       </TopBar>
 
-      {/* メンバーカードグリッド */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div
-          className="grid gap-4"
-          style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))' }}
-        >
-          {members.map((member, i) => {
-            const palette = AVATAR_PALETTES[i % AVATAR_PALETTES.length];
-            const isMe = member.userId === currentUser?.uid;
-            const roleBadge = ROLE_BADGE[member.role];
-            const initials = member.displayName.slice(0, 2).toUpperCase();
+      <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 space-y-4">
+        {/* メンバーカード */}
+        <Card noPadding>
+          <CardHeader title="メンバー" />
+          <div className="p-[18px]">
+            <div
+              className="grid gap-3"
+              style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))' }}
+            >
+              {members.map((member, i) => {
+                const palette = AVATAR_PALETTES[i % AVATAR_PALETTES.length];
+                const isMe = member.userId === currentUser?.uid;
+                const roleBadge = ROLE_BADGE[member.role];
+                const initials = member.displayName.slice(0, 2).toUpperCase();
 
-            return (
-              <div
-                key={member.userId}
-                className="bg-card border rounded-[18px] p-5 flex items-center gap-4 transition-all"
-                style={{ borderColor: isMe ? 'var(--purple)' : 'var(--border)' }}
-              >
-                {/* アバター */}
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-[16px] font-bold shrink-0 relative overflow-hidden"
-                  style={{ background: palette.bg, color: palette.text }}
-                >
-                  {member.avatarUrl ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={member.avatarUrl} alt={member.displayName} className="absolute inset-0 w-full h-full object-cover" />
-                  ) : (
-                    initials
-                  )}
-                  {/* オンラインインジケーター（オーナーと自分を常にオンライン表示） */}
-                  {(isMe || member.role === 'owner') && (
-                    <span
-                      className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card z-10"
-                      style={{ background: 'var(--green)' }}
-                    />
-                  )}
-                </div>
+                return (
+                  <div
+                    key={member.userId}
+                    className="bg-surface border rounded-[14px] p-4 flex items-center gap-4 transition-all"
+                    style={{ borderColor: isMe ? 'var(--purple)' : 'var(--border)' }}
+                  >
+                    {/* アバター */}
+                    <div
+                      className="w-11 h-11 rounded-full flex items-center justify-center text-[15px] font-bold shrink-0 relative overflow-hidden"
+                      style={{ background: palette.bg, color: palette.text }}
+                    >
+                      {member.avatarUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={member.avatarUrl} alt={member.displayName} className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        initials
+                      )}
+                      {(isMe || member.role === 'owner') && (
+                        <span
+                          className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-surface z-10"
+                          style={{ background: 'var(--green)' }}
+                        />
+                      )}
+                    </div>
 
-                {/* 情報 */}
-                <div className="flex-1 min-w-0">
-                  <div className="text-[15px] font-bold text-text mb-1 truncate">
-                    {member.displayName}
-                    {isMe && (
-                      <span className="text-muted text-[11px] font-normal ml-1.5">（あなた）</span>
+                    {/* 情報 */}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[14px] font-bold text-text mb-1 truncate">
+                        {member.displayName}
+                        {isMe && (
+                          <span className="text-muted text-[11px] font-normal ml-1.5">（あなた）</span>
+                        )}
+                      </div>
+                      <div
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border"
+                        style={{
+                          background: roleBadge.bg,
+                          color: roleBadge.text,
+                          borderColor: roleBadge.border,
+                        }}
+                      >
+                        {ROLE_LABELS[member.role]}
+                      </div>
+                    </div>
+
+                    {/* オーナー向けアクション */}
+                    {isOwner && !isMe && member.role !== 'owner' && (
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <select
+                          value={member.role}
+                          onChange={(e) => handleRoleChange(member, e.target.value)}
+                          className="text-[11px] border border-border rounded-[6px] px-2 py-1 bg-card text-text outline-none"
+                        >
+                          <option value="editor">Editor</option>
+                          <option value="viewer">Viewer</option>
+                        </select>
+                        <button
+                          onClick={() => setDialog({ type: 'remove', member })}
+                          className="text-[11px] text-muted hover:text-live transition-colors px-1.5 py-1 rounded-[4px] hover:bg-live/10"
+                        >
+                          削除
+                        </button>
+                      </div>
                     )}
                   </div>
-                  <div
-                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border"
-                    style={{
-                      background: roleBadge.bg,
-                      color: roleBadge.text,
-                      borderColor: roleBadge.border,
-                    }}
-                  >
-                    {ROLE_LABELS[member.role]}
-                  </div>
-                </div>
+                );
+              })}
+            </div>
 
-                {/* オーナー向けアクション */}
-                {isOwner && !isMe && member.role !== 'owner' && (
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <select
-                      value={member.role}
-                      onChange={(e) => handleRoleChange(member, e.target.value)}
-                      className="text-[11px] border border-border rounded-[6px] px-2 py-1 bg-surface text-text outline-none"
-                    >
-                      <option value="editor">Editor</option>
-                      <option value="viewer">Viewer</option>
-                    </select>
-                    <button
-                      onClick={() => setDialog({ type: 'remove', member })}
-                      className="text-[11px] text-muted hover:text-live transition-colors px-1.5 py-1 rounded-[4px] hover:bg-live/10"
-                    >
-                      削除
-                    </button>
-                  </div>
-                )}
+            {/* 脱退ボタン（非オーナー） */}
+            {!isOwner && (
+              <div className="mt-4">
+                <button
+                  onClick={() => setDialog({ type: 'leave' })}
+                  className="text-[12px] text-muted hover:text-live transition-colors"
+                >
+                  チームを脱退する
+                </button>
               </div>
-            );
-          })}
-        </div>
+            )}
+          </div>
+        </Card>
 
-        {/* チーム基本情報 */}
+        {/* チームの基本情報 */}
         {currentTeam && (
-          <div className="mt-6 bg-card border border-border rounded-[18px] p-5 max-w-sm">
-            <p className="text-[11px] text-muted uppercase tracking-wide mb-3">チーム基本情報</p>
-            <div className="flex items-center justify-between gap-3 mb-4">
+          <Card noPadding>
+            <CardHeader
+              title="チームの基本情報"
+              action={
+                isOwner ? (
+                  <button
+                    onClick={() => { setEditNameValue(currentTeam.name); setShowEditName(true); }}
+                    className="text-[11px] text-muted hover:text-text transition-colors px-2 py-1 rounded-[6px] hover:bg-surface border border-border"
+                  >
+                    チーム名を編集
+                  </button>
+                ) : undefined
+              }
+            />
+            <div className="p-[18px] space-y-4">
               <div>
                 <p className="text-[11px] text-muted mb-0.5">チーム名</p>
                 <p className="text-[15px] font-bold text-text">{currentTeam.name}</p>
               </div>
-              {isOwner && (
-                <button
-                  onClick={() => { setEditNameValue(currentTeam.name); setShowEditName(true); }}
-                  className="text-[11px] text-muted hover:text-text transition-colors px-2 py-1 rounded-[6px] hover:bg-surface border border-border"
-                >
-                  編集
-                </button>
-              )}
+              <div>
+                <p className="text-[11px] text-muted mb-1">チームコード</p>
+                <p className="text-[18px] font-mono font-bold text-purple-l tracking-widest">
+                  {currentTeam.teamCode}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-[11px] text-muted mb-1">チームコード</p>
-              <p className="text-[18px] font-mono font-bold text-purple-l tracking-widest">
-                {currentTeam.teamCode}
-              </p>
-            </div>
-          </div>
+          </Card>
         )}
 
-        {/* 脱退 */}
-        {!isOwner && (
-          <div className="mt-4 max-w-sm">
-            <button
-              onClick={() => setDialog({ type: 'leave' })}
-              className="text-[12px] text-muted hover:text-live transition-colors"
-            >
-              チームを脱退する
-            </button>
-          </div>
-        )}
-
-        {/* 危険ゾーン（オーナーのみ） */}
+        {/* チームを解散する（オーナーのみ） */}
         {isOwner && (
-          <div className="mt-6 max-w-sm border border-live/30 rounded-[18px] p-5">
-            <p className="text-[11px] font-bold text-live uppercase tracking-wide mb-1">危険ゾーン</p>
-            <p className="text-[12px] text-muted mb-4">
-              この操作は元に戻せません。チームを解散すると全メンバーがソロ状態に戻ります。
-            </p>
-            <button
-              onClick={openDissolveModal}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold transition-colors border border-live/40 text-live hover:bg-live/10"
-            >
-              <span className="material-icons text-[18px]">group_remove</span>
-              チームを解散する
-            </button>
+          <div className="bg-card border border-live/30 rounded-lg overflow-hidden">
+            <CardHeader title="危険ゾーン" />
+            <div className="p-[18px]">
+              <p className="text-[12px] text-muted mb-4">
+                この操作は元に戻せません。チームを解散すると全メンバーがソロ状態に戻ります。
+              </p>
+              <button
+                onClick={openDissolveModal}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold transition-colors border border-live/40 text-live hover:bg-live/10"
+              >
+                <span className="material-icons text-[18px]">group_remove</span>
+                チームを解散する
+              </button>
+            </div>
           </div>
         )}
       </div>

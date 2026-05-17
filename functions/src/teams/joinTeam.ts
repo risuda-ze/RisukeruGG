@@ -62,7 +62,17 @@ export const joinTeam = onCall(
       const now = FieldValue.serverTimestamp();
 
       if (oldTeamId) {
+        const oldMembersSnap = await tx.get(db.collection(`teams/${oldTeamId}/members`));
         tx.delete(db.doc(`teams/${oldTeamId}/members/${uid}`));
+        const remainingCount = oldMembersSnap.docs.filter((d) => d.id !== uid).length;
+        if (remainingCount === 0) {
+          const oldTeamSnap = await tx.get(db.doc(`teams/${oldTeamId}`));
+          const oldTeamCode = oldTeamSnap.data()?.teamCode as string | undefined;
+          tx.delete(db.doc(`teams/${oldTeamId}`));
+          if (oldTeamCode) {
+            tx.delete(db.doc(`teamCodes/${oldTeamCode}`));
+          }
+        }
       }
 
       tx.set(db.doc(`teams/${teamId}/members/${uid}`), {
