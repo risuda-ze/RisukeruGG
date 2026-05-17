@@ -208,7 +208,7 @@ export function Sidebar() {
 
       {/* ── フッター（ユーザー情報） ─────────────────────── */}
       <div className="border-t border-border px-3 py-3 flex items-center gap-2 min-w-0">
-        <Avatar initials={initials} bgClass="bg-purple-d/30" textClass="text-purple-l" size="sm" />
+        <Avatar initials={initials} src={currentUser?.photoURL} bgClass="bg-purple-d/30" textClass="text-purple-l" size="sm" />
         {/* 名前・プランバッジ（折りたたみ時は非表示） */}
         <div
           className={`flex-1 min-w-0 transition-[opacity,width] duration-300 ${

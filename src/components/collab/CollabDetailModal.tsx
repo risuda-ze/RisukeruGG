@@ -125,6 +125,11 @@ export function CollabDetailModal({
   const teamId = currentTeam?.id ?? '';
   const isOpen = session.status === 'open';
 
+  /* メンバーIDからアバターURLを取得するヘルパー */
+  function memberAvatarUrl(userId: string) {
+    return members.find((m) => m.userId === userId)?.avatarUrl ?? null;
+  }
+
   /* アイコン */
   const [iconValue, setIconValue] = useState(session.icon ?? 'sports_esports');
   const [showIconPicker, setShowIconPicker] = useState(false);
@@ -155,7 +160,7 @@ export function CollabDetailModal({
   const [sendingComment, setSendingComment] = useState(false);
 
   /* 返信（ローカル状態のみ） */
-  type LocalReply = { id: string; authorName: string; text: string; time: string };
+  type LocalReply = { id: string; authorId: string; authorName: string; text: string; time: string };
   const [localReplies, setLocalReplies] = useState<Record<string, LocalReply[]>>({});
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
@@ -345,6 +350,7 @@ export function CollabDetailModal({
     const myMember = members.find((m) => m.userId === currentUser?.uid);
     const reply: LocalReply = {
       id: `r-${Date.now()}`,
+      authorId: currentUser?.uid ?? '',
       authorName: myMember?.displayName ?? 'あなた',
       text: replyText.trim(),
       time: format(new Date(), 'HH:mm', { locale: ja }),
@@ -591,18 +597,24 @@ export function CollabDetailModal({
               <div className="flex flex-wrap gap-2 mb-3">
                 {participants.map((p) => {
                   const style = avatarStyle(p.name);
+                  const pAvatarUrl = p.type === 'member' ? memberAvatarUrl(p.id) : null;
                   return (
                     <div
                       key={p.id}
                       className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-semibold border"
                       style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
                     >
-                      <div
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
-                        style={{ background: style.bg, color: style.text }}
-                      >
-                        {p.name.slice(0, 2).toUpperCase()}
-                      </div>
+                      {pAvatarUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={pAvatarUrl} alt={p.name} className="w-6 h-6 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <div
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
+                          style={{ background: style.bg, color: style.text }}
+                        >
+                          {p.name.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
                       <span>{p.name}</span>
                       {isOpen && canEdit && (
                         <button
@@ -640,12 +652,17 @@ export function CollabDetailModal({
                               onClick={() => addMember(m.userId, m.displayName)}
                               className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] text-[13px] text-text hover:bg-purple-xs transition-colors text-left"
                             >
-                              <div
-                                className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
-                                style={{ background: s.bg, color: s.text }}
-                              >
-                                {m.displayName.slice(0, 2).toUpperCase()}
-                              </div>
+                              {m.avatarUrl ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img src={m.avatarUrl} alt={m.displayName} className="w-6 h-6 rounded-full object-cover shrink-0" />
+                              ) : (
+                                <div
+                                  className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
+                                  style={{ background: s.bg, color: s.text }}
+                                >
+                                  {m.displayName.slice(0, 2).toUpperCase()}
+                                </div>
+                              )}
                               {m.displayName}
                             </button>
                           );
@@ -775,16 +792,22 @@ export function CollabDetailModal({
                 )}
                 {comments.map((c) => {
                   const style = avatarStyle(c.authorName);
+                  const cAvatarUrl = memberAvatarUrl(c.authorId);
                   const replies = localReplies[c.id] ?? [];
                   return (
                     <div key={c.id}>
                       <div className="flex gap-2.5">
-                        <div
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
-                          style={{ background: style.bg, color: style.text }}
-                        >
-                          {c.authorName.slice(0, 2).toUpperCase()}
-                        </div>
+                        {cAvatarUrl ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img src={cAvatarUrl} alt={c.authorName} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
+                            style={{ background: style.bg, color: style.text }}
+                          >
+                            {c.authorName.slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
                           <div
                             className="rounded-[0_10px_10px_10px] px-3 py-2"
@@ -810,14 +833,20 @@ export function CollabDetailModal({
                         <div className="ml-9 mt-2 flex flex-col gap-2 border-l-2 pl-3" style={{ borderColor: 'var(--border)' }}>
                           {replies.map((r) => {
                             const rs = avatarStyle(r.authorName);
+                            const rAvatarUrl = memberAvatarUrl(r.authorId);
                             return (
                               <div key={r.id} className="flex gap-2">
-                                <div
-                                  className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5"
-                                  style={{ background: rs.bg, color: rs.text }}
-                                >
-                                  {r.authorName.slice(0, 2).toUpperCase()}
-                                </div>
+                                {rAvatarUrl ? (
+                                  /* eslint-disable-next-line @next/next/no-img-element */
+                                  <img src={rAvatarUrl} alt={r.authorName} className="w-5 h-5 rounded-full object-cover shrink-0 mt-0.5" />
+                                ) : (
+                                  <div
+                                    className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5"
+                                    style={{ background: rs.bg, color: rs.text }}
+                                  >
+                                    {r.authorName.slice(0, 2).toUpperCase()}
+                                  </div>
+                                )}
                                 <div
                                   className="flex-1 rounded-[0_8px_8px_8px] px-2.5 py-1.5"
                                   style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}

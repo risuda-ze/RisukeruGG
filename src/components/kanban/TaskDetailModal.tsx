@@ -10,6 +10,7 @@ import type { Task, TeamMember, TaskCategory, KanbanColumn, CollabComment } from
 
 interface LocalReply {
   id: string;
+  authorId: string;
   authorName: string;
   text: string;
   time: string;
@@ -175,6 +176,7 @@ export function TaskDetailModal({
     if (!replyText.trim()) return;
     const reply: LocalReply = {
       id: `r-${Date.now()}`,
+      authorId: currentUser?.uid ?? '',
       authorName: myName,
       text: replyText.trim(),
       time: format(new Date(), 'HH:mm', { locale: ja }),
@@ -202,6 +204,9 @@ export function TaskDetailModal({
   function avatarColor(name: string) {
     const colors = ['var(--purple-l)', '#4ade80', 'var(--amber-l)', '#ff6b70'];
     return colors[name.charCodeAt(0) % colors.length];
+  }
+  function memberAvatarUrl(authorId: string) {
+    return members.find((m) => m.userId === authorId)?.avatarUrl ?? null;
   }
 
   return (
@@ -437,12 +442,17 @@ export function TaskDetailModal({
                   <div key={c.id}>
                     {/* コメント本体 */}
                     <div className="flex gap-2.5">
-                      <div
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
-                        style={{ background: avatarBg(c.authorName), color: avatarColor(c.authorName) }}
-                      >
-                        {c.authorName.slice(0, 2).toUpperCase()}
-                      </div>
+                      {memberAvatarUrl(c.authorId) ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={memberAvatarUrl(c.authorId)!} alt={c.authorName} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <div
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
+                          style={{ background: avatarBg(c.authorName), color: avatarColor(c.authorName) }}
+                        >
+                          {c.authorName.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div
                           className="rounded-[0_10px_10px_10px] px-3 py-2"
@@ -468,12 +478,17 @@ export function TaskDetailModal({
                       <div className="ml-9 mt-2 flex flex-col gap-2 border-l-2 pl-3" style={{ borderColor: 'var(--border)' }}>
                         {replies.map((r) => (
                           <div key={r.id} className="flex gap-2">
-                            <div
-                              className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5"
-                              style={{ background: avatarBg(r.authorName), color: avatarColor(r.authorName) }}
-                            >
-                              {r.authorName.slice(0, 2).toUpperCase()}
-                            </div>
+                            {memberAvatarUrl(r.authorId) ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img src={memberAvatarUrl(r.authorId)!} alt={r.authorName} className="w-5 h-5 rounded-full object-cover shrink-0 mt-0.5" />
+                            ) : (
+                              <div
+                                className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5"
+                                style={{ background: avatarBg(r.authorName), color: avatarColor(r.authorName) }}
+                              >
+                                {r.authorName.slice(0, 2).toUpperCase()}
+                              </div>
+                            )}
                             <div
                               className="flex-1 rounded-[0_8px_8px_8px] px-2.5 py-1.5"
                               style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}

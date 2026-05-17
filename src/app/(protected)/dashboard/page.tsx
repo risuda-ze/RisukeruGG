@@ -251,6 +251,7 @@ export default function DashboardPage() {
                     <li key={m.userId} className="flex items-center gap-2.5">
                       <Avatar
                         initials={m.displayName.slice(0, 2)}
+                        src={m.avatarUrl}
                         bgClass="bg-purple-d/30"
                         textClass="text-purple-l"
                         size="sm"

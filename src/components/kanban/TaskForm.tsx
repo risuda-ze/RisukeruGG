@@ -57,10 +57,11 @@ export default function TaskForm({
         teamId,
         title: data.title,
         columnId: data.columnId,
-        categoryId: data.categoryId ?? null,
-        assigneeId: data.assigneeId ?? null,
+        /* select の空文字選択は null として送信する */
+        categoryId: data.categoryId || null,
+        assigneeId: data.assigneeId || null,
         dueDate: data.dueDate ? data.dueDate.toISOString() : null,
-        linkedScheduleId: data.linkedScheduleId ?? null,
+        linkedScheduleId: data.linkedScheduleId || null,
       });
       onSuccess();
     } catch (err) {
@@ -98,7 +99,9 @@ export default function TaskForm({
         <label className="block text-sm font-medium text-muted mb-1">カテゴリ</label>
         <select
           {...register('categoryId')}
-          className="w-full border border-border rounded-[8px] px-3 py-2 text-sm bg-card text-text"
+          className={`w-full border rounded-[8px] px-3 py-2 text-sm bg-card text-text outline-none transition-colors ${
+            errors.categoryId ? 'border-live' : 'border-border'
+          }`}
         >
           <option value="">なし</option>
           {taskCategories.map((cat) => (
@@ -108,7 +111,7 @@ export default function TaskForm({
           ))}
         </select>
         {errors.categoryId && (
-          <p className="text-red-500 text-xs mt-1">{errors.categoryId.message}</p>
+          <p className="text-live text-[12px] mt-1">必須項目です。</p>
         )}
       </div>
 
@@ -116,7 +119,9 @@ export default function TaskForm({
         <label className="block text-sm font-medium text-muted mb-1">カラム *</label>
         <select
           {...register('columnId')}
-          className="w-full border border-border rounded-[8px] px-3 py-2 text-sm bg-card text-text"
+          className={`w-full border rounded-[8px] px-3 py-2 text-sm bg-card text-text outline-none transition-colors ${
+            errors.columnId ? 'border-live' : 'border-border'
+          }`}
         >
           {columns.map((col) => (
             <option key={col.id} value={col.id}>
@@ -124,13 +129,18 @@ export default function TaskForm({
             </option>
           ))}
         </select>
+        {errors.columnId && (
+          <p className="text-live text-[12px] mt-1">必須項目です。</p>
+        )}
       </div>
 
       <div>
         <label className="block text-sm font-medium text-muted mb-1">担当者</label>
         <select
           {...register('assigneeId')}
-          className="w-full border border-border rounded-[8px] px-3 py-2 text-sm bg-card text-text"
+          className={`w-full border rounded-[8px] px-3 py-2 text-sm bg-card text-text outline-none transition-colors ${
+            errors.assigneeId ? 'border-live' : 'border-border'
+          }`}
         >
           <option value="">なし</option>
           {members.map((m) => (
@@ -139,6 +149,9 @@ export default function TaskForm({
             </option>
           ))}
         </select>
+        {errors.assigneeId && (
+          <p className="text-live text-[12px] mt-1">必須項目です。</p>
+        )}
       </div>
 
       <div>
@@ -148,15 +161,22 @@ export default function TaskForm({
           {...register('dueDate', {
             setValueAs: (v: string) => (v ? new Date(v) : null),
           })}
-          className="w-full border border-border rounded-[8px] px-3 py-2 text-sm bg-card text-text"
+          className={`w-full border rounded-[8px] px-3 py-2 text-sm bg-card text-text outline-none transition-colors ${
+            errors.dueDate ? 'border-live' : 'border-border'
+          }`}
         />
+        {errors.dueDate && (
+          <p className="text-live text-[12px] mt-1">必須項目です。</p>
+        )}
       </div>
 
       <div>
         <label className="block text-sm font-medium text-muted mb-1">紐付けスケジュール</label>
         <select
           {...register('linkedScheduleId')}
-          className="w-full border border-border rounded-[8px] px-3 py-2 text-sm bg-card text-text"
+          className={`w-full border rounded-[8px] px-3 py-2 text-sm bg-card text-text outline-none transition-colors ${
+            errors.linkedScheduleId ? 'border-live' : 'border-border'
+          }`}
         >
           <option value="">なし</option>
           {schedules.map((s) => (
@@ -165,9 +185,12 @@ export default function TaskForm({
             </option>
           ))}
         </select>
+        {errors.linkedScheduleId && (
+          <p className="text-live text-[12px] mt-1">必須項目です。</p>
+        )}
       </div>
 
-      {submitError && <p className="text-red-500 text-sm">{submitError}</p>}
+      {submitError && <p className="text-live text-sm">{submitError}</p>}
 
       <div className="flex gap-2 justify-end">
         <Button type="button" variant="secondary" onClick={onCancel}>

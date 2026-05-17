@@ -147,8 +147,12 @@ export default function CollabsPage() {
         proposedDates: proposedDate ? [new Date(proposedDate).toISOString()] : [],
         expiresInDays: 14,
       });
-      /* アイコンをFirestoreに保存（Cloud Functionは受け取らないため直接write） */
-      await updateCollabSession(teamId, result.data.sessionId, { icon: formIcon });
+      /* Cloud Functionが受け取れないフィールドをまとめて保存 */
+      await updateCollabSession(teamId, result.data.sessionId, {
+        icon: formIcon,
+        content: content.trim() || null,
+        participants: formParticipants,
+      });
       /* shareUrlが返されればそれを使用、なければ手動生成 */
       const url =
         result.data.shareUrl ||

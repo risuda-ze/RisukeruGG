@@ -130,7 +130,7 @@ export default function TaskCard({
         )}
         {assigneeName && (
           <div className="flex items-center gap-1">
-            <Avatar initials={assigneeInitials} size="sm" />
+            <Avatar initials={assigneeInitials} src={assignee?.avatarUrl} size="sm" />
             <span className="text-[10px] text-muted font-num truncate max-w-[80px]">
               {assigneeName}
             </span>

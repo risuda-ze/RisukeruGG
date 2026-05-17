@@ -72,6 +72,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
                 <div className="flex items-center gap-1.5 mt-3">
                   <Avatar
                     initials={assignee.displayName.slice(0, 2)}
+                    src={assignee.avatarUrl}
                     bgClass="bg-purple-d/30"
                     textClass="text-purple-l"
                     size="sm"

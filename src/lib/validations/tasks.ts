@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const taskSchema = z.object({
-  title: z.string().min(1).max(200),
-  columnId: z.string().min(1),
+  title: z.string().min(1, '必須項目です。').max(200, '200文字以内で入力してください。'),
+  columnId: z.string().min(1, '必須項目です。'),
   categoryId: z.string().nullable().default(null),
   description: z.string().max(2000).nullable().default(null),
   assigneeId: z.string().nullable().default(null),

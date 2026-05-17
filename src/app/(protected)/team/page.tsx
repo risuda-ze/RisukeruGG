@@ -256,14 +256,19 @@ export default function TeamPage() {
               >
                 {/* アバター */}
                 <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-[16px] font-bold shrink-0 relative"
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-[16px] font-bold shrink-0 relative overflow-hidden"
                   style={{ background: palette.bg, color: palette.text }}
                 >
-                  {initials}
+                  {member.avatarUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={member.avatarUrl} alt={member.displayName} className="absolute inset-0 w-full h-full object-cover" />
+                  ) : (
+                    initials
+                  )}
                   {/* オンラインインジケーター（オーナーと自分を常にオンライン表示） */}
                   {(isMe || member.role === 'owner') && (
                     <span
-                      className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card"
+                      className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card z-10"
                       style={{ background: 'var(--green)' }}
                     />
                   )}
