@@ -80,13 +80,23 @@ export default function DashboardPage() {
         err && typeof err === 'object' && 'code' in err
           ? String((err as { code: unknown }).code)
           : 'unknown';
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : '';
 
-      if (code === 'functions/not-found') {
-        setCreateError('createTeam 関数が未デプロイです（functions/not-found）');
+      if (code === 'functions/not-found' && message.includes('ユーザー')) {
+        setCreateError('ユーザー初期化データが見つかりません（functions/not-found）');
+      } else if (code === 'functions/not-found') {
+        setCreateError('createTeam 関数が見つかりません（functions/not-found）');
       } else if (code === 'functions/unauthenticated') {
         setCreateError('ログイン状態が関数に渡っていません（functions/unauthenticated）');
-      } else if (code === 'functions/not-found') {
-        setCreateError('ユーザー初期化データが見つかりません（functions/not-found）');
+      } else if (code === 'functions/internal' && message.includes('Cloud Functions API')) {
+        setCreateError(
+          'Cloud Functions API が Firebase プロジェクトで無効です（functions/internal）'
+        );
+      } else if (code === 'functions/internal') {
+        setCreateError('Cloud Functions 側で内部エラーが発生しました（functions/internal）');
       } else {
         setCreateError(`チームの作成に失敗しました（${code}）`);
       }
@@ -113,7 +123,9 @@ export default function DashboardPage() {
         <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 max-w-lg">
           <Card>
             <h3 className="text-sm font-semibold text-text mb-1">チームに参加または作成する</h3>
-            <p className="text-[12px] text-muted mb-5">チームメンバーとスケジュールを共有できます</p>
+            <p className="text-[12px] text-muted mb-5">
+              チームメンバーとスケジュールを共有できます
+            </p>
             <div className="mb-5">
               <p className="text-[11px] font-medium text-muted mb-2 uppercase tracking-wide">
                 チームコードで参加
@@ -166,100 +178,99 @@ export default function DashboardPage() {
     <div className="flex flex-col flex-1 overflow-hidden">
       <TopBar title="ダッシュボード" />
       <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7">
-      {/* ── 統計カード（5枚グリッド） ──────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
-        <StatCard
-          label="今月の配信数"
-          value={thisMonthSchedules.length}
-          color="purple"
-        />
-        <StatCard label="完了タスク数" value={doneTasks.length} color="amber" />
-        <StatCard label="今月のタスク数" value={tasks.length} color="green" />
-        <StatCard label="コラボ調整中" value={pendingCollabs.length} color="live" />
-        <StatCard
-          label="タスク完了率"
-          value={`${taskCompletionRate}%`}
-          color="green"
-          sub={`${doneTasks.length}/${tasks.length}件`}
-        />
-      </div>
-
-      {/* ── 2カラムレイアウト ───────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-4">
-        {/* ── 左カラム: タスクカードグリッド ─────────────── */}
-        <Card noPadding>
-          <CardHeader
-            title="タスクボード"
-            action={
-              <Link href="/tasks" className="text-purple-l hover:text-purple transition-colors">
-                すべて見る →
-              </Link>
-            }
+        {/* ── 統計カード（5枚グリッド） ──────────────────────── */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
+          <StatCard label="今月の配信数" value={thisMonthSchedules.length} color="purple" />
+          <StatCard label="完了タスク数" value={doneTasks.length} color="amber" />
+          <StatCard label="今月のタスク数" value={tasks.length} color="green" />
+          <StatCard label="コラボ調整中" value={pendingCollabs.length} color="live" />
+          <StatCard
+            label="タスク完了率"
+            value={`${taskCompletionRate}%`}
+            color="green"
+            sub={`${doneTasks.length}/${tasks.length}件`}
           />
-          <div className="px-[18px] py-[14px]">
-            <TaskBoardPreview tasks={tasks} columns={columns} members={members} />
-          </div>
-        </Card>
+        </div>
 
-        {/* ── 右カラム ─────────────────────────────────────── */}
-        <div className="space-y-4">
-          {/* コラボ打診リンク */}
+        {/* ── 2カラムレイアウト ───────────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-4">
+          {/* ── 左カラム: タスクカードグリッド ─────────────── */}
           <Card noPadding>
             <CardHeader
-              title="コラボ打診"
+              title="タスクボード"
               action={
-                <Link href="/collabs" className="text-purple-l hover:text-purple transition-colors">
+                <Link href="/tasks" className="text-purple-l hover:text-purple transition-colors">
                   すべて見る →
                 </Link>
               }
             />
             <div className="px-[18px] py-[14px]">
-              {pendingCollabs.length === 0 ? (
-                <p className="text-[12px] text-muted py-2 text-center">打診はありません</p>
-              ) : (
-                <p className="text-[12px] text-text">
-                  {pendingCollabs.length}件の打診が回答待ちです
-                </p>
-              )}
+              <TaskBoardPreview tasks={tasks} columns={columns} members={members} />
             </div>
           </Card>
 
-          {/* チームメンバー */}
-          <Card noPadding>
-            <CardHeader
-              title="チームメンバー"
-              action={
-                <Link href="/team" className="text-purple-l hover:text-purple transition-colors">
-                  管理 →
-                </Link>
-              }
-            />
-            <div className="px-[18px] py-[14px]">
-              <ul className="space-y-2">
-                {members.slice(0, 5).map((m) => (
-                  <li key={m.userId} className="flex items-center gap-2.5">
-                    <Avatar
-                      initials={m.displayName.slice(0, 2)}
-                      bgClass="bg-purple-d/30"
-                      textClass="text-purple-l"
-                      size="sm"
-                    />
-                    <span className="text-[12px] text-text truncate flex-1">{m.displayName}</span>
-                    <Badge variant={ROLE_BADGE[m.role] ?? 'muted'}>{m.role}</Badge>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Card>
-        </div>
-      </div>
+          {/* ── 右カラム ─────────────────────────────────────── */}
+          <div className="space-y-4">
+            {/* コラボ打診リンク */}
+            <Card noPadding>
+              <CardHeader
+                title="コラボ打診"
+                action={
+                  <Link
+                    href="/collabs"
+                    className="text-purple-l hover:text-purple transition-colors"
+                  >
+                    すべて見る →
+                  </Link>
+                }
+              />
+              <div className="px-[18px] py-[14px]">
+                {pendingCollabs.length === 0 ? (
+                  <p className="text-[12px] text-muted py-2 text-center">打診はありません</p>
+                ) : (
+                  <p className="text-[12px] text-text">
+                    {pendingCollabs.length}件の打診が回答待ちです
+                  </p>
+                )}
+              </div>
+            </Card>
 
-      {/* LIGHTプラン向けバナー広告 */}
-      {myMember?.plan === 'light' && (
-        <div className="mt-4 md:hidden">
-          <BannerAd plan="light" />
+            {/* チームメンバー */}
+            <Card noPadding>
+              <CardHeader
+                title="チームメンバー"
+                action={
+                  <Link href="/team" className="text-purple-l hover:text-purple transition-colors">
+                    管理 →
+                  </Link>
+                }
+              />
+              <div className="px-[18px] py-[14px]">
+                <ul className="space-y-2">
+                  {members.slice(0, 5).map((m) => (
+                    <li key={m.userId} className="flex items-center gap-2.5">
+                      <Avatar
+                        initials={m.displayName.slice(0, 2)}
+                        bgClass="bg-purple-d/30"
+                        textClass="text-purple-l"
+                        size="sm"
+                      />
+                      <span className="text-[12px] text-text truncate flex-1">{m.displayName}</span>
+                      <Badge variant={ROLE_BADGE[m.role] ?? 'muted'}>{m.role}</Badge>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Card>
+          </div>
         </div>
-      )}
+
+        {/* LIGHTプラン向けバナー広告 */}
+        {myMember?.plan === 'light' && (
+          <div className="mt-4 md:hidden">
+            <BannerAd plan="light" />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -28,10 +28,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 /* ロール別バッジ色 */
-const ROLE_BADGE: Record<
-  UserRole,
-  { bg: string; text: string; border: string }
-> = {
+const ROLE_BADGE: Record<UserRole, { bg: string; text: string; border: string }> = {
   owner: {
     bg: 'var(--purple-sm)',
     text: 'var(--purple-l)',
@@ -85,8 +82,33 @@ export default function TeamPage() {
       await createTeam({ name: teamName.trim() });
       setShowCreateTeam(false);
       setTeamName('');
-    } catch {
-      setCreateError('チームの作成に失敗しました');
+    } catch (err: unknown) {
+      const code =
+        err && typeof err === 'object' && 'code' in err
+          ? String((err as { code: unknown }).code)
+          : 'unknown';
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : '';
+
+      if (code === 'functions/not-found' && message.includes('ユーザー')) {
+        setCreateError('ユーザー初期化データが見つかりません（functions/not-found）');
+      } else if (code === 'functions/not-found') {
+        setCreateError('createTeam 関数が見つかりません（functions/not-found）');
+      } else if (code === 'functions/unauthenticated') {
+        setCreateError('ログイン状態が関数に渡っていません（functions/unauthenticated）');
+      } else if (code === 'functions/internal' && message.includes('Cloud Functions API')) {
+        setCreateError(
+          'Cloud Functions API が Firebase プロジェクトで無効です（functions/internal）'
+        );
+      } else if (code === 'functions/internal') {
+        setCreateError('Cloud Functions 側で内部エラーが発生しました（functions/internal）');
+      } else {
+        setCreateError(`チームの作成に失敗しました（${code}）`);
+      }
+
+      console.error('createTeam failed:', err);
     } finally {
       setCreating(false);
     }
@@ -99,9 +121,7 @@ export default function TeamPage() {
         <TopBar title="チームメンバー" />
         <div className="flex-1 overflow-y-auto p-6 max-w-lg">
           <div className="bg-card border border-border rounded-[18px] p-6">
-            <h3 className="text-sm font-semibold text-text mb-1">
-              チームに参加または作成する
-            </h3>
+            <h3 className="text-sm font-semibold text-text mb-1">チームに参加または作成する</h3>
             <p className="text-[12px] text-muted mb-5">
               チームメンバーとスケジュールを共有できます
             </p>
@@ -169,7 +189,10 @@ export default function TeamPage() {
 
       {/* メンバーカードグリッド */}
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))' }}>
+        <div
+          className="grid gap-4"
+          style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))' }}
+        >
           {members.map((member, i) => {
             const palette = AVATAR_PALETTES[i % AVATAR_PALETTES.length];
             const isMe = member.userId === currentUser?.uid;
