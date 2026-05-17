@@ -75,8 +75,23 @@ export default function DashboardPage() {
       await createTeam({ name: teamName.trim() });
       setShowCreateTeam(false);
       setTeamName('');
-    } catch {
-      setCreateError('チームの作成に失敗しました');
+    } catch (err: unknown) {
+      const code =
+        err && typeof err === 'object' && 'code' in err
+          ? String((err as { code: unknown }).code)
+          : 'unknown';
+
+      if (code === 'functions/not-found') {
+        setCreateError('createTeam 関数が未デプロイです（functions/not-found）');
+      } else if (code === 'functions/unauthenticated') {
+        setCreateError('ログイン状態が関数に渡っていません（functions/unauthenticated）');
+      } else if (code === 'functions/not-found') {
+        setCreateError('ユーザー初期化データが見つかりません（functions/not-found）');
+      } else {
+        setCreateError(`チームの作成に失敗しました（${code}）`);
+      }
+
+      console.error('createTeam failed:', err);
     } finally {
       setCreating(false);
     }
