@@ -1,14 +1,6 @@
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import type { Task, KanbanColumn, TeamMember } from '@/types/entities';
-
-const CATEGORY_LABELS: Record<Task['category'], string> = {
-  shooting: '撮影',
-  editing: '編集',
-  thumbnail: 'サムネ',
-  announcement: '告知',
-  other: 'その他',
-};
+import type { Task, KanbanColumn, TeamMember, TaskCategory } from '@/types/entities';
 
 function escapeCsv(value: string): string {
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
@@ -20,16 +12,18 @@ function escapeCsv(value: string): string {
 export function exportTasksCsv(
   tasks: Task[],
   columns: KanbanColumn[],
-  members: TeamMember[]
+  members: TeamMember[],
+  categories: TaskCategory[]
 ): void {
   const columnMap = new Map(columns.map((c) => [c.id, c.name]));
   const memberMap = new Map(members.map((m) => [m.userId, m.displayName]));
+  const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
 
   const headers = ['タイトル', '担当者', 'カテゴリ', 'カラム', '締切日', '作成日', '作成者'];
   const rows = tasks.map((task) => [
     task.title,
     task.assigneeId ? (memberMap.get(task.assigneeId) ?? '元メンバー') : '',
-    CATEGORY_LABELS[task.category],
+    task.categoryId ? (categoryMap.get(task.categoryId) ?? '') : '',
     columnMap.get(task.columnId) ?? '',
     task.dueDate ? format(task.dueDate, 'yyyy/MM/dd', { locale: ja }) : '',
     format(task.createdAt, 'yyyy/MM/dd', { locale: ja }),

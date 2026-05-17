@@ -5,28 +5,10 @@ import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import type { Task, TeamMember, KanbanColumn } from '@/types/entities';
 import { useTasksStore } from '@/stores/tasks';
+import { useTaskCategoryStore } from '@/stores/taskCategories';
 import { updateTask } from '@/lib/repositories/tasks';
-import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
-
-const CATEGORY_LABELS: Record<Task['category'], string> = {
-  shooting: '撮影',
-  editing: '編集',
-  thumbnail: 'サムネ',
-  announcement: '告知',
-  other: 'その他',
-};
-
-/* カテゴリ別バッジバリアント */
-type BadgeVariant = 'purple' | 'amber' | 'live' | 'green' | 'muted' | 'default';
-const CATEGORY_BADGE: Record<Task['category'], BadgeVariant> = {
-  shooting: 'purple',
-  editing: 'amber',
-  thumbnail: 'green',
-  announcement: 'live',
-  other: 'muted',
-};
 
 interface TaskCardProps {
   task: Task;
@@ -48,11 +30,16 @@ export default function TaskCard({
   onDelete,
 }: TaskCardProps) {
   const { columns } = useTasksStore();
+  const { taskCategories } = useTaskCategoryStore();
   const [movingColumn, setMovingColumn] = useState(false);
 
   const assignee = members.find((m) => m.userId === task.assigneeId);
   const assigneeName = assignee?.displayName ?? (task.assigneeId ? '元メンバー' : null);
   const assigneeInitials = assigneeName ? assigneeName.slice(0, 2) : '';
+
+  const category = task.categoryId
+    ? taskCategories.find((c) => c.id === task.categoryId)
+    : null;
 
   async function handleColumnChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const newColumnId = e.target.value;
@@ -67,9 +54,10 @@ export default function TaskCard({
 
   return (
     <div
-      className={`bg-surface border rounded-[8px] p-3 flex flex-col gap-2 select-none transition-colors ${
+      className={`bg-surface border rounded-[8px] p-3 flex flex-col gap-2 select-none transition-colors cursor-pointer ${
         isDragging ? 'border-purple shadow-md rotate-1' : 'border-border hover:border-purple'
       }`}
+      onClick={onEdit}
     >
       {/* タスクタイトル + アクションボタン */}
       <div className="flex items-start justify-between gap-2">
@@ -81,7 +69,10 @@ export default function TaskCard({
             <Button
               variant="ghost"
               size="sm"
-              onClick={onEdit}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
               className="px-1.5 py-1 text-muted hover:text-purple-l"
               aria-label="タスクを編集"
             >
@@ -102,7 +93,10 @@ export default function TaskCard({
             <Button
               variant="ghost"
               size="sm"
-              onClick={onDelete}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
               className="px-1.5 py-1 text-muted hover:text-live"
               aria-label="タスクを削除"
             >
@@ -126,7 +120,14 @@ export default function TaskCard({
 
       {/* メタ情報（カテゴリ・担当者・期限） */}
       <div className="flex flex-wrap gap-1.5 items-center">
-        <Badge variant={CATEGORY_BADGE[task.category]}>{CATEGORY_LABELS[task.category]}</Badge>
+        {category && (
+          <span
+            className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide"
+            style={{ backgroundColor: category.color + '33', color: category.color }}
+          >
+            {category.name}
+          </span>
+        )}
         {assigneeName && (
           <div className="flex items-center gap-1">
             <Avatar initials={assigneeInitials} size="sm" />
@@ -144,7 +145,7 @@ export default function TaskCard({
 
       {/* モバイル向けカラム変更セレクト */}
       {canEdit && (
-        <div className="sm:hidden">
+        <div className="sm:hidden" onClick={(e) => e.stopPropagation()}>
           <select
             value={task.columnId}
             onChange={handleColumnChange}

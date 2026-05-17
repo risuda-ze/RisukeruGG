@@ -18,6 +18,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { TaskBoardPreview } from '@/components/dashboard/TaskBoardPreview';
 import { BannerAd } from '@/components/plan/BannerAd';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
+import { TopBar } from '@/components/layout/TopBar';
 import type { CollabSession } from '@/types/entities';
 
 const ROLE_BADGE: Record<string, 'purple' | 'amber' | 'muted'> = {
@@ -58,17 +59,11 @@ export default function DashboardPage() {
   const thisMonthSchedules = schedules.filter(
     (s) => s.startAt.getMonth() === now.getMonth() && s.startAt.getFullYear() === now.getFullYear()
   );
-  const liveSchedule = schedules.find((s) => s.status === 'live');
   const pendingCollabs = collabSessions.filter((s) => s.status === 'open');
-  const doneTasks = tasks.filter((t) => {
-    const doneCol = columns.find((c) => c.name === '完了' || c.name === 'Done');
-    return doneCol && t.columnId === doneCol.id;
-  });
+  const doneCol = columns.find((c) => c.role === 'done');
+  const doneTasks = tasks.filter((t) => doneCol && t.columnId === doneCol.id);
   const taskCompletionRate =
     tasks.length > 0 ? Math.round((doneTasks.length / tasks.length) * 100) : 0;
-
-  /* 今月の編集タスク数（動画投稿数の代替指標） */
-  const thisMonthEditingTasks = tasks.filter((t) => t.category === 'editing').length;
 
   /* チーム作成ハンドラ */
   const handleCreateTeam = async (e: React.FormEvent) => {
@@ -98,69 +93,72 @@ export default function DashboardPage() {
   /* ── ソロ（チーム未所属）オンボーディング ─────────────── */
   if (isSoloTeam) {
     return (
-      <div className="px-4 py-6 md:px-7 max-w-lg">
-        <h2 className="text-base font-semibold text-text mb-5">ダッシュボード</h2>
-        <Card>
-          <h3 className="text-sm font-semibold text-text mb-1">チームに参加または作成する</h3>
-          <p className="text-[12px] text-muted mb-5">チームメンバーとスケジュールを共有できます</p>
-          <div className="mb-5">
-            <p className="text-[11px] font-medium text-muted mb-2 uppercase tracking-wide">
-              チームコードで参加
-            </p>
-            <TeamJoinForm />
-          </div>
-          <div className="border-t border-border pt-4">
-            <p className="text-[11px] font-medium text-muted mb-2 uppercase tracking-wide">
-              新しいチームを作成
-            </p>
-            <Button variant="secondary" size="sm" onClick={() => setShowCreateTeam(true)}>
-              チームを作成する
-            </Button>
-          </div>
-        </Card>
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <TopBar title="ダッシュボード" />
+        <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 max-w-lg">
+          <Card>
+            <h3 className="text-sm font-semibold text-text mb-1">チームに参加または作成する</h3>
+            <p className="text-[12px] text-muted mb-5">チームメンバーとスケジュールを共有できます</p>
+            <div className="mb-5">
+              <p className="text-[11px] font-medium text-muted mb-2 uppercase tracking-wide">
+                チームコードで参加
+              </p>
+              <TeamJoinForm />
+            </div>
+            <div className="border-t border-border pt-4">
+              <p className="text-[11px] font-medium text-muted mb-2 uppercase tracking-wide">
+                新しいチームを作成
+              </p>
+              <Button variant="secondary" size="sm" onClick={() => setShowCreateTeam(true)}>
+                チームを作成する
+              </Button>
+            </div>
+          </Card>
 
-        <Modal
-          open={showCreateTeam}
-          onClose={() => setShowCreateTeam(false)}
-          title="チームを作成する"
-          footer={
-            <>
-              <Button variant="secondary" onClick={() => setShowCreateTeam(false)}>
-                キャンセル
-              </Button>
-              <Button loading={creating} onClick={handleCreateTeam}>
-                作成する
-              </Button>
-            </>
-          }
-        >
-          <form onSubmit={handleCreateTeam}>
-            <Input
-              label="チーム名"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-              placeholder="例: 配信チーム"
-              maxLength={50}
-              error={createError ?? undefined}
-            />
-          </form>
-        </Modal>
+          <Modal
+            open={showCreateTeam}
+            onClose={() => setShowCreateTeam(false)}
+            title="チームを作成する"
+            footer={
+              <>
+                <Button variant="secondary" onClick={() => setShowCreateTeam(false)}>
+                  キャンセル
+                </Button>
+                <Button loading={creating} onClick={handleCreateTeam}>
+                  作成する
+                </Button>
+              </>
+            }
+          >
+            <form onSubmit={handleCreateTeam}>
+              <Input
+                label="チーム名"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                placeholder="例: 配信チーム"
+                maxLength={50}
+                error={createError ?? undefined}
+              />
+            </form>
+          </Modal>
+        </div>
       </div>
     );
   }
 
   /* ── 通常ダッシュボード ─────────────────────────────────── */
   return (
-    <div className="px-4 py-6 md:px-7">
+    <div className="flex flex-col flex-1 overflow-hidden">
+      <TopBar title="ダッシュボード" />
+      <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7">
       {/* ── 統計カード（5枚グリッド） ──────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
         <StatCard
           label="今月の配信数"
           value={thisMonthSchedules.length}
           color="purple"
-          sub={liveSchedule ? '🔴 LIVE中' : undefined}
         />
-        <StatCard label="今月の編集タスク数" value={thisMonthEditingTasks} color="amber" />
+        <StatCard label="完了タスク数" value={doneTasks.length} color="amber" />
         <StatCard label="今月のタスク数" value={tasks.length} color="green" />
         <StatCard label="コラボ調整中" value={pendingCollabs.length} color="live" />
         <StatCard
@@ -247,6 +245,7 @@ export default function DashboardPage() {
           <BannerAd plan="light" />
         </div>
       )}
+      </div>
     </div>
   );
 }

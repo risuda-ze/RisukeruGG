@@ -72,7 +72,7 @@ export function Sidebar() {
       }`}
     >
       {/* ── ヘッダー ────────────────────────────────────────── */}
-      <div className="px-4 py-4 border-b border-border flex items-center gap-3 min-w-0">
+      <div className={`py-4 border-b border-border flex items-center min-w-0 ${collapsed ? 'px-2 justify-between' : 'px-4 gap-3'}`}>
         {/* ロゴアイコン（クリックでダッシュボードへ） */}
         <Link href="/dashboard" className="shrink-0" aria-label="ダッシュボードへ">
           <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7">
@@ -144,7 +144,7 @@ export function Sidebar() {
                     const active = !item.disabled && pathname.startsWith(item.href);
                     const showBadge = item.href === '/collabs' && unreadCount > 0;
                     return (
-                      <li key={item.href}>
+                      <li key={item.label}>
                         {item.disabled ? (
                           <span className="flex items-center gap-2.5 px-3 py-2 rounded-[8px] text-sm text-muted/50 pointer-events-none select-none">
                             <span className="material-icons text-[20px] shrink-0">{item.icon}</span>
@@ -180,7 +180,7 @@ export function Sidebar() {
                   {section.items.map((item) => {
                     const active = !item.disabled && pathname.startsWith(item.href);
                     return (
-                      <li key={item.href}>
+                      <li key={item.label}>
                         {item.disabled ? (
                           <span className="flex justify-center py-2 rounded-[8px] text-muted/50 pointer-events-none select-none">
                             <span className="material-icons text-[20px]">{item.icon}</span>

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { KanbanColumn, Task } from '@/types/entities';
 
 function buildColumn(id: string, order: number): KanbanColumn {
-  return { id, name: `Column ${id}`, order, color: '#000', createdAt: new Date() };
+  return { id, name: `Column ${id}`, order, color: '#000', role: null, createdAt: new Date() };
 }
 
 function buildTask(id: string, columnId: string): Task {
@@ -10,7 +10,8 @@ function buildTask(id: string, columnId: string): Task {
     id,
     title: `Task ${id}`,
     columnId,
-    category: 'other',
+    categoryId: null,
+    description: null,
     assigneeId: null,
     dueDate: null,
     linkedScheduleId: null,

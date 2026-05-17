@@ -97,7 +97,7 @@ export default function CollabPublicPage() {
               <h1 className="text-base font-semibold text-text mb-2">
                 このリンクは有効期限切れです
               </h1>
-              <p className="text-sm text-muted">コラボ打診者に再送をお願いしてください</p>
+              <p className="text-sm text-muted">コラボ調整者に再送をお願いしてください</p>
             </Card>
           )}
 

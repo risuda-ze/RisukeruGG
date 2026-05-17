@@ -44,6 +44,16 @@ service cloud.firestore {
         allow write: if isTeamOwner(teamId);
       }
 
+      match /scheduleCategories/{categoryId} {
+        allow read: if isTeamMember(teamId);
+        allow write: if isOwnerOrEditor(teamId);
+      }
+
+      match /taskCategories/{categoryId} {
+        allow read: if isTeamMember(teamId);
+        allow write: if isOwnerOrEditor(teamId);
+      }
+
       match /schedules/{scheduleId} {
         allow read: if isTeamMember(teamId);
         allow write: if isOwnerOrEditor(teamId);

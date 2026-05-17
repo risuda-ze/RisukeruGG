@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Modal } from '@/components/ui/Modal';
-import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
-import type { Task, KanbanColumn, TeamMember, TaskCategory } from '@/types/entities';
+import { useTaskCategoryStore } from '@/stores/taskCategories';
+import type { Task, KanbanColumn, TeamMember } from '@/types/entities';
 
 interface TaskBoardPreviewProps {
   tasks: Task[];
@@ -15,25 +15,9 @@ interface TaskBoardPreviewProps {
   members: TeamMember[];
 }
 
-/* カテゴリ表示名 */
-const CATEGORY_LABELS: Record<TaskCategory, string> = {
-  shooting: '撮影',
-  editing: '編集',
-  thumbnail: 'サムネ',
-  announcement: '告知',
-  other: 'その他',
-};
-
-const CATEGORY_VARIANTS: Record<TaskCategory, 'purple' | 'amber' | 'green' | 'live' | 'muted'> = {
-  shooting: 'purple',
-  editing: 'amber',
-  thumbnail: 'green',
-  announcement: 'live',
-  other: 'muted',
-};
-
 export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const { taskCategories } = useTaskCategoryStore();
 
   if (tasks.length === 0) {
     return <p className="text-[12px] text-muted py-4 text-center">タスクはありません</p>;
@@ -44,7 +28,11 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
 
   const getColumnName = (columnId: string) => columns.find((c) => c.id === columnId)?.name ?? '—';
 
+  const getCategory = (categoryId: string | null) =>
+    categoryId ? taskCategories.find((c) => c.id === categoryId) ?? null : null;
+
   const selectedAssignee = selectedTask ? getAssignee(selectedTask.assigneeId) : null;
+  const selectedCategory = selectedTask ? getCategory(selectedTask.categoryId) : null;
 
   return (
     <>
@@ -52,6 +40,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {tasks.map((task) => {
           const assignee = getAssignee(task.assigneeId);
+          const category = getCategory(task.categoryId);
           return (
             <button
               key={task.id}
@@ -62,9 +51,14 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
               <p className="text-sm font-semibold text-text mb-2 line-clamp-2">{task.title}</p>
 
               {/* カテゴリバッジ */}
-              <Badge variant={CATEGORY_VARIANTS[task.category]}>
-                {CATEGORY_LABELS[task.category]}
-              </Badge>
+              {category && (
+                <span
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide"
+                  style={{ backgroundColor: category.color + '33', color: category.color }}
+                >
+                  {category.name}
+                </span>
+              )}
 
               {/* 期限 */}
               {task.dueDate && (
@@ -104,12 +98,20 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
       >
         {selectedTask && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="text-[12px] text-muted w-20">カテゴリ</span>
-              <Badge variant={CATEGORY_VARIANTS[selectedTask.category]}>
-                {CATEGORY_LABELS[selectedTask.category]}
-              </Badge>
-            </div>
+            {selectedCategory && (
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] text-muted w-20">カテゴリ</span>
+                <span
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide"
+                  style={{
+                    backgroundColor: selectedCategory.color + '33',
+                    color: selectedCategory.color,
+                  }}
+                >
+                  {selectedCategory.name}
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-muted w-20">進捗</span>
               <span className="text-[12px] text-text">{getColumnName(selectedTask.columnId)}</span>

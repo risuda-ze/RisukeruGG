@@ -8,10 +8,12 @@
 /* ── Tailwind v4 カスタムトークン定義 ───────────────────────── */
 @theme {
   /* カラー */
-  --color-bg: #08081a;
-  --color-surface: #10102a;
+  --color-bg: #0a0a18;
+  --color-surface: #11112a;
   --color-card: #16163a;
-  --color-border: #28285a;
+  --color-card-2: #1c1c42;
+  --color-border: #2a2a55;
+  --color-border-l: #3a3a6a;
 
   /* プライマリ（パープル） */
   --color-purple: #7f77dd;
@@ -24,12 +26,14 @@
   --color-amber-d: #ba7517;
 
   /* テキスト */
-  --color-text: #eeeeff;
+  --color-text: #e8e8ff;
+  --color-text-2: #c0c0e8;
   --color-muted: #6666aa;
+  --color-muted-l: #8888bb;
 
   /* セマンティック */
   --color-live: #ff4d6d;
-  --color-green: #3fcf7f;
+  --color-green: #4ade80;
 
   /* フォント変数（layout.tsx で next/font/google を通じてセット） */
   --font-ja: 'Zen Kaku Gothic New', sans-serif;
@@ -38,35 +42,52 @@
   /* 角丸 */
   --radius-sm: 6px;
   --radius-md: 12px;
-  --radius-lg: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
 }
 
 /* ── CSS カスタムプロパティ（デザイントークン） ────────────── */
 :root {
-  --bg: #08081a;
-  --surface: #10102a;
+  --bg: #0a0a18;
+  --surface: #11112a;
   --card: #16163a;
-  --border: #28285a;
+  --card-2: #1c1c42;
+  --border: #2a2a55;
+  --border-l: #3a3a6a;
 
   --purple: #7f77dd;
   --purple-l: #a0a0ff;
   --purple-d: #534ab7;
+  --purple-xs: rgba(127, 119, 221, 0.08);
+  --purple-sm: rgba(127, 119, 221, 0.15);
+  --purple-md: rgba(127, 119, 221, 0.25);
 
   --amber: #ef9f27;
   --amber-l: #fac775;
   --amber-d: #ba7517;
 
-  --text: #eeeeff;
-  --muted: #6666aa;
-
   --live: #ff4d6d;
-  --green: #3fcf7f;
+  --live-xs: rgba(255, 77, 109, 0.15);
+  --green: #4ade80;
+
+  --text: #e8e8ff;
+  --text-2: #c0c0e8;
+  --muted: #6666aa;
+  --muted-l: #8888bb;
 
   /* シャドウ */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.24);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.32), 0 2px 4px -2px rgba(0, 0, 0, 0.32);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.8);
+
+  /* 角丸 */
+  --r-sm: 6px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-full: 9999px;
 }
 
 /* ── ベーススタイル ─────────────────────────────────────────── */

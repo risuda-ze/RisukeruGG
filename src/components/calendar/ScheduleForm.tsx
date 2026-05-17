@@ -3,26 +3,25 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import type { ScheduleEntry } from '@/types/entities';
+import type { ScheduleEntry, ScheduleCategory } from '@/types/entities';
 
 interface ScheduleFormProps {
   initialData?: Partial<ScheduleEntry>;
+  categories: ScheduleCategory[];
   onSubmit: (
     data: Omit<ScheduleEntry, 'id' | 'updatedAt' | 'createdAt' | 'createdBy'>
   ) => Promise<void>;
   onCancel: () => void;
-  teamMemberIds?: string[];
 }
 
-export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormProps) {
+const selectClass =
+  'w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple';
+
+export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: ScheduleFormProps) {
   const [title, setTitle] = useState(initialData?.title ?? '');
-  const [type, setType] = useState<'stream' | 'video'>(initialData?.type ?? 'stream');
+  const [categoryId, setCategoryId] = useState<string>(initialData?.categoryId ?? '');
   const [startAt, setStartAt] = useState(initialData?.startAt?.toISOString().slice(0, 16) ?? '');
   const [endAt, setEndAt] = useState(initialData?.endAt?.toISOString().slice(0, 16) ?? '');
-  const [platform, setPlatform] = useState<'youtube' | 'twitch' | 'both' | ''>(
-    initialData?.platform ?? ''
-  );
-  const [status, setStatus] = useState<ScheduleEntry['status']>(initialData?.status ?? 'planned');
   const [description, setDescription] = useState(initialData?.description ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,11 +44,9 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
     try {
       await onSubmit({
         title,
-        type,
+        categoryId: categoryId || null,
         startAt: start,
         endAt: end,
-        platform: platform || null,
-        status,
         description,
         participantIds: initialData?.participantIds ?? [],
         collabPartnerName: initialData?.collabPartnerName ?? null,
@@ -63,7 +60,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Input
         label="タイトル"
         value={title}
@@ -72,76 +69,59 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
         maxLength={100}
       />
 
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-zinc-700">種別</label>
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[12px] font-semibold text-muted">カテゴリ</label>
         <select
-          value={type}
-          onChange={(e) => setType(e.target.value as 'stream' | 'video')}
-          className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
-        >
-          <option value="stream">配信枠</option>
-          <option value="video">動画投稿</option>
-        </select>
-      </div>
-
-      <Input
-        label="開始日時"
-        type="datetime-local"
-        value={startAt}
-        onChange={(e) => setStartAt(e.target.value)}
-        required
-      />
-      <Input
-        label="終了日時"
-        type="datetime-local"
-        value={endAt}
-        onChange={(e) => setEndAt(e.target.value)}
-        required
-      />
-
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-zinc-700">プラットフォーム</label>
-        <select
-          value={platform}
-          onChange={(e) => setPlatform(e.target.value as 'youtube' | 'twitch' | 'both' | '')}
-          className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+          value={categoryId}
+          onChange={(e) => setCategoryId(e.target.value)}
+          className={selectClass}
         >
           <option value="">未選択</option>
-          <option value="youtube">YouTube</option>
-          <option value="twitch">Twitch</option>
-          <option value="both">両方</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
         </select>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-zinc-700">ステータス</label>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as ScheduleEntry['status'])}
-          className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
-        >
-          <option value="planned">予定</option>
-          <option value="live">LIVE</option>
-          <option value="ended">終了</option>
-          <option value="cancelled">キャンセル</option>
-        </select>
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[12px] font-semibold text-muted">開始日時</label>
+        <input
+          type="datetime-local"
+          value={startAt}
+          onChange={(e) => setStartAt(e.target.value)}
+          required
+          className={selectClass}
+        />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-zinc-700">説明</label>
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[12px] font-semibold text-muted">終了日時</label>
+        <input
+          type="datetime-local"
+          value={endAt}
+          onChange={(e) => setEndAt(e.target.value)}
+          required
+          className={selectClass}
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[12px] font-semibold text-muted">説明</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           maxLength={1000}
           rows={3}
-          className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+          className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple resize-y"
         />
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-[12px] text-live">{error}</p>}
 
-      <div className="flex justify-end gap-3">
-        <Button variant="secondary" type="button" onClick={onCancel}>
+      <div className="flex justify-end gap-3 pt-1">
+        <Button variant="ghost" type="button" onClick={onCancel}>
           キャンセル
         </Button>
         <Button type="submit" loading={loading}>

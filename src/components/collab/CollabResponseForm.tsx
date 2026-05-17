@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import type { CollabSession } from '@/types/entities';
 
+type DateChoice = 'ok' | 'ng' | 'pending';
+
 interface CollabResponseFormProps {
   session: CollabSession;
   teamId: string;
@@ -21,7 +23,8 @@ export default function CollabResponseForm({
   sessionId,
   onSuccess,
 }: CollabResponseFormProps) {
-  const [dates, setDates] = useState<Record<string, 'ok' | 'ng'>>({});
+  const [respondentName, setRespondentName] = useState('');
+  const [dates, setDates] = useState<Record<string, DateChoice>>({});
   const [alternativeDate, setAlternativeDate] = useState('');
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -29,11 +32,13 @@ export default function CollabResponseForm({
   const [showConfirm, setShowConfirm] = useState(false);
 
   const daysLeft = differenceInDays(session.expiresAt, new Date());
+  /* OK/NG/未定のどれも未選択の日程 */
   const unselected = session.proposedDates.filter((_, i) => !dates[i.toString()]);
 
-  function toggleDate(index: number, value: 'ok' | 'ng') {
+  function toggleDate(index: number, value: DateChoice) {
     setDates((prev) => {
       const key = index.toString();
+      /* 同じ値をもう一度クリックしたら選択解除 */
       if (prev[key] === value) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { [key]: _, ...rest } = prev;
@@ -44,6 +49,11 @@ export default function CollabResponseForm({
   }
 
   function handleSubmitClick() {
+    if (!respondentName.trim()) {
+      setError('お名前を入力してください');
+      return;
+    }
+    setError(null);
     if (unselected.length > 0) {
       setShowConfirm(true);
     } else {
@@ -59,6 +69,7 @@ export default function CollabResponseForm({
       await respondToCollab({
         teamId,
         sessionId,
+        respondentName: respondentName.trim(),
         dates,
         alternativeDates: alternativeDate ? [alternativeDate] : [],
         note: note.trim() || null,
@@ -75,13 +86,29 @@ export default function CollabResponseForm({
     <div className="space-y-5">
       {/* セッション情報 */}
       <div>
-        <p className="text-[11px] text-muted">{session.partnerName}さんからのコラボ打診</p>
+        <p className="text-[11px] text-muted">{session.partnerName}さんからのコラボ調整</p>
         <p className="text-base font-semibold text-text mt-0.5">{session.title}</p>
         {daysLeft > 0 ? (
           <p className="text-[11px] text-amber-l mt-1">回答期限: あと{daysLeft}日</p>
         ) : (
           <p className="text-[11px] text-live mt-1">有効期限切れ</p>
         )}
+      </div>
+
+      {/* お名前（必須） */}
+      <div>
+        <label className="block text-sm font-medium text-text mb-2">
+          お名前 <span className="text-live text-[11px]">必須</span>
+        </label>
+        <input
+          type="text"
+          value={respondentName}
+          onChange={(e) => setRespondentName(e.target.value)}
+          placeholder="例: 田中 太郎"
+          maxLength={50}
+          className="w-full border border-border rounded-[6px] px-3 py-2 text-sm bg-surface text-text placeholder:text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none"
+          aria-label="お名前"
+        />
       </div>
 
       {/* 候補日程リスト */}
@@ -92,7 +119,7 @@ export default function CollabResponseForm({
             const key = index.toString();
             const val = dates[key];
             return (
-              <Card key={index} className="flex items-center gap-3 p-3" noPadding>
+              <Card key={index} noPadding>
                 <div className="flex items-center gap-3 px-3 py-3 w-full">
                   <span className="flex-1 text-sm text-text">
                     {format(date, 'M月d日(E) HH:mm', { locale: ja })}
@@ -122,6 +149,18 @@ export default function CollabResponseForm({
                     >
                       × NG
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleDate(index, 'pending')}
+                      className={`px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
+                        val === 'pending'
+                          ? 'bg-amber/15 border border-amber/40 text-amber-l'
+                          : 'bg-surface border border-border text-muted hover:text-amber-l hover:border-amber/40'
+                      }`}
+                      aria-label="未定"
+                    >
+                      ? 未定
+                    </button>
                   </div>
                 </div>
               </Card>
@@ -130,15 +169,17 @@ export default function CollabResponseForm({
         </div>
       </div>
 
-      {/* 代替日程 */}
+      {/* 別の日程を提案する */}
       <div>
-        <label className="block text-sm font-medium text-text mb-2">代替日程の提案（任意）</label>
+        <label className="block text-sm font-medium text-text mb-2">
+          別の日程を提案する（任意）
+        </label>
         <input
           type="datetime-local"
           value={alternativeDate}
           onChange={(e) => setAlternativeDate(e.target.value)}
           className="w-full border border-border rounded-[6px] px-3 py-2 text-sm bg-surface text-text focus:ring-1 focus:ring-purple focus:border-purple outline-none"
-          aria-label="代替日程"
+          aria-label="別の日程を提案"
         />
       </div>
 

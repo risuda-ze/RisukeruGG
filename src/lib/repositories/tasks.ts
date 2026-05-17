@@ -20,7 +20,8 @@ function toTask(id: string, data: Record<string, unknown>): Task {
     id,
     title: data.title as string,
     columnId: data.columnId as string,
-    category: data.category as Task['category'],
+    categoryId: (data.categoryId as string | null) ?? null,
+    description: (data.description as string | null) ?? null,
     assigneeId: (data.assigneeId as string | null) ?? null,
     dueDate: data.dueDate ? (data.dueDate as Timestamp).toDate() : null,
     linkedScheduleId: (data.linkedScheduleId as string | null) ?? null,
@@ -35,7 +36,7 @@ export const createTask = httpsCallable<
     teamId: string;
     title: string;
     columnId: string;
-    category: string;
+    categoryId?: string | null;
     assigneeId?: string | null;
     dueDate?: string | null;
     linkedScheduleId?: string | null;

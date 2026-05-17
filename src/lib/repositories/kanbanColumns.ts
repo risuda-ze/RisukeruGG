@@ -18,16 +18,18 @@ function toColumn(id: string, data: Record<string, unknown>): KanbanColumn {
     name: data.name as string,
     order: data.order as number,
     color: data.color as string,
+    role: (data.role as 'done' | null) ?? null,
     createdAt: (data.createdAt as Timestamp).toDate(),
   };
 }
 
 export async function createColumn(
   teamId: string,
-  data: Omit<KanbanColumn, 'id' | 'createdAt'>
+  data: Omit<KanbanColumn, 'id' | 'role' | 'createdAt'>
 ): Promise<string> {
   const ref = await addDoc(collection(db, 'teams', teamId, 'kanbanColumns'), {
     ...data,
+    role: null,
     createdAt: serverTimestamp(),
   });
   return ref.id;

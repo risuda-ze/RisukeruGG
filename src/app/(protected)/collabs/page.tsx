@@ -1,212 +1,483 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useAuthStore } from '@/stores/auth';
-import { subscribeCollabSessions } from '@/lib/repositories/collabs';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { Modal } from '@/components/ui/Modal';
+import { subscribeCollabSessions, createCollabSession } from '@/lib/repositories/collabs';
+import { TopBar } from '@/components/layout/TopBar';
+import { CollabDetailModal } from '@/components/collab/CollabDetailModal';
 import { Spinner } from '@/components/ui/Spinner';
-import { Avatar } from '@/components/ui/Avatar';
-import CollabForm from '@/components/collab/CollabForm';
-import { COLLAB_STATUS_LABELS, LIGHT_PLAN_LIMITS } from '@/types/entities';
-import type { CollabSession } from '@/types/entities';
+import { LIGHT_PLAN_LIMITS, COLLAB_STATUS_LABELS } from '@/types/entities';
+import type { CollabSession, CollabParticipant } from '@/types/entities';
 
-/* ステータス → バッジバリアント */
-type BadgeVariant = 'purple' | 'amber' | 'live' | 'green' | 'muted' | 'default';
-const STATUS_BADGE: Record<string, BadgeVariant> = {
-  open: 'purple',
-  confirmed: 'green',
-  expired: 'muted',
-  cancelled: 'live',
-};
+/* アバター背景色セット */
+const AVATAR_COLORS = [
+  { bg: 'linear-gradient(135deg,#3a1a6a,#6a2a9a)', text: '#cc88ff' },
+  { bg: 'linear-gradient(135deg,#1a3a1a,#2a6a2a)', text: '#66cc66' },
+  { bg: 'linear-gradient(135deg,#3a1a1a,#6a2a2a)', text: '#cc8888' },
+  { bg: 'linear-gradient(135deg,#1a3a3a,#2a6a6a)', text: '#88cccc' },
+];
+function getAvatarColor(name: string) {
+  return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
+}
 
-/* ステータスタブ定義 */
-const STATUS_TABS = [
-  { value: 'open', label: '返答待ち' },
-  { value: 'confirmed', label: '確定済み' },
-  { value: 'expired', label: '期限切れ' },
-  { value: 'cancelled', label: 'キャンセル' },
-] as const;
-
-type StatusFilter = (typeof STATUS_TABS)[number]['value'] | 'all';
+/* ステータスバッジのスタイル */
+function StatusBadge({ status }: { status: CollabSession['status'] }) {
+  const label = COLLAB_STATUS_LABELS[status];
+  if (status === 'open') {
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border"
+        style={{
+          background: 'var(--live-xs)',
+          color: 'var(--live)',
+          borderColor: 'rgba(255,77,109,0.3)',
+        }}
+      >
+        ⏳ {label}
+      </span>
+    );
+  }
+  if (status === 'confirmed') {
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border"
+        style={{
+          background: 'rgba(74,222,128,0.15)',
+          color: 'var(--green)',
+          borderColor: 'rgba(74,222,128,0.3)',
+        }}
+      >
+        ✓ {label}
+      </span>
+    );
+  }
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border"
+      style={{
+        background: 'var(--purple-xs)',
+        color: 'var(--muted)',
+        borderColor: 'var(--border)',
+      }}
+    >
+      {label}
+    </span>
+  );
+}
 
 export default function CollabsPage() {
   const { currentUser, currentTeam, members } = useAuthStore();
   const [sessions, setSessions] = useState<CollabSession[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
-  const [createdShareUrl, setCreatedShareUrl] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<StatusFilter>('open');
+  const [selectedSession, setSelectedSession] = useState<CollabSession | null>(null);
+
+  /* 新規コラボ調整フォーム */
+  const [formTitle, setFormTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [proposedDate, setProposedDate] = useState('');
+  const [formParticipants, setFormParticipants] = useState<CollabParticipant[]>([]);
+  const [externalName, setExternalName] = useState('');
+  const [showMemberPicker, setShowMemberPicker] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [createdUrl, setCreatedUrl] = useState<string | null>(null);
+  const [urlCopied, setUrlCopied] = useState(false);
 
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const canEdit = myMember?.role === 'owner' || myMember?.role === 'editor';
-
   const myCollabCount = sessions.filter((s) => s.createdBy === currentUser?.uid).length;
   const isLightPlanFull =
     myMember?.plan === 'light' && myCollabCount >= LIGHT_PLAN_LIMITS.monthlyCollabs;
 
-  const filtered = sessions.filter((s) => s.status === activeTab);
+  const openSessions = sessions.filter((s) => s.status === 'open');
+  const confirmedSessions = sessions
+    .filter((s) => s.status === 'confirmed' && s.confirmedDate && s.confirmedDate > new Date())
+    .sort((a, b) => (a.confirmedDate?.getTime() ?? 0) - (b.confirmedDate?.getTime() ?? 0));
+
+  const receivedCount = openSessions.filter((s) => s.createdBy !== currentUser?.uid).length;
+  const sentCount = openSessions.filter((s) => s.createdBy === currentUser?.uid).length;
 
   useEffect(() => {
     if (!teamId) return;
-    const unsub = subscribeCollabSessions(teamId, (data) => {
+    return subscribeCollabSessions(teamId, (data) => {
       setSessions(data);
       setLoading(false);
     });
-    return unsub;
   }, [teamId]);
 
-  async function copyUrl(url: string) {
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  /* 現在ログイン中のメンバーをフォーム参加者に初期セット */
+  useEffect(() => {
+    if (myMember && formParticipants.length === 0) {
+      setFormParticipants([
+        { id: myMember.userId, name: myMember.displayName, type: 'member' },
+      ]);
+    }
+  }, [myMember]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!teamId || !formTitle.trim()) {
+      setFormError('タイトルを入力してください');
+      return;
+    }
+    /* 外部参加者の名前をpartnerNameとして使用、なければタイトルを代用 */
+    const externalParticipants = formParticipants.filter((p) => p.type === 'external');
+    const partnerName =
+      externalParticipants.length > 0
+        ? externalParticipants.map((p) => p.name).join(', ')
+        : formTitle.trim();
+
+    setSubmitting(true);
+    setFormError(null);
+    try {
+      const result = await createCollabSession({
+        teamId,
+        title: formTitle.trim(),
+        partnerName,
+        proposedDates: proposedDate ? [new Date(proposedDate).toISOString()] : [],
+        expiresInDays: 14,
+      });
+      /* shareUrlが返されればそれを使用、なければ手動生成 */
+      const url =
+        result.data.shareUrl ||
+        `${window.location.origin}/collab/${teamId}__${result.data.sessionId}`;
+      setCreatedUrl(url);
+      setFormTitle('');
+      setContent('');
+      setProposedDate('');
+      setFormParticipants(
+        myMember ? [{ id: myMember.userId, name: myMember.displayName, type: 'member' }] : []
+      );
+    } catch {
+      setFormError('作成に失敗しました。Firebaseエミュレータが起動しているか確認してください。');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function copyUrl() {
+    if (!createdUrl) return;
+    await navigator.clipboard.writeText(createdUrl);
+    setUrlCopied(true);
+    setTimeout(() => setUrlCopied(false), 2000);
+  }
+
+  function addExternalParticipant() {
+    if (!externalName.trim()) return;
+    setFormParticipants((prev) => [
+      ...prev,
+      { id: `ext_${Date.now()}`, name: externalName.trim(), type: 'external' },
+    ]);
+    setExternalName('');
+  }
+
+  function removeFormParticipant(id: string) {
+    setFormParticipants((prev) => prev.filter((p) => p.id !== id));
+  }
+
+  function addMemberParticipant(memberId: string, name: string) {
+    if (formParticipants.some((p) => p.id === memberId)) return;
+    setFormParticipants((prev) => [...prev, { id: memberId, name, type: 'member' }]);
   }
 
   if (!teamId) {
     return (
-      <div className="flex flex-1 items-center justify-center text-muted text-sm px-4">
-        チームに参加してからコラボ機能を利用できます
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <TopBar title="コラボ調整" />
+        <div className="flex-1 flex items-center justify-center text-muted text-sm">
+          チームに参加してからコラボ機能を利用できます
+        </div>
       </div>
     );
   }
 
+  const subtitle =
+    receivedCount > 0 || sentCount > 0
+      ? `受信 ${receivedCount}件・送信 ${sentCount}件`
+      : undefined;
+
+  /* フォーム参加者に未追加のメンバー一覧 */
+  const availableMembers = members.filter(
+    (m) => !formParticipants.some((p) => p.id === m.userId)
+  );
+
   return (
-    <div className="px-4 py-6 md:px-7 max-w-3xl">
-      {/* ── ページヘッダー ─────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-5 gap-3">
-        <h2 className="text-base font-semibold text-text">コラボ調整</h2>
-        {canEdit && (
-          <Button
-            variant="amber"
-            size="sm"
-            onClick={() => setShowCreate(true)}
-            disabled={isLightPlanFull}
-          >
-            + 打診する
-          </Button>
-        )}
-      </div>
+    <div className="flex flex-col flex-1 overflow-hidden relative">
+      <TopBar title="コラボ調整" subtitle={subtitle} />
 
-      {/* ── ステータスタブ ─────────────────────────────────── */}
-      <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-none">
-        {STATUS_TABS.map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => setActiveTab(tab.value)}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
-              activeTab === tab.value
-                ? 'bg-purple-d text-purple-l'
-                : 'bg-surface border border-border text-muted hover:text-text'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <div className="flex-1 overflow-y-auto">
+        <div className="flex gap-6 p-6 items-start min-h-full">
+          {/* ── 左カラム: コラボリスト ──────────────────── */}
+          <div className="flex-1 flex flex-col gap-4">
+            <div className="text-[15px] font-bold text-muted mb-1">受信・送信したコラボ調整</div>
 
-      {/* ── リスト ─────────────────────────────────────────── */}
-      {loading ? (
-        <div className="flex justify-center py-16">
-          <Spinner size="lg" />
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center text-muted text-sm py-16">
-          {activeTab === 'open' ? 'コラボ打診はありません' : 'データがありません'}
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {filtered.map((session) => {
-            const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/collab/${teamId}__${session.id}`;
-            const initials = session.partnerName.slice(0, 2).toUpperCase();
-            return (
-              <div
-                key={session.id}
-                className="bg-card border border-border rounded-[12px] p-4 flex items-center gap-3"
-              >
-                <Avatar
-                  initials={initials}
-                  bgClass="bg-amber-d/30"
-                  textClass="text-amber-l"
-                  size="md"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                    <Link
-                      href={`/collabs/${session.id}`}
-                      className="text-sm font-medium text-text hover:text-purple-l transition-colors truncate"
-                    >
-                      {session.title}
-                    </Link>
-                    <Badge variant={STATUS_BADGE[session.status] ?? 'default'}>
-                      {COLLAB_STATUS_LABELS[session.status]}
-                    </Badge>
-                  </div>
-                  <p className="text-[11px] text-muted font-num">
-                    {session.partnerName}さんと · {format(session.createdAt, 'M/d', { locale: ja })}
-                    作成
-                  </p>
-                </div>
-                {session.status === 'open' && (
-                  <button
-                    onClick={() => copyUrl(shareUrl)}
-                    className="shrink-0 text-[11px] px-3 py-1.5 rounded-[8px] border border-border text-muted hover:text-text hover:bg-surface transition-colors"
-                    aria-label="URLをコピー"
-                  >
-                    {copied ? '✓ コピー済み' : 'URLコピー'}
-                  </button>
-                )}
+            {loading ? (
+              <div className="flex justify-center py-16">
+                <Spinner size="lg" />
               </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* コラボ作成モーダル */}
-      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="コラボ日程調整を作成">
-        <CollabForm
-          teamId={teamId}
-          isLightPlanFull={isLightPlanFull}
-          onSuccess={(url) => {
-            setShowCreate(false);
-            setCreatedShareUrl(url);
-          }}
-          onCancel={() => setShowCreate(false)}
-        />
-      </Modal>
-
-      {/* 作成完了モーダル（URLコピー） */}
-      <Modal
-        open={Boolean(createdShareUrl)}
-        onClose={() => setCreatedShareUrl(null)}
-        title="コラボURLを共有しましょう"
-        footer={
-          <Button variant="secondary" onClick={() => setCreatedShareUrl(null)}>
-            閉じる
-          </Button>
-        }
-      >
-        <div className="space-y-3">
-          <p className="text-sm text-muted">以下のURLをコラボ相手に送ってください:</p>
-          <div className="bg-surface border border-border rounded-[8px] p-3 break-all text-[12px] font-num text-text">
-            {createdShareUrl}
+            ) : openSessions.length === 0 ? (
+              <div className="bg-card border border-border rounded-[18px] p-8 text-center text-muted text-sm">
+                コラボ調整はありません
+              </div>
+            ) : (
+              openSessions.map((session) => {
+                const avatarColor = getAvatarColor(session.partnerName);
+                const initials = session.partnerName.slice(0, 2).toUpperCase();
+                return (
+                  <div
+                    key={session.id}
+                    className="bg-card border border-border rounded-[18px] p-5 flex items-center gap-5 transition-all hover:border-purple"
+                    style={{ boxShadow: 'none' }}
+                  >
+                    <div
+                      className="w-12 h-12 rounded-full flex items-center justify-center text-[16px] font-bold shrink-0"
+                      style={{ background: avatarColor.bg, color: avatarColor.text }}
+                    >
+                      {initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <StatusBadge status={session.status} />
+                        <span className="text-[12px] text-muted font-num">
+                          {format(session.createdAt, 'M/d', { locale: ja })} 作成
+                        </span>
+                      </div>
+                      <div className="text-[16px] font-bold text-text mb-1 truncate">
+                        {session.title}
+                      </div>
+                      <div className="text-[13px] text-text-2 truncate">
+                        {session.content ?? session.partnerName}
+                      </div>
+                    </div>
+                    <button
+                      className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold transition-colors"
+                      style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+                      onClick={() => setSelectedSession(session)}
+                    >
+                      詳細を見る
+                    </button>
+                  </div>
+                );
+              })
+            )}
           </div>
-          <Button
-            variant="amber"
-            className="w-full"
-            onClick={() => {
-              if (createdShareUrl) copyUrl(createdShareUrl);
-            }}
-          >
-            {copied ? '✓ コピーしました' : 'URLをコピーする'}
-          </Button>
+
+          {/* ── 右カラム: フォーム + 予定コラボ ─────────── */}
+          <div className="w-[380px] shrink-0 flex flex-col gap-6">
+            {/* 新規コラボ調整フォーム */}
+            <div
+              className="bg-card border rounded-[18px] p-5"
+              style={{ borderColor: 'var(--amber-d)' }}
+            >
+              <div
+                className="text-[15px] font-bold mb-4 flex items-center gap-2"
+                style={{ color: 'var(--amber-l)' }}
+              >
+                <span className="material-icons text-[20px]">handshake</span>
+                新規コラボ調整
+              </div>
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                {/* タイトル */}
+                <div>
+                  <label className="block text-[12px] font-semibold text-muted mb-2">
+                    タイトル <span style={{ color: 'var(--live)' }}>*</span>
+                  </label>
+                  <input
+                    id="collab-title-input"
+                    type="text"
+                    value={formTitle}
+                    onChange={(e) => setFormTitle(e.target.value)}
+                    placeholder="例: Apex大会練習コラボ"
+                    maxLength={100}
+                    disabled={isLightPlanFull}
+                    className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple"
+                  />
+                </div>
+
+                {/* 内容 */}
+                <div>
+                  <label className="block text-[12px] font-semibold text-muted mb-2">内容</label>
+                  <textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="コラボ内容詳細..."
+                    rows={2}
+                    maxLength={500}
+                    disabled={isLightPlanFull}
+                    className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple resize-y min-h-[60px]"
+                  />
+                </div>
+
+                {/* 参加者 */}
+                <div>
+                  <label className="block text-[12px] font-semibold text-muted mb-2">参加者</label>
+                  {/* 参加者チップ */}
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {formParticipants.map((p) => (
+                      <div
+                        key={p.id}
+                        className="inline-flex items-center gap-2 bg-surface border border-border rounded-full px-3 py-1 text-[13px] font-semibold"
+                      >
+                        <div
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
+                          style={
+                            p.type === 'member'
+                              ? { background: 'var(--purple-d)', color: 'var(--purple-l)' }
+                              : { background: 'var(--amber-d)', color: '#fff' }
+                          }
+                        >
+                          {p.name.slice(0, 2).toUpperCase()}
+                        </div>
+                        <span className="truncate max-w-[80px]">{p.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeFormParticipant(p.id)}
+                          className="text-muted hover:text-live transition-colors"
+                        >
+                          <span className="material-icons text-[14px]">close</span>
+                        </button>
+                      </div>
+                    ))}
+                    {/* メンバー追加ボタン */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowMemberPicker((v) => !v)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-dashed border-border text-muted text-[12px] font-semibold hover:border-purple hover:text-text transition-colors"
+                      >
+                        <span className="material-icons text-[16px]">person_add</span>
+                        メンバー
+                      </button>
+                      {showMemberPicker && availableMembers.length > 0 && (
+                        <div className="absolute top-8 left-0 z-20 bg-card border border-border-l rounded-[12px] shadow-xl p-2 min-w-[180px]">
+                          {availableMembers.map((m) => (
+                            <button
+                              key={m.userId}
+                              type="button"
+                              onClick={() => {
+                                addMemberParticipant(m.userId, m.displayName);
+                                setShowMemberPicker(false);
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] text-[13px] hover:bg-purple-xs text-text transition-colors text-left"
+                            >
+                              <div
+                                className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
+                                style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+                              >
+                                {m.displayName.slice(0, 2).toUpperCase()}
+                              </div>
+                              {m.displayName}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* 外部参加者 */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={externalName}
+                      onChange={(e) => setExternalName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addExternalParticipant())}
+                      placeholder="外部参加者の名前"
+                      className="flex-1 bg-bg border border-border text-text px-3 py-2 rounded-[10px] text-[13px] outline-none focus:border-purple"
+                    />
+                    <button
+                      type="button"
+                      onClick={addExternalParticipant}
+                      className="px-3 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-muted hover:text-text hover:border-border-l transition-colors bg-surface"
+                    >
+                      追加
+                    </button>
+                  </div>
+                </div>
+
+                {/* 希望日時 */}
+                <div>
+                  <label className="block text-[12px] font-semibold text-muted mb-2">
+                    希望日時
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={proposedDate}
+                    onChange={(e) => setProposedDate(e.target.value)}
+                    disabled={isLightPlanFull}
+                    className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple"
+                  />
+                </div>
+
+                {formError && <p className="text-[12px] text-live">{formError}</p>}
+
+                {/* 発行済みURL表示 */}
+                {createdUrl && (
+                  <div className="bg-surface border border-border rounded-[8px] p-3">
+                    <p className="text-[11px] text-muted mb-2">URLを相手に共有してください</p>
+                    <p className="text-[11px] font-num text-text break-all mb-2">{createdUrl}</p>
+                    <button
+                      type="button"
+                      onClick={copyUrl}
+                      className="text-[11px] text-purple-l hover:text-purple transition-colors"
+                    >
+                      {urlCopied ? '✓ コピー済み' : 'URLをコピー'}
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submitting || isLightPlanFull}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-[12px] text-[14px] font-bold text-white transition-colors disabled:opacity-40"
+                  style={{ background: 'var(--amber-d)' }}
+                >
+                  {submitting ? '作成中...' : 'URLを発行する'}
+                </button>
+              </form>
+            </div>
+
+            {/* 予定しているコラボ */}
+            {confirmedSessions.length > 0 && (
+              <div className="bg-card border border-border rounded-[18px] p-5">
+                <div className="text-[15px] font-bold mb-4 flex items-center gap-2 text-text">
+                  <span className="material-icons text-[20px] text-purple-l">event_available</span>
+                  予定しているコラボ
+                </div>
+                <div className="flex flex-col gap-3">
+                  {confirmedSessions.slice(0, 3).map((s) => (
+                    <div
+                      key={s.id}
+                      className="bg-surface border border-border rounded-[12px] p-3"
+                    >
+                      <div
+                        className="text-[13px] font-bold mb-1"
+                        style={{ color: 'var(--purple-l)' }}
+                      >
+                        {format(s.confirmedDate!, 'M月d日（E） HH:mm〜', { locale: ja })}
+                      </div>
+                      <div className="text-[14px] font-semibold text-text">
+                        {s.partnerName} — {s.title}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </Modal>
+      </div>
+
+      {/* コラボ詳細モーダル */}
+      {selectedSession && (
+        <CollabDetailModal
+          session={selectedSession}
+          canEdit={canEdit}
+          onClose={() => setSelectedSession(null)}
+          onDeleted={() => setSelectedSession(null)}
+        />
+      )}
     </div>
   );
 }
