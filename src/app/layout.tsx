@@ -36,6 +36,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" className={`h-full ${zenKaku.variable} ${spaceGrotesk.variable}`}>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" precedence="default" />
       <body className="min-h-full flex flex-col antialiased">
         <AuthProvider>{children}</AuthProvider>
       </body>

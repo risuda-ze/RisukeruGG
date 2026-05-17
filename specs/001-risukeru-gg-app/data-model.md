@@ -35,22 +35,22 @@ globals.css
 
 ```typescript
 type ButtonVariant = 'primary' | 'secondary' | 'amber' | 'danger' | 'ghost';
-type ButtonSize    = 'sm' | 'md' | 'lg';
+type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;  // デフォルト: 'primary'
-  size?:    ButtonSize;     // デフォルト: 'md'
-  loading?: boolean;        // ローディングスピナー表示
+  variant?: ButtonVariant; // デフォルト: 'primary'
+  size?: ButtonSize; // デフォルト: 'md'
+  loading?: boolean; // ローディングスピナー表示
 }
 ```
 
-| variant | 背景 | テキスト | 用途 |
-|---------|------|---------|------|
-| primary | --purple-d | --purple-l | 主要アクション |
-| secondary | transparent | --text | 補助アクション |
-| amber | --amber-d | white | CTA・打診 |
-| danger | rgba(live,.2) | --live | 削除・NG |
-| ghost | transparent | --muted | テキストボタン |
+| variant   | 背景          | テキスト   | 用途           |
+| --------- | ------------- | ---------- | -------------- |
+| primary   | --purple-d    | --purple-l | 主要アクション |
+| secondary | transparent   | --text     | 補助アクション |
+| amber     | --amber-d     | white      | CTA・打診      |
+| danger    | rgba(live,.2) | --live     | 削除・NG       |
+| ghost     | transparent   | --muted    | テキストボタン |
 
 ---
 
@@ -60,7 +60,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 type BadgeVariant = 'purple' | 'amber' | 'live' | 'green' | 'muted' | 'default';
 
 interface BadgeProps {
-  variant?: BadgeVariant;  // デフォルト: 'default'
+  variant?: BadgeVariant; // デフォルト: 'default'
   children: React.ReactNode;
 }
 ```
@@ -71,9 +71,9 @@ interface BadgeProps {
 
 ```typescript
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?:   string;
-  error?:   string;
-  hint?:    string;
+  label?: string;
+  error?: string;
+  hint?: string;
 }
 ```
 
@@ -83,15 +83,15 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 ```typescript
 interface CardProps {
-  children:   React.ReactNode;
+  children: React.ReactNode;
   className?: string;
-  noPadding?: boolean;  // section-card でヘッダーを自前で持つ場合
+  noPadding?: boolean; // section-card でヘッダーを自前で持つ場合
 }
 
 // セクションカードのサブコンポーネント
 interface CardHeaderProps {
-  title:    string;
-  action?:  React.ReactNode;  // 右側アクションリンク
+  title: string;
+  action?: React.ReactNode; // 右側アクションリンク
 }
 ```
 
@@ -103,10 +103,10 @@ interface CardHeaderProps {
 type StatColorVariant = 'purple' | 'amber' | 'live' | 'green';
 
 interface StatCardProps {
-  label:    string;           // カード上部ラベル
-  value:    string | number;  // 大きな数値テキスト
-  color?:   StatColorVariant; // 数値テキスト色（デフォルト: 'purple'）
-  sub?:     string;           // 下部補助テキスト（例: "先月比 +3"）
+  label: string; // カード上部ラベル
+  value: string | number; // 大きな数値テキスト
+  color?: StatColorVariant; // 数値テキスト色（デフォルト: 'purple'）
+  sub?: string; // 下部補助テキスト（例: "先月比 +3"）
 }
 ```
 
@@ -116,10 +116,10 @@ interface StatCardProps {
 
 ```typescript
 interface AvatarProps {
-  initials:   string;           // 1〜2文字のイニシャル
-  colorClass?: string;          // 背景色クラス（Tailwind）
-  size?:       'sm' | 'md' | 'lg'; // sm=24px, md=34px, lg=42px
-  online?:     boolean;         // オンライン状態ドット表示
+  initials: string; // 1〜2文字のイニシャル
+  colorClass?: string; // 背景色クラス（Tailwind）
+  size?: 'sm' | 'md' | 'lg'; // sm=24px, md=34px, lg=42px
+  online?: boolean; // オンライン状態ドット表示
 }
 ```
 
@@ -129,12 +129,12 @@ interface AvatarProps {
 
 ```typescript
 interface ModalProps {
-  open:      boolean;
-  onClose:   () => void;
-  title?:    string;
-  children:  React.ReactNode;
-  footer?:   React.ReactNode;
-  size?:     'sm' | 'md' | 'lg'; // デフォルト: 'md'
+  open: boolean;
+  onClose: () => void;
+  title?: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  size?: 'sm' | 'md' | 'lg'; // デフォルト: 'md'
 }
 ```
 
@@ -171,9 +171,9 @@ interface AppShellProps {
 ```typescript
 // ナビゲーションアイテムの定義
 interface SidebarNavItem {
-  href:   string;
-  label:  string;
-  icon:   string;  // Unicode記号またはSVGコンポーネント
+  href: string;
+  label: string;
+  icon: string; // Unicode記号またはSVGコンポーネント
 }
 
 // セクション定義
@@ -186,6 +186,7 @@ interface SidebarSection {
 ```
 
 **構成**:
+
 1. ロゴエリア（リスケるGG + SVGマスコット）
 2. メインナビ（ダッシュボード・スケジュール・タスク管理・コラボ調整）
 3. チームナビ（メンバー・チャンネル設定・通知）
@@ -198,9 +199,9 @@ interface SidebarSection {
 
 ```typescript
 interface TopBarProps {
-  title?:   string;   // ページタイトル（デスクトップ用）
-  date?:    string;   // 日付表示（デスクトップ用）
-  actions?: React.ReactNode;  // 右側アクションボタン群
+  title?: string; // ページタイトル（デスクトップ用）
+  date?: string; // 日付表示（デスクトップ用）
+  actions?: React.ReactNode; // 右側アクションボタン群
 }
 
 // モバイルではロゴ・LIVEバッジ・通知ベルを表示
@@ -227,10 +228,10 @@ interface TopBarProps {
 
 ```typescript
 interface TimelineItem {
-  time:  string;           // "20:00"
-  title: string;           // タイトル
-  tags:  TimelineTag[];    // タグリスト
-  color: string;           // バーカラー（--live / --amber / --purple / --green）
+  time: string; // "20:00"
+  title: string; // タイトル
+  tags: TimelineTag[]; // タグリスト
+  color: string; // バーカラー（--live / --amber / --purple / --green）
 }
 
 interface TimelineTag {
@@ -249,12 +250,12 @@ interface TodayTimelineProps {
 
 ```typescript
 interface CollabRequestItem {
-  id:     string;
-  name:   string;   // 相手の名前
-  detail: string;   // "Apex コラボ希望 — 5/18 20:00〜"
+  id: string;
+  name: string; // 相手の名前
+  detail: string; // "Apex コラボ希望 — 5/18 20:00〜"
   status: 'pending' | 'confirmed' | 'cancelled';
-  onOk?:  () => void;
-  onNg?:  () => void;
+  onOk?: () => void;
+  onNg?: () => void;
 }
 
 interface CollabRequestsProps {
@@ -366,8 +367,13 @@ SettingsPage
 ```css
 /* pulse keyframe はglobals.cssで定義 */
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.3; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .live-dot {

@@ -11,6 +11,8 @@ interface KanbanBoardProps {
   teamId: string;
   members: TeamMember[];
   canEdit: boolean;
+  /** フィルタ済みタスク。省略時はストアから全件取得 */
+  tasks?: Task[];
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
 }
@@ -19,10 +21,12 @@ export default function KanbanBoard({
   teamId,
   members,
   canEdit,
+  tasks: tasksProp,
   onEditTask,
   onDeleteTask,
 }: KanbanBoardProps) {
-  const { tasks, columns } = useTasksStore();
+  const { tasks: storeTasks, columns } = useTasksStore();
+  const tasks = tasksProp ?? storeTasks;
 
   async function handleDragEnd(result: DropResult) {
     if (!result.destination || !canEdit) return;
@@ -63,9 +67,17 @@ interface KanbanColumnPanelProps {
   onDeleteTask: (taskId: string) => void;
 }
 
-function KanbanColumnPanel({ column, tasks, teamId, members, canEdit, onEditTask, onDeleteTask }: KanbanColumnPanelProps) {
+function KanbanColumnPanel({
+  column,
+  tasks,
+  teamId,
+  members,
+  canEdit,
+  onEditTask,
+  onDeleteTask,
+}: KanbanColumnPanelProps) {
   return (
-    <div className="flex-shrink-0 w-[272px]">
+    <div className="flex-1 min-w-[240px]">
       {/* カラムヘッダー */}
       <div className="flex items-center gap-2 mb-2 px-1">
         <span
@@ -74,7 +86,9 @@ function KanbanColumnPanel({ column, tasks, teamId, members, canEdit, onEditTask
           aria-hidden="true"
         />
         <span className="text-sm font-semibold text-text">{column.name}</span>
-        <Badge variant="muted" className="ml-auto">{tasks.length}</Badge>
+        <Badge variant="muted" className="ml-auto">
+          {tasks.length}
+        </Badge>
       </div>
 
       {/* カラムボディ */}
@@ -88,7 +102,12 @@ function KanbanColumnPanel({ column, tasks, teamId, members, canEdit, onEditTask
             }`}
           >
             {tasks.map((task, index) => (
-              <Draggable key={task.id} draggableId={task.id} index={index} isDragDisabled={!canEdit}>
+              <Draggable
+                key={task.id}
+                draggableId={task.id}
+                index={index}
+                isDragDisabled={!canEdit}
+              >
                 {(provided, snapshot) => (
                   <div
                     ref={provided.innerRef}

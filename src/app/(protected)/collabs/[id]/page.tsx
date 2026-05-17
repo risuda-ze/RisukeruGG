@@ -19,9 +19,9 @@ import type { CollabSession } from '@/types/entities';
 
 type BadgeVariant = 'purple' | 'amber' | 'live' | 'green' | 'muted' | 'default';
 const STATUS_BADGE: Record<string, BadgeVariant> = {
-  open:      'purple',
+  open: 'purple',
   confirmed: 'green',
-  expired:   'muted',
+  expired: 'muted',
   cancelled: 'live',
 };
 
@@ -73,18 +73,25 @@ export default function CollabDetailPage() {
   }
 
   if (loading) {
-    return <div className="flex flex-1 items-center justify-center bg-bg"><Spinner size="lg" /></div>;
+    return (
+      <div className="flex flex-1 items-center justify-center bg-bg">
+        <Spinner size="lg" />
+      </div>
+    );
   }
 
   if (!session) {
-    return <div className="flex flex-1 items-center justify-center text-muted text-sm">セッションが見つかりません</div>;
+    return (
+      <div className="flex flex-1 items-center justify-center text-muted text-sm">
+        セッションが見つかりません
+      </div>
+    );
   }
 
   const responses = session.responses;
 
   return (
     <div className="px-4 py-6 md:px-7 max-w-2xl">
-
       {/* ── ページヘッダー ─────────────────────────────────── */}
       <div className="flex items-start gap-3 mb-6 flex-wrap">
         <div className="flex-1 min-w-0">
@@ -95,10 +102,16 @@ export default function CollabDetailPage() {
             </Badge>
           </div>
           <p className="text-[11px] text-muted font-num">
-            {session.partnerName}さんと · 期限: {format(session.expiresAt, 'M/d', { locale: ja })}まで
+            {session.partnerName}さんと · 期限: {format(session.expiresAt, 'M/d', { locale: ja })}
+            まで
           </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => router.push('/collabs')} aria-label="一覧へ戻る">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push('/collabs')}
+          aria-label="一覧へ戻る"
+        >
           ← 一覧
         </Button>
       </div>
@@ -137,7 +150,9 @@ export default function CollabDetailPage() {
                   {format(date, 'M月d日(E) HH:mm', { locale: ja })}
                 </span>
                 {response ? (
-                  <span className={`text-[11px] font-medium ${response === 'ok' ? 'text-green' : 'text-live'}`}>
+                  <span
+                    className={`text-[11px] font-medium ${response === 'ok' ? 'text-green' : 'text-live'}`}
+                  >
                     {response === 'ok' ? '○ OK' : '× NG'}
                   </span>
                 ) : responses ? (

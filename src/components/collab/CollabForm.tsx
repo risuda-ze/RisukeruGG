@@ -77,7 +77,9 @@ export default function CollabForm({
           <p className="font-medium text-amber-l">コラボ作成の月次上限に達しました（月3件）</p>
           <p className="text-muted mt-1">
             PARTYプランにアップグレードすると無制限で作成できます。
-            <a href="/settings" className="underline ml-1 text-amber-l">アップグレードする</a>
+            <a href="/settings" className="underline ml-1 text-amber-l">
+              アップグレードする
+            </a>
           </p>
         </div>
       )}
@@ -149,7 +151,9 @@ export default function CollabForm({
           aria-label="有効期限を選択"
         >
           {[1, 3, 7, 14, 30].map((d) => (
-            <option key={d} value={d}>{d}日間</option>
+            <option key={d} value={d}>
+              {d}日間
+            </option>
           ))}
         </select>
       </div>

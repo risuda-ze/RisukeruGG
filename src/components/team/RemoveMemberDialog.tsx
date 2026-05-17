@@ -44,8 +44,12 @@ export function RemoveMemberDialog({
       title="メンバーを削除"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>キャンセル</Button>
-          <Button variant="danger" loading={removing} onClick={handleConfirm}>削除する</Button>
+          <Button variant="secondary" onClick={onClose}>
+            キャンセル
+          </Button>
+          <Button variant="danger" loading={removing} onClick={handleConfirm}>
+            削除する
+          </Button>
         </>
       }
     >

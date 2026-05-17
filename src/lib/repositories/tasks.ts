@@ -8,22 +8,33 @@ import {
   Timestamp,
   runTransaction,
   serverTimestamp,
+  arrayUnion,
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '@/lib/firebase/client';
-import type { Task } from '@/types/entities';
+import type { Task, CollabComment } from '@/types/entities';
 
 const functions = getFunctions(undefined, 'asia-northeast1');
 
 function toTask(id: string, data: Record<string, unknown>): Task {
+  const rawComments = (data.comments as Array<Record<string, unknown>> | null) ?? [];
+  const comments: CollabComment[] = rawComments.map((c) => ({
+    id: c.id as string,
+    authorId: c.authorId as string,
+    authorName: c.authorName as string,
+    text: c.text as string,
+    createdAt: (c.createdAt as Timestamp).toDate(),
+  }));
   return {
     id,
     title: data.title as string,
     columnId: data.columnId as string,
-    category: data.category as Task['category'],
+    categoryId: (data.categoryId as string | null) ?? null,
+    description: (data.description as string | null) ?? null,
     assigneeId: (data.assigneeId as string | null) ?? null,
     dueDate: data.dueDate ? (data.dueDate as Timestamp).toDate() : null,
     linkedScheduleId: (data.linkedScheduleId as string | null) ?? null,
+    comments,
     updatedAt: (data.updatedAt as Timestamp).toDate(),
     createdBy: data.createdBy as string,
     createdAt: (data.createdAt as Timestamp).toDate(),
@@ -35,7 +46,7 @@ export const createTask = httpsCallable<
     teamId: string;
     title: string;
     columnId: string;
-    category: string;
+    categoryId?: string | null;
     assigneeId?: string | null;
     dueDate?: string | null;
     linkedScheduleId?: string | null;
@@ -65,6 +76,15 @@ export async function updateTask(
   } else {
     await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
   }
+}
+
+export async function addTaskComment(
+  teamId: string,
+  taskId: string,
+  comment: { id: string; authorId: string; authorName: string; text: string; createdAt: Timestamp }
+): Promise<void> {
+  const ref = doc(db, 'teams', teamId, 'tasks', taskId);
+  await updateDoc(ref, { comments: arrayUnion(comment) });
 }
 
 export async function deleteTask(teamId: string, taskId: string): Promise<void> {

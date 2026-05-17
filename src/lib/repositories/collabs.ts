@@ -3,15 +3,14 @@ import {
   collection,
   getDoc,
   updateDoc,
+  arrayUnion,
   onSnapshot,
   Unsubscribe,
   Timestamp,
 } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db } from '@/lib/firebase/client';
-import type { CollabSession } from '@/types/entities';
-
-const functions = getFunctions(undefined, 'asia-northeast1');
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '@/lib/firebase/client';
+import type { CollabSession, CollabParticipant, CollabComment } from '@/types/entities';
 
 function toCollabSession(id: string, data: Record<string, unknown>): CollabSession {
   const responses = data.responses as {
@@ -20,6 +19,15 @@ function toCollabSession(id: string, data: Record<string, unknown>): CollabSessi
     respondedAt: Timestamp;
     note: string | null;
   } | null;
+
+  const rawComments = (data.comments as Array<Record<string, unknown>> | null) ?? [];
+  const comments: CollabComment[] = rawComments.map((c) => ({
+    id: c.id as string,
+    authorId: c.authorId as string,
+    authorName: c.authorName as string,
+    text: c.text as string,
+    createdAt: (c.createdAt as Timestamp).toDate(),
+  }));
 
   return {
     id,
@@ -41,6 +49,12 @@ function toCollabSession(id: string, data: Record<string, unknown>): CollabSessi
     confirmedDate: data.confirmedDate ? (data.confirmedDate as Timestamp).toDate() : null,
     linkedScheduleId: (data.linkedScheduleId as string | null) ?? null,
     createdAt: (data.createdAt as Timestamp).toDate(),
+    content: (data.content as string | null) ?? null,
+    participants: (data.participants as CollabParticipant[] | null) ?? [],
+    participantResponses:
+      (data.participantResponses as Record<string, Record<string, 'ok' | 'ng' | 'pending'>> | null) ??
+      {},
+    comments,
   };
 }
 
@@ -71,7 +85,72 @@ export async function updateCollabSession(
   sessionId: string,
   data: Partial<CollabSession>
 ): Promise<void> {
-  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), data as Record<string, unknown>);
+  await updateDoc(
+    doc(db, 'teams', teamId, 'collabSessions', sessionId),
+    data as Record<string, unknown>
+  );
+}
+
+/** 参加者リストを更新 */
+export async function updateCollabParticipants(
+  teamId: string,
+  sessionId: string,
+  participants: CollabParticipant[]
+): Promise<void> {
+  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), { participants });
+}
+
+/** 内容テキストを更新 */
+export async function updateCollabContent(
+  teamId: string,
+  sessionId: string,
+  content: string
+): Promise<void> {
+  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), { content });
+}
+
+/** タイトルを更新 */
+export async function updateCollabTitle(
+  teamId: string,
+  sessionId: string,
+  title: string
+): Promise<void> {
+  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), { title });
+}
+
+/** 候補日程を追加 */
+export async function addCollabProposedDate(
+  teamId: string,
+  sessionId: string,
+  date: Date
+): Promise<void> {
+  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), {
+    proposedDates: arrayUnion(Timestamp.fromDate(date)),
+  });
+}
+
+/** コメントを追加 */
+export async function addCollabComment(
+  teamId: string,
+  sessionId: string,
+  comment: Omit<CollabComment, 'createdAt'> & { createdAt: Timestamp }
+): Promise<void> {
+  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), {
+    comments: arrayUnion(comment),
+  });
+}
+
+/** 参加者回答を更新 */
+export async function updateParticipantResponse(
+  teamId: string,
+  sessionId: string,
+  participantId: string,
+  dateIndex: string,
+  response: 'ok' | 'ng' | 'pending'
+): Promise<void> {
+  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), {
+    [`participantResponses.${participantId}.${dateIndex}`]: response,
+  });
 }
 
 export const createCollabSession = httpsCallable<
@@ -89,7 +168,8 @@ export const respondToCollab = httpsCallable<
   {
     teamId: string;
     sessionId: string;
-    dates: Record<string, 'ok' | 'ng'>;
+    respondentName: string;
+    dates: Record<string, 'ok' | 'ng' | 'pending'>;
     alternativeDates?: string[];
     note?: string | null;
   },

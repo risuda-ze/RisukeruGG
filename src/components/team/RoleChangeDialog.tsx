@@ -50,8 +50,12 @@ export function RoleChangeDialog({
       title="ロールを変更"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>キャンセル</Button>
-          <Button loading={saving} onClick={handleConfirm}>変更する</Button>
+          <Button variant="secondary" onClick={onClose}>
+            キャンセル
+          </Button>
+          <Button loading={saving} onClick={handleConfirm}>
+            変更する
+          </Button>
         </>
       }
     >

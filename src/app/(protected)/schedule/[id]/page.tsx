@@ -1,33 +1,17 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/stores/auth';
 import { useScheduleStore } from '@/stores/schedule';
+import { useScheduleCategoryStore } from '@/stores/scheduleCategories';
 import { updateSchedule, deleteSchedule } from '@/lib/repositories/schedules';
 import { ScheduleForm } from '@/components/calendar/ScheduleForm';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
-import { LiveBadge } from '@/components/calendar/LiveBadge';
 import type { ScheduleEntry } from '@/types/entities';
-
-/* ステータスバッジバリアントのマッピング */
-type BadgeVariant = 'live' | 'muted' | 'green' | 'purple' | 'amber' | 'default';
-const STATUS_BADGE: Record<string, BadgeVariant> = {
-  live:      'live',
-  scheduled: 'purple',
-  ended:     'muted',
-  cancelled: 'muted',
-};
-const STATUS_LABEL: Record<string, string> = {
-  live:      'LIVE中',
-  scheduled: '予定',
-  ended:     '終了',
-  cancelled: 'キャンセル',
-};
 
 export default function ScheduleDetailPage() {
   const params = useParams();
@@ -36,8 +20,14 @@ export default function ScheduleDetailPage() {
 
   const { currentUser, currentTeamId, members } = useAuthStore();
   const { schedules } = useScheduleStore();
+  const { categories, subscribe: subscribeCategories } = useScheduleCategoryStore();
   const [showConflict, setShowConflict] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!currentTeamId) return;
+    return subscribeCategories(currentTeamId);
+  }, [currentTeamId, subscribeCategories]);
 
   const schedule = schedules.find((s) => s.id === scheduleId);
   const myMember = members.find((m) => m.userId === currentUser?.uid);
@@ -74,19 +64,29 @@ export default function ScheduleDetailPage() {
     router.push('/schedule');
   };
 
+  const currentCategory = categories.find((c) => c.id === schedule.categoryId);
+
   return (
     <div className="px-4 py-6 md:px-7 max-w-2xl">
-
       {/* ── ページヘッダー ─────────────────────────────────── */}
       <div className="mb-6 flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
           <h2 className="text-lg font-semibold text-text truncate">{schedule.title}</h2>
-          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            <LiveBadge status={schedule.status} />
-            <Badge variant={STATUS_BADGE[schedule.status] ?? 'default'}>
-              {STATUS_LABEL[schedule.status] ?? schedule.status}
-            </Badge>
-          </div>
+          {currentCategory && (
+            <div className="flex items-center gap-2 mt-1.5">
+              <span
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold"
+                style={{
+                  background: `${currentCategory.color}22`,
+                  color: currentCategory.color,
+                  border: `1px solid ${currentCategory.color}44`,
+                }}
+              >
+                <span className="material-icons text-[12px]">{currentCategory.icon}</span>
+                {currentCategory.name}
+              </span>
+            </div>
+          )}
         </div>
         <Button
           variant="ghost"
@@ -102,6 +102,7 @@ export default function ScheduleDetailPage() {
         <>
           <ScheduleForm
             initialData={schedule}
+            categories={categories}
             onSubmit={handleUpdate}
             onCancel={() => router.push('/schedule')}
           />
@@ -117,14 +118,8 @@ export default function ScheduleDetailPage() {
           <dl className="space-y-4 text-sm">
             <InfoRow label="開始">{schedule.startAt.toLocaleString('ja-JP')}</InfoRow>
             <InfoRow label="終了">{schedule.endAt.toLocaleString('ja-JP')}</InfoRow>
-            <InfoRow label="ステータス">
-              <Badge variant={STATUS_BADGE[schedule.status] ?? 'default'}>
-                {STATUS_LABEL[schedule.status] ?? schedule.status}
-              </Badge>
-            </InfoRow>
-            {schedule.description && (
-              <InfoRow label="説明">{schedule.description}</InfoRow>
-            )}
+            <InfoRow label="カテゴリ">{currentCategory?.name ?? '未選択'}</InfoRow>
+            {schedule.description && <InfoRow label="説明">{schedule.description}</InfoRow>}
           </dl>
         </Card>
       )}
@@ -135,12 +130,19 @@ export default function ScheduleDetailPage() {
         onClose={() => setShowConflict(false)}
         title="編集が競合しました"
         footer={
-          <Button onClick={() => { setShowConflict(false); router.refresh(); }}>
+          <Button
+            onClick={() => {
+              setShowConflict(false);
+              router.refresh();
+            }}
+          >
             最新版を読み込む
           </Button>
         }
       >
-        <p className="text-muted">他のユーザーが同時に編集しました。最新版を読み込んで再度編集してください。</p>
+        <p className="text-muted">
+          他のユーザーが同時に編集しました。最新版を読み込んで再度編集してください。
+        </p>
       </Modal>
     </div>
   );

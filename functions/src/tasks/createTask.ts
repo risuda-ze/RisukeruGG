@@ -29,10 +29,7 @@ export const createTask = onCall(
     const userData = await getUserDoc(ctx.uid);
 
     // LIGHTプランの月次制限チェック
-    if (
-      userData.plan === 'light' &&
-      userData.monthlyTaskCount >= LIGHT_PLAN_LIMITS.monthlyTasks
-    ) {
+    if (userData.plan === 'light' && userData.monthlyTaskCount >= LIGHT_PLAN_LIMITS.monthlyTasks) {
       throw new HttpsError(
         'failed-precondition',
         `LIGHTプランのタスク作成上限（月${LIGHT_PLAN_LIMITS.monthlyTasks}件）に達しました。PARTYプランにアップグレードしてください`

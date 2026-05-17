@@ -1,724 +1,1307 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>リスケるGG — Mobile Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg:       #08081a;
-  --surface:  #10102a;
-  --card:     #16163a;
-  --border:   #28285a;
-  --purple:   #7F77DD;
-  --purple-l: #a0a0ff;
-  --purple-d: #534AB7;
-  --amber:    #EF9F27;
-  --amber-l:  #FAC775;
-  --amber-d:  #BA7517;
-  --text:     #eeeeff;
-  --muted:    #6666aa;
-  --live:     #ff4d6d;
-  --green:    #3fcf7f;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'Zen Kaku Gothic New', sans-serif;
-  background: #1a1a35;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 32px 16px;
-  gap: 40px;
-  flex-wrap: wrap;
-}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>リスケるGG — Mobile Dashboard</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #08081a;
+        --surface: #10102a;
+        --card: #16163a;
+        --border: #28285a;
+        --purple: #7f77dd;
+        --purple-l: #a0a0ff;
+        --purple-d: #534ab7;
+        --amber: #ef9f27;
+        --amber-l: #fac775;
+        --amber-d: #ba7517;
+        --text: #eeeeff;
+        --muted: #6666aa;
+        --live: #ff4d6d;
+        --green: #3fcf7f;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: 'Zen Kaku Gothic New', sans-serif;
+        background: #1a1a35;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 32px 16px;
+        gap: 40px;
+        flex-wrap: wrap;
+      }
 
-/* ── PHONE FRAME ── */
-.phone {
-  width: 375px;
-  flex-shrink: 0;
-}
-.phone-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--muted);
-  text-align: center;
-  margin-bottom: 12px;
-  letter-spacing: .06em;
-  font-family: 'Space Grotesk', sans-serif;
-}
-.phone-frame {
-  background: var(--bg);
-  border-radius: 40px;
-  border: 2px solid #3a3a6a;
-  overflow: hidden;
-  box-shadow: 0 40px 80px rgba(0,0,0,.7), inset 0 0 0 1px rgba(255,255,255,.04);
-  position: relative;
-}
-.phone-notch {
-  height: 44px;
-  background: var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-}
-.notch-time {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  font-family: 'Space Grotesk', sans-serif;
-}
-.notch-icons {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-.notch-icon {
-  font-size: 12px;
-  color: var(--text);
-}
-.phone-screen {
-  background: var(--bg);
-  min-height: 780px;
-  overflow: hidden;
-}
-.phone-home {
-  height: 32px;
-  background: var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.home-bar {
-  width: 120px;
-  height: 5px;
-  background: #3a3a6a;
-  border-radius: 99px;
-}
+      /* ── PHONE FRAME ── */
+      .phone {
+        width: 375px;
+        flex-shrink: 0;
+      }
+      .phone-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--muted);
+        text-align: center;
+        margin-bottom: 12px;
+        letter-spacing: 0.06em;
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .phone-frame {
+        background: var(--bg);
+        border-radius: 40px;
+        border: 2px solid #3a3a6a;
+        overflow: hidden;
+        box-shadow:
+          0 40px 80px rgba(0, 0, 0, 0.7),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+        position: relative;
+      }
+      .phone-notch {
+        height: 44px;
+        background: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+      }
+      .notch-time {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .notch-icons {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .notch-icon {
+        font-size: 12px;
+        color: var(--text);
+      }
+      .phone-screen {
+        background: var(--bg);
+        min-height: 780px;
+        overflow: hidden;
+      }
+      .phone-home {
+        height: 32px;
+        background: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .home-bar {
+        width: 120px;
+        height: 5px;
+        background: #3a3a6a;
+        border-radius: 99px;
+      }
 
-/* ── TOP BAR ── */
-.topbar {
-  padding: 4px 20px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.tb-left { display: flex; align-items: center; gap: 8px; }
-.tb-logo {
-  width: 28px; height: 28px;
-  background: var(--purple-d);
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-}
-.tb-name { font-size: 14px; font-weight: 700; }
-.tb-name span { color: var(--amber); }
-.tb-right { display: flex; align-items: center; gap: 10px; }
-.live-pill {
-  display: flex; align-items: center; gap: 5px;
-  background: rgba(255,77,109,.15);
-  border: .5px solid rgba(255,77,109,.4);
-  border-radius: 99px;
-  padding: 4px 10px;
-  font-size: 11px; font-weight: 700;
-  color: var(--live);
-}
-.live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--live); animation: pulse 1.2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-.notif-btn {
-  width: 30px; height: 30px;
-  background: var(--surface);
-  border: .5px solid var(--border);
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px;
-  position: relative;
-}
-.notif-badge {
-  position: absolute;
-  top: -3px; right: -3px;
-  width: 12px; height: 12px;
-  background: var(--live);
-  border-radius: 50%;
-  border: 2px solid var(--bg);
-  font-size: 8px;
-  display: flex; align-items: center; justify-content: center;
-  color: #fff;
-  font-weight: 700;
-}
+      /* ── TOP BAR ── */
+      .topbar {
+        padding: 4px 20px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .tb-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .tb-logo {
+        width: 28px;
+        height: 28px;
+        background: var(--purple-d);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .tb-name {
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .tb-name span {
+        color: var(--amber);
+      }
+      .tb-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .live-pill {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(255, 77, 109, 0.15);
+        border: 0.5px solid rgba(255, 77, 109, 0.4);
+        border-radius: 99px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--live);
+      }
+      .live-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--live);
+        animation: pulse 1.2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+      .notif-btn {
+        width: 30px;
+        height: 30px;
+        background: var(--surface);
+        border: 0.5px solid var(--border);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        position: relative;
+      }
+      .notif-badge {
+        position: absolute;
+        top: -3px;
+        right: -3px;
+        width: 12px;
+        height: 12px;
+        background: var(--live);
+        border-radius: 50%;
+        border: 2px solid var(--bg);
+        font-size: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+      }
 
-/* ── DATE STRIP ── */
-.date-strip {
-  padding: 0 20px 14px;
-}
-.date-main { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
-.date-sub { font-size: 12px; color: var(--muted); }
+      /* ── DATE STRIP ── */
+      .date-strip {
+        padding: 0 20px 14px;
+      }
+      .date-main {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+      .date-sub {
+        font-size: 12px;
+        color: var(--muted);
+      }
 
-/* ── STATS ROW ── */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  padding: 0 20px 16px;
-}
-.stat {
-  background: var(--card);
-  border: .5px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 10px;
-  text-align: center;
-}
-.stat-v { font-size: 22px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; line-height: 1; }
-.stat-l { font-size: 9px; color: var(--muted); margin-top: 4px; }
+      /* ── STATS ROW ── */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        padding: 0 20px 16px;
+      }
+      .stat {
+        background: var(--card);
+        border: 0.5px solid var(--border);
+        border-radius: 12px;
+        padding: 12px 10px;
+        text-align: center;
+      }
+      .stat-v {
+        font-size: 22px;
+        font-weight: 700;
+        font-family: 'Space Grotesk', sans-serif;
+        line-height: 1;
+      }
+      .stat-l {
+        font-size: 9px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
 
-/* ── SECTION HEADER ── */
-.sec-head {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 20px 10px;
-}
-.sec-title { font-size: 13px; font-weight: 700; }
-.sec-more { font-size: 11px; color: var(--purple); }
+      /* ── SECTION HEADER ── */
+      .sec-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px 10px;
+      }
+      .sec-title {
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .sec-more {
+        font-size: 11px;
+        color: var(--purple);
+      }
 
-/* ── WEEK STRIP ── */
-.week-strip {
-  display: flex;
-  gap: 6px;
-  padding: 0 20px 16px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.week-strip::-webkit-scrollbar { display: none; }
-.wday {
-  flex-shrink: 0;
-  width: 46px;
-  background: var(--card);
-  border: .5px solid var(--border);
-  border-radius: 12px;
-  padding: 8px 4px;
-  text-align: center;
-  cursor: pointer;
-}
-.wday.today { background: var(--purple-d); border-color: var(--purple); }
-.wday-dow { font-size: 9px; color: var(--muted); margin-bottom: 3px; }
-.wday.today .wday-dow { color: var(--purple-l); }
-.wday-date { font-size: 15px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; }
-.wday-dot { width: 4px; height: 4px; border-radius: 50%; margin: 4px auto 0; }
+      /* ── WEEK STRIP ── */
+      .week-strip {
+        display: flex;
+        gap: 6px;
+        padding: 0 20px 16px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .week-strip::-webkit-scrollbar {
+        display: none;
+      }
+      .wday {
+        flex-shrink: 0;
+        width: 46px;
+        background: var(--card);
+        border: 0.5px solid var(--border);
+        border-radius: 12px;
+        padding: 8px 4px;
+        text-align: center;
+        cursor: pointer;
+      }
+      .wday.today {
+        background: var(--purple-d);
+        border-color: var(--purple);
+      }
+      .wday-dow {
+        font-size: 9px;
+        color: var(--muted);
+        margin-bottom: 3px;
+      }
+      .wday.today .wday-dow {
+        color: var(--purple-l);
+      }
+      .wday-date {
+        font-size: 15px;
+        font-weight: 700;
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .wday-dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        margin: 4px auto 0;
+      }
 
-/* ── TIMELINE ── */
-.timeline { padding: 0 20px 16px; display: flex; flex-direction: column; gap: 8px; }
-.tl-item {
-  background: var(--card);
-  border: .5px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 14px;
-  display: flex; align-items: center; gap: 12px;
-  cursor: pointer;
-}
-.tl-bar { width: 3px; border-radius: 99px; align-self: stretch; flex-shrink: 0; min-height: 36px; }
-.tl-time { font-size: 11px; color: var(--muted); font-family: 'Space Grotesk', sans-serif; min-width: 36px; }
-.tl-body { flex: 1; }
-.tl-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
-.tl-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.tl-tag {
-  font-size: 9px; padding: 2px 7px; border-radius: 99px;
-  font-weight: 700; letter-spacing: .04em;
-}
-.tl-arrow { font-size: 14px; color: var(--muted); }
+      /* ── TIMELINE ── */
+      .timeline {
+        padding: 0 20px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .tl-item {
+        background: var(--card);
+        border: 0.5px solid var(--border);
+        border-radius: 12px;
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+      }
+      .tl-bar {
+        width: 3px;
+        border-radius: 99px;
+        align-self: stretch;
+        flex-shrink: 0;
+        min-height: 36px;
+      }
+      .tl-time {
+        font-size: 11px;
+        color: var(--muted);
+        font-family: 'Space Grotesk', sans-serif;
+        min-width: 36px;
+      }
+      .tl-body {
+        flex: 1;
+      }
+      .tl-title {
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+      .tl-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .tl-tag {
+        font-size: 9px;
+        padding: 2px 7px;
+        border-radius: 99px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      .tl-arrow {
+        font-size: 14px;
+        color: var(--muted);
+      }
 
-/* ── TASK SCROLL ── */
-.task-scroll {
-  display: flex;
-  gap: 10px;
-  padding: 0 20px 16px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.task-scroll::-webkit-scrollbar { display: none; }
-.task-card {
-  flex-shrink: 0;
-  width: 160px;
-  background: var(--card);
-  border: .5px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
-  cursor: pointer;
-}
-.task-tag {
-  font-size: 9px; padding: 2px 7px; border-radius: 99px;
-  font-weight: 700; margin-bottom: 8px; display: inline-block;
-}
-.task-title { font-size: 12px; font-weight: 500; line-height: 1.4; margin-bottom: 10px; }
-.task-foot { display: flex; align-items: center; justify-content: space-between; }
-.task-av {
-  width: 20px; height: 20px; border-radius: 50%;
-  font-size: 8px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-}
-.task-due { font-size: 10px; color: var(--muted); font-family: 'Space Grotesk', sans-serif; }
+      /* ── TASK SCROLL ── */
+      .task-scroll {
+        display: flex;
+        gap: 10px;
+        padding: 0 20px 16px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .task-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .task-card {
+        flex-shrink: 0;
+        width: 160px;
+        background: var(--card);
+        border: 0.5px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        cursor: pointer;
+      }
+      .task-tag {
+        font-size: 9px;
+        padding: 2px 7px;
+        border-radius: 99px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        display: inline-block;
+      }
+      .task-title {
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1.4;
+        margin-bottom: 10px;
+      }
+      .task-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .task-av {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        font-size: 8px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .task-due {
+        font-size: 10px;
+        color: var(--muted);
+        font-family: 'Space Grotesk', sans-serif;
+      }
 
-/* ── COLLAB ── */
-.collab-list { padding: 0 20px 16px; display: flex; flex-direction: column; gap: 8px; }
-.collab-item {
-  background: var(--card);
-  border: .5px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 14px;
-  display: flex; align-items: center; gap: 10px;
-}
-.col-av {
-  width: 34px; height: 34px; border-radius: 50%;
-  font-size: 12px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.col-info { flex: 1; }
-.col-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
-.col-date { font-size: 11px; color: var(--muted); }
-.col-btns { display: flex; gap: 5px; }
-.col-btn {
-  border: none; border-radius: 7px;
-  font-size: 11px; font-weight: 700;
-  padding: 5px 10px; cursor: pointer;
-  font-family: inherit;
-}
+      /* ── COLLAB ── */
+      .collab-list {
+        padding: 0 20px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .collab-item {
+        background: var(--card);
+        border: 0.5px solid var(--border);
+        border-radius: 12px;
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .col-av {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        font-size: 12px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .col-info {
+        flex: 1;
+      }
+      .col-name {
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+      .col-date {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .col-btns {
+        display: flex;
+        gap: 5px;
+      }
+      .col-btn {
+        border: none;
+        border-radius: 7px;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 5px 10px;
+        cursor: pointer;
+        font-family: inherit;
+      }
 
-/* ── AD BANNER ── */
-.ad-banner {
-  margin: 0 20px 16px;
-  background: rgba(239,159,39,.08);
-  border: .5px solid rgba(239,159,39,.25);
-  border-radius: 10px;
-  padding: 8px 12px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.ad-left { display: flex; flex-direction: column; }
-.ad-label { font-size: 9px; color: var(--muted); margin-bottom: 2px; }
-.ad-text { font-size: 11px; color: var(--amber-l); }
-.ad-upgrade {
-  font-size: 10px; font-weight: 700;
-  color: var(--amber);
-  background: rgba(239,159,39,.15);
-  border: .5px solid rgba(239,159,39,.3);
-  border-radius: 6px;
-  padding: 4px 9px;
-  white-space: nowrap;
-  cursor: pointer;
-}
+      /* ── AD BANNER ── */
+      .ad-banner {
+        margin: 0 20px 16px;
+        background: rgba(239, 159, 39, 0.08);
+        border: 0.5px solid rgba(239, 159, 39, 0.25);
+        border-radius: 10px;
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .ad-left {
+        display: flex;
+        flex-direction: column;
+      }
+      .ad-label {
+        font-size: 9px;
+        color: var(--muted);
+        margin-bottom: 2px;
+      }
+      .ad-text {
+        font-size: 11px;
+        color: var(--amber-l);
+      }
+      .ad-upgrade {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--amber);
+        background: rgba(239, 159, 39, 0.15);
+        border: 0.5px solid rgba(239, 159, 39, 0.3);
+        border-radius: 6px;
+        padding: 4px 9px;
+        white-space: nowrap;
+        cursor: pointer;
+      }
 
-/* ── BOTTOM NAV ── */
-.bottom-nav {
-  display: flex;
-  background: var(--surface);
-  border-top: .5px solid var(--border);
-  padding: 10px 0 4px;
-}
-.bn-item {
-  flex: 1;
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  cursor: pointer;
-  padding: 4px 0;
-}
-.bn-icon { font-size: 20px; color: var(--muted); }
-.bn-item.active .bn-icon { color: var(--purple-l); }
-.bn-label { font-size: 9px; color: var(--muted); }
-.bn-item.active .bn-label { color: var(--purple-l); }
-.bn-item.add .bn-icon {
-  width: 36px; height: 36px;
-  background: var(--amber);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  color: #1a0800;
-  font-size: 22px;
-  margin-top: -10px;
-}
+      /* ── BOTTOM NAV ── */
+      .bottom-nav {
+        display: flex;
+        background: var(--surface);
+        border-top: 0.5px solid var(--border);
+        padding: 10px 0 4px;
+      }
+      .bn-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        cursor: pointer;
+        padding: 4px 0;
+      }
+      .bn-icon {
+        font-size: 20px;
+        color: var(--muted);
+      }
+      .bn-item.active .bn-icon {
+        color: var(--purple-l);
+      }
+      .bn-label {
+        font-size: 9px;
+        color: var(--muted);
+      }
+      .bn-item.active .bn-label {
+        color: var(--purple-l);
+      }
+      .bn-item.add .bn-icon {
+        width: 36px;
+        height: 36px;
+        background: var(--amber);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #1a0800;
+        font-size: 22px;
+        margin-top: -10px;
+      }
 
-/* ── SCREEN VARIANTS ── */
-.screen-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--muted);
-  letter-spacing: .06em;
-  text-align: center;
-  margin-bottom: 8px;
-  font-family: 'Space Grotesk', sans-serif;
-}
-</style>
-</head>
-<body>
-
-<!-- ═══════════════ SCREEN 1: ダッシュボード ═══════════════ -->
-<div class="phone">
-  <div class="phone-label">SCREEN 1 — ダッシュボード</div>
-  <div class="phone-frame">
-    <!-- Notch -->
-    <div class="phone-notch">
-      <div class="notch-time">20:00</div>
-      <div class="notch-icons">
-        <span class="notch-icon">▋▋▋</span>
-        <span class="notch-icon">WiFi</span>
-        <span class="notch-icon">🔋</span>
-      </div>
-    </div>
-
-    <div class="phone-screen">
-      <!-- Topbar -->
-      <div class="topbar">
-        <div class="tb-left">
-          <div class="tb-logo">
-            <svg width="18" height="18" viewBox="0 0 56 56" fill="none">
-              <path d="M30 44 Q16 40 13 25 Q10 12 18 9 Q15 18 20 25 Q24 32 30 35 Q36 38 34 46Z" fill="#AFA9EC" opacity="0.8"/>
-              <ellipse cx="32" cy="37" rx="11" ry="9" fill="#EEEDFE"/>
-              <ellipse cx="33" cy="23" rx="9" ry="8" fill="#EEEDFE"/>
-              <ellipse cx="27" cy="14" rx="3.5" ry="5" fill="#EEEDFE"/>
-              <ellipse cx="38" cy="12" rx="3.5" ry="5" fill="#EEEDFE"/>
-              <circle cx="30" cy="22" r="1.8" fill="#26215C"/>
-              <circle cx="37" cy="22" r="1.8" fill="#26215C"/>
-              <ellipse cx="33" cy="38" rx="3" ry="2" fill="#EF9F27" opacity="0.8"/>
-            </svg>
+      /* ── SCREEN VARIANTS ── */
+      .screen-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        text-align: center;
+        margin-bottom: 8px;
+        font-family: 'Space Grotesk', sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ═══════════════ SCREEN 1: ダッシュボード ═══════════════ -->
+    <div class="phone">
+      <div class="phone-label">SCREEN 1 — ダッシュボード</div>
+      <div class="phone-frame">
+        <!-- Notch -->
+        <div class="phone-notch">
+          <div class="notch-time">20:00</div>
+          <div class="notch-icons">
+            <span class="notch-icon">▋▋▋</span>
+            <span class="notch-icon">WiFi</span>
+            <span class="notch-icon">🔋</span>
           </div>
-          <div class="tb-name">リスケる<span>GG</span></div>
         </div>
-        <div class="tb-right">
-          <div class="live-pill"><div class="live-dot"></div>LIVE中</div>
-          <div class="notif-btn">🔔<div class="notif-badge">2</div></div>
-        </div>
-      </div>
 
-      <!-- Date -->
-      <div class="date-strip">
-        <div class="date-main">5月12日（火）</div>
-        <div class="date-sub">今日 3件の予定 · タスク残り 3件</div>
-      </div>
-
-      <!-- Stats -->
-      <div class="stats">
-        <div class="stat">
-          <div class="stat-v" style="color:var(--live);">1,204</div>
-          <div class="stat-l">LIVE視聴者</div>
-        </div>
-        <div class="stat">
-          <div class="stat-v" style="color:var(--purple-l);">18</div>
-          <div class="stat-l">今月配信数</div>
-        </div>
-        <div class="stat">
-          <div class="stat-v" style="color:var(--amber-l);">4</div>
-          <div class="stat-l">コラボ予定</div>
-        </div>
-      </div>
-
-      <!-- Week -->
-      <div class="sec-head">
-        <div class="sec-title">今週</div>
-        <div class="sec-more">月表示 →</div>
-      </div>
-      <div class="week-strip">
-        <div class="wday"><div class="wday-dow">月</div><div class="wday-date">11</div><div class="wday-dot" style="background:var(--purple);"></div></div>
-        <div class="wday today"><div class="wday-dow">火</div><div class="wday-date">12</div><div class="wday-dot" style="background:var(--amber);"></div></div>
-        <div class="wday"><div class="wday-dow">水</div><div class="wday-date">13</div><div class="wday-dot" style="background:var(--amber-d);"></div></div>
-        <div class="wday"><div class="wday-dow">木</div><div class="wday-date">14</div><div class="wday-dot" style="background:transparent;"></div></div>
-        <div class="wday"><div class="wday-dow">金</div><div class="wday-date">15</div><div class="wday-dot" style="background:var(--live);"></div></div>
-        <div class="wday"><div class="wday-dow">土</div><div class="wday-date">16</div><div class="wday-dot" style="background:var(--purple);"></div></div>
-        <div class="wday"><div class="wday-dow">日</div><div class="wday-date">17</div><div class="wday-dot" style="background:transparent;"></div></div>
-      </div>
-
-      <!-- Timeline -->
-      <div class="sec-head">
-        <div class="sec-title">本日のタイムライン</div>
-      </div>
-      <div class="timeline">
-        <div class="tl-item">
-          <div class="tl-bar" style="background:var(--live);"></div>
-          <div class="tl-time">20:00</div>
-          <div class="tl-body">
-            <div class="tl-title">LIVE配信 — Apex ランク戦</div>
-            <div class="tl-meta">
-              <span class="tl-tag" style="background:rgba(255,77,109,.15);color:var(--live);">🔴 LIVE</span>
-              <span style="font-size:10px;color:var(--muted);">YouTube / Twitch</span>
+        <div class="phone-screen">
+          <!-- Topbar -->
+          <div class="topbar">
+            <div class="tb-left">
+              <div class="tb-logo">
+                <svg width="18" height="18" viewBox="0 0 56 56" fill="none">
+                  <path
+                    d="M30 44 Q16 40 13 25 Q10 12 18 9 Q15 18 20 25 Q24 32 30 35 Q36 38 34 46Z"
+                    fill="#AFA9EC"
+                    opacity="0.8"
+                  />
+                  <ellipse cx="32" cy="37" rx="11" ry="9" fill="#EEEDFE" />
+                  <ellipse cx="33" cy="23" rx="9" ry="8" fill="#EEEDFE" />
+                  <ellipse cx="27" cy="14" rx="3.5" ry="5" fill="#EEEDFE" />
+                  <ellipse cx="38" cy="12" rx="3.5" ry="5" fill="#EEEDFE" />
+                  <circle cx="30" cy="22" r="1.8" fill="#26215C" />
+                  <circle cx="37" cy="22" r="1.8" fill="#26215C" />
+                  <ellipse cx="33" cy="38" rx="3" ry="2" fill="#EF9F27" opacity="0.8" />
+                </svg>
+              </div>
+              <div class="tb-name">リスケる<span>GG</span></div>
+            </div>
+            <div class="tb-right">
+              <div class="live-pill">
+                <div class="live-dot"></div>
+                LIVE中
+              </div>
+              <div class="notif-btn">
+                🔔
+                <div class="notif-badge">2</div>
+              </div>
             </div>
           </div>
-          <div class="tl-arrow">›</div>
-        </div>
-        <div class="tl-item">
-          <div class="tl-bar" style="background:var(--amber);"></div>
-          <div class="tl-time">14:00</div>
-          <div class="tl-body">
-            <div class="tl-title">コラボ打ち合わせ — ぺこらch</div>
-            <div class="tl-meta">
-              <span class="tl-tag" style="background:rgba(239,159,39,.15);color:var(--amber-l);">コラボ</span>
-              <span style="font-size:10px;color:var(--muted);">Discord 30分</span>
+
+          <!-- Date -->
+          <div class="date-strip">
+            <div class="date-main">5月12日（火）</div>
+            <div class="date-sub">今日 3件の予定 · タスク残り 3件</div>
+          </div>
+
+          <!-- Stats -->
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-v" style="color: var(--live)">1,204</div>
+              <div class="stat-l">LIVE視聴者</div>
+            </div>
+            <div class="stat">
+              <div class="stat-v" style="color: var(--purple-l)">18</div>
+              <div class="stat-l">今月配信数</div>
+            </div>
+            <div class="stat">
+              <div class="stat-v" style="color: var(--amber-l)">4</div>
+              <div class="stat-l">コラボ予定</div>
             </div>
           </div>
-          <div class="tl-arrow">›</div>
-        </div>
-        <div class="tl-item">
-          <div class="tl-bar" style="background:var(--purple);"></div>
-          <div class="tl-time">11:00</div>
-          <div class="tl-body">
-            <div class="tl-title">サムネイル確認 3本</div>
-            <div class="tl-meta">
-              <span class="tl-tag" style="background:rgba(127,119,221,.15);color:var(--purple-l);">編集</span>
-              <span style="font-size:10px;color:var(--muted);">担当: スタッフA</span>
+
+          <!-- Week -->
+          <div class="sec-head">
+            <div class="sec-title">今週</div>
+            <div class="sec-more">月表示 →</div>
+          </div>
+          <div class="week-strip">
+            <div class="wday">
+              <div class="wday-dow">月</div>
+              <div class="wday-date">11</div>
+              <div class="wday-dot" style="background: var(--purple)"></div>
+            </div>
+            <div class="wday today">
+              <div class="wday-dow">火</div>
+              <div class="wday-date">12</div>
+              <div class="wday-dot" style="background: var(--amber)"></div>
+            </div>
+            <div class="wday">
+              <div class="wday-dow">水</div>
+              <div class="wday-date">13</div>
+              <div class="wday-dot" style="background: var(--amber-d)"></div>
+            </div>
+            <div class="wday">
+              <div class="wday-dow">木</div>
+              <div class="wday-date">14</div>
+              <div class="wday-dot" style="background: transparent"></div>
+            </div>
+            <div class="wday">
+              <div class="wday-dow">金</div>
+              <div class="wday-date">15</div>
+              <div class="wday-dot" style="background: var(--live)"></div>
+            </div>
+            <div class="wday">
+              <div class="wday-dow">土</div>
+              <div class="wday-date">16</div>
+              <div class="wday-dot" style="background: var(--purple)"></div>
+            </div>
+            <div class="wday">
+              <div class="wday-dow">日</div>
+              <div class="wday-date">17</div>
+              <div class="wday-dot" style="background: transparent"></div>
             </div>
           </div>
-          <div class="tl-arrow">›</div>
+
+          <!-- Timeline -->
+          <div class="sec-head">
+            <div class="sec-title">本日のタイムライン</div>
+          </div>
+          <div class="timeline">
+            <div class="tl-item">
+              <div class="tl-bar" style="background: var(--live)"></div>
+              <div class="tl-time">20:00</div>
+              <div class="tl-body">
+                <div class="tl-title">LIVE配信 — Apex ランク戦</div>
+                <div class="tl-meta">
+                  <span
+                    class="tl-tag"
+                    style="background: rgba(255, 77, 109, 0.15); color: var(--live)"
+                    >🔴 LIVE</span
+                  >
+                  <span style="font-size: 10px; color: var(--muted)">YouTube / Twitch</span>
+                </div>
+              </div>
+              <div class="tl-arrow">›</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-bar" style="background: var(--amber)"></div>
+              <div class="tl-time">14:00</div>
+              <div class="tl-body">
+                <div class="tl-title">コラボ打ち合わせ — ぺこらch</div>
+                <div class="tl-meta">
+                  <span
+                    class="tl-tag"
+                    style="background: rgba(239, 159, 39, 0.15); color: var(--amber-l)"
+                    >コラボ</span
+                  >
+                  <span style="font-size: 10px; color: var(--muted)">Discord 30分</span>
+                </div>
+              </div>
+              <div class="tl-arrow">›</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-bar" style="background: var(--purple)"></div>
+              <div class="tl-time">11:00</div>
+              <div class="tl-body">
+                <div class="tl-title">サムネイル確認 3本</div>
+                <div class="tl-meta">
+                  <span
+                    class="tl-tag"
+                    style="background: rgba(127, 119, 221, 0.15); color: var(--purple-l)"
+                    >編集</span
+                  >
+                  <span style="font-size: 10px; color: var(--muted)">担当: スタッフA</span>
+                </div>
+              </div>
+              <div class="tl-arrow">›</div>
+            </div>
+          </div>
+
+          <!-- Ad banner (LIGHT plan) -->
+          <div class="ad-banner">
+            <div class="ad-left">
+              <div class="ad-label">広告</div>
+              <div class="ad-text">配信者向け〇〇サービス</div>
+            </div>
+            <div class="ad-upgrade">広告を消す →</div>
+          </div>
         </div>
-      </div>
+        <!-- /phone-screen -->
 
-      <!-- Ad banner (LIGHT plan) -->
-      <div class="ad-banner">
-        <div class="ad-left">
-          <div class="ad-label">広告</div>
-          <div class="ad-text">配信者向け〇〇サービス</div>
+        <!-- Bottom Nav -->
+        <div class="bottom-nav">
+          <div class="bn-item active">
+            <div class="bn-icon">▦</div>
+            <div class="bn-label">ホーム</div>
+          </div>
+          <div class="bn-item">
+            <div class="bn-icon">◷</div>
+            <div class="bn-label">スケジュール</div>
+          </div>
+          <div class="bn-item add">
+            <div class="bn-icon">＋</div>
+            <div class="bn-label" style="margin-top: 4px">追加</div>
+          </div>
+          <div class="bn-item">
+            <div class="bn-icon">▤</div>
+            <div class="bn-label">タスク</div>
+          </div>
+          <div class="bn-item">
+            <div class="bn-icon">◎</div>
+            <div class="bn-label">チーム</div>
+          </div>
         </div>
-        <div class="ad-upgrade">広告を消す →</div>
-      </div>
-
-    </div><!-- /phone-screen -->
-
-    <!-- Bottom Nav -->
-    <div class="bottom-nav">
-      <div class="bn-item active">
-        <div class="bn-icon">▦</div>
-        <div class="bn-label">ホーム</div>
-      </div>
-      <div class="bn-item">
-        <div class="bn-icon">◷</div>
-        <div class="bn-label">スケジュール</div>
-      </div>
-      <div class="bn-item add">
-        <div class="bn-icon">＋</div>
-        <div class="bn-label" style="margin-top:4px;">追加</div>
-      </div>
-      <div class="bn-item">
-        <div class="bn-icon">▤</div>
-        <div class="bn-label">タスク</div>
-      </div>
-      <div class="bn-item">
-        <div class="bn-icon">◎</div>
-        <div class="bn-label">チーム</div>
+        <div class="phone-home"><div class="home-bar"></div></div>
       </div>
     </div>
-    <div class="phone-home"><div class="home-bar"></div></div>
-  </div>
-</div>
 
-<!-- ═══════════════ SCREEN 2: タスク ═══════════════ -->
-<div class="phone">
-  <div class="phone-label">SCREEN 2 — タスクボード</div>
-  <div class="phone-frame">
-    <div class="phone-notch">
-      <div class="notch-time">20:00</div>
-      <div class="notch-icons"><span class="notch-icon">▋▋▋</span><span class="notch-icon">🔋</span></div>
+    <!-- ═══════════════ SCREEN 2: タスク ═══════════════ -->
+    <div class="phone">
+      <div class="phone-label">SCREEN 2 — タスクボード</div>
+      <div class="phone-frame">
+        <div class="phone-notch">
+          <div class="notch-time">20:00</div>
+          <div class="notch-icons">
+            <span class="notch-icon">▋▋▋</span><span class="notch-icon">🔋</span>
+          </div>
+        </div>
+
+        <div class="phone-screen">
+          <div class="topbar">
+            <div class="tb-left">
+              <div style="font-size: 18px; font-weight: 700">タスクボード</div>
+            </div>
+            <div class="tb-right">
+              <div
+                style="
+                  background: var(--purple-d);
+                  color: var(--purple-l);
+                  border-radius: 8px;
+                  padding: 6px 12px;
+                  font-size: 12px;
+                  font-weight: 700;
+                  cursor: pointer;
+                "
+              >
+                ＋ 追加
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter tabs -->
+          <div
+            style="
+              display: flex;
+              gap: 8px;
+              padding: 0 20px 14px;
+              overflow-x: auto;
+              scrollbar-width: none;
+            "
+          >
+            <div
+              style="
+                flex-shrink: 0;
+                background: var(--purple-d);
+                color: var(--purple-l);
+                border-radius: 99px;
+                padding: 6px 14px;
+                font-size: 12px;
+                font-weight: 700;
+              "
+            >
+              すべて
+            </div>
+            <div
+              style="
+                flex-shrink: 0;
+                background: var(--card);
+                border: 0.5px solid var(--border);
+                color: var(--muted);
+                border-radius: 99px;
+                padding: 6px 14px;
+                font-size: 12px;
+              "
+            >
+              撮影
+            </div>
+            <div
+              style="
+                flex-shrink: 0;
+                background: var(--card);
+                border: 0.5px solid var(--border);
+                color: var(--muted);
+                border-radius: 99px;
+                padding: 6px 14px;
+                font-size: 12px;
+              "
+            >
+              編集
+            </div>
+            <div
+              style="
+                flex-shrink: 0;
+                background: var(--card);
+                border: 0.5px solid var(--border);
+                color: var(--muted);
+                border-radius: 99px;
+                padding: 6px 14px;
+                font-size: 12px;
+              "
+            >
+              サムネ
+            </div>
+            <div
+              style="
+                flex-shrink: 0;
+                background: var(--card);
+                border: 0.5px solid var(--border);
+                color: var(--muted);
+                border-radius: 99px;
+                padding: 6px 14px;
+                font-size: 12px;
+              "
+            >
+              告知
+            </div>
+          </div>
+
+          <!-- TODO -->
+          <div class="sec-head" style="padding-bottom: 8px">
+            <div class="sec-title" style="display: flex; align-items: center; gap: 7px">
+              TODO
+              <span
+                style="
+                  background: var(--surface);
+                  color: var(--muted);
+                  font-size: 10px;
+                  padding: 2px 7px;
+                  border-radius: 99px;
+                  font-weight: 400;
+                "
+                >3</span
+              >
+            </div>
+          </div>
+          <div class="task-scroll">
+            <div class="task-card">
+              <div
+                class="task-tag"
+                style="background: rgba(127, 119, 221, 0.15); color: var(--purple-l)"
+              >
+                台本
+              </div>
+              <div class="task-title">Shorts台本 3本分</div>
+              <div class="task-foot">
+                <div
+                  class="task-av"
+                  style="background: rgba(239, 159, 39, 0.3); color: var(--amber-l)"
+                >
+                  TK
+                </div>
+                <div class="task-due">5/16</div>
+              </div>
+            </div>
+            <div class="task-card">
+              <div
+                class="task-tag"
+                style="background: rgba(63, 207, 127, 0.15); color: var(--green)"
+              >
+                告知
+              </div>
+              <div class="task-title">概要欄テンプレ更新</div>
+              <div class="task-foot">
+                <div
+                  class="task-av"
+                  style="background: rgba(127, 119, 221, 0.3); color: var(--purple-l)"
+                >
+                  RK
+                </div>
+                <div class="task-due">5/14</div>
+              </div>
+            </div>
+            <div class="task-card">
+              <div
+                class="task-tag"
+                style="background: rgba(239, 159, 39, 0.15); color: var(--amber-l)"
+              >
+                コラボ
+              </div>
+              <div class="task-title">企画書 v2 作成</div>
+              <div class="task-foot">
+                <div
+                  class="task-av"
+                  style="background: rgba(239, 159, 39, 0.3); color: var(--amber-l)"
+                >
+                  MG
+                </div>
+                <div class="task-due">5/15</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 進行中 -->
+          <div class="sec-head" style="padding-bottom: 8px">
+            <div
+              class="sec-title"
+              style="display: flex; align-items: center; gap: 7px; color: var(--amber-l)"
+            >
+              進行中
+              <span
+                style="
+                  background: rgba(239, 159, 39, 0.15);
+                  color: var(--amber);
+                  font-size: 10px;
+                  padding: 2px 7px;
+                  border-radius: 99px;
+                  font-weight: 400;
+                "
+                >2</span
+              >
+            </div>
+          </div>
+          <div class="task-scroll">
+            <div class="task-card" style="border-color: var(--amber-d)">
+              <div
+                class="task-tag"
+                style="background: rgba(127, 119, 221, 0.15); color: var(--purple-l)"
+              >
+                編集
+              </div>
+              <div class="task-title">4月振り返り動画 編集</div>
+              <div class="task-foot">
+                <div
+                  class="task-av"
+                  style="background: rgba(63, 207, 127, 0.3); color: var(--green)"
+                >
+                  SA
+                </div>
+                <div class="task-due" style="color: var(--live)">5/13</div>
+              </div>
+            </div>
+            <div class="task-card" style="border-color: var(--amber-d)">
+              <div
+                class="task-tag"
+                style="background: rgba(127, 119, 221, 0.15); color: var(--purple-l)"
+              >
+                サムネ
+              </div>
+              <div class="task-title">サムネイル 3本 デザイン</div>
+              <div class="task-foot">
+                <div
+                  class="task-av"
+                  style="background: rgba(239, 159, 39, 0.3); color: var(--amber-l)"
+                >
+                  MG
+                </div>
+                <div class="task-due">5/12</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 完了 -->
+          <div class="sec-head" style="padding-bottom: 8px">
+            <div
+              class="sec-title"
+              style="display: flex; align-items: center; gap: 7px; color: var(--green)"
+            >
+              完了
+              <span
+                style="
+                  background: rgba(63, 207, 127, 0.15);
+                  color: var(--green);
+                  font-size: 10px;
+                  padding: 2px 7px;
+                  border-radius: 99px;
+                  font-weight: 400;
+                "
+                >5</span
+              >
+            </div>
+          </div>
+          <div class="task-scroll">
+            <div class="task-card" style="opacity: 0.5">
+              <div
+                class="task-tag"
+                style="background: rgba(63, 207, 127, 0.1); color: var(--green)"
+              >
+                撮影
+              </div>
+              <div class="task-title">Short素材 2本 撮影</div>
+              <div class="task-foot">
+                <div
+                  class="task-av"
+                  style="background: rgba(127, 119, 221, 0.3); color: var(--purple-l)"
+                >
+                  RK
+                </div>
+                <div class="task-due">5/12</div>
+              </div>
+            </div>
+            <div class="task-card" style="opacity: 0.5">
+              <div
+                class="task-tag"
+                style="background: rgba(63, 207, 127, 0.1); color: var(--green)"
+              >
+                配信
+              </div>
+              <div class="task-title">LIVEアーカイブ 公開</div>
+              <div class="task-foot">
+                <div
+                  class="task-av"
+                  style="background: rgba(127, 119, 221, 0.3); color: var(--purple-l)"
+                >
+                  RK
+                </div>
+                <div class="task-due">5/11</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bottom-nav">
+          <div class="bn-item">
+            <div class="bn-icon">▦</div>
+            <div class="bn-label">ホーム</div>
+          </div>
+          <div class="bn-item">
+            <div class="bn-icon">◷</div>
+            <div class="bn-label">スケジュール</div>
+          </div>
+          <div class="bn-item add">
+            <div class="bn-icon">＋</div>
+            <div class="bn-label" style="margin-top: 4px">追加</div>
+          </div>
+          <div class="bn-item active">
+            <div class="bn-icon">▤</div>
+            <div class="bn-label">タスク</div>
+          </div>
+          <div class="bn-item">
+            <div class="bn-icon">◎</div>
+            <div class="bn-label">チーム</div>
+          </div>
+        </div>
+        <div class="phone-home"><div class="home-bar"></div></div>
+      </div>
     </div>
 
-    <div class="phone-screen">
-      <div class="topbar">
-        <div class="tb-left">
-          <div style="font-size:18px;font-weight:700;">タスクボード</div>
+    <!-- ═══════════════ SCREEN 3: コラボ ═══════════════ -->
+    <div class="phone">
+      <div class="phone-label">SCREEN 3 — コラボ調整</div>
+      <div class="phone-frame">
+        <div class="phone-notch">
+          <div class="notch-time">20:00</div>
+          <div class="notch-icons">
+            <span class="notch-icon">▋▋▋</span><span class="notch-icon">🔋</span>
+          </div>
         </div>
-        <div class="tb-right">
-          <div style="background:var(--purple-d);color:var(--purple-l);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">＋ 追加</div>
-        </div>
-      </div>
 
-      <!-- Filter tabs -->
-      <div style="display:flex;gap:8px;padding:0 20px 14px;overflow-x:auto;scrollbar-width:none;">
-        <div style="flex-shrink:0;background:var(--purple-d);color:var(--purple-l);border-radius:99px;padding:6px 14px;font-size:12px;font-weight:700;">すべて</div>
-        <div style="flex-shrink:0;background:var(--card);border:.5px solid var(--border);color:var(--muted);border-radius:99px;padding:6px 14px;font-size:12px;">撮影</div>
-        <div style="flex-shrink:0;background:var(--card);border:.5px solid var(--border);color:var(--muted);border-radius:99px;padding:6px 14px;font-size:12px;">編集</div>
-        <div style="flex-shrink:0;background:var(--card);border:.5px solid var(--border);color:var(--muted);border-radius:99px;padding:6px 14px;font-size:12px;">サムネ</div>
-        <div style="flex-shrink:0;background:var(--card);border:.5px solid var(--border);color:var(--muted);border-radius:99px;padding:6px 14px;font-size:12px;">告知</div>
-      </div>
+        <div class="phone-screen">
+          <div class="topbar">
+            <div class="tb-left">
+              <div style="font-size: 18px; font-weight: 700">コラボ調整</div>
+            </div>
+            <div class="tb-right">
+              <div
+                style="
+                  background: var(--amber-d);
+                  color: #fff;
+                  border-radius: 8px;
+                  padding: 6px 12px;
+                  font-size: 12px;
+                  font-weight: 700;
+                  cursor: pointer;
+                "
+              >
+                打診する
+              </div>
+            </div>
+          </div>
 
-      <!-- TODO -->
-      <div class="sec-head" style="padding-bottom:8px;">
-        <div class="sec-title" style="display:flex;align-items:center;gap:7px;">
-          TODO
-          <span style="background:var(--surface);color:var(--muted);font-size:10px;padding:2px 7px;border-radius:99px;font-weight:400;">3</span>
-        </div>
-      </div>
-      <div class="task-scroll">
-        <div class="task-card">
-          <div class="task-tag" style="background:rgba(127,119,221,.15);color:var(--purple-l);">台本</div>
-          <div class="task-title">Shorts台本 3本分</div>
-          <div class="task-foot">
-            <div class="task-av" style="background:rgba(239,159,39,.3);color:var(--amber-l);">TK</div>
-            <div class="task-due">5/16</div>
+          <!-- Status tabs -->
+          <div style="display: flex; gap: 8px; padding: 0 20px 16px">
+            <div
+              style="
+                flex: 1;
+                text-align: center;
+                background: var(--amber-d);
+                color: #fff;
+                border-radius: 99px;
+                padding: 7px;
+                font-size: 12px;
+                font-weight: 700;
+              "
+            >
+              返答待ち 2
+            </div>
+            <div
+              style="
+                flex: 1;
+                text-align: center;
+                background: var(--card);
+                border: 0.5px solid var(--border);
+                color: var(--muted);
+                border-radius: 99px;
+                padding: 7px;
+                font-size: 12px;
+              "
+            >
+              確定済み 1
+            </div>
+            <div
+              style="
+                flex: 1;
+                text-align: center;
+                background: var(--card);
+                border: 0.5px solid var(--border);
+                color: var(--muted);
+                border-radius: 99px;
+                padding: 7px;
+                font-size: 12px;
+              "
+            >
+              過去
+            </div>
           </div>
-        </div>
-        <div class="task-card">
-          <div class="task-tag" style="background:rgba(63,207,127,.15);color:var(--green);">告知</div>
-          <div class="task-title">概要欄テンプレ更新</div>
-          <div class="task-foot">
-            <div class="task-av" style="background:rgba(127,119,221,.3);color:var(--purple-l);">RK</div>
-            <div class="task-due">5/14</div>
-          </div>
-        </div>
-        <div class="task-card">
-          <div class="task-tag" style="background:rgba(239,159,39,.15);color:var(--amber-l);">コラボ</div>
-          <div class="task-title">企画書 v2 作成</div>
-          <div class="task-foot">
-            <div class="task-av" style="background:rgba(239,159,39,.3);color:var(--amber-l);">MG</div>
-            <div class="task-due">5/15</div>
-          </div>
-        </div>
-      </div>
 
-      <!-- 進行中 -->
-      <div class="sec-head" style="padding-bottom:8px;">
-        <div class="sec-title" style="display:flex;align-items:center;gap:7px;color:var(--amber-l);">
-          進行中
-          <span style="background:rgba(239,159,39,.15);color:var(--amber);font-size:10px;padding:2px 7px;border-radius:99px;font-weight:400;">2</span>
-        </div>
-      </div>
-      <div class="task-scroll">
-        <div class="task-card" style="border-color:var(--amber-d);">
-          <div class="task-tag" style="background:rgba(127,119,221,.15);color:var(--purple-l);">編集</div>
-          <div class="task-title">4月振り返り動画 編集</div>
-          <div class="task-foot">
-            <div class="task-av" style="background:rgba(63,207,127,.3);color:var(--green);">SA</div>
-            <div class="task-due" style="color:var(--live);">5/13</div>
+          <div class="sec-head">
+            <div class="sec-title">返答待ち</div>
+            <div class="sec-more">月3件まで（LIGHT）</div>
           </div>
-        </div>
-        <div class="task-card" style="border-color:var(--amber-d);">
-          <div class="task-tag" style="background:rgba(127,119,221,.15);color:var(--purple-l);">サムネ</div>
-          <div class="task-title">サムネイル 3本 デザイン</div>
-          <div class="task-foot">
-            <div class="task-av" style="background:rgba(239,159,39,.3);color:var(--amber-l);">MG</div>
-            <div class="task-due">5/12</div>
+          <div class="collab-list">
+            <div class="collab-item">
+              <div class="col-av" style="background: rgba(255, 77, 109, 0.2); color: var(--live)">
+                KZ
+              </div>
+              <div class="col-info">
+                <div class="col-name">カズくんGames</div>
+                <div class="col-date">Apex コラボ — 5/18 20:00〜</div>
+              </div>
+              <div class="col-btns">
+                <button
+                  class="col-btn"
+                  style="background: rgba(63, 207, 127, 0.15); color: var(--green)"
+                >
+                  OK
+                </button>
+                <button
+                  class="col-btn"
+                  style="background: rgba(255, 77, 109, 0.1); color: var(--live)"
+                >
+                  NG
+                </button>
+              </div>
+            </div>
+            <div class="collab-item">
+              <div
+                class="col-av"
+                style="background: rgba(127, 119, 221, 0.2); color: var(--purple-l)"
+              >
+                HN
+              </div>
+              <div class="col-info">
+                <div class="col-name">ひなたch</div>
+                <div class="col-date">雑談コラボ — 5/20 or 5/21</div>
+              </div>
+              <div class="col-btns">
+                <button
+                  class="col-btn"
+                  style="background: rgba(63, 207, 127, 0.15); color: var(--green)"
+                >
+                  OK
+                </button>
+                <button
+                  class="col-btn"
+                  style="background: rgba(255, 77, 109, 0.1); color: var(--live)"
+                >
+                  NG
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <!-- 完了 -->
-      <div class="sec-head" style="padding-bottom:8px;">
-        <div class="sec-title" style="display:flex;align-items:center;gap:7px;color:var(--green);">
-          完了
-          <span style="background:rgba(63,207,127,.15);color:var(--green);font-size:10px;padding:2px 7px;border-radius:99px;font-weight:400;">5</span>
-        </div>
-      </div>
-      <div class="task-scroll">
-        <div class="task-card" style="opacity:.5;">
-          <div class="task-tag" style="background:rgba(63,207,127,.1);color:var(--green);">撮影</div>
-          <div class="task-title">Short素材 2本 撮影</div>
-          <div class="task-foot">
-            <div class="task-av" style="background:rgba(127,119,221,.3);color:var(--purple-l);">RK</div>
-            <div class="task-due">5/12</div>
+          <div class="sec-head" style="margin-top: 8px">
+            <div class="sec-title">確定済み</div>
           </div>
-        </div>
-        <div class="task-card" style="opacity:.5;">
-          <div class="task-tag" style="background:rgba(63,207,127,.1);color:var(--green);">配信</div>
-          <div class="task-title">LIVEアーカイブ 公開</div>
-          <div class="task-foot">
-            <div class="task-av" style="background:rgba(127,119,221,.3);color:var(--purple-l);">RK</div>
-            <div class="task-due">5/11</div>
+          <div class="collab-list">
+            <div class="collab-item" style="border-color: rgba(63, 207, 127, 0.3)">
+              <div class="col-av" style="background: rgba(63, 207, 127, 0.2); color: var(--green)">
+                PK
+              </div>
+              <div class="col-info">
+                <div class="col-name" style="color: var(--green)">ぺこらch ✓ 確定</div>
+                <div class="col-date">5/22（金）21:00〜 / Discord</div>
+              </div>
+              <div style="font-size: 11px; color: var(--muted); cursor: pointer">詳細 ›</div>
+            </div>
           </div>
-        </div>
-      </div>
 
+          <!-- PARTY upgrade prompt -->
+          <div
+            style="
+              margin: 8px 20px 0;
+              background: rgba(127, 119, 221, 0.1);
+              border: 0.5px solid rgba(127, 119, 221, 0.3);
+              border-radius: 12px;
+              padding: 14px 16px;
+            "
+          >
+            <div
+              style="font-size: 12px; font-weight: 700; color: var(--purple-l); margin-bottom: 4px"
+            >
+              コラボ調整をもっと使いたいですか？
+            </div>
+            <div
+              style="font-size: 11px; color: var(--muted); margin-bottom: 10px; line-height: 1.5"
+            >
+              PARTYプランなら月の件数制限なし。コラボ返答の通知も届きます。
+            </div>
+            <div
+              style="
+                background: var(--purple-d);
+                color: var(--purple-l);
+                border-radius: 8px;
+                padding: 8px;
+                text-align: center;
+                font-size: 12px;
+                font-weight: 700;
+                cursor: pointer;
+              "
+            >
+              PARTYプランを試す（14日無料）→
+            </div>
+          </div>
+        </div>
+
+        <div class="bottom-nav">
+          <div class="bn-item">
+            <div class="bn-icon">▦</div>
+            <div class="bn-label">ホーム</div>
+          </div>
+          <div class="bn-item">
+            <div class="bn-icon">◷</div>
+            <div class="bn-label">スケジュール</div>
+          </div>
+          <div class="bn-item add">
+            <div class="bn-icon">＋</div>
+            <div class="bn-label" style="margin-top: 4px">追加</div>
+          </div>
+          <div class="bn-item active">
+            <div class="bn-icon">🤝</div>
+            <div class="bn-label">コラボ</div>
+          </div>
+          <div class="bn-item">
+            <div class="bn-icon">◎</div>
+            <div class="bn-label">チーム</div>
+          </div>
+        </div>
+        <div class="phone-home"><div class="home-bar"></div></div>
+      </div>
     </div>
-
-    <div class="bottom-nav">
-      <div class="bn-item"><div class="bn-icon">▦</div><div class="bn-label">ホーム</div></div>
-      <div class="bn-item"><div class="bn-icon">◷</div><div class="bn-label">スケジュール</div></div>
-      <div class="bn-item add"><div class="bn-icon">＋</div><div class="bn-label" style="margin-top:4px;">追加</div></div>
-      <div class="bn-item active"><div class="bn-icon">▤</div><div class="bn-label">タスク</div></div>
-      <div class="bn-item"><div class="bn-icon">◎</div><div class="bn-label">チーム</div></div>
-    </div>
-    <div class="phone-home"><div class="home-bar"></div></div>
-  </div>
-</div>
-
-<!-- ═══════════════ SCREEN 3: コラボ ═══════════════ -->
-<div class="phone">
-  <div class="phone-label">SCREEN 3 — コラボ調整</div>
-  <div class="phone-frame">
-    <div class="phone-notch">
-      <div class="notch-time">20:00</div>
-      <div class="notch-icons"><span class="notch-icon">▋▋▋</span><span class="notch-icon">🔋</span></div>
-    </div>
-
-    <div class="phone-screen">
-      <div class="topbar">
-        <div class="tb-left">
-          <div style="font-size:18px;font-weight:700;">コラボ調整</div>
-        </div>
-        <div class="tb-right">
-          <div style="background:var(--amber-d);color:#fff;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">打診する</div>
-        </div>
-      </div>
-
-      <!-- Status tabs -->
-      <div style="display:flex;gap:8px;padding:0 20px 16px;">
-        <div style="flex:1;text-align:center;background:var(--amber-d);color:#fff;border-radius:99px;padding:7px;font-size:12px;font-weight:700;">返答待ち 2</div>
-        <div style="flex:1;text-align:center;background:var(--card);border:.5px solid var(--border);color:var(--muted);border-radius:99px;padding:7px;font-size:12px;">確定済み 1</div>
-        <div style="flex:1;text-align:center;background:var(--card);border:.5px solid var(--border);color:var(--muted);border-radius:99px;padding:7px;font-size:12px;">過去</div>
-      </div>
-
-      <div class="sec-head">
-        <div class="sec-title">返答待ち</div>
-        <div class="sec-more">月3件まで（LIGHT）</div>
-      </div>
-      <div class="collab-list">
-        <div class="collab-item">
-          <div class="col-av" style="background:rgba(255,77,109,.2);color:var(--live);">KZ</div>
-          <div class="col-info">
-            <div class="col-name">カズくんGames</div>
-            <div class="col-date">Apex コラボ — 5/18 20:00〜</div>
-          </div>
-          <div class="col-btns">
-            <button class="col-btn" style="background:rgba(63,207,127,.15);color:var(--green);">OK</button>
-            <button class="col-btn" style="background:rgba(255,77,109,.1);color:var(--live);">NG</button>
-          </div>
-        </div>
-        <div class="collab-item">
-          <div class="col-av" style="background:rgba(127,119,221,.2);color:var(--purple-l);">HN</div>
-          <div class="col-info">
-            <div class="col-name">ひなたch</div>
-            <div class="col-date">雑談コラボ — 5/20 or 5/21</div>
-          </div>
-          <div class="col-btns">
-            <button class="col-btn" style="background:rgba(63,207,127,.15);color:var(--green);">OK</button>
-            <button class="col-btn" style="background:rgba(255,77,109,.1);color:var(--live);">NG</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="sec-head" style="margin-top:8px;">
-        <div class="sec-title">確定済み</div>
-      </div>
-      <div class="collab-list">
-        <div class="collab-item" style="border-color:rgba(63,207,127,.3);">
-          <div class="col-av" style="background:rgba(63,207,127,.2);color:var(--green);">PK</div>
-          <div class="col-info">
-            <div class="col-name" style="color:var(--green);">ぺこらch ✓ 確定</div>
-            <div class="col-date">5/22（金）21:00〜 / Discord</div>
-          </div>
-          <div style="font-size:11px;color:var(--muted);cursor:pointer;">詳細 ›</div>
-        </div>
-      </div>
-
-      <!-- PARTY upgrade prompt -->
-      <div style="margin:8px 20px 0;background:rgba(127,119,221,.1);border:.5px solid rgba(127,119,221,.3);border-radius:12px;padding:14px 16px;">
-        <div style="font-size:12px;font-weight:700;color:var(--purple-l);margin-bottom:4px;">コラボ調整をもっと使いたいですか？</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;">PARTYプランなら月の件数制限なし。コラボ返答の通知も届きます。</div>
-        <div style="background:var(--purple-d);color:var(--purple-l);border-radius:8px;padding:8px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;">PARTYプランを試す（14日無料）→</div>
-      </div>
-
-    </div>
-
-    <div class="bottom-nav">
-      <div class="bn-item"><div class="bn-icon">▦</div><div class="bn-label">ホーム</div></div>
-      <div class="bn-item"><div class="bn-icon">◷</div><div class="bn-label">スケジュール</div></div>
-      <div class="bn-item add"><div class="bn-icon">＋</div><div class="bn-label" style="margin-top:4px;">追加</div></div>
-      <div class="bn-item active"><div class="bn-icon">🤝</div><div class="bn-label">コラボ</div></div>
-      <div class="bn-item"><div class="bn-icon">◎</div><div class="bn-label">チーム</div></div>
-    </div>
-    <div class="phone-home"><div class="home-bar"></div></div>
-  </div>
-</div>
-
-</body>
+  </body>
 </html>

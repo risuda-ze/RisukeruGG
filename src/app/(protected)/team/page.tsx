@@ -2,16 +2,16 @@
 
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/auth';
-import { useTasksStore } from '@/stores/tasks';
-import { Badge } from '@/components/ui/Badge';
+import { TopBar } from '@/components/layout/TopBar';
+import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { Card, CardHeader } from '@/components/ui/Card';
-import { Avatar } from '@/components/ui/Avatar';
+import { Input } from '@/components/ui/Input';
 import { RoleChangeDialog } from '@/components/team/RoleChangeDialog';
 import { RemoveMemberDialog } from '@/components/team/RemoveMemberDialog';
 import { TransferOwnershipDialog } from '@/components/team/TransferOwnershipDialog';
 import { LeaveTeamDialog } from '@/components/team/LeaveTeamDialog';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
+import { createTeam } from '@/lib/repositories/teams';
 import type { TeamMember, UserRole } from '@/types/entities';
 
 type DialogState =
@@ -22,31 +22,53 @@ type DialogState =
   | null;
 
 const ROLE_LABELS: Record<UserRole, string> = {
-  owner:  'Owner',
+  owner: '配信者 / オーナー',
   editor: 'Editor',
   viewer: 'Viewer',
 };
 
-type BadgeVariant = 'purple' | 'amber' | 'muted' | 'green' | 'live' | 'default';
-const ROLE_BADGE: Record<UserRole, BadgeVariant> = {
-  owner:  'purple',
-  editor: 'amber',
-  viewer: 'muted',
+/* ロール別バッジ色 */
+const ROLE_BADGE: Record<
+  UserRole,
+  { bg: string; text: string; border: string }
+> = {
+  owner: {
+    bg: 'var(--purple-sm)',
+    text: 'var(--purple-l)',
+    border: 'var(--purple)',
+  },
+  editor: {
+    bg: 'rgba(239,159,39,0.15)',
+    text: 'var(--amber-l)',
+    border: 'var(--amber)',
+  },
+  viewer: {
+    bg: 'rgba(102,102,170,0.15)',
+    text: 'var(--muted-l)',
+    border: 'var(--border-l)',
+  },
 };
+
+/* アバター背景色 */
+const AVATAR_PALETTES = [
+  { bg: 'var(--purple-d)', text: 'var(--purple-l)' },
+  { bg: 'rgba(74,222,128,0.2)', text: '#4ade80' },
+  { bg: 'rgba(239,159,39,0.2)', text: 'var(--amber-l)' },
+  { bg: 'rgba(127,119,221,0.2)', text: 'var(--purple-l)' },
+];
 
 export default function TeamPage() {
   const { currentUser, currentTeam, members } = useAuthStore();
-  const { tasks } = useTasksStore();
   const [dialog, setDialog] = useState<DialogState>(null);
-  const [copied, setCopied] = useState(false);
+  const [showCreateTeam, setShowCreateTeam] = useState(false);
+  const [teamName, setTeamName] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const isOwner = myMember?.role === 'owner';
-
-  function getPendingTaskCount(userId: string): number {
-    return tasks.filter((t) => t.assigneeId === userId).length;
-  }
+  const isSolo = members.length <= 1 && !teamId;
 
   function handleRoleChange(member: TeamMember, value: string) {
     if (value === 'editor' || value === 'viewer') {
@@ -54,131 +76,193 @@ export default function TeamPage() {
     }
   }
 
-  async function copyTeamCode() {
-    if (!currentTeam?.teamCode) return;
-    await navigator.clipboard.writeText(currentTeam.teamCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  async function handleCreateTeam(e: React.FormEvent) {
+    e.preventDefault();
+    if (!teamName.trim()) return;
+    setCreating(true);
+    setCreateError(null);
+    try {
+      await createTeam({ name: teamName.trim() });
+      setShowCreateTeam(false);
+      setTeamName('');
+    } catch {
+      setCreateError('チームの作成に失敗しました');
+    } finally {
+      setCreating(false);
+    }
   }
 
-  if (!teamId) {
+  /* ── チーム未参加 ─────────────────────────────────────────── */
+  if (isSolo) {
     return (
-      <div className="px-4 py-6 md:px-7 max-w-lg">
-        <h2 className="text-base font-semibold text-text mb-5">チーム管理</h2>
-        <Card>
-          <p className="text-sm text-muted mb-4">チームに参加してください</p>
-          <TeamJoinForm />
-        </Card>
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <TopBar title="チームメンバー" />
+        <div className="flex-1 overflow-y-auto p-6 max-w-lg">
+          <div className="bg-card border border-border rounded-[18px] p-6">
+            <h3 className="text-sm font-semibold text-text mb-1">
+              チームに参加または作成する
+            </h3>
+            <p className="text-[12px] text-muted mb-5">
+              チームメンバーとスケジュールを共有できます
+            </p>
+            <div className="mb-5">
+              <p className="text-[11px] font-medium text-muted mb-2 uppercase tracking-wide">
+                チームコードで参加
+              </p>
+              <TeamJoinForm />
+            </div>
+            <div className="border-t border-border pt-4">
+              <p className="text-[11px] font-medium text-muted mb-2 uppercase tracking-wide">
+                新しいチームを作成
+              </p>
+              <Button variant="secondary" size="sm" onClick={() => setShowCreateTeam(true)}>
+                チームを作成する
+              </Button>
+            </div>
+          </div>
+          <Modal
+            open={showCreateTeam}
+            onClose={() => setShowCreateTeam(false)}
+            title="チームを作成する"
+            footer={
+              <>
+                <Button variant="secondary" onClick={() => setShowCreateTeam(false)}>
+                  キャンセル
+                </Button>
+                <Button loading={creating} onClick={handleCreateTeam}>
+                  作成する
+                </Button>
+              </>
+            }
+          >
+            <form onSubmit={handleCreateTeam}>
+              <Input
+                label="チーム名"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                placeholder="例: 配信チーム"
+                maxLength={50}
+                error={createError ?? undefined}
+              />
+            </form>
+          </Modal>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="px-4 py-6 md:px-7 max-w-2xl space-y-4">
-      <div className="flex items-center justify-between mb-1">
-        <h2 className="text-base font-semibold text-text">チーム管理</h2>
+    <div className="flex flex-col flex-1 overflow-hidden">
+      {/* トップバー */}
+      <TopBar title="チームメンバー" subtitle={`${members.length}名`}>
         {isOwner && (
-          <Button variant="ghost" size="sm" onClick={() => setDialog({ type: 'transfer' })}>
-            所有権を移譲
-          </Button>
+          <button
+            onClick={() => setDialog({ type: 'transfer' })}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-[12px] text-[12px] font-semibold transition-colors"
+            style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+          >
+            <span className="material-icons text-[16px]">person_add</span>
+            メンバーを招待
+          </button>
         )}
+      </TopBar>
+
+      {/* メンバーカードグリッド */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))' }}>
+          {members.map((member, i) => {
+            const palette = AVATAR_PALETTES[i % AVATAR_PALETTES.length];
+            const isMe = member.userId === currentUser?.uid;
+            const roleBadge = ROLE_BADGE[member.role];
+            const initials = member.displayName.slice(0, 2).toUpperCase();
+
+            return (
+              <div
+                key={member.userId}
+                className="bg-card border rounded-[18px] p-5 flex items-center gap-4 transition-all"
+                style={{ borderColor: isMe ? 'var(--purple)' : 'var(--border)' }}
+              >
+                {/* アバター */}
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-[16px] font-bold shrink-0 relative"
+                  style={{ background: palette.bg, color: palette.text }}
+                >
+                  {initials}
+                  {/* オンラインインジケーター（オーナーと自分を常にオンライン表示） */}
+                  {(isMe || member.role === 'owner') && (
+                    <span
+                      className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card"
+                      style={{ background: 'var(--green)' }}
+                    />
+                  )}
+                </div>
+
+                {/* 情報 */}
+                <div className="flex-1 min-w-0">
+                  <div className="text-[15px] font-bold text-text mb-1 truncate">
+                    {member.displayName}
+                    {isMe && (
+                      <span className="text-muted text-[11px] font-normal ml-1.5">（あなた）</span>
+                    )}
+                  </div>
+                  <div
+                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border"
+                    style={{
+                      background: roleBadge.bg,
+                      color: roleBadge.text,
+                      borderColor: roleBadge.border,
+                    }}
+                  >
+                    {ROLE_LABELS[member.role]}
+                  </div>
+                </div>
+
+                {/* オーナー向けアクション */}
+                {isOwner && !isMe && member.role !== 'owner' && (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <select
+                      value={member.role}
+                      onChange={(e) => handleRoleChange(member, e.target.value)}
+                      className="text-[11px] border border-border rounded-[6px] px-2 py-1 bg-surface text-text outline-none"
+                    >
+                      <option value="editor">Editor</option>
+                      <option value="viewer">Viewer</option>
+                    </select>
+                    <button
+                      onClick={() => setDialog({ type: 'remove', member })}
+                      className="text-[11px] text-muted hover:text-live transition-colors px-1.5 py-1 rounded-[4px] hover:bg-live/10"
+                    >
+                      削除
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* チームコード */}
+        {currentTeam && (
+          <div className="mt-6 bg-card border border-border rounded-[18px] p-5 max-w-sm">
+            <p className="text-[11px] text-muted uppercase tracking-wide mb-2">チームコード</p>
+            <p className="text-[18px] font-mono font-bold text-purple-l tracking-widest">
+              {currentTeam.teamCode}
+            </p>
+          </div>
+        )}
+
+        {/* 脱退 */}
+        <div className="mt-4 max-w-sm">
+          <button
+            onClick={() => setDialog({ type: 'leave' })}
+            className="text-[12px] text-muted hover:text-live transition-colors"
+          >
+            チームを脱退する
+          </button>
+        </div>
       </div>
 
-      {/* ── チーム情報カード ─────────────────────────────── */}
-      {currentTeam && (
-        <Card>
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[11px] text-muted uppercase tracking-wide mb-0.5">チーム名</p>
-              <p className="text-base font-semibold text-text">{currentTeam.name}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 mt-4 pt-3 border-t border-border">
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] text-muted uppercase tracking-wide mb-0.5">チームコード</p>
-              <p className="text-base font-mono font-bold text-purple-l tracking-widest">
-                {currentTeam.teamCode}
-              </p>
-            </div>
-            <Button variant="secondary" size="sm" onClick={copyTeamCode} aria-label="チームコードをコピー">
-              {copied ? '✓ コピー済み' : 'コピー'}
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      {/* ── メンバーリスト ───────────────────────────────── */}
-      <Card noPadding>
-        <CardHeader title={`メンバー (${members.length}名)`} />
-        <div className="divide-y divide-border">
-          {members.map((member) => (
-            <div key={member.userId} className="flex items-center gap-3 px-[18px] py-3">
-              <Avatar
-                initials={member.displayName.slice(0, 2)}
-                bgClass="bg-purple-d/30"
-                textClass="text-purple-l"
-                size="md"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-text truncate">
-                  {member.displayName}
-                  {member.userId === currentUser?.uid && (
-                    <span className="text-muted ml-1 text-[11px]">（あなた）</span>
-                  )}
-                </p>
-                <div className="flex gap-1 mt-0.5">
-                  <Badge variant={ROLE_BADGE[member.role]}>{ROLE_LABELS[member.role]}</Badge>
-                  <Badge variant={member.plan === 'party' ? 'purple' : 'muted'}>
-                    {member.plan === 'party' ? 'PARTY' : 'LIGHT'}
-                  </Badge>
-                </div>
-              </div>
-
-              {/* オーナー専用アクション */}
-              {isOwner && member.userId !== currentUser?.uid && member.role !== 'owner' && (
-                <div className="flex items-center gap-2 shrink-0">
-                  <select
-                    value={member.role}
-                    onChange={(e) => handleRoleChange(member, e.target.value)}
-                    className="text-xs border border-border rounded-[6px] px-2 py-1 bg-card text-text"
-                    aria-label="ロールを変更"
-                  >
-                    <option value="editor">Editor</option>
-                    <option value="viewer">Viewer</option>
-                  </select>
-                  <button
-                    onClick={() => setDialog({ type: 'remove', member })}
-                    className="text-[11px] text-muted hover:text-live transition-colors px-1.5 py-1 rounded-[4px] hover:bg-live/10"
-                    aria-label="メンバーを削除"
-                  >
-                    削除
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* ── チームコードで参加 ───────────────────────────── */}
-      <Card>
-        <p className="text-[11px] text-muted uppercase tracking-wide mb-3">チームコードで参加</p>
-        <TeamJoinForm />
-      </Card>
-
-      {/* ── 危険ゾーン ───────────────────────────────────── */}
-      <Card className="border-live/20">
-        <p className="text-[11px] text-muted uppercase tracking-wide mb-3">退出</p>
-        <Button
-          variant="danger"
-          size="sm"
-          onClick={() => setDialog({ type: 'leave' })}
-        >
-          チームを脱退する
-        </Button>
-      </Card>
-
-      {/* ── ダイアログ ───────────────────────────────────── */}
+      {/* ── ダイアログ ─────────────────────────────────────── */}
       {dialog?.type === 'roleChange' && teamId && (
         <RoleChangeDialog
           teamId={teamId}
@@ -192,7 +276,7 @@ export default function TeamPage() {
         <RemoveMemberDialog
           teamId={teamId}
           member={dialog.member}
-          pendingTaskCount={getPendingTaskCount(dialog.member.userId)}
+          pendingTaskCount={0}
           onClose={() => setDialog(null)}
           onSuccess={() => setDialog(null)}
         />

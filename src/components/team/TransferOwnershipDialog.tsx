@@ -51,7 +51,9 @@ export function TransferOwnershipDialog({
           <Button onClick={onSuccess}>閉じる</Button>
         ) : (
           <>
-            <Button variant="secondary" onClick={onClose}>キャンセル</Button>
+            <Button variant="secondary" onClick={onClose}>
+              キャンセル
+            </Button>
             <Button loading={transferring} onClick={handleConfirm} disabled={!selectedUserId}>
               移譲する
             </Button>

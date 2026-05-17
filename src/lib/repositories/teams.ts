@@ -1,11 +1,4 @@
-import {
-  doc,
-  getDoc,
-  collection,
-  onSnapshot,
-  Unsubscribe,
-  updateDoc,
-} from 'firebase/firestore';
+import { doc, getDoc, collection, onSnapshot, Unsubscribe, updateDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '@/lib/firebase/client';
 import type { Team, TeamMember, UserRole } from '@/types/entities';
@@ -75,10 +68,10 @@ export const createTeam = httpsCallable<{ name: string }, { teamId: string; team
   'createTeam'
 );
 
-export const joinTeam = httpsCallable<
-  { teamCode: string },
-  { success: boolean; teamId: string }
->(functions, 'joinTeam');
+export const joinTeam = httpsCallable<{ teamCode: string }, { success: boolean; teamId: string }>(
+  functions,
+  'joinTeam'
+);
 
 export const leaveTeam = httpsCallable<void, { success: boolean; newSoloTeamId: string }>(
   functions,

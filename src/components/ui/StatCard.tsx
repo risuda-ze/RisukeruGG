@@ -15,9 +15,9 @@ export interface StatCardProps {
 
 const colorClasses: Record<StatColor, string> = {
   purple: 'text-purple-l',
-  amber:  'text-amber-l',
-  live:   'text-live',
-  green:  'text-green',
+  amber: 'text-amber-l',
+  live: 'text-live',
+  green: 'text-green',
 };
 
 export function StatCard({ label, value, color = 'purple', sub }: StatCardProps) {

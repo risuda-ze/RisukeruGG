@@ -20,10 +20,14 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+// functionsをモジュールレベルで作成し、エミュレータ接続前にインスタンスを確立する
+export const functions = getFunctions(app, 'asia-northeast1');
 
 // エミュレータへの接続（開発環境のみ・ブラウザ側で一度だけ実行）
 declare global {
-  interface Window { __firebaseEmulatorsConnected?: boolean }
+  interface Window {
+    __firebaseEmulatorsConnected?: boolean;
+  }
 }
 
 if (
@@ -36,7 +40,6 @@ if (
   connectAuthEmulator(auth, `http://${emulatorHost}:9099`, { disableWarnings: false });
   connectFirestoreEmulator(db, emulatorHost, 8080);
   connectStorageEmulator(storage, emulatorHost, 9199);
-  const functions = getFunctions(app, 'asia-northeast1');
   connectFunctionsEmulator(functions, emulatorHost, 5001);
 }
 
