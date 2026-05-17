@@ -71,7 +71,7 @@ export const createCollabSession = onCall(
       }
     });
 
-    const shareUrl = `https://risukeru.gg/collab/${teamId}__${sessionId}`;
+    const shareUrl = `https://risukeru-gg.vercel.app/collab/${teamId}__${sessionId}`;
     return { sessionId, shareUrl };
   }
 );

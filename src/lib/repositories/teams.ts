@@ -92,3 +92,13 @@ export const removeTeamMember = httpsCallable<
   { teamId: string; targetUserId: string },
   { success: boolean }
 >(functions, 'removeTeamMember');
+
+export const deleteAccount = httpsCallable<void, { success: boolean }>(
+  functions,
+  'deleteAccount'
+);
+
+export const dissolveTeam = httpsCallable<void, { success: boolean }>(
+  functions,
+  'dissolveTeam'
+);

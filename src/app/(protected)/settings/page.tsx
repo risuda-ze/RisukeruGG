@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { useTasksStore } from '@/stores/tasks';
 import { useTaskCategoryStore } from '@/stores/taskCategories';
@@ -24,16 +25,16 @@ import {
   updateTaskCategory,
   deleteTaskCategory,
 } from '@/lib/repositories/taskCategories';
+import { deleteAccount } from '@/lib/repositories/teams';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Card } from '@/components/ui/Card';
 import { TopBar } from '@/components/layout/TopBar';
 
-type Tab = 'team' | 'tasks' | 'calendar' | 'notifications';
+type Tab = 'tasks' | 'calendar' | 'notifications';
 
 const TAB_LABELS: Record<Tab, string> = {
-  team: 'チーム',
   tasks: 'タスク管理',
   calendar: 'スケジュール',
   notifications: '通知',
@@ -67,7 +68,41 @@ const ICON_OPTIONS = [
 ];
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('team');
+  const [activeTab, setActiveTab] = useState<Tab>('tasks');
+  const router = useRouter();
+  const { currentUser, members, signOut } = useAuthStore();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const myMember = members.find((m) => m.userId === currentUser?.uid);
+  const isOwnerWithMembers = myMember?.role === 'owner' && members.length > 1;
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteAccount();
+      await signOut();
+      router.replace('/login');
+    } catch (err: unknown) {
+      const code =
+        err && typeof err === 'object' && 'code' in err
+          ? String((err as { code: unknown }).code)
+          : 'unknown';
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : '';
+      if (code === 'functions/failed-precondition') {
+        setDeleteError(message || '先に所有権を移譲してください');
+      } else {
+        setDeleteError(`削除に失敗しました（${code}）`);
+      }
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -93,16 +128,93 @@ export default function SettingsPage() {
         </div>
 
         <div>
-          {activeTab === 'team' && (
-            <Card>
-              <p className="text-sm text-muted">チーム設定（チーム管理ページから変更できます）</p>
-            </Card>
-          )}
           {activeTab === 'tasks' && <TaskManagementSettings />}
           {activeTab === 'calendar' && <ScheduleCategorySettings />}
           {activeTab === 'notifications' && <NotificationSettings />}
         </div>
+
+        {/* ── 危険ゾーン ─────────────────────────────────────── */}
+        <div className="mt-10 border-t border-border pt-6">
+          <h3 className="text-sm font-semibold text-live mb-1">危険ゾーン</h3>
+          <p className="text-[12px] text-muted mb-4">
+            一度削除したアカウントは復元できません。
+          </p>
+          <Card className="border-live/20">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-text mb-0.5">アカウントを削除する</p>
+                <p className="text-[12px] text-muted">
+                  {isOwnerWithMembers
+                    ? '先にチームの所有権を別のメンバーに移譲してください。'
+                    : 'アカウント・チームデータ・スケジュールがすべて削除されます。'}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setDeleteError(null);
+                  setShowDeleteDialog(true);
+                }}
+                disabled={isOwnerWithMembers}
+                className="shrink-0 px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-live/40 text-live hover:bg-live/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                削除する
+              </button>
+            </div>
+            {isOwnerWithMembers && (
+              <div className="mt-3 flex items-center gap-2 text-[11px] text-amber-l">
+                <span className="material-icons text-[14px]">info</span>
+                <a href="/team" className="underline hover:no-underline">
+                  チームページ
+                </a>
+                から所有権を移譲してください。
+              </div>
+            )}
+          </Card>
+        </div>
       </div>
+
+      {/* アカウント削除確認ダイアログ */}
+      <Modal
+        open={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        title="アカウントを削除する"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowDeleteDialog(false)} disabled={deleting}>
+              キャンセル
+            </Button>
+            <Button variant="danger" loading={deleting} onClick={handleDeleteAccount}>
+              削除する
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3 text-sm">
+          <p className="text-text">以下のデータが完全に削除されます：</p>
+          <ul className="space-y-1 text-[13px] text-muted list-none">
+            <li className="flex items-center gap-2">
+              <span className="material-icons text-[14px] text-live">remove_circle_outline</span>
+              アカウント情報（名前・メールアドレス）
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="material-icons text-[14px] text-live">remove_circle_outline</span>
+              チームとすべてのスケジュール
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="material-icons text-[14px] text-live">remove_circle_outline</span>
+              タスク・通知などのアプリデータ
+            </li>
+          </ul>
+          <p className="text-[12px] text-live font-semibold pt-1">
+            この操作は取り消せません。
+          </p>
+          {deleteError && (
+            <p className="text-[12px] text-live bg-live/10 border border-live/30 rounded-[8px] px-3 py-2">
+              {deleteError}
+            </p>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

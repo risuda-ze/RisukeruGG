@@ -95,7 +95,13 @@
       "Bash(curl -s -X POST http://localhost:5001/demo-risukeru/asia-northeast1/respondToCollab -H 'Content-Type: application/json' -d '{ *)",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); pr=d['fields'].get\\('participantResponses'\\); print\\(json.dumps\\(pr, ensure_ascii=False, indent=2\\) if pr else 'NO participantResponses'\\)\")",
       "Bash(bash .specify/scripts/bash/update-agent-context.sh \"specs/002-ui-redesign/plan.md\")",
-      "Bash(Test-Path \"c:\\\\dev\\\\RisukeruGG\\\\specs\\\\002-ui-redesign\\\\tasks.md\")"
+      "Bash(Test-Path \"c:\\\\dev\\\\RisukeruGG\\\\specs\\\\002-ui-redesign\\\\tasks.md\")",
+      "PowerShell(Copy-Item \"c:\\\\dev\\\\RisukeruGG\\\\icon.png\" \"c:\\\\dev\\\\RisukeruGG\\\\src\\\\app\\\\icon.png\" -Force)",
+      "PowerShell(Copy-Item \"c:\\\\dev\\\\RisukeruGG\\\\icon.png\" \"c:\\\\dev\\\\RisukeruGG\\\\src\\\\app\\\\apple-icon.png\" -Force)",
+      "PowerShell(Copy-Item \"c:\\\\dev\\\\RisukeruGG\\\\icon.png\" \"c:\\\\dev\\\\RisukeruGG\\\\public\\\\icon-192x192.png\" -Force)",
+      "PowerShell(Copy-Item \"c:\\\\dev\\\\RisukeruGG\\\\icon.png\" \"c:\\\\dev\\\\RisukeruGG\\\\public\\\\icon-512x512.png\" -Force)",
+      "Bash(node -e \"require\\('sharp'\\)\")",
+      "Bash(node -e ' *)"
     ]
   }
 }

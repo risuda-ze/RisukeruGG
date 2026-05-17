@@ -10,7 +10,8 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
       "Bash(pnpm test:e2e)",
       "Bash(pnpm exec *)",
-      "Bash(bash scripts/seed.bat)"
+      "Bash(bash scripts/seed.bat)",
+      "Bash(node -e ' *)"
     ]
   }
 }

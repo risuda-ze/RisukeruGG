@@ -7,7 +7,9 @@ export * from './teams/leaveTeam';
 export * from './teams/transferOwnership';
 export * from './teams/resetTeamCode';
 export * from './teams/removeTeamMember';
+export * from './teams/dissolveTeam';
 export * from './auth/onUserCreate';
+export * from './auth/deleteAccount';
 export * from './plan/resetMonthlyPlanCounts';
 
 // Phase 4: US2 — カレンダー同期

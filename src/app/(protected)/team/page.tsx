@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/client';
 import { useAuthStore } from '@/stores/auth';
 import { TopBar } from '@/components/layout/TopBar';
 import { Modal } from '@/components/ui/Modal';
@@ -11,7 +13,7 @@ import { RemoveMemberDialog } from '@/components/team/RemoveMemberDialog';
 import { TransferOwnershipDialog } from '@/components/team/TransferOwnershipDialog';
 import { LeaveTeamDialog } from '@/components/team/LeaveTeamDialog';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
-import { createTeam } from '@/lib/repositories/teams';
+import { createTeam, dissolveTeam } from '@/lib/repositories/teams';
 import type { TeamMember, UserRole } from '@/types/entities';
 
 type DialogState =
@@ -62,10 +64,50 @@ export default function TeamPage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
+  const [showEditName, setShowEditName] = useState(false);
+  const [editNameValue, setEditNameValue] = useState('');
+  const [savingName, setSavingName] = useState(false);
+  const [editNameError, setEditNameError] = useState<string | null>(null);
+  const [showDissolve, setShowDissolve] = useState(false);
+  const [dissolving, setDissolving] = useState(false);
+  const [dissolveError, setDissolveError] = useState<string | null>(null);
+
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const isOwner = myMember?.role === 'owner';
   const isSolo = members.length <= 1 && !teamId;
+
+  async function handleSaveName(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editNameValue.trim() || !teamId) return;
+    setSavingName(true);
+    setEditNameError(null);
+    try {
+      await updateDoc(doc(db, 'teams', teamId), { name: editNameValue.trim() });
+      setShowEditName(false);
+    } catch {
+      setEditNameError('チーム名の更新に失敗しました');
+    } finally {
+      setSavingName(false);
+    }
+  }
+
+  async function handleDissolve() {
+    setDissolving(true);
+    setDissolveError(null);
+    try {
+      await dissolveTeam();
+      setShowDissolve(false);
+    } catch (err: unknown) {
+      const code =
+        err && typeof err === 'object' && 'code' in err
+          ? String((err as { code: unknown }).code)
+          : 'unknown';
+      setDissolveError(`チームの解散に失敗しました（${code}）`);
+    } finally {
+      setDissolving(false);
+    }
+  }
 
   function handleRoleChange(member: TeamMember, value: string) {
     if (value === 'editor' || value === 'viewer') {
@@ -264,26 +306,109 @@ export default function TeamPage() {
           })}
         </div>
 
-        {/* チームコード */}
+        {/* チーム基本情報 */}
         {currentTeam && (
           <div className="mt-6 bg-card border border-border rounded-[18px] p-5 max-w-sm">
-            <p className="text-[11px] text-muted uppercase tracking-wide mb-2">チームコード</p>
-            <p className="text-[18px] font-mono font-bold text-purple-l tracking-widest">
-              {currentTeam.teamCode}
-            </p>
+            <p className="text-[11px] text-muted uppercase tracking-wide mb-3">チーム基本情報</p>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div>
+                <p className="text-[11px] text-muted mb-0.5">チーム名</p>
+                <p className="text-[15px] font-bold text-text">{currentTeam.name}</p>
+              </div>
+              {isOwner && (
+                <button
+                  onClick={() => { setEditNameValue(currentTeam.name); setShowEditName(true); }}
+                  className="text-[11px] text-muted hover:text-text transition-colors px-2 py-1 rounded-[6px] hover:bg-surface border border-border"
+                >
+                  編集
+                </button>
+              )}
+            </div>
+            <div>
+              <p className="text-[11px] text-muted mb-1">チームコード</p>
+              <p className="text-[18px] font-mono font-bold text-purple-l tracking-widest">
+                {currentTeam.teamCode}
+              </p>
+            </div>
           </div>
         )}
 
-        {/* 脱退 */}
-        <div className="mt-4 max-w-sm">
-          <button
-            onClick={() => setDialog({ type: 'leave' })}
-            className="text-[12px] text-muted hover:text-live transition-colors"
-          >
-            チームを脱退する
-          </button>
+        {/* 脱退 / 解散 */}
+        <div className="mt-4 max-w-sm flex items-center gap-4">
+          {!isOwner && (
+            <button
+              onClick={() => setDialog({ type: 'leave' })}
+              className="text-[12px] text-muted hover:text-live transition-colors"
+            >
+              チームを脱退する
+            </button>
+          )}
+          {isOwner && (
+            <button
+              onClick={() => setShowDissolve(true)}
+              className="text-[12px] text-muted hover:text-live transition-colors"
+            >
+              チームを解散する
+            </button>
+          )}
         </div>
       </div>
+
+      {/* ── チーム名編集モーダル ──────────────────────────────── */}
+      <Modal
+        open={showEditName}
+        onClose={() => setShowEditName(false)}
+        title="チーム名を編集"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowEditName(false)}>
+              キャンセル
+            </Button>
+            <Button loading={savingName} onClick={handleSaveName}>
+              保存
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleSaveName}>
+          <Input
+            label="チーム名"
+            value={editNameValue}
+            onChange={(e) => setEditNameValue(e.target.value)}
+            placeholder="例: 配信チーム"
+            maxLength={50}
+            error={editNameError ?? undefined}
+          />
+        </form>
+      </Modal>
+
+      {/* ── チーム解散確認モーダル ───────────────────────────── */}
+      <Modal
+        open={showDissolve}
+        onClose={() => setShowDissolve(false)}
+        title="チームを解散する"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowDissolve(false)}>
+              キャンセル
+            </Button>
+            <Button
+              loading={dissolving}
+              onClick={handleDissolve}
+              style={{ background: 'var(--live)', color: '#fff' }}
+            >
+              解散する
+            </Button>
+          </>
+        }
+      >
+        <p className="text-[13px] text-text mb-3">
+          チームを解散すると、全メンバーがソロ状態に戻ります。この操作は元に戻せません。
+        </p>
+        {dissolveError && (
+          <p className="text-[12px] text-live mt-2">{dissolveError}</p>
+        )}
+      </Modal>
 
       {/* ── ダイアログ ─────────────────────────────────────── */}
       {dialog?.type === 'roleChange' && teamId && (

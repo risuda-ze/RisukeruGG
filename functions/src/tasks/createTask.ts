@@ -7,7 +7,7 @@ interface CreateTaskData {
   teamId: string;
   title: string;
   columnId: string;
-  category: string;
+  categoryId?: string | null;
   assigneeId?: string | null;
   dueDate?: string | null;
   linkedScheduleId?: string | null;
@@ -16,10 +16,10 @@ interface CreateTaskData {
 export const createTask = onCall(
   { region: 'asia-northeast1' },
   async (request: CallableRequest<CreateTaskData>) => {
-    const { teamId, title, columnId, category, assigneeId, dueDate, linkedScheduleId } =
+    const { teamId, title, columnId, categoryId, assigneeId, dueDate, linkedScheduleId } =
       request.data;
 
-    if (!teamId || !title || !columnId || !category) {
+    if (!teamId || !title || !columnId) {
       throw new HttpsError('invalid-argument', '必須項目が不足しています');
     }
 
@@ -43,7 +43,7 @@ export const createTask = onCall(
       tx.set(taskRef, {
         title,
         columnId,
-        category,
+        categoryId: categoryId ?? null,
         assigneeId: assigneeId ?? null,
         dueDate: dueDate ? new Date(dueDate) : null,
         linkedScheduleId: linkedScheduleId ?? null,
