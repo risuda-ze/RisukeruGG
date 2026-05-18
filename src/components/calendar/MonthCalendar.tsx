@@ -126,10 +126,11 @@ export function MonthCalendar({
               {/* イベントバー */}
               {daySchedules.map((s) => {
                 const style = getEventStyle(s.categoryId, categories, s.source);
+                const cat = categories.find((c) => c.id === s.categoryId);
                 return (
                   <button
                     key={s.id}
-                    className="w-full text-left px-1.5 h-[25px] rounded-[4px] text-[11px] font-semibold text-white whitespace-nowrap overflow-hidden text-ellipsis shrink-0 border-l-[3px] transition-opacity hover:opacity-80 flex items-center gap-1"
+                    className="w-full text-left px-1.5 h-[28px] rounded-[4px] text-[11px] font-semibold text-white whitespace-nowrap overflow-hidden shrink-0 border-l-[3px] transition-opacity hover:opacity-80 flex items-center gap-1"
                     style={style}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -137,6 +138,11 @@ export function MonthCalendar({
                     }}
                     title={s.title}
                   >
+                    {cat?.icon && (
+                      <span className="material-icons text-[11px] opacity-80 shrink-0">
+                        {cat.icon}
+                      </span>
+                    )}
                     <span className="opacity-75 shrink-0">{format(s.startAt, 'HH:mm')}</span>
                     <span className="truncate">{s.title}</span>
                   </button>

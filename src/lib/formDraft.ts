@@ -1,9 +1,21 @@
 /** フォーム入力の一時保存・復元ユーティリティ（localStorage ベース） */
 
-/** Date を含むオブジェクトを JSON シリアライズするためのリプレイサー */
-function replacer(_key: string, value: unknown): unknown {
+/**
+ * Date を含むオブジェクトを再帰的にシリアライズする。
+ * JSON.stringify の replacer は Date.toJSON() が先に呼ばれるため
+ * instanceof Date が常に false になる。この関数で事前変換する。
+ */
+function serializeDates(value: unknown): unknown {
   if (value instanceof Date) {
-    return { __type: 'Date', value: value.toISOString() };
+    return { __type: 'Date', iso: value.toISOString() };
+  }
+  if (Array.isArray(value)) {
+    return value.map(serializeDates);
+  }
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, serializeDates(v)])
+    );
   }
   return value;
 }
@@ -16,7 +28,10 @@ function reviver(_key: string, value: unknown): unknown {
     '__type' in value &&
     (value as Record<string, unknown>).__type === 'Date'
   ) {
-    return new Date((value as Record<string, unknown>).value as string);
+    const record = value as Record<string, unknown>;
+    // iso (新形式) と value (旧形式) の両方に対応
+    const isoStr = (record.iso ?? record.value) as string;
+    return new Date(isoStr);
   }
   return value;
 }
@@ -28,7 +43,7 @@ function reviver(_key: string, value: unknown): unknown {
  */
 export function saveDraft<T>(key: string, data: T): void {
   try {
-    localStorage.setItem(key, JSON.stringify(data, replacer));
+    localStorage.setItem(key, JSON.stringify(serializeDates(data as unknown)));
   } catch {
     // localStorage が使用不可の環境では無視
   }

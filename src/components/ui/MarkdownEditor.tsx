@@ -104,17 +104,49 @@ export function MarkdownEditor({
                   <ol className="list-decimal pl-4 mb-2 flex flex-col gap-0.5">{children}</ol>
                 ),
                 li: ({ children }) => <li className="text-[14px]">{children}</li>,
-                // インラインコード
-                code: ({ children }) => (
-                  <code className="bg-surface px-1.5 py-0.5 rounded text-[12px] font-mono text-purple-l">
-                    {children}
-                  </code>
-                ),
-                // コードブロック
+                // コード（インライン vs ブロックを区別）
+                code: ({ className, children }) => {
+                  // ブロックコード: language-* クラス有り、または改行を含む（```...``` の末尾は常に \n）
+                  const isBlock = Boolean(className?.startsWith('language-')) || String(children).includes('\n');
+                  if (isBlock) {
+                    return (
+                      <code className={`font-mono text-[12px] text-text/90 ${className ?? ''}`}>
+                        {children}
+                      </code>
+                    );
+                  }
+                  return (
+                    <code className="bg-surface px-1.5 py-0.5 rounded text-[12px] font-mono text-purple-l">
+                      {children}
+                    </code>
+                  );
+                },
+                // コードブロックの外枠（pre はスタイリングのみ担当）
                 pre: ({ children }) => (
-                  <pre className="bg-surface px-3 py-2.5 rounded-[8px] text-[12px] font-mono overflow-x-auto mb-2">
+                  <pre className="bg-surface px-3 py-2.5 rounded-[8px] text-[12px] font-mono overflow-x-auto mb-2 whitespace-pre">
                     {children}
                   </pre>
+                ),
+                // テーブル
+                table: ({ children }) => (
+                  <div className="overflow-x-auto mb-2">
+                    <table className="min-w-full border-collapse text-[13px]">{children}</table>
+                  </div>
+                ),
+                thead: ({ children }) => (
+                  <thead className="border-b-2 border-border">{children}</thead>
+                ),
+                tbody: ({ children }) => (
+                  <tbody className="divide-y divide-border/50">{children}</tbody>
+                ),
+                tr: ({ children }) => <tr>{children}</tr>,
+                th: ({ children }) => (
+                  <th className="px-3 py-2 text-left font-semibold text-text whitespace-nowrap">
+                    {children}
+                  </th>
+                ),
+                td: ({ children }) => (
+                  <td className="px-3 py-2 text-text/90">{children}</td>
                 ),
                 // 引用
                 blockquote: ({ children }) => (
