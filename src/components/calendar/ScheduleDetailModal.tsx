@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { updateSchedule, deleteSchedule } from '@/lib/repositories/schedules';
 import { useAuthStore } from '@/stores/auth';
@@ -335,12 +335,24 @@ export function ScheduleDetailModal({
                     </button>
                   </div>
                 </div>
-              ) : (
+              ) : isSameDay(schedule.startAt, schedule.endAt) ? (
+                /* 同日 */
                 <div className="text-[15px] font-medium text-text font-num">
                   {format(schedule.startAt, 'yyyy年 MM月 dd日（E）', { locale: ja })}
                   <br />
                   <span className="text-[20px] text-purple-l font-bold">
                     {format(schedule.startAt, 'HH:mm')} – {format(schedule.endAt, 'HH:mm')}
+                  </span>
+                </div>
+              ) : (
+                /* 複数日: 左「開始日時」中「-」右「終了日時」 */
+                <div className="flex items-center gap-3 text-[14px] font-medium text-text font-num flex-wrap">
+                  <span className="text-purple-l font-bold">
+                    {format(schedule.startAt, 'yyyy年MM月dd日 HH:mm', { locale: ja })}
+                  </span>
+                  <span className="text-muted text-[16px] font-normal">—</span>
+                  <span className="text-purple-l font-bold">
+                    {format(schedule.endAt, 'yyyy年MM月dd日 HH:mm', { locale: ja })}
                   </span>
                 </div>
               )}
