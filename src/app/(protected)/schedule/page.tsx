@@ -22,7 +22,7 @@ import { ScheduleForm } from '@/components/calendar/ScheduleForm';
 import type { ScheduleEntry } from '@/types/entities';
 
 export default function SchedulePage() {
-  const { currentUser, currentTeamId, members, googleAccessToken } = useAuthStore();
+  const { currentUser, currentTeamId, members, googleAccessToken, signIn } = useAuthStore();
   const { schedules, loading, subscribe } = useScheduleStore();
   const { categories, subscribe: subscribeCategories } = useScheduleCategoryStore();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -76,14 +76,6 @@ export default function SchedulePage() {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
 
-  /* トップバーのサブタイトル */
-  const subtitle =
-    view === 'month'
-      ? `${year}年${month}月`
-      : (() => {
-          const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
-          return format(weekStart, 'yyyy年M月d日〜', { locale: ja });
-        })();
 
   /* 前後ナビゲーション */
   function goBack() {
@@ -104,7 +96,7 @@ export default function SchedulePage() {
   return (
     <div className="flex flex-col flex-1 overflow-hidden relative">
       {/* トップバー */}
-      <TopBar title="スケジュール" subtitle={subtitle}>
+      <TopBar title="スケジュール">
         {canEdit && (
           <button
             onClick={() => setShowCreate(true)}
@@ -174,7 +166,20 @@ export default function SchedulePage() {
       {gcalError === 'auth_expired' && (
         <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-amber/10 border-b border-amber/30 text-[12px] text-amber-l">
           <span className="material-icons text-[16px]">warning</span>
-          Googleカレンダーの認証が切れています。再ログインすると個人予定が再表示されます。
+          <span className="flex-1">Googleカレンダーの認証が切れています。</span>
+          <button
+            onClick={async () => {
+              try {
+                await signIn();
+                setGcalError(null);
+              } catch {
+                /* ポップアップがブロックされた場合などは無視 */
+              }
+            }}
+            className="shrink-0 px-3 py-1 rounded-[6px] text-[11px] font-bold bg-amber/20 border border-amber/50 hover:bg-amber/30 transition-colors"
+          >
+            再接続
+          </button>
         </div>
       )}
 

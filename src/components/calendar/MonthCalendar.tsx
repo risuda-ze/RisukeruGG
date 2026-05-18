@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   format,
   startOfMonth,
@@ -12,6 +13,7 @@ import {
   isSameMonth,
   isToday,
 } from 'date-fns';
+import { ja } from 'date-fns/locale';
 import type { ScheduleEntry, ScheduleCategory } from '@/types/entities';
 
 interface MonthCalendarProps {
@@ -35,7 +37,7 @@ const EVENT_H = 22;
 const EVENT_GAP = 2;
 /** 日付番号エリアの高さ (px) */
 const DATE_H = 26;
-/** 表示する最大トラック数（超えたら単日エリアに折り込み） */
+/** 表示する最大トラック数 */
 const MAX_TRACKS = 2;
 
 /** カテゴリ/ソースに基づくイベントカラーを返す */
@@ -54,9 +56,7 @@ function assignTracks(
   events: Array<{ id: string; colStart: number; colEnd: number }>
 ): Record<string, number> {
   const result: Record<string, number> = {};
-  /* colStart 昇順にソート */
   const sorted = [...events].sort((a, b) => a.colStart - b.colStart || a.colEnd - b.colEnd);
-  /* 各トラックの最後の使用 colEnd を追跡 */
   const trackEnds: number[] = [];
   for (const evt of sorted) {
     let t = 0;
@@ -67,7 +67,10 @@ function assignTracks(
   return result;
 }
 
-/** 週行コンポーネント: 複数日バー + 単日イベントを描画 */
+/** ホバー時のツールチップ */
+type DayTooltip = { day: Date; x: number; y: number } | null;
+
+/** 週行コンポーネント */
 function WeekRow({
   weekDays,
   multiDayEvents,
@@ -76,6 +79,8 @@ function WeekRow({
   firstDay,
   onEventClick,
   onDateClick,
+  onDayHover,
+  onDayHoverEnd,
 }: {
   weekDays: Date[];
   multiDayEvents: ScheduleEntry[];
@@ -84,6 +89,8 @@ function WeekRow({
   firstDay: Date;
   onEventClick: (s: ScheduleEntry) => void;
   onDateClick?: (d: Date) => void;
+  onDayHover: (day: Date, x: number, y: number) => void;
+  onDayHoverEnd: () => void;
 }) {
   const weekStart = weekDays[0];
   const weekEnd = weekDays[6];
@@ -93,10 +100,7 @@ function WeekRow({
   const eventCols: EventCol[] = [];
 
   for (const s of multiDayEvents) {
-    /* 週内に含まれるか確認 */
     if (s.startAt > endOfDay(weekEnd) || s.endAt < startOfDay(weekStart)) continue;
-
-    /* 週内の開始列 */
     let colStart = -1;
     let colEnd = -1;
     for (let i = 0; i < 7; i++) {
@@ -110,23 +114,18 @@ function WeekRow({
     eventCols.push({ id: s.id, colStart, colEnd, event: s });
   }
 
-  /* トラック割り当て */
   const tracks = assignTracks(eventCols.map((e) => ({ id: e.id, colStart: e.colStart, colEnd: e.colEnd })));
   const maxTrack = eventCols.length > 0 ? Math.max(...Object.values(tracks)) : -1;
   const visibleTracks = Math.min(maxTrack + 1, MAX_TRACKS);
-
-  /* 単日エリアの上部オフセット（日付番号 + 複数日バー分） */
   const topOffset = DATE_H + visibleTracks * (EVENT_H + EVENT_GAP) + 4;
 
   return (
     <div className="flex-1 relative border-b border-border last:border-b-0 min-h-0">
-      {/* ── 日付セルグリッド ───────────────────────────────────── */}
+      {/* ── 日付セルグリッド ── */}
       <div className="grid grid-cols-7 h-full">
         {weekDays.map((day) => {
           const isCurrentMonth = isSameMonth(day, firstDay);
           const isCurrentDay = isToday(day);
-
-          /* 単日イベントのみ（複数日は絶対配置バーで描画） */
           const daySingles = singleDaySchedules
             .filter((s) => s.startAt <= endOfDay(day) && s.endAt >= startOfDay(day))
             .sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
@@ -145,7 +144,7 @@ function WeekRow({
               style={{ paddingTop: `${topOffset}px` }}
               onClick={() => onDateClick?.(day)}
             >
-              {/* 日付番号（絶対配置） */}
+              {/* 日付番号（ホバーでツールチップ表示） */}
               <div
                 className="absolute left-1.5 flex items-center"
                 style={{ top: '4px', height: `${DATE_H}px` }}
@@ -153,8 +152,15 @@ function WeekRow({
                 <span
                   className={[
                     'inline-flex items-center justify-center w-[22px] h-[22px] rounded-full text-[11px] font-bold',
-                    isCurrentDay ? 'bg-purple-d text-purple-l' : 'text-muted',
+                    'cursor-default hover:bg-purple-d/40 transition-colors',
+                    isCurrentDay ? 'bg-purple-d text-purple-l' : 'text-muted hover:text-purple-l',
                   ].join(' ')}
+                  onMouseEnter={(e) => {
+                    e.stopPropagation();
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    onDayHover(day, rect.right + 6, rect.top);
+                  }}
+                  onMouseLeave={onDayHoverEnd}
                 >
                   {format(day, 'd')}
                 </span>
@@ -169,21 +175,12 @@ function WeekRow({
                     <button
                       key={s.id}
                       className="w-full text-left px-1.5 rounded-[4px] text-[10px] font-semibold text-white whitespace-nowrap overflow-hidden shrink-0 border-l-[3px] transition-opacity hover:opacity-80 flex items-center gap-1"
-                      style={{
-                        height: `${EVENT_H}px`,
-                        background: `${color}28`,
-                        borderLeftColor: color,
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEventClick(s);
-                      }}
+                      style={{ height: `${EVENT_H}px`, background: `${color}28`, borderLeftColor: color }}
+                      onClick={(e) => { e.stopPropagation(); onEventClick(s); }}
                       title={s.title}
                     >
                       {cat?.icon && (
-                        <span className="material-icons text-[10px] opacity-80 shrink-0">
-                          {cat.icon}
-                        </span>
+                        <span className="material-icons text-[10px] opacity-80 shrink-0">{cat.icon}</span>
                       )}
                       <span className="opacity-75 shrink-0 font-num">{format(s.startAt, 'HH:mm')}</span>
                       <span className="truncate">{s.title}</span>
@@ -196,10 +193,9 @@ function WeekRow({
         })}
       </div>
 
-      {/* ── 複数日イベントバー（絶対配置オーバーレイ） ─────────── */}
+      {/* ── 複数日イベントバー（絶対配置） ── */}
       {eventCols.map(({ id, colStart, colEnd, event: s }) => {
         const track = tracks[id];
-        /* MAX_TRACKS 超えは非表示（単日エリア内で折り込む対応は省略） */
         if (track >= MAX_TRACKS) return null;
 
         const color = getEventColor(s.categoryId, categories, s.source);
@@ -215,9 +211,9 @@ function WeekRow({
           <button
             key={`${s.id}-w${weekStart.getTime()}`}
             className={[
-              'absolute flex items-center gap-1 text-[11px] font-semibold text-white',
-              'transition-opacity hover:opacity-80 overflow-hidden border-l-[3px]',
-              'animate-puni',
+              'absolute overflow-hidden border-l-[3px] animate-puni',
+              'transition-opacity hover:opacity-80 text-white',
+              'flex items-center',
               !startsBefore ? 'rounded-l-[4px]' : 'border-l-transparent',
               !endsAfter ? 'rounded-r-[4px]' : '',
             ]
@@ -230,31 +226,107 @@ function WeekRow({
               height: `${EVENT_H}px`,
               background: `${color}28`,
               borderLeftColor: startsBefore ? 'transparent' : color,
-              paddingLeft: startsBefore ? '4px' : '6px',
-              paddingRight: endsAfter ? '2px' : '6px',
+              paddingLeft: startsBefore ? '3px' : '5px',
+              paddingRight: endsAfter ? '2px' : '5px',
+              gap: '3px',
             }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onEventClick(s);
-            }}
+            onClick={(e) => { e.stopPropagation(); onEventClick(s); }}
             title={s.title}
           >
-            {/* 前週から続いている表示 */}
-            {startsBefore && (
-              <span className="opacity-50 shrink-0 text-[10px] leading-none">◀</span>
-            )}
-            {/* アイコン（開始日のある場合のみ） */}
-            {!startsBefore && cat?.icon && (
-              <span className="material-icons text-[10px] opacity-80 shrink-0">{cat.icon}</span>
-            )}
-            <span className="truncate flex-1">{s.title}</span>
-            {/* 次週に続いている表示 */}
+            {/* 左: ◀ or アイコン、次に開始日時 */}
+            <div className="flex items-center gap-0.5 shrink-0">
+              {startsBefore ? (
+                <span className="opacity-50 text-[9px] leading-none">◀</span>
+              ) : (
+                cat?.icon && (
+                  <span className="material-icons text-[10px] opacity-80 leading-none">{cat.icon}</span>
+                )
+              )}
+              <span className="opacity-65 text-[9px] font-num leading-none whitespace-nowrap">
+                {format(s.startAt, 'MM/dd HH:mm')}
+              </span>
+            </div>
+            {/* 中央: タイトル */}
+            <span className="flex-1 text-center text-[11px] font-semibold truncate leading-none">
+              {s.title}
+            </span>
+            {/* 右: ▶ */}
             {endsAfter && (
-              <span className="opacity-50 shrink-0 text-[10px] leading-none">▶</span>
+              <span className="opacity-50 text-[9px] leading-none shrink-0">▶</span>
             )}
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/** 日付ホバーツールチップ（読み取り専用プレビュー） */
+function DayTooltipPanel({
+  tooltip,
+  schedules,
+  categories,
+}: {
+  tooltip: NonNullable<DayTooltip>;
+  schedules: ScheduleEntry[];
+  categories: ScheduleCategory[];
+}) {
+  const daySchedules = schedules
+    .filter((s) => s.startAt <= endOfDay(tooltip.day) && s.endAt >= startOfDay(tooltip.day))
+    .sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
+
+  /* 画面右端・下端オーバーフロー対策 */
+  const PANEL_W = 240;
+  const approxItemH = 32;
+  const panelH = 36 + daySchedules.length * approxItemH + 8;
+  const x = typeof window !== 'undefined'
+    ? Math.min(tooltip.x, window.innerWidth - PANEL_W - 8)
+    : tooltip.x;
+  const y = typeof window !== 'undefined'
+    ? Math.min(tooltip.y, window.innerHeight - panelH - 8)
+    : tooltip.y;
+
+  return (
+    <div
+      className="fixed z-[400] rounded-[12px] border border-border bg-card shadow-xl overflow-hidden pointer-events-none"
+      style={{ left: x, top: y, width: PANEL_W }}
+    >
+      {/* ヘッダー */}
+      <div className="px-3 py-2 border-b border-border bg-surface/60">
+        <p className="text-[12px] font-bold text-text">
+          {format(tooltip.day, 'M月d日(E)', { locale: ja })}
+        </p>
+      </div>
+
+      {daySchedules.length === 0 ? (
+        <p className="px-3 py-3 text-[11px] text-muted italic">予定なし</p>
+      ) : (
+        <div className="flex flex-col">
+          {daySchedules.map((s) => {
+            const color = getEventColor(s.categoryId, categories, s.source);
+            const cat = categories.find((c) => c.id === s.categoryId);
+            return (
+              <div
+                key={s.id}
+                className="flex items-center gap-2 px-3 py-2 border-b border-border/50 last:border-b-0"
+                style={{ borderLeftColor: color, borderLeftWidth: '2px' }}
+              >
+                {cat?.icon && (
+                  <span className="material-icons text-[12px] shrink-0" style={{ color }}>
+                    {cat.icon}
+                  </span>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-text truncate">{s.title}</p>
+                  <p className="text-[10px] text-muted font-num">
+                    {format(s.startAt, 'HH:mm')} – {format(s.endAt, 'HH:mm')}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -269,13 +341,14 @@ export function MonthCalendar({
 }: MonthCalendarProps) {
   const firstDay = new Date(year, month - 1, 1);
 
-  /* 日曜始まりのカレンダー全日リスト */
   const calStart = startOfWeek(startOfMonth(firstDay), { weekStartsOn: 0 });
   const calEnd = endOfWeek(endOfMonth(firstDay), { weekStartsOn: 0 });
   const days = eachDayOfInterval({ start: calStart, end: calEnd });
   const weekCount = days.length / 7;
 
-  /* 複数日 vs 単日に分類 */
+  /* ホバーツールチップの状態 */
+  const [dayTooltip, setDayTooltip] = useState<DayTooltip>(null);
+
   const multiDaySchedules = schedules.filter(
     (s) => startOfDay(s.startAt).getTime() < startOfDay(s.endAt).getTime()
   );
@@ -313,10 +386,21 @@ export function MonthCalendar({
               firstDay={firstDay}
               onEventClick={onEventClick}
               onDateClick={onDateClick}
+              onDayHover={(day, x, y) => setDayTooltip({ day, x, y })}
+              onDayHoverEnd={() => setDayTooltip(null)}
             />
           );
         })}
       </div>
+
+      {/* 日付ホバーツールチップ */}
+      {dayTooltip && (
+        <DayTooltipPanel
+          tooltip={dayTooltip}
+          schedules={schedules}
+          categories={categories}
+        />
+      )}
     </div>
   );
 }
