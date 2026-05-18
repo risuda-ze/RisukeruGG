@@ -131,6 +131,7 @@ export function WeekCalendar({
                 className={[
                   'flex items-center gap-1 text-[11px] font-semibold text-white',
                   'transition-opacity hover:opacity-80 overflow-hidden border-l-[3px]',
+                  'animate-puni',
                   !startsBefore ? 'ml-1 rounded-l-[4px]' : 'ml-0 border-l-transparent',
                   !endsAfter ? 'mr-1 rounded-r-[4px]' : 'mr-0',
                 ]

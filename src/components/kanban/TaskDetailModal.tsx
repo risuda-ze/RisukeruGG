@@ -78,8 +78,11 @@ export function TaskDetailModal({
   const [commentText, setCommentText] = useState('');
   const [sendingComment, setSendingComment] = useState(false);
 
-  /* 返信（ローカル状態のみ） */
-  const [localReplies, setLocalReplies] = useState<Record<string, LocalReply[]>>({});
+  /* 返信（ローカル保存 — モーダルを閉じても維持） */
+  const repliesKey = `draft:task:replies:${task.id}`;
+  const [localReplies, setLocalReplies] = useState<Record<string, LocalReply[]>>(
+    () => loadDraft<Record<string, LocalReply[]>>(repliesKey) ?? {}
+  );
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
 
@@ -187,7 +190,7 @@ export function TaskDetailModal({
     }
   }
 
-  /* 返信追加（ローカルのみ） */
+  /* 返信追加（ローカル保存付き） */
   function addReply(commentId: string) {
     if (!replyText.trim()) return;
     const reply: LocalReply = {
@@ -197,10 +200,14 @@ export function TaskDetailModal({
       text: replyText.trim(),
       time: format(new Date(), 'HH:mm', { locale: ja }),
     };
-    setLocalReplies((prev) => ({
-      ...prev,
-      [commentId]: [...(prev[commentId] ?? []), reply],
-    }));
+    setLocalReplies((prev) => {
+      const next = {
+        ...prev,
+        [commentId]: [...(prev[commentId] ?? []), reply],
+      };
+      saveDraft<Record<string, LocalReply[]>>(repliesKey, next);
+      return next;
+    });
     setReplyText('');
     setReplyingTo(null);
   }
