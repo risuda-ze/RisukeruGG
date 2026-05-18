@@ -7,7 +7,14 @@ import { ja } from 'date-fns/locale';
 import { Timestamp } from 'firebase/firestore';
 import { updateTask, deleteTask, addTaskComment } from '@/lib/repositories/tasks';
 import { useAuthStore } from '@/stores/auth';
+import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
+import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import type { Task, TeamMember, TaskCategory, KanbanColumn, CollabComment } from '@/types/entities';
+
+interface TaskDetailDraft {
+  description: string;
+  editingDesc: boolean;
+}
 
 interface LocalReply {
   id: string;
@@ -43,6 +50,10 @@ export function TaskDetailModal({
 }: TaskDetailModalProps) {
   const { currentUser } = useAuthStore();
 
+  /* ── ドラフト復元 ─────────────────────────── */
+  const draftKey = DRAFT_KEYS.taskEdit(task.id);
+  const savedDraft = loadDraft<TaskDetailDraft>(draftKey);
+
   /* 担当者ピッカー */
   const [showAssigneePicker, setShowAssigneePicker] = useState(false);
 
@@ -58,8 +69,8 @@ export function TaskDetailModal({
   const [dueDate, setDueDate] = useState(task.dueDate ? format(task.dueDate, 'yyyy-MM-dd') : '');
 
   /* 詳細（description）編集 */
-  const [editingDesc, setEditingDesc] = useState(false);
-  const [description, setDescription] = useState(task.description ?? '');
+  const [editingDesc, setEditingDesc] = useState(savedDraft?.editingDesc ?? false);
+  const [description, setDescription] = useState(savedDraft?.description ?? task.description ?? '');
   const [savingDesc, setSavingDesc] = useState(false);
 
   /* コメント（Firestore 永続化） */
@@ -144,6 +155,7 @@ export function TaskDetailModal({
     setSavingDesc(true);
     try {
       await updateTask(teamId, task.id, { description: description || null });
+      clearDraft(draftKey);
       setEditingDesc(false);
     } catch {
       /* ローカル状態はそのまま */
@@ -197,7 +209,21 @@ export function TaskDetailModal({
   async function handleDelete() {
     if (!confirm('このタスクを削除しますか？')) return;
     await deleteTask(teamId, task.id);
+    clearDraft(draftKey);
     onDeleted();
+  }
+
+  /* ── ドラフト付きクローズ ───────────────── */
+  function handleCloseWithDraft() {
+    if (editingDesc) {
+      saveDraft<TaskDetailDraft>(draftKey, { description, editingDesc: true });
+    }
+    onClose();
+  }
+
+  function handleConfirmClose() {
+    clearDraft(draftKey);
+    onClose();
   }
 
   /* アバタースタイル */
@@ -217,7 +243,7 @@ export function TaskDetailModal({
     <div
       className="fixed inset-0 z-[290] flex items-center justify-center p-4"
       style={{ background: 'rgba(6,6,16,0.85)', backdropFilter: 'blur(6px)' }}
-      onClick={onClose}
+      onClick={handleCloseWithDraft}
     >
       <div
         className="flex flex-col overflow-hidden rounded-[20px]"
@@ -281,7 +307,7 @@ export function TaskDetailModal({
               )}
             </div>
             <button
-              onClick={onClose}
+              onClick={handleCloseWithDraft}
               className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center border border-border text-muted hover:text-text transition-colors"
               style={{ background: 'var(--surface)' }}
               aria-label="閉じる"
@@ -454,13 +480,11 @@ export function TaskDetailModal({
               </div>
               {editingDesc ? (
                 <div className="flex flex-col gap-2">
-                  <textarea
+                  <MarkdownEditor
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={5}
-                    className="w-full bg-bg border border-purple text-text px-3.5 py-2.5 rounded-[10px] text-[14px] outline-none resize-y"
+                    onChange={setDescription}
                     placeholder="詳細を入力..."
-                    autoFocus
+                    rows={5}
                   />
                   <div className="flex gap-2 justify-end">
                     <button
@@ -481,10 +505,14 @@ export function TaskDetailModal({
                 </div>
               ) : (
                 <div
-                  className="text-[14px] text-text-2 leading-relaxed whitespace-pre-wrap cursor-pointer hover:text-text transition-colors"
+                  className="cursor-pointer"
                   onClick={canEdit ? () => setEditingDesc(true) : undefined}
                 >
-                  {description || <span className="text-muted italic text-[13px]">詳細が入力されていません{canEdit ? '（クリックして編集）' : ''}</span>}
+                  <MarkdownEditor
+                    value={description}
+                    placeholder={`詳細が入力されていません${canEdit ? '（クリックして編集）' : ''}`}
+                    readOnly
+                  />
                 </div>
               )}
             </div>
@@ -652,7 +680,7 @@ export function TaskDetailModal({
             作成: {format(task.createdAt, 'yyyy/MM/dd', { locale: ja })}
           </div>
           <button
-            onClick={onClose}
+            onClick={handleConfirmClose}
             className="px-5 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-muted hover:text-text transition-colors"
             style={{ background: 'transparent' }}
           >

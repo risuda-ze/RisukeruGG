@@ -8,6 +8,7 @@ import { useSidebarStore } from '@/stores/sidebar';
 import { useNotificationsStore } from '@/stores/notifications';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
+import { TeamSwitcher } from '@/components/layout/TeamSwitcher';
 
 /* ── ナビゲーション定義 ─────────────────────────────────────── */
 interface NavItem {
@@ -205,6 +206,11 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* ── チームスイッチャー ──────────────────────────── */}
+      <div className="border-t border-border px-2 pt-2">
+        <TeamSwitcher collapsed={collapsed} />
+      </div>
 
       {/* ── フッター（ユーザー情報） ─────────────────────── */}
       <div className="border-t border-border px-3 py-3 flex items-center gap-2 min-w-0">

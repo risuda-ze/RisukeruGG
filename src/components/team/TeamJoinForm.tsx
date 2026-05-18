@@ -80,7 +80,7 @@ export function TeamJoinForm({ onSuccess }: TeamJoinFormProps) {
           </>
         }
       >
-        <p>現在のチームを脱退して、このチームに参加します。</p>
+        <p>このチームに新たに所属します。現在のチームには引き続き所属できます。</p>
         <p className="mt-2 text-muted">
           チームコード: <strong className="text-text">{teamCode}</strong>
         </p>

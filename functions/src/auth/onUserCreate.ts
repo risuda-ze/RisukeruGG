@@ -26,6 +26,7 @@ export const onUserCreate = v1.auth.user().onCreate(async (user) => {
     email: user.email ?? '',
     avatarUrl,
     currentTeamId: soloTeamId,
+    teamIds: [soloTeamId],
     plan: 'light',
     planUpdatedAt: now,
     monthlyTaskCount: 0,

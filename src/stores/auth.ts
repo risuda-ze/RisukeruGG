@@ -14,6 +14,8 @@ import type { Team, TeamMember } from '@/types/entities';
 interface AuthState {
   currentUser: FirebaseUser | null;
   currentTeamId: string | null;
+  /** 所属している全チームの ID リスト */
+  teamIds: string[];
   currentTeam: Team | null;
   members: TeamMember[];
   loading: boolean;
@@ -31,6 +33,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   currentUser: null,
   currentTeamId: null,
+  teamIds: [],
   currentTeam: null,
   members: [],
   loading: true,
@@ -54,7 +57,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   signOut: async () => {
     await firebaseSignOut(auth);
     try { sessionStorage.removeItem('gcal_token'); } catch {}
-    set({ currentUser: null, currentTeamId: null, currentTeam: null, members: [], idToken: null, googleAccessToken: null });
+    set({ currentUser: null, currentTeamId: null, teamIds: [], currentTeam: null, members: [], idToken: null, googleAccessToken: null });
   },
 
   _setUser: (user) => set({ currentUser: user }),
@@ -103,13 +106,15 @@ export function initAuthListener() {
       // 古いユーザードキュメント購読を解除して再設定
       unsubUser?.();
 
-      // users/{uid} をリアルタイム購読 → currentTeamId の変化に追従
+      // users/{uid} をリアルタイム購読 → currentTeamId / teamIds の変化に追従
       unsubUser = onSnapshot(doc(db, 'users', user.uid), (snap) => {
         if (!snap.exists()) return;
-        const newTeamId = snap.data().currentTeamId as string | null;
+        const data = snap.data();
+        const newTeamId = data.currentTeamId as string | null;
+        const newTeamIds = (data.teamIds as string[] | undefined) ?? (newTeamId ? [newTeamId] : []);
         const prev = useAuthStore.getState().currentTeamId;
 
-        useAuthStore.setState({ currentTeamId: newTeamId });
+        useAuthStore.setState({ currentTeamId: newTeamId, teamIds: newTeamIds });
 
         if (newTeamId !== prev) {
           unsubTeam?.();
@@ -139,6 +144,7 @@ export function initAuthListener() {
       useAuthStore.setState({
         currentUser: null,
         currentTeamId: null,
+        teamIds: [],
         currentTeam: null,
         members: [],
         loading: false,

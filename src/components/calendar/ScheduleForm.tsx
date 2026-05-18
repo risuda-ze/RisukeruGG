@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { DateTimeInput } from '@/components/ui/DateTimeInput';
+import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
+import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import type { ScheduleEntry, ScheduleCategory } from '@/types/entities';
 
 interface ScheduleFormProps {
@@ -14,17 +17,63 @@ interface ScheduleFormProps {
   onCancel: () => void;
 }
 
+interface ScheduleFormDraft {
+  title: string;
+  categoryId: string;
+  startAt: Date | null;
+  endAt: Date | null;
+  description: string;
+}
+
 const selectClass =
   'w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple';
 
 export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: ScheduleFormProps) {
-  const [title, setTitle] = useState(initialData?.title ?? '');
-  const [categoryId, setCategoryId] = useState<string>(initialData?.categoryId ?? '');
-  const [startAt, setStartAt] = useState(initialData?.startAt?.toISOString().slice(0, 16) ?? '');
-  const [endAt, setEndAt] = useState(initialData?.endAt?.toISOString().slice(0, 16) ?? '');
-  const [description, setDescription] = useState(initialData?.description ?? '');
+  /* 新規作成フォームのみドラフト復元対象 */
+  const draftKey = initialData?.id
+    ? DRAFT_KEYS.scheduleEdit(initialData.id)
+    : DRAFT_KEYS.SCHEDULE_NEW;
+  const savedDraft = loadDraft<ScheduleFormDraft>(draftKey);
+
+  const [title, setTitle] = useState(savedDraft?.title ?? initialData?.title ?? '');
+  const [categoryId, setCategoryId] = useState<string>(
+    savedDraft?.categoryId ?? initialData?.categoryId ?? ''
+  );
+  const [startAt, setStartAt] = useState<Date | null>(
+    savedDraft?.startAt ?? initialData?.startAt ?? null
+  );
+  const [endAt, setEndAt] = useState<Date | null>(
+    savedDraft?.endAt ?? initialData?.endAt ?? null
+  );
+  const [description, setDescription] = useState(
+    savedDraft?.description ?? initialData?.description ?? ''
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /* 入力変更のたびにドラフトを保存 */
+  useEffect(() => {
+    saveDraft<ScheduleFormDraft>(draftKey, { title, categoryId, startAt, endAt, description });
+  }, [title, categoryId, startAt, endAt, description]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleStartAtChange(date: Date | null) {
+    setStartAt(date);
+    /* 開始日時が変更されたとき、終了日時が未設定なら2時間後を自動補完 */
+    if (date && !endAt) {
+      const auto = new Date(date.getTime() + 2 * 60 * 60 * 1000);
+      setEndAt(auto);
+    }
+  }
+
+  function handleAllDay() {
+    if (!startAt) return;
+    const start = new Date(startAt);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(startAt);
+    end.setHours(23, 59, 0, 0);
+    setStartAt(start);
+    setEndAt(end);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,9 +81,7 @@ export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: Sc
       setError('必須項目を入力してください');
       return;
     }
-    const start = new Date(startAt);
-    const end = new Date(endAt);
-    if (end <= start) {
+    if (endAt <= startAt) {
       setError('終了日時は開始日時より後にしてください');
       return;
     }
@@ -45,13 +92,14 @@ export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: Sc
       await onSubmit({
         title,
         categoryId: categoryId || null,
-        startAt: start,
-        endAt: end,
+        startAt,
+        endAt,
         description,
         participantIds: initialData?.participantIds ?? [],
         collabPartnerName: initialData?.collabPartnerName ?? null,
         linkedTaskIds: initialData?.linkedTaskIds ?? [],
       });
+      clearDraft(draftKey);
     } catch {
       setError('保存に失敗しました。もう一度お試しください');
     } finally {
@@ -85,38 +133,41 @@ export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: Sc
         </select>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-[12px] font-semibold text-muted">開始日時</label>
-        <input
-          type="datetime-local"
+      {/* 開始日時 + 終日ボタン */}
+      <div className="flex items-end gap-2">
+        <DateTimeInput
+          label="開始日時"
           value={startAt}
-          onChange={(e) => setStartAt(e.target.value)}
+          onChange={handleStartAtChange}
           required
-          className={selectClass}
+          className="flex-1"
         />
+        <button
+          type="button"
+          onClick={handleAllDay}
+          disabled={!startAt}
+          className="mb-0.5 px-3 py-2.5 rounded-[12px] text-[12px] font-semibold border border-border text-muted hover:text-purple-l hover:border-purple-l transition-colors disabled:opacity-40 whitespace-nowrap"
+        >
+          終日
+        </button>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-[12px] font-semibold text-muted">終了日時</label>
-        <input
-          type="datetime-local"
-          value={endAt}
-          onChange={(e) => setEndAt(e.target.value)}
-          required
-          className={selectClass}
-        />
-      </div>
+      <DateTimeInput
+        label="終了日時"
+        value={endAt}
+        onChange={setEndAt}
+        min={startAt ?? undefined}
+        required
+      />
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-[12px] font-semibold text-muted">説明</label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          maxLength={1000}
-          rows={3}
-          className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple resize-y"
-        />
-      </div>
+      <MarkdownEditor
+        label="説明"
+        value={description}
+        onChange={setDescription}
+        placeholder="予定の詳細を入力..."
+        maxLength={1000}
+        rows={3}
+      />
 
       {error && <p className="text-[12px] text-live">{error}</p>}
 

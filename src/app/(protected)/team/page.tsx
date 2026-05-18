@@ -384,6 +384,17 @@ export default function TeamPage() {
             </div>
           </div>
         )}
+
+        {/* 別のチームに所属する */}
+        <Card noPadding>
+          <CardHeader title="別のチームに所属する" />
+          <div className="p-[18px]">
+            <p className="text-[12px] text-muted mb-4">
+              チームコードを入力して、追加のチームに所属できます。現在のチームには引き続き所属します。
+            </p>
+            <TeamJoinForm />
+          </div>
+        </Card>
       </div>
 
       {/* ── チーム名編集モーダル ──────────────────────────────── */}
