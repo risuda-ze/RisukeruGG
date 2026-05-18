@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useContext, createContext } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import type { Components } from 'react-markdown';
 
 interface MarkdownEditorProps {
   label?: string;
@@ -18,6 +19,120 @@ interface MarkdownEditorProps {
 
 const textareaClass =
   'w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple resize-y';
+
+/* ── コードブロックコンテキスト ──────────────────────────────────
+ * pre コンポーネントが true を流すことで、内側の code がブロックか否かを判定。
+ * react-markdown v10 では children の型だけでは区別できないため Context を使用。
+ */
+const InsidePreCtx = createContext(false);
+
+/* ── コードコンポーネント ──────────────────────────────────────── */
+function CodeComp({
+  className,
+  children,
+}: {
+  className?: string;
+  children?: React.ReactNode;
+}) {
+  const insidePre = useContext(InsidePreCtx);
+
+  if (insidePre) {
+    /* ブロックコード内の <code> — スタイルは <pre> が担う */
+    return (
+      <code
+        className={`font-mono text-[13px] text-text/90 ${className ?? ''}`}
+        style={{ background: 'none', padding: 0 }}
+      >
+        {children}
+      </code>
+    );
+  }
+
+  /* インラインコード */
+  return (
+    <code className="bg-surface px-1.5 py-0.5 rounded text-[12px] font-mono text-purple-l">
+      {children}
+    </code>
+  );
+}
+
+/* ── マークダウンコンポーネント定義 ──────────────────────────── */
+const MD_COMPONENTS: Components = {
+  /* 見出し */
+  h1: ({ children }) => <h1 className="text-[18px] font-bold mb-2 mt-1">{children}</h1>,
+  h2: ({ children }) => <h2 className="text-[16px] font-bold mb-1.5 mt-1">{children}</h2>,
+  h3: ({ children }) => <h3 className="text-[14px] font-bold mb-1 mt-1">{children}</h3>,
+
+  /* 段落 */
+  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+
+  /* リスト */
+  ul: ({ children }) => (
+    <ul className="list-disc pl-4 mb-2 flex flex-col gap-0.5">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal pl-4 mb-2 flex flex-col gap-0.5">{children}</ol>
+  ),
+  li: ({ children }) => <li className="text-[14px]">{children}</li>,
+
+  /* コードブロック（pre が Context を提供して code にブロック判定を伝達） */
+  pre: ({ children }) => (
+    <InsidePreCtx.Provider value={true}>
+      <pre
+        className="bg-surface px-3 py-2.5 rounded-[8px] text-[12px] font-mono overflow-x-auto mb-2"
+        style={{ whiteSpace: 'pre', lineHeight: 1.6 }}
+      >
+        {children}
+      </pre>
+    </InsidePreCtx.Provider>
+  ),
+  code: CodeComp,
+
+  /* テーブル */
+  table: ({ children }) => (
+    <div className="overflow-x-auto mb-2">
+      <table className="min-w-full border-collapse text-[13px]">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="border-b-2 border-border">{children}</thead>,
+  tbody: ({ children }) => <tbody className="divide-y divide-border/50">{children}</tbody>,
+  tr: ({ children }) => <tr>{children}</tr>,
+  th: ({ children }) => (
+    <th className="px-3 py-2 text-left font-semibold text-text whitespace-nowrap">{children}</th>
+  ),
+  td: ({ children }) => <td className="px-3 py-2 text-text/90">{children}</td>,
+
+  /* 引用 */
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-[3px] border-purple-l/40 pl-3 text-muted italic mb-2">
+      {children}
+    </blockquote>
+  ),
+
+  /* インライン装飾 */
+  strong: ({ children }) => <strong className="font-bold text-text">{children}</strong>,
+  em: ({ children }) => <em className="italic text-text/80">{children}</em>,
+
+  /* 区切り線 */
+  hr: () => <hr className="border-border my-3" />,
+
+  /* リンク */
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-purple-l underline hover:text-purple transition-colors"
+    >
+      {children}
+    </a>
+  ),
+
+  /* GFM チェックリスト */
+  input: ({ checked }) => (
+    <input type="checkbox" checked={checked} readOnly className="mr-1.5 accent-purple-l" />
+  ),
+};
 
 /** マークダウン記法の入力とプレビュー切替をサポートするテキストエリア */
 export function MarkdownEditor({
@@ -41,7 +156,6 @@ export function MarkdownEditor({
           {label && (
             <label className="text-[12px] font-semibold text-muted">{label}</label>
           )}
-          {/* 編集モード時のみトグルボタンを表示 */}
           {!readOnly && (
             <button
               type="button"
@@ -81,108 +195,7 @@ export function MarkdownEditor({
             .join(' ')}
         >
           {value ? (
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                // 見出し
-                h1: ({ children }) => (
-                  <h1 className="text-[18px] font-bold mb-2 mt-1">{children}</h1>
-                ),
-                h2: ({ children }) => (
-                  <h2 className="text-[16px] font-bold mb-1.5 mt-1">{children}</h2>
-                ),
-                h3: ({ children }) => (
-                  <h3 className="text-[14px] font-bold mb-1 mt-1">{children}</h3>
-                ),
-                // 段落
-                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                // リスト
-                ul: ({ children }) => (
-                  <ul className="list-disc pl-4 mb-2 flex flex-col gap-0.5">{children}</ul>
-                ),
-                ol: ({ children }) => (
-                  <ol className="list-decimal pl-4 mb-2 flex flex-col gap-0.5">{children}</ol>
-                ),
-                li: ({ children }) => <li className="text-[14px]">{children}</li>,
-                // コード（インライン vs ブロックを区別）
-                code: ({ className, children }) => {
-                  // ブロックコード: language-* クラス有り、または改行を含む（```...``` の末尾は常に \n）
-                  const isBlock = Boolean(className?.startsWith('language-')) || String(children).includes('\n');
-                  if (isBlock) {
-                    return (
-                      <code className={`font-mono text-[12px] text-text/90 ${className ?? ''}`}>
-                        {children}
-                      </code>
-                    );
-                  }
-                  return (
-                    <code className="bg-surface px-1.5 py-0.5 rounded text-[12px] font-mono text-purple-l">
-                      {children}
-                    </code>
-                  );
-                },
-                // コードブロックの外枠（pre はスタイリングのみ担当）
-                pre: ({ children }) => (
-                  <pre className="bg-surface px-3 py-2.5 rounded-[8px] text-[12px] font-mono overflow-x-auto mb-2 whitespace-pre">
-                    {children}
-                  </pre>
-                ),
-                // テーブル
-                table: ({ children }) => (
-                  <div className="overflow-x-auto mb-2">
-                    <table className="min-w-full border-collapse text-[13px]">{children}</table>
-                  </div>
-                ),
-                thead: ({ children }) => (
-                  <thead className="border-b-2 border-border">{children}</thead>
-                ),
-                tbody: ({ children }) => (
-                  <tbody className="divide-y divide-border/50">{children}</tbody>
-                ),
-                tr: ({ children }) => <tr>{children}</tr>,
-                th: ({ children }) => (
-                  <th className="px-3 py-2 text-left font-semibold text-text whitespace-nowrap">
-                    {children}
-                  </th>
-                ),
-                td: ({ children }) => (
-                  <td className="px-3 py-2 text-text/90">{children}</td>
-                ),
-                // 引用
-                blockquote: ({ children }) => (
-                  <blockquote className="border-l-[3px] border-purple-l/40 pl-3 text-muted italic mb-2">
-                    {children}
-                  </blockquote>
-                ),
-                // 太字・斜体
-                strong: ({ children }) => (
-                  <strong className="font-bold text-text">{children}</strong>
-                ),
-                em: ({ children }) => <em className="italic text-text/80">{children}</em>,
-                // 区切り線
-                hr: () => <hr className="border-border my-3" />,
-                // リンク
-                a: ({ href, children }) => (
-                  <a
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-purple-l underline hover:text-purple transition-colors"
-                  >
-                    {children}
-                  </a>
-                ),
-                // チェックリスト (GFM)
-                input: ({ checked }) => (
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    readOnly
-                    className="mr-1.5 accent-purple-l"
-                  />
-                ),
-              }}
-            >
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS}>
               {value}
             </ReactMarkdown>
           ) : (
