@@ -85,6 +85,20 @@ const LP_CSS = `
   #lp-root .nav-links a:hover {
     color: var(--text);
   }
+  #lp-root .nav-login {
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 0.5px solid var(--border);
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  #lp-root .nav-login:hover {
+    color: var(--text);
+    border-color: var(--muted);
+  }
   #lp-root .nav-cta {
     background: var(--amber);
     color: #1a0800;
@@ -97,6 +111,9 @@ const LP_CSS = `
     font-family: inherit;
     transition: background 0.15s;
     white-space: nowrap;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
   }
   #lp-root .nav-cta:hover {
     background: var(--amber-l);
@@ -197,6 +214,9 @@ const LP_CSS = `
     color: #1a0800;
     border: none;
     border-radius: 10px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
     font-size: 15px;
     font-weight: 700;
     padding: 14px 32px;
@@ -220,6 +240,9 @@ const LP_CSS = `
     cursor: pointer;
     font-family: inherit;
     transition: all 0.15s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
   }
   #lp-root .btn-secondary:hover {
     background: rgba(127, 119, 221, 0.2);
@@ -1122,7 +1145,8 @@ const LP_HTML = `
         <a href="#how">使い方</a>
         <a href="#plan">料金</a>
       </div>
-      <button class="nav-cta">無料で始める</button>
+      <a href="/login" class="nav-login">ログイン</a>
+      <a href="/login" class="nav-cta">無料で始める</a>
     </nav>
 
     <!-- HERO -->
@@ -1143,8 +1167,8 @@ const LP_HTML = `
         <strong>配信者とチームが必要なものだけ</strong>を、ひとつのアプリにまとめました。
       </p>
       <div class="hero-btns">
-        <button class="btn-primary">無料で始める →</button>
-        <button class="btn-secondary">デモを見る</button>
+        <a href="/login" class="btn-primary">無料で始める →</a>
+        <a href="#features" class="btn-secondary">機能を見る</a>
       </div>
       <div class="hero-mockup">
         <div class="mockup-bar">
@@ -1434,8 +1458,8 @@ const LP_HTML = `
         <h2 class="final-cta-title">今日から配信に<br/><span class="accent">全集中</span>しよう</h2>
         <p class="final-cta-sub">スケジュール管理、コラボ調整、チーム連携——<br/>面倒なことはリスケるGGに任せて、あなたは配信だけ考えていてください。</p>
         <div class="hero-btns">
-          <button class="btn-primary">無料で始める →</button>
-          <button class="btn-secondary">機能をもっと見る</button>
+          <a href="/login" class="btn-primary">無料で始める →</a>
+          <a href="#features" class="btn-secondary">機能をもっと見る</a>
         </div>
       </div>
     </section>
