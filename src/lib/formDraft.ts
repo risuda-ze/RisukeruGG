@@ -21,7 +21,8 @@ function serializeDates(value: unknown): unknown {
 }
 
 /** シリアライズされた Date を復元するリバイバー */
-function reviver(_key: string, value: unknown): unknown {
+function reviver(key: string, value: unknown): unknown {
+  // 新形式: { __type: 'Date', iso: '...' }
   if (
     typeof value === 'object' &&
     value !== null &&
@@ -29,9 +30,16 @@ function reviver(_key: string, value: unknown): unknown {
     (value as Record<string, unknown>).__type === 'Date'
   ) {
     const record = value as Record<string, unknown>;
-    // iso (新形式) と value (旧形式) の両方に対応
     const isoStr = (record.iso ?? record.value) as string;
     return new Date(isoStr);
+  }
+  // 旧形式: Date が生の ISO 文字列として保存されていた場合（キー名で判定）
+  const DATE_KEYS = ['startAt', 'endAt', 'dueDate', 'createdAt', 'updatedAt', 'planUpdatedAt'];
+  if (typeof value === 'string' && DATE_KEYS.includes(key)) {
+    if (/^\d{4}-\d{2}-\d{2}T/.test(value)) {
+      const d = new Date(value);
+      if (!isNaN(d.getTime())) return d;
+    }
   }
   return value;
 }
