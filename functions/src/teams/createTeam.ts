@@ -26,7 +26,6 @@ export const createTeam = onCall(
     }
 
     const userData = await getUserDoc(uid);
-    const oldTeamId = userData.currentTeamId as string | null;
 
     let teamCode = generateTeamCode();
 
@@ -43,10 +42,6 @@ export const createTeam = onCall(
       const teamId = teamRef.id;
       const now = FieldValue.serverTimestamp();
 
-      if (oldTeamId) {
-        tx.delete(db.doc(`teams/${oldTeamId}/members/${uid}`));
-      }
-
       tx.set(teamRef, { name: name.trim(), ownerId: uid, teamCode, createdAt: now });
       tx.set(db.doc(`teamCodes/${teamCode}`), { teamId, createdAt: now });
       tx.set(db.doc(`teams/${teamId}/members/${uid}`), {
@@ -56,7 +51,11 @@ export const createTeam = onCall(
         plan: userData.plan,
         joinedAt: now,
       });
-      tx.update(db.doc(`users/${uid}`), { currentTeamId: teamId });
+      /* 既存チームには引き続き所属し、新チームを追加してアクティブにする */
+      tx.update(db.doc(`users/${uid}`), {
+        currentTeamId: teamId,
+        teamIds: FieldValue.arrayUnion(teamId),
+      });
 
       return { teamId, teamCode };
     });

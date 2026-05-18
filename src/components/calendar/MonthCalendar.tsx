@@ -7,8 +7,9 @@ import {
   startOfWeek,
   endOfWeek,
   eachDayOfInterval,
+  startOfDay,
+  endOfDay,
   isSameMonth,
-  isSameDay,
   isToday,
 } from 'date-fns';
 import type { ScheduleEntry, ScheduleCategory } from '@/types/entities';
@@ -22,7 +23,8 @@ interface MonthCalendarProps {
   onDateClick?: (date: Date) => void;
 }
 
-const DOW_LABELS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+/** 日曜始まりの曜日ヘッダーラベル */
+const DOW_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 const DEFAULT_EVENT_COLOR = '#7F77DD';
 const GCAL_EVENT_COLOR = '#4ade80';
@@ -56,15 +58,18 @@ export function MonthCalendar({
 }: MonthCalendarProps) {
   const firstDay = new Date(year, month - 1, 1);
 
-  /* 月曜始まりのカレンダー範囲 */
-  const calStart = startOfWeek(startOfMonth(firstDay), { weekStartsOn: 1 });
-  const calEnd = endOfWeek(endOfMonth(firstDay), { weekStartsOn: 1 });
+  /* 日曜始まりのカレンダー範囲 */
+  const calStart = startOfWeek(startOfMonth(firstDay), { weekStartsOn: 0 });
+  const calEnd = endOfWeek(endOfMonth(firstDay), { weekStartsOn: 0 });
   const days = eachDayOfInterval({ start: calStart, end: calEnd });
 
   const weekCount = days.length / 7;
 
+  /** 複数日対応: 当日の範囲内にある全イベントを取得 */
   function getSchedulesForDay(date: Date): ScheduleEntry[] {
-    return schedules.filter((s) => isSameDay(s.startAt, date));
+    return schedules
+      .filter((s) => s.startAt <= endOfDay(date) && s.endAt >= startOfDay(date))
+      .sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
   }
 
   return (
@@ -75,7 +80,7 @@ export function MonthCalendar({
           <div
             key={d}
             className={`text-center py-2.5 text-[11px] font-bold tracking-widest ${
-              i === 5 ? 'text-purple-l' : i === 6 ? 'text-live' : 'text-muted'
+              i === 0 ? 'text-live' : i === 6 ? 'text-purple-l' : 'text-muted'
             }`}
           >
             {d}

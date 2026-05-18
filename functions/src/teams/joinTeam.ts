@@ -24,9 +24,9 @@ export const joinTeam = onCall(
 
     const teamId = codeSnap.data()!.teamId as string;
     const userData = await getUserDoc(uid);
-    const oldTeamId = userData.currentTeamId as string | null;
+    const currentTeamIds = (userData.teamIds as string[] | undefined) ?? (userData.currentTeamId ? [userData.currentTeamId as string] : []);
 
-    if (oldTeamId === teamId) {
+    if (currentTeamIds.includes(teamId)) {
       throw new HttpsError('already-exists', 'すでにこのチームに所属しています');
     }
 
@@ -61,20 +61,6 @@ export const joinTeam = onCall(
 
       const now = FieldValue.serverTimestamp();
 
-      if (oldTeamId) {
-        const oldMembersSnap = await tx.get(db.collection(`teams/${oldTeamId}/members`));
-        tx.delete(db.doc(`teams/${oldTeamId}/members/${uid}`));
-        const remainingCount = oldMembersSnap.docs.filter((d) => d.id !== uid).length;
-        if (remainingCount === 0) {
-          const oldTeamSnap = await tx.get(db.doc(`teams/${oldTeamId}`));
-          const oldTeamCode = oldTeamSnap.data()?.teamCode as string | undefined;
-          tx.delete(db.doc(`teams/${oldTeamId}`));
-          if (oldTeamCode) {
-            tx.delete(db.doc(`teamCodes/${oldTeamCode}`));
-          }
-        }
-      }
-
       tx.set(db.doc(`teams/${teamId}/members/${uid}`), {
         role: 'editor',
         displayName: userData.displayName,
@@ -83,7 +69,11 @@ export const joinTeam = onCall(
         joinedAt: now,
       });
 
-      tx.update(db.doc(`users/${uid}`), { currentTeamId: teamId });
+      /* 既存チームには引き続き所属し、新チームを追加してアクティブにする */
+      tx.update(db.doc(`users/${uid}`), {
+        currentTeamId: teamId,
+        teamIds: FieldValue.arrayUnion(teamId),
+      });
 
       return { success: true, teamId };
     });

@@ -32,6 +32,8 @@ export interface User {
   email: string;
   avatarUrl: string | null;
   currentTeamId: string | null;
+  /** 所属している全チームの ID リスト。複数チーム同時所属をサポート */
+  teamIds: string[];
   plan: PlanType;
   planUpdatedAt: Date;
   monthlyTaskCount: number;
@@ -107,6 +109,8 @@ export interface ScheduleEntry {
   createdAt: Date;
   /** Googleカレンダーから取得した予定は 'google'、チーム予定は undefined */
   source?: 'google';
+  /** 終日フラグ。後方互換のため optional（未設定は false 扱い） */
+  allDay?: boolean;
 }
 
 export interface Task {

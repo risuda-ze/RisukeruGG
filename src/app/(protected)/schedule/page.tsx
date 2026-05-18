@@ -53,10 +53,10 @@ export default function SchedulePage() {
     }
     const timeMin = view === 'month'
       ? startOfMonth(currentDate)
-      : startOfWeek(currentDate, { weekStartsOn: 1 });
+      : startOfWeek(currentDate, { weekStartsOn: 0 });
     const timeMax = view === 'month'
       ? endOfMonth(currentDate)
-      : endOfWeek(currentDate, { weekStartsOn: 1 });
+      : endOfWeek(currentDate, { weekStartsOn: 0 });
 
     fetchGCalEvents(googleAccessToken, timeMin, timeMax).then(({ events, error }) => {
       setGcalEvents(events);
@@ -81,7 +81,7 @@ export default function SchedulePage() {
     view === 'month'
       ? `${year}年${month}月`
       : (() => {
-          const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+          const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
           return format(weekStart, 'yyyy年M月d日〜', { locale: ja });
         })();
 

@@ -5,7 +5,15 @@ import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { updateSchedule, deleteSchedule } from '@/lib/repositories/schedules';
 import { useAuthStore } from '@/stores/auth';
+import { DateTimeInput } from '@/components/ui/DateTimeInput';
+import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
+import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import type { ScheduleEntry, ScheduleCategory } from '@/types/entities';
+
+interface ScheduleDetailDraft {
+  description: string;
+  editingDesc: boolean;
+}
 
 interface LocalComment {
   id: string;
@@ -31,8 +39,6 @@ interface ScheduleDetailModalProps {
   onDeleted: () => void;
 }
 
-const inputClass =
-  'w-full bg-bg border border-border text-text px-3 py-2 rounded-[8px] text-[13px] outline-none transition-colors focus:border-purple';
 
 export function ScheduleDetailModal({
   schedule,
@@ -44,10 +50,14 @@ export function ScheduleDetailModal({
 }: ScheduleDetailModalProps) {
   const { currentUser } = useAuthStore();
 
+  /* ── ドラフト復元 ─────────────────────────── */
+  const draftKey = DRAFT_KEYS.scheduleEdit(schedule.id);
+  const savedDraft = loadDraft<ScheduleDetailDraft>(draftKey);
+
   /* ── 日時編集 ─────────────────────────────── */
   const [editingDate, setEditingDate] = useState(false);
-  const [startAt, setStartAt] = useState(schedule.startAt.toISOString().slice(0, 16));
-  const [endAt, setEndAt] = useState(schedule.endAt.toISOString().slice(0, 16));
+  const [startAt, setStartAt] = useState<Date>(schedule.startAt);
+  const [endAt, setEndAt] = useState<Date>(schedule.endAt);
   const [savingDate, setSavingDate] = useState(false);
   const [dateError, setDateError] = useState<string | null>(null);
 
@@ -56,8 +66,8 @@ export function ScheduleDetailModal({
   const [savingCategory, setSavingCategory] = useState(false);
 
   /* ── 内容（description）編集 ─────────────── */
-  const [editingDesc, setEditingDesc] = useState(false);
-  const [description, setDescription] = useState(schedule.description);
+  const [editingDesc, setEditingDesc] = useState(savedDraft?.editingDesc ?? false);
+  const [description, setDescription] = useState(savedDraft?.description ?? schedule.description);
   const [savingDesc, setSavingDesc] = useState(false);
 
   /* ── コメントローカル状態 ───────────────── */
@@ -73,16 +83,14 @@ export function ScheduleDetailModal({
 
   /* ── 日時保存 ─────────────────────────────── */
   async function handleSaveDate() {
-    const start = new Date(startAt);
-    const end = new Date(endAt);
-    if (end <= start) {
+    if (endAt <= startAt) {
       setDateError('終了日時は開始日時より後にしてください');
       return;
     }
     setDateError(null);
     setSavingDate(true);
     try {
-      await updateSchedule(teamId, schedule.id, { startAt: start, endAt: end }, schedule.updatedAt);
+      await updateSchedule(teamId, schedule.id, { startAt, endAt }, schedule.updatedAt);
       setEditingDate(false);
     } catch {
       setDateError('保存に失敗しました。もう一度お試しください');
@@ -115,6 +123,7 @@ export function ScheduleDetailModal({
     setSavingDesc(true);
     try {
       await updateSchedule(teamId, schedule.id, { description }, schedule.updatedAt);
+      clearDraft(draftKey);
       setEditingDesc(false);
     } catch {
       /* ローカル状態はそのまま維持 */
@@ -127,7 +136,22 @@ export function ScheduleDetailModal({
   async function handleDelete() {
     if (!confirm('この予定を削除しますか？')) return;
     await deleteSchedule(teamId, schedule.id);
+    clearDraft(draftKey);
     onDeleted();
+  }
+
+  /* ── 「確定」以外で閉じるときにドラフト保存 ─ */
+  function handleCloseWithDraft() {
+    if (editingDesc) {
+      saveDraft<ScheduleDetailDraft>(draftKey, { description, editingDesc: true });
+    }
+    onClose();
+  }
+
+  /* ── 「確定」で閉じるときはドラフト削除 ─────── */
+  function handleConfirmClose() {
+    clearDraft(draftKey);
+    onClose();
   }
 
   /* ── コメント追加 ─────────────────────────── */
@@ -175,7 +199,7 @@ export function ScheduleDetailModal({
     <div
       className="absolute inset-0 z-[290] flex items-center justify-center p-10"
       style={{ background: 'rgba(6,6,16,0.85)', backdropFilter: 'blur(6px)' }}
-      onClick={onClose}
+      onClick={handleCloseWithDraft}
     >
       <div
         className="w-[720px] max-h-[90vh] bg-card-2 border border-border-l rounded-[24px] flex flex-col overflow-hidden"
@@ -230,7 +254,7 @@ export function ScheduleDetailModal({
           </div>
 
           <button
-            onClick={onClose}
+            onClick={handleCloseWithDraft}
             className="shrink-0 w-9 h-9 rounded-full bg-surface border border-border text-muted hover:text-text flex items-center justify-center transition-colors"
           >
             <span className="material-icons text-[20px]">close</span>
@@ -260,20 +284,34 @@ export function ScheduleDetailModal({
               </div>
 
               {editingDate ? (
-                <div className="flex flex-col gap-2">
-                  <label className="text-[11px] text-muted">開始</label>
-                  <input
-                    type="datetime-local"
-                    value={startAt}
-                    onChange={(e) => setStartAt(e.target.value)}
-                    className={inputClass}
-                  />
-                  <label className="text-[11px] text-muted">終了</label>
-                  <input
-                    type="datetime-local"
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-end gap-2">
+                    <DateTimeInput
+                      label="開始"
+                      value={startAt}
+                      onChange={(d) => d && setStartAt(d)}
+                      className="flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const s = new Date(startAt);
+                        s.setHours(0, 0, 0, 0);
+                        const e = new Date(startAt);
+                        e.setHours(23, 59, 0, 0);
+                        setStartAt(s);
+                        setEndAt(e);
+                      }}
+                      className="mb-0.5 px-3 py-2.5 rounded-[12px] text-[12px] font-semibold border border-border text-muted hover:text-purple-l hover:border-purple-l transition-colors whitespace-nowrap"
+                    >
+                      終日
+                    </button>
+                  </div>
+                  <DateTimeInput
+                    label="終了"
                     value={endAt}
-                    onChange={(e) => setEndAt(e.target.value)}
-                    className={inputClass}
+                    onChange={(d) => d && setEndAt(d)}
+                    min={startAt}
                   />
                   {dateError && <p className="text-[12px] text-live">{dateError}</p>}
                   <div className="flex gap-2 justify-end pt-1">
@@ -281,8 +319,8 @@ export function ScheduleDetailModal({
                       onClick={() => {
                         setEditingDate(false);
                         setDateError(null);
-                        setStartAt(schedule.startAt.toISOString().slice(0, 16));
-                        setEndAt(schedule.endAt.toISOString().slice(0, 16));
+                        setStartAt(schedule.startAt);
+                        setEndAt(schedule.endAt);
                       }}
                       className="px-3 py-1 text-[12px] text-muted border border-border rounded-[6px] hover:text-text transition-colors"
                     >
@@ -361,12 +399,12 @@ export function ScheduleDetailModal({
 
               {editingDesc ? (
                 <div className="flex flex-col gap-2">
-                  <textarea
+                  <MarkdownEditor
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={4}
+                    onChange={setDescription}
+                    placeholder="予定の詳細を入力..."
                     maxLength={1000}
-                    className="w-full bg-bg border border-border text-text px-3 py-2 rounded-[8px] text-[13px] outline-none focus:border-purple resize-y transition-colors"
+                    rows={4}
                   />
                   <div className="flex gap-2 justify-end pt-1">
                     <button
@@ -388,11 +426,11 @@ export function ScheduleDetailModal({
                   </div>
                 </div>
               ) : (
-                <div className="text-[14px] text-text-2 leading-relaxed whitespace-pre-wrap">
-                  {description || (
-                    <span className="text-muted italic text-[13px]">内容なし</span>
-                  )}
-                </div>
+                <MarkdownEditor
+                  value={description}
+                  placeholder="内容なし"
+                  readOnly
+                />
               )}
             </div>
           </div>
@@ -558,7 +596,7 @@ export function ScheduleDetailModal({
             </button>
           )}
           <button
-            onClick={onClose}
+            onClick={handleConfirmClose}
             className="flex items-center gap-1.5 px-5 py-2.5 rounded-[12px] text-[13px] font-semibold bg-purple-d text-purple-l hover:bg-purple transition-colors"
           >
             <span className="material-icons text-[16px]">check</span>

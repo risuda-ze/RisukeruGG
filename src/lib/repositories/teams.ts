@@ -102,3 +102,13 @@ export const dissolveTeam = httpsCallable<void, { success: boolean }>(
   functions,
   'dissolveTeam'
 );
+
+export const leaveSpecificTeam = httpsCallable<
+  { teamId: string },
+  { success: boolean; newActiveTeamId: string }
+>(functions, 'leaveSpecificTeam');
+
+export const switchActiveTeam = httpsCallable<
+  { teamId: string },
+  { success: boolean; teamId: string }
+>(functions, 'switchActiveTeam');
