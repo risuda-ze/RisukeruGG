@@ -119,13 +119,13 @@ export default function SchedulePage() {
       </TopBar>
 
       {/* カレンダーナビゲーションバー */}
-      <div className="flex items-center justify-between px-3 md:px-6 py-2 md:py-3 bg-card border-b border-border shrink-0">
+      <div className="flex items-center justify-between px-3 md:px-6 py-1 md:py-1.5 bg-card border-b border-border shrink-0">
         {/* 週/月トグル + ラベル */}
         <div className="flex items-center gap-2 md:gap-4">
           <div className="flex bg-surface border border-border rounded-[6px] overflow-hidden">
             <button
               onClick={() => setView('week')}
-              className={`px-2.5 md:px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
+              className={`px-2.5 md:px-3.5 py-1 text-[12px] font-semibold transition-colors ${
                 view === 'week' ? 'bg-purple-d text-purple-l' : 'text-muted hover:text-text'
               }`}
             >
@@ -133,14 +133,14 @@ export default function SchedulePage() {
             </button>
             <button
               onClick={() => setView('month')}
-              className={`px-2.5 md:px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
+              className={`px-2.5 md:px-3.5 py-1 text-[12px] font-semibold transition-colors ${
                 view === 'month' ? 'bg-purple-d text-purple-l' : 'text-muted hover:text-text'
               }`}
             >
               月
             </button>
           </div>
-          <div className="text-[15px] md:text-[18px] font-bold font-num text-text">
+          <div className="text-[14px] md:text-[16px] font-bold font-num text-text">
             {year}年 {month}月
           </div>
         </div>
@@ -149,23 +149,23 @@ export default function SchedulePage() {
         <div className="flex gap-1.5 md:gap-2">
           <button
             onClick={goBack}
-            className="p-1.5 rounded-[6px] border border-border text-text hover:bg-surface transition-colors"
+            className="p-1 rounded-[6px] border border-border text-text hover:bg-surface transition-colors"
             aria-label={view === 'month' ? '前月' : '前の週'}
           >
-            <span className="material-icons text-[18px]">chevron_left</span>
+            <span className="material-icons text-[16px]">chevron_left</span>
           </button>
           <button
             onClick={() => setCurrentDate(new Date())}
-            className="px-2.5 md:px-3.5 py-1.5 rounded-[6px] border border-border text-[12px] font-semibold text-text hover:bg-surface transition-colors"
+            className="px-2.5 md:px-3 py-1 rounded-[6px] border border-border text-[11px] font-semibold text-text hover:bg-surface transition-colors"
           >
             今日
           </button>
           <button
             onClick={goForward}
-            className="p-1.5 rounded-[6px] border border-border text-text hover:bg-surface transition-colors"
+            className="p-1 rounded-[6px] border border-border text-text hover:bg-surface transition-colors"
             aria-label={view === 'month' ? '翌月' : '次の週'}
           >
-            <span className="material-icons text-[18px]">chevron_right</span>
+            <span className="material-icons text-[16px]">chevron_right</span>
           </button>
         </div>
       </div>
