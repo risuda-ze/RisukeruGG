@@ -75,8 +75,8 @@ export default function CollabPublicPage() {
       </header>
 
       {/* コンテンツ */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-lg">
+      <div className="flex-1 flex items-start justify-center p-4 md:p-8">
+        <div className="w-full max-w-lg md:max-w-5xl">
           {pageState === 'loading' && (
             <div className="flex justify-center py-16">
               <Spinner size="lg" />

@@ -5,30 +5,30 @@ import { format, differenceInDays } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { respondToCollab } from '@/lib/repositories/collabs';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import type { CollabSession, CollabParticipant } from '@/types/entities';
 
 type DateChoice = 'ok' | 'ng' | 'pending';
 
-interface CollabResponseFormProps {
-  session: CollabSession;
-  teamId: string;
-  sessionId: string;
-  onSuccess: () => void;
+/* PC 用ステップカードヘッダー（モジュールトップレベルで定義） */
+function PcStepBadge({ step, label, description }: { step: number; label: string; description: string }) {
+  return (
+    <div className="mb-4 pb-3 border-b border-border">
+      <div className="flex items-center gap-2 mb-1">
+        <div
+          className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
+          style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+        >
+          {step}
+        </div>
+        <span className="text-[14px] font-bold text-text">{label}</span>
+      </div>
+      <p className="text-[12px] text-muted">{description}</p>
+    </div>
+  );
 }
 
-/* ステップインジケーター（PC では常時表示なので補助的に使用） */
-function StepHeader({
-  step,
-  label,
-  description,
-  active,
-}: {
-  step: number;
-  label: string;
-  description: string;
-  active: boolean;
-}) {
+/* モバイル用ステップヘッダー（モジュールトップレベルで定義） */
+function MobileStepHeader({ step, label, description, active }: { step: number; label: string; description: string; active: boolean }) {
   return (
     <div className={`mb-4 ${active ? '' : 'opacity-60'}`}>
       <div className="flex items-center gap-2 mb-1">
@@ -47,6 +47,13 @@ function StepHeader({
       <p className="text-[12px] text-muted pl-8">{description}</p>
     </div>
   );
+}
+
+interface CollabResponseFormProps {
+  session: CollabSession;
+  teamId: string;
+  sessionId: string;
+  onSuccess: () => void;
 }
 
 export default function CollabResponseForm({
@@ -129,33 +136,33 @@ export default function CollabResponseForm({
     }
   }
 
-  /* セッション情報ヘッダー（期限表示） */
+  /* ── セッション情報ヘッダー ───────────────────────── */
   const sessionHeader = (
-    <div className="mb-5 pb-4 border-b border-border">
-      <p className="text-base font-semibold text-text">{session.title}</p>
-      {daysLeft > 0 ? (
-        <p className="text-[11px] text-amber-l mt-1">回答期限: あと{daysLeft}日</p>
-      ) : (
-        <p className="text-[11px] text-live mt-1">有効期限切れ</p>
-      )}
+    <div className="mb-6 pb-4 border-b border-border flex items-start justify-between gap-4">
+      <div>
+        <p className="text-base font-semibold text-text">{session.title}</p>
+        {daysLeft > 0 ? (
+          <p className="text-[11px] text-amber-l mt-1">回答期限: あと{daysLeft}日</p>
+        ) : (
+          <p className="text-[11px] text-live mt-1">有効期限切れ</p>
+        )}
+      </div>
     </div>
   );
 
-  /* ── Step 1: 名前入力 ─────────────────────────────── */
-  const step1Content = (
+  /* ── Step 1 コンテンツ（モバイル用・pl-8 あり） ──── */
+  const step1Mobile = (
     <div>
-      <StepHeader
+      <MobileStepHeader
         step={1}
         label="お名前を教えてください"
         description="回答者のお名前を入力してください。チームメンバーはアイコンを選択することもできます。"
         active={currentStep === 0}
       />
-
-      {/* メンバーアイコン選択（session.participants から type=member のみ） */}
       {memberParticipants.length > 0 && (
-        <div className="mb-3">
-          <p className="text-[11px] text-muted mb-2 pl-8">チームメンバーから選択</p>
-          <div className="flex flex-wrap gap-2 pl-8">
+        <div className="mb-3 pl-8">
+          <p className="text-[11px] text-muted mb-2">チームメンバーから選択</p>
+          <div className="flex flex-wrap gap-2">
             {memberParticipants.map((p) => (
               <button
                 key={p.id}
@@ -180,8 +187,6 @@ export default function CollabResponseForm({
           </div>
         </div>
       )}
-
-      {/* テキスト入力（メンバー以外） */}
       <div className="pl-8">
         {memberParticipants.length > 0 && (
           <p className="text-[11px] text-muted mb-2">または直接入力</p>
@@ -199,16 +204,11 @@ export default function CollabResponseForm({
           <p className="text-live text-[12px] mt-1">{error}</p>
         )}
       </div>
-
-      {/* モバイル: 次へボタン */}
-      <div className="md:hidden mt-4 pl-8">
+      <div className="mt-4 pl-8">
         <button
           type="button"
           onClick={() => {
-            if (!respondentName.trim()) {
-              setError('お名前を入力してください');
-              return;
-            }
+            if (!respondentName.trim()) { setError('お名前を入力してください'); return; }
             setError(null);
             setCurrentStep(1);
           }}
@@ -221,86 +221,138 @@ export default function CollabResponseForm({
     </div>
   );
 
-  /* ── Step 2: 日程回答 ─────────────────────────────── */
-  const step2Content = (
+  /* ── Step 1 コンテンツ（PC用・インデントなし） ────── */
+  const step1Pc = (
+    <div className="flex flex-col gap-3">
+      {memberParticipants.length > 0 && (
+        <div>
+          <p className="text-[11px] text-muted mb-2">チームメンバーから選択</p>
+          <div className="flex flex-wrap gap-2">
+            {memberParticipants.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setRespondentName(p.name)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors text-[13px] font-semibold"
+                style={
+                  respondentName === p.name
+                    ? { background: 'var(--purple-d)', borderColor: 'var(--purple)', color: 'var(--purple-l)' }
+                    : { background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }
+                }
+              >
+                <div
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
+                  style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+                >
+                  {p.name.slice(0, 2).toUpperCase()}
+                </div>
+                {p.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div>
+        {memberParticipants.length > 0 && (
+          <p className="text-[11px] text-muted mb-2">または直接入力</p>
+        )}
+        <input
+          type="text"
+          value={respondentName}
+          onChange={(e) => setRespondentName(e.target.value)}
+          placeholder="例: 田中 太郎"
+          maxLength={50}
+          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none"
+          aria-label="お名前"
+        />
+        {error && (
+          <p className="text-live text-[12px] mt-1">{error}</p>
+        )}
+      </div>
+    </div>
+  );
+
+  /* ── Step 2 共通コンテンツ ────────────────────────── */
+  const step2DateList = (
+    <div className="space-y-2">
+      {sortedDatePairs.map(({ date, originalIndex }) => {
+        const key = originalIndex.toString();
+        const val = dates[key];
+        return (
+          <div
+            key={originalIndex}
+            className="border border-border rounded-[8px] bg-surface"
+          >
+            <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 w-full">
+              <span className="flex-1 min-w-0 text-sm text-text">
+                {format(date, 'M月d日(E) HH:mm', { locale: ja })}
+              </span>
+              <div className="flex gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => toggleDate(originalIndex, 'ok')}
+                  className={`px-2 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
+                    val === 'ok'
+                      ? 'bg-green/15 border border-green/40 text-green'
+                      : 'bg-bg border border-border text-muted hover:text-green hover:border-green/40'
+                  }`}
+                >
+                  ○ OK
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggleDate(originalIndex, 'ng')}
+                  className={`px-2 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
+                    val === 'ng'
+                      ? 'bg-live/10 border border-live/30 text-live'
+                      : 'bg-bg border border-border text-muted hover:text-live hover:border-live/30'
+                  }`}
+                >
+                  × NG
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggleDate(originalIndex, 'pending')}
+                  className={`px-2 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
+                    val === 'pending'
+                      ? 'bg-amber/15 border border-amber/40 text-amber-l'
+                      : 'bg-bg border border-border text-muted hover:text-amber-l hover:border-amber/40'
+                  }`}
+                >
+                  ? 未定
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  /* ── Step 2 コンテンツ（モバイル用） ─────────────── */
+  const step2Mobile = (
     <div>
-      <StepHeader
+      <MobileStepHeader
         step={2}
         label="候補日程に回答してください"
-        description="各日程に OK / NG / 未定 で回答してください。参加できない場合は NG を選んでください。"
+        description="各日程に OK / NG / 未定 で回答してください。"
         active={currentStep === 1}
       />
-
-      <div className="space-y-2 pl-8">
-        {sortedDatePairs.map(({ date, originalIndex }) => {
-          const key = originalIndex.toString();
-          const val = dates[key];
-          return (
-            <Card key={originalIndex} noPadding>
-              <div className="flex flex-wrap items-center gap-2 px-3 py-3 w-full">
-                <span className="flex-1 min-w-0 text-sm text-text">
-                  {format(date, 'M月d日(E) HH:mm', { locale: ja })}
-                </span>
-                <div className="flex gap-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => toggleDate(originalIndex, 'ok')}
-                    className={`px-2 sm:px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
-                      val === 'ok'
-                        ? 'bg-green/15 border border-green/40 text-green'
-                        : 'bg-surface border border-border text-muted hover:text-green hover:border-green/40'
-                    }`}
-                    aria-label="OK"
-                  >
-                    ○ OK
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleDate(originalIndex, 'ng')}
-                    className={`px-2 sm:px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
-                      val === 'ng'
-                        ? 'bg-live/10 border border-live/30 text-live'
-                        : 'bg-surface border border-border text-muted hover:text-live hover:border-live/30'
-                    }`}
-                    aria-label="NG"
-                  >
-                    × NG
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleDate(originalIndex, 'pending')}
-                    className={`px-2 sm:px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
-                      val === 'pending'
-                        ? 'bg-amber/15 border border-amber/40 text-amber-l'
-                        : 'bg-surface border border-border text-muted hover:text-amber-l hover:border-amber/40'
-                    }`}
-                    aria-label="未定"
-                  >
-                    ? 未定
-                  </button>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
+      <div className="pl-8 space-y-3">
+        {step2DateList}
+        <div>
+          <label className="block text-[12px] font-semibold text-muted mb-2">
+            別の日程を提案する（任意）
+          </label>
+          <input
+            type="datetime-local"
+            value={alternativeDate}
+            onChange={(e) => setAlternativeDate(e.target.value)}
+            className="w-full min-w-0 border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text focus:ring-1 focus:ring-purple focus:border-purple outline-none"
+          />
+        </div>
       </div>
-
-      {/* 別の日程を提案 */}
-      <div className="mt-4 pl-8">
-        <label className="block text-[12px] font-semibold text-muted mb-2">
-          別の日程を提案する（任意）
-        </label>
-        <input
-          type="datetime-local"
-          value={alternativeDate}
-          onChange={(e) => setAlternativeDate(e.target.value)}
-          className="w-full min-w-0 border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text focus:ring-1 focus:ring-purple focus:border-purple outline-none"
-          aria-label="別の日程を提案"
-        />
-      </div>
-
-      {/* モバイル: 前へ / 次へボタン */}
-      <div className="md:hidden mt-4 pl-8 flex gap-2">
+      <div className="mt-4 pl-8 flex gap-2">
         <button
           type="button"
           onClick={() => setCurrentStep(0)}
@@ -321,57 +373,77 @@ export default function CollabResponseForm({
     </div>
   );
 
-  /* ── Step 3: コメント + 送信 ──────────────────────── */
-  const step3Content = (
+  /* ── Step 2 コンテンツ（PC用） ───────────────────── */
+  const step2Pc = (
+    <div className="flex flex-col gap-3">
+      {step2DateList}
+      <div>
+        <label className="block text-[12px] font-semibold text-muted mb-2">
+          別の日程を提案する（任意）
+        </label>
+        <input
+          type="datetime-local"
+          value={alternativeDate}
+          onChange={(e) => setAlternativeDate(e.target.value)}
+          className="w-full min-w-0 border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text focus:ring-1 focus:ring-purple focus:border-purple outline-none"
+        />
+      </div>
+    </div>
+  );
+
+  /* ── Step 3 共通コンテンツ ────────────────────────── */
+  const step3Submit = (
+    <div className="flex flex-col gap-3">
+      <div>
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          maxLength={200}
+          rows={4}
+          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none resize-none"
+          placeholder="コメントがあればどうぞ（任意）"
+        />
+        <p className="text-[10px] text-muted text-right font-num">{note.length}/200</p>
+      </div>
+
+      {/* 未選択確認ダイアログ */}
+      {showConfirm && (
+        <div className="bg-amber/10 border border-amber/30 rounded-[10px] p-4">
+          <p className="text-sm text-amber-l mb-3">
+            {unselected.length}件の候補日程が未選択です。このまま送信しますか？
+          </p>
+          <div className="flex gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setShowConfirm(false)}>
+              戻る
+            </Button>
+            <Button variant="amber" size="sm" onClick={handleSubmit} loading={submitting}>
+              このまま送信する
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {!showConfirm && (
+        <Button variant="amber" onClick={handleSubmitClick} loading={submitting} className="w-full">
+          回答を送信する
+        </Button>
+      )}
+    </div>
+  );
+
+  /* ── Step 3 コンテンツ（モバイル用） ─────────────── */
+  const step3Mobile = (
     <div>
-      <StepHeader
+      <MobileStepHeader
         step={3}
         label="コメント（任意）"
         description="一言コメントや都合のつかない理由など、自由に記入してください。"
         active={currentStep === 2}
       />
-
-      <div className="pl-8 space-y-4">
-        <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          maxLength={200}
-          rows={3}
-          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none resize-none"
-          placeholder="コメントがあればどうぞ（任意）"
-        />
-        <p className="text-[10px] text-muted text-right font-num">{note.length}/200</p>
-
-        {error && currentStep === 2 && (
-          <p className="text-live text-sm">{error}</p>
-        )}
-
-        {/* 未選択確認 */}
-        {showConfirm && (
-          <div className="bg-amber/10 border border-amber/30 rounded-[10px] p-4">
-            <p className="text-sm text-amber-l mb-3">
-              {unselected.length}件の候補日程が未選択です。このまま送信しますか？
-            </p>
-            <div className="flex gap-2">
-              <Button variant="secondary" size="sm" onClick={() => setShowConfirm(false)}>
-                戻る
-              </Button>
-              <Button variant="amber" size="sm" onClick={handleSubmit} loading={submitting}>
-                このまま送信する
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {!showConfirm && (
-          <Button variant="amber" onClick={handleSubmitClick} loading={submitting} className="w-full">
-            回答を送信する
-          </Button>
-        )}
+      <div className="pl-8">
+        {step3Submit}
       </div>
-
-      {/* モバイル: 前へボタン */}
-      <div className="md:hidden mt-2 pl-8">
+      <div className="mt-2 pl-8">
         <button
           type="button"
           onClick={() => setCurrentStep(1)}
@@ -388,31 +460,64 @@ export default function CollabResponseForm({
     <div className="overflow-x-hidden">
       {sessionHeader}
 
-      {/* PC: 3カラム横並び（md以上で全ステップ常時表示） */}
-      <div className="hidden md:grid md:grid-cols-3 md:gap-6">
-        {step1Content}
-        {step2Content}
-        {step3Content}
+      {/* PC: 3カラム横並び（md以上）— 各ステップをカード形式で表示 */}
+      <div className="hidden md:grid md:grid-cols-3 md:gap-4 md:items-start">
+        {/* Step 1 カード */}
+        <div
+          className="rounded-[14px] p-5 flex flex-col gap-0"
+          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+        >
+          <PcStepBadge
+            step={1}
+            label="お名前"
+            description="回答するお名前を入力、またはメンバーアイコンを選択してください。"
+          />
+          {step1Pc}
+        </div>
+
+        {/* Step 2 カード */}
+        <div
+          className="rounded-[14px] p-5 flex flex-col gap-0"
+          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+        >
+          <PcStepBadge
+            step={2}
+            label="候補日程への回答"
+            description="各日程に OK / NG / 未定 で回答してください。別の日程も提案できます。"
+          />
+          {step2Pc}
+        </div>
+
+        {/* Step 3 カード */}
+        <div
+          className="rounded-[14px] p-5 flex flex-col gap-0"
+          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+        >
+          <PcStepBadge
+            step={3}
+            label="コメント・送信"
+            description="一言コメントがあれば入力し、回答を送信してください。"
+          />
+          {step3Submit}
+        </div>
       </div>
 
       {/* モバイル: currentStep に応じて1ステップずつ表示 */}
       <div className="md:hidden">
-        {/* ステップインジケーター */}
+        {/* プログレスバー */}
         <div className="flex items-center gap-1 mb-5">
           {[0, 1, 2].map((i) => (
             <div
               key={i}
               className="h-1 flex-1 rounded-full transition-colors"
-              style={{
-                background: i <= currentStep ? 'var(--purple)' : 'var(--border)',
-              }}
+              style={{ background: i <= currentStep ? 'var(--purple)' : 'var(--border)' }}
             />
           ))}
         </div>
 
-        {currentStep === 0 && step1Content}
-        {currentStep === 1 && step2Content}
-        {currentStep === 2 && step3Content}
+        {currentStep === 0 && step1Mobile}
+        {currentStep === 1 && step2Mobile}
+        {currentStep === 2 && step3Mobile}
       </div>
     </div>
   );
