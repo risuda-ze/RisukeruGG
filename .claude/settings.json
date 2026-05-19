@@ -11,7 +11,13 @@
       "Bash(pnpm test:e2e)",
       "Bash(pnpm exec *)",
       "Bash(bash scripts/seed.bat)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "PowerShell(.specify/extensions/git/scripts/powershell/auto-commit.ps1 manual)",
+      "Bash(git commit -m ' *)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js|jsx\\)$\")",
+      "PowerShell(pnpm typecheck 2>&1)",
+      "PowerShell(npx tsc --noEmit --project functions/tsconfig.json 2>&1)",
+      "Bash(grep -v \"planUpdatedAt\\\\|planned\\\\|#\\\\|//\")"
     ]
   }
 }
