@@ -466,12 +466,16 @@ export function CollabDetailModal({
   const availableMembers = members.filter((m) => !participants.some((p) => p.id === m.userId));
   const myMember = members.find((m) => m.userId === currentUser?.uid);
 
+  /* リサイズドラッグ時の誤クローズを防ぐため mousedown 発生元を追跡する */
+  const mouseDownOnOverlay = useRef<boolean>(false);
+
   return (
     /* オーバーレイ（fixed に変更） */
     <div
       className="fixed inset-0 z-[290] flex items-center justify-center p-4"
       style={{ background: 'rgba(6,6,16,0.85)', backdropFilter: 'blur(6px)' }}
-      onClick={onClose}
+      onMouseDown={(e) => { mouseDownOnOverlay.current = e.target === e.currentTarget; }}
+      onClick={() => { if (mouseDownOnOverlay.current) onClose(); }}
     >
       <div
         className="flex flex-col overflow-hidden rounded-[24px]"
