@@ -10,6 +10,8 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 # functions は emulator コンテナ側で管理するためダミーを置く
 COPY functions/package.json ./functions/package.json
 RUN pnpm install --frozen-lockfile --filter "!risukeru-gg-functions"
+COPY docker/app/start-dev.sh /usr/local/bin/start-dev.sh
+RUN chmod +x /usr/local/bin/start-dev.sh
 
 EXPOSE 3000
 
@@ -17,4 +19,4 @@ EXPOSE 3000
 ENV CHOKIDAR_USEPOLLING=true
 ENV WATCHPACK_POLLING=true
 
-CMD ["pnpm", "dev", "--hostname", "0.0.0.0"]
+CMD ["/usr/local/bin/start-dev.sh"]
