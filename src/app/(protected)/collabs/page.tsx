@@ -1,10 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useAuthStore } from '@/stores/auth';
-import { subscribeCollabSessions, createCollabSession, updateCollabSession } from '@/lib/repositories/collabs';
+import {
+  subscribeCollabSessions,
+  createCollabSession,
+  updateCollabSession,
+  reopenCollabSession,
+} from '@/lib/repositories/collabs';
 import { TopBar } from '@/components/layout/TopBar';
 import { CollabDetailModal } from '@/components/collab/CollabDetailModal';
 import { Spinner } from '@/components/ui/Spinner';
@@ -80,6 +85,10 @@ export default function CollabsPage() {
   const [selectedSession, setSelectedSession] = useState<CollabSession | null>(null);
   const [duplicateSource, setDuplicateSource] = useState<CollabSession | null>(null);
 
+  /* 再調整確認・実行中 state */
+  const [confirmReopenId, setConfirmReopenId] = useState<string | null>(null);
+  const [reopeningId, setReopeningId] = useState<string | null>(null);
+
   /* 新規コラボ調整フォーム */
   const [formTitle, setFormTitle] = useState('');
   const [formIcon, setFormIcon] = useState('sports_esports');
@@ -93,6 +102,9 @@ export default function CollabsPage() {
   const [createdUrl, setCreatedUrl] = useState<string | null>(null);
   const [urlCopied, setUrlCopied] = useState(false);
 
+  /* フォームエリアの外クリックでメンバーピッカーを閉じる */
+  const memberPickerRef = useRef<HTMLDivElement>(null);
+
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const canEdit = myMember?.role === 'owner' || myMember?.role === 'editor';
@@ -102,7 +114,7 @@ export default function CollabsPage() {
 
   const openSessions = sessions.filter((s) => s.status === 'open');
   const confirmedSessions = sessions
-    .filter((s) => s.status === 'confirmed' && s.confirmedDate && s.confirmedDate > new Date())
+    .filter((s) => s.status === 'confirmed')
     .sort((a, b) => (a.confirmedDate?.getTime() ?? 0) - (b.confirmedDate?.getTime() ?? 0));
 
   const receivedCount = openSessions.filter((s) => s.createdBy !== currentUser?.uid).length;
@@ -119,6 +131,7 @@ export default function CollabsPage() {
   /* 現在ログイン中のメンバーをフォーム参加者に初期セット */
   useEffect(() => {
     if (myMember && formParticipants.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormParticipants([
         { id: myMember.userId, name: myMember.displayName, type: 'member' },
       ]);
@@ -128,11 +141,8 @@ export default function CollabsPage() {
   /* 複製元が変化したらフォームをプリフィル */
   useEffect(() => {
     if (!duplicateSource) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormTitle(duplicateSource.title);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setContent(duplicateSource.content ?? '');
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormParticipants(duplicateSource.participants ?? []);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [duplicateSource]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -211,6 +221,21 @@ export default function CollabsPage() {
     setFormParticipants((prev) => [...prev, { id: memberId, name, type: 'member' }]);
   }
 
+  /* 確定コラボを再調整状態に戻す */
+  async function handleReopen(sessionId: string) {
+    if (!teamId) return;
+    setReopeningId(sessionId);
+    try {
+      await reopenCollabSession({ teamId, sessionId });
+      setConfirmReopenId(null);
+    } catch {
+      /* エラーは静かに失敗（ユーザーに見える変化がないため再試行可能） */
+      console.error('再調整に失敗しました');
+    } finally {
+      setReopeningId(null);
+    }
+  }
+
   if (!teamId) {
     return (
       <div className="flex flex-col flex-1 overflow-hidden">
@@ -222,11 +247,6 @@ export default function CollabsPage() {
     );
   }
 
-  const subtitle =
-    receivedCount > 0 || sentCount > 0
-      ? `受信 ${receivedCount}件・送信 ${sentCount}件`
-      : undefined;
-
   /* フォーム参加者に未追加のメンバー一覧 */
   const availableMembers = members.filter(
     (m) => !formParticipants.some((p) => p.id === m.userId)
@@ -234,68 +254,203 @@ export default function CollabsPage() {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden relative">
-      <TopBar title="コラボ調整" subtitle={subtitle} />
+      <TopBar title="コラボ調整" />
 
       <div className="flex-1 overflow-y-auto">
         <div className="flex gap-6 p-6 items-start min-h-full">
-          {/* ── 左カラム: コラボリスト ──────────────────── */}
-          <div className="flex-1 flex flex-col gap-4">
-            <div className="text-[15px] font-bold text-muted mb-1">受信・送信したコラボ調整</div>
+          {/* ── 中央カラム: コラボリスト ──────────────────── */}
+          <div className="flex-1 flex flex-col gap-6">
+            {/* 受信・送信セクション */}
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <div className="text-[15px] font-bold text-muted">受信・送信したコラボ調整</div>
+                {(receivedCount > 0 || sentCount > 0) && (
+                  <div className="flex items-center gap-2 text-[12px] text-muted">
+                    {receivedCount > 0 && (
+                      <span
+                        className="px-2 py-0.5 rounded-full font-semibold"
+                        style={{ background: 'var(--purple-xs)', color: 'var(--purple-l)' }}
+                      >
+                        受信 {receivedCount}件
+                      </span>
+                    )}
+                    {sentCount > 0 && (
+                      <span
+                        className="px-2 py-0.5 rounded-full font-semibold"
+                        style={{ background: 'rgba(239,159,39,0.12)', color: 'var(--amber-l)' }}
+                      >
+                        送信 {sentCount}件
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
 
-            {loading ? (
-              <div className="flex justify-center py-16">
-                <Spinner size="lg" />
+              {loading ? (
+                <div className="flex justify-center py-16">
+                  <Spinner size="lg" />
+                </div>
+              ) : openSessions.length === 0 ? (
+                <div className="bg-card border border-border rounded-[18px] p-8 text-center text-muted text-sm">
+                  コラボ調整はありません
+                </div>
+              ) : (
+                openSessions.map((session) => {
+                  const avatarColor = getAvatarColor(session.partnerName);
+                  const initials = session.partnerName.slice(0, 2).toUpperCase();
+                  return (
+                    <div
+                      key={session.id}
+                      className="bg-card border border-border rounded-[18px] p-5 flex items-center gap-5 transition-all hover:border-purple"
+                      style={{ boxShadow: 'none' }}
+                    >
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center text-[18px] font-bold shrink-0"
+                        style={{ background: avatarColor.bg, color: avatarColor.text }}
+                      >
+                        {session.icon
+                          ? <span className="material-icons text-[22px]">{session.icon}</span>
+                          : initials}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <StatusBadge status={session.status} />
+                          <span className="text-[12px] text-muted font-num">
+                            {format(session.createdAt, 'M/d', { locale: ja })} 作成
+                          </span>
+                        </div>
+                        <div className="text-[16px] font-bold text-text mb-1 truncate">
+                          {session.title}
+                        </div>
+                        <div className="text-[13px] text-text-2 truncate">
+                          {session.content ?? session.partnerName}
+                        </div>
+                      </div>
+                      <button
+                        className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold transition-colors"
+                        style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+                        onClick={() => setSelectedSession(session)}
+                      >
+                        詳細を見る
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* 予定確定したコラボセクション */}
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <span className="material-icons text-[20px]" style={{ color: 'var(--green)' }}>
+                  event_available
+                </span>
+                <div className="text-[15px] font-bold text-muted">予定確定したコラボ</div>
+                {confirmedSessions.length > 0 && (
+                  <span
+                    className="px-2 py-0.5 rounded-full text-[12px] font-semibold"
+                    style={{ background: 'rgba(74,222,128,0.12)', color: 'var(--green)' }}
+                  >
+                    {confirmedSessions.length}件
+                  </span>
+                )}
               </div>
-            ) : openSessions.length === 0 ? (
-              <div className="bg-card border border-border rounded-[18px] p-8 text-center text-muted text-sm">
-                コラボ調整はありません
-              </div>
-            ) : (
-              openSessions.map((session) => {
+
+              {!loading && confirmedSessions.length === 0 && (
+                <div className="bg-card border border-border rounded-[18px] p-6 text-center text-muted text-sm">
+                  確定したコラボはありません
+                </div>
+              )}
+
+              {confirmedSessions.map((session) => {
                 const avatarColor = getAvatarColor(session.partnerName);
-                const initials = session.partnerName.slice(0, 2).toUpperCase();
+                const isConfirmingReopen = confirmReopenId === session.id;
+                const isReopening = reopeningId === session.id;
+
                 return (
                   <div
                     key={session.id}
-                    className="bg-card border border-border rounded-[18px] p-5 flex items-center gap-5 transition-all hover:border-purple"
-                    style={{ boxShadow: 'none' }}
+                    className="bg-card border rounded-[18px] p-5 flex flex-col gap-3 transition-all"
+                    style={{ borderColor: 'rgba(74,222,128,0.3)' }}
                   >
-                    <div
-                      className="w-12 h-12 rounded-full flex items-center justify-center text-[18px] font-bold shrink-0"
-                      style={{ background: avatarColor.bg, color: avatarColor.text }}
-                    >
-                      {session.icon
-                        ? <span className="material-icons text-[22px]">{session.icon}</span>
-                        : initials}
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-[16px] font-bold shrink-0"
+                        style={{ background: avatarColor.bg, color: avatarColor.text }}
+                      >
+                        {session.icon
+                          ? <span className="material-icons text-[18px]">{session.icon}</span>
+                          : session.partnerName.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        {session.confirmedDate && (
+                          <div
+                            className="text-[12px] font-bold font-num mb-0.5"
+                            style={{ color: 'var(--green)' }}
+                          >
+                            {format(session.confirmedDate, 'M月d日（E） HH:mm〜', { locale: ja })}
+                          </div>
+                        )}
+                        <div className="text-[15px] font-bold text-text truncate">
+                          {session.title}
+                        </div>
+                        <div className="text-[12px] text-muted truncate">{session.partnerName}</div>
+                      </div>
+                      <button
+                        className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-[10px] text-[12px] font-semibold transition-colors"
+                        style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+                        onClick={() => setSelectedSession(session)}
+                      >
+                        詳細
+                      </button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <StatusBadge status={session.status} />
-                        <span className="text-[12px] text-muted font-num">
-                          {format(session.createdAt, 'M/d', { locale: ja })} 作成
-                        </span>
+
+                    {/* 再調整確認 UI */}
+                    {isConfirmingReopen ? (
+                      <div
+                        className="rounded-[12px] p-3 text-[13px]"
+                        style={{ background: 'rgba(239,159,39,0.10)', border: '1px solid rgba(239,159,39,0.25)' }}
+                      >
+                        <p className="text-muted mb-2">
+                          再調整すると確定日時とカレンダー予定が削除されます。よろしいですか？
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-muted hover:text-text transition-colors"
+                            onClick={() => setConfirmReopenId(null)}
+                            disabled={isReopening}
+                          >
+                            キャンセル
+                          </button>
+                          <button
+                            className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold transition-colors disabled:opacity-50"
+                            style={{ background: 'var(--amber-d)', color: 'var(--amber-l)' }}
+                            onClick={() => handleReopen(session.id)}
+                            disabled={isReopening}
+                          >
+                            {isReopening ? '処理中...' : '再調整する'}
+                          </button>
+                        </div>
                       </div>
-                      <div className="text-[16px] font-bold text-text mb-1 truncate">
-                        {session.title}
-                      </div>
-                      <div className="text-[13px] text-text-2 truncate">
-                        {session.content ?? session.partnerName}
-                      </div>
-                    </div>
-                    <button
-                      className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold transition-colors"
-                      style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
-                      onClick={() => setSelectedSession(session)}
-                    >
-                      詳細を見る
-                    </button>
+                    ) : (
+                      canEdit && (
+                        <button
+                          className="self-start flex items-center gap-1 px-3 py-1.5 rounded-[10px] text-[12px] font-semibold border border-dashed transition-colors hover:border-amber"
+                          style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
+                          onClick={() => setConfirmReopenId(session.id)}
+                        >
+                          <span className="material-icons text-[14px]">refresh</span>
+                          再調整する
+                        </button>
+                      )
+                    )}
                   </div>
                 );
-              })
-            )}
+              })}
+            </div>
           </div>
 
-          {/* ── 右カラム: フォーム + 予定コラボ ─────────── */}
+          {/* ── 右カラム: フォーム ─────────────────────────── */}
           <div className="w-[380px] shrink-0 flex flex-col gap-6">
             {/* 新規コラボ調整フォーム */}
             <div
@@ -395,7 +550,7 @@ export default function CollabsPage() {
                       </div>
                     ))}
                     {/* メンバー追加ボタン */}
-                    <div className="relative">
+                    <div className="relative" ref={memberPickerRef}>
                       <button
                         type="button"
                         onClick={() => setShowMemberPicker((v) => !v)}
@@ -490,34 +645,6 @@ export default function CollabsPage() {
                 </button>
               </form>
             </div>
-
-            {/* 予定しているコラボ */}
-            {confirmedSessions.length > 0 && (
-              <div className="bg-card border border-border rounded-[18px] p-5">
-                <div className="text-[15px] font-bold mb-4 flex items-center gap-2 text-text">
-                  <span className="material-icons text-[20px] text-purple-l">event_available</span>
-                  予定しているコラボ
-                </div>
-                <div className="flex flex-col gap-3">
-                  {confirmedSessions.slice(0, 3).map((s) => (
-                    <div
-                      key={s.id}
-                      className="bg-surface border border-border rounded-[12px] p-3"
-                    >
-                      <div
-                        className="text-[13px] font-bold mb-1"
-                        style={{ color: 'var(--purple-l)' }}
-                      >
-                        {format(s.confirmedDate!, 'M月d日（E） HH:mm〜', { locale: ja })}
-                      </div>
-                      <div className="text-[14px] font-semibold text-text">
-                        {s.partnerName} — {s.title}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>

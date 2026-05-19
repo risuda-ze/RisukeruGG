@@ -6,7 +6,7 @@ import { ja } from 'date-fns/locale';
 import { respondToCollab } from '@/lib/repositories/collabs';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import type { CollabSession } from '@/types/entities';
+import type { CollabSession, CollabParticipant } from '@/types/entities';
 
 type DateChoice = 'ok' | 'ng' | 'pending';
 
@@ -15,6 +15,38 @@ interface CollabResponseFormProps {
   teamId: string;
   sessionId: string;
   onSuccess: () => void;
+}
+
+/* ステップインジケーター（PC では常時表示なので補助的に使用） */
+function StepHeader({
+  step,
+  label,
+  description,
+  active,
+}: {
+  step: number;
+  label: string;
+  description: string;
+  active: boolean;
+}) {
+  return (
+    <div className={`mb-4 ${active ? '' : 'opacity-60'}`}>
+      <div className="flex items-center gap-2 mb-1">
+        <div
+          className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
+          style={
+            active
+              ? { background: 'var(--purple-d)', color: 'var(--purple-l)' }
+              : { background: 'var(--surface)', color: 'var(--muted)', border: '1px solid var(--border)' }
+          }
+        >
+          {step}
+        </div>
+        <span className="text-[14px] font-bold text-text">{label}</span>
+      </div>
+      <p className="text-[12px] text-muted pl-8">{description}</p>
+    </div>
+  );
 }
 
 export default function CollabResponseForm({
@@ -31,7 +63,11 @@ export default function CollabResponseForm({
   const [error, setError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  /* モバイル用の現在ステップ（0: 名前, 1: 日程, 2: コメント） */
+  const [currentStep, setCurrentStep] = useState(0);
+
   const daysLeft = differenceInDays(session.expiresAt, new Date());
+
   /* 候補日程を日時の昇順でソート（originalIndex で dates キーを参照） */
   const sortedDatePairs = session.proposedDates
     .map((date, i) => ({ date, originalIndex: i }))
@@ -39,6 +75,11 @@ export default function CollabResponseForm({
 
   /* OK/NG/未定のどれも未選択の日程 */
   const unselected = session.proposedDates.filter((_, i) => !dates[i.toString()]);
+
+  /* session.participants から type=member のみアイコン表示候補として使用（認証不要） */
+  const memberParticipants: CollabParticipant[] = (session.participants ?? []).filter(
+    (p) => p.type === 'member'
+  );
 
   function toggleDate(index: number, value: DateChoice) {
     setDates((prev) => {
@@ -56,6 +97,7 @@ export default function CollabResponseForm({
   function handleSubmitClick() {
     if (!respondentName.trim()) {
       setError('お名前を入力してください');
+      setCurrentStep(0);
       return;
     }
     setError(null);
@@ -87,148 +129,291 @@ export default function CollabResponseForm({
     }
   }
 
-  return (
-    <div className="space-y-5 overflow-x-hidden">
-      {/* セッション情報 */}
-      <div>
-        <p className="text-[11px] text-muted">{session.partnerName}さんからのコラボ調整</p>
-        <p className="text-base font-semibold text-text mt-0.5">{session.title}</p>
-        {daysLeft > 0 ? (
-          <p className="text-[11px] text-amber-l mt-1">回答期限: あと{daysLeft}日</p>
-        ) : (
-          <p className="text-[11px] text-live mt-1">有効期限切れ</p>
-        )}
-      </div>
+  /* セッション情報ヘッダー（期限表示） */
+  const sessionHeader = (
+    <div className="mb-5 pb-4 border-b border-border">
+      <p className="text-base font-semibold text-text">{session.title}</p>
+      {daysLeft > 0 ? (
+        <p className="text-[11px] text-amber-l mt-1">回答期限: あと{daysLeft}日</p>
+      ) : (
+        <p className="text-[11px] text-live mt-1">有効期限切れ</p>
+      )}
+    </div>
+  );
 
-      {/* お名前（必須） */}
-      <div>
-        <label className="block text-sm font-medium text-text mb-2">
-          お名前 <span className="text-live text-[11px]">必須</span>
-        </label>
+  /* ── Step 1: 名前入力 ─────────────────────────────── */
+  const step1Content = (
+    <div>
+      <StepHeader
+        step={1}
+        label="お名前を教えてください"
+        description="回答者のお名前を入力してください。チームメンバーはアイコンを選択することもできます。"
+        active={currentStep === 0}
+      />
+
+      {/* メンバーアイコン選択（session.participants から type=member のみ） */}
+      {memberParticipants.length > 0 && (
+        <div className="mb-3">
+          <p className="text-[11px] text-muted mb-2 pl-8">チームメンバーから選択</p>
+          <div className="flex flex-wrap gap-2 pl-8">
+            {memberParticipants.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setRespondentName(p.name)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors text-[13px] font-semibold"
+                style={
+                  respondentName === p.name
+                    ? { background: 'var(--purple-d)', borderColor: 'var(--purple)', color: 'var(--purple-l)' }
+                    : { background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }
+                }
+              >
+                <div
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
+                  style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+                >
+                  {p.name.slice(0, 2).toUpperCase()}
+                </div>
+                {p.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* テキスト入力（メンバー以外） */}
+      <div className="pl-8">
+        {memberParticipants.length > 0 && (
+          <p className="text-[11px] text-muted mb-2">または直接入力</p>
+        )}
         <input
           type="text"
           value={respondentName}
           onChange={(e) => setRespondentName(e.target.value)}
           placeholder="例: 田中 太郎"
           maxLength={50}
-          className="w-full border border-border rounded-[6px] px-3 py-2 text-sm bg-surface text-text placeholder:text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none"
+          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none"
           aria-label="お名前"
         />
+        {error && currentStep === 0 && (
+          <p className="text-live text-[12px] mt-1">{error}</p>
+        )}
       </div>
 
-      {/* 候補日程リスト */}
-      <div>
-        <p className="text-sm font-medium text-text mb-2">候補日程</p>
-        <div className="space-y-2">
-          {/* 日時の昇順でソート（originalIndex で dates キーを参照） */}
-          {sortedDatePairs.map(({ date, originalIndex }) => {
-            const key = originalIndex.toString();
-            const val = dates[key];
-            return (
-              <Card key={originalIndex} noPadding>
-                <div className="flex flex-wrap items-center gap-2 px-3 py-3 w-full">
-                  <span className="flex-1 min-w-0 text-sm text-text">
-                    {format(date, 'M月d日(E) HH:mm', { locale: ja })}
-                  </span>
-                  <div className="flex gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => toggleDate(originalIndex, 'ok')}
-                      className={`px-2 sm:px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
-                        val === 'ok'
-                          ? 'bg-green/15 border border-green/40 text-green'
-                          : 'bg-surface border border-border text-muted hover:text-green hover:border-green/40'
-                      }`}
-                      aria-label="OK"
-                    >
-                      ○ OK
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => toggleDate(originalIndex, 'ng')}
-                      className={`px-2 sm:px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
-                        val === 'ng'
-                          ? 'bg-live/10 border border-live/30 text-live'
-                          : 'bg-surface border border-border text-muted hover:text-live hover:border-live/30'
-                      }`}
-                      aria-label="NG"
-                    >
-                      × NG
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => toggleDate(originalIndex, 'pending')}
-                      className={`px-2 sm:px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
-                        val === 'pending'
-                          ? 'bg-amber/15 border border-amber/40 text-amber-l'
-                          : 'bg-surface border border-border text-muted hover:text-amber-l hover:border-amber/40'
-                      }`}
-                      aria-label="未定"
-                    >
-                      ? 未定
-                    </button>
-                  </div>
+      {/* モバイル: 次へボタン */}
+      <div className="md:hidden mt-4 pl-8">
+        <button
+          type="button"
+          onClick={() => {
+            if (!respondentName.trim()) {
+              setError('お名前を入力してください');
+              return;
+            }
+            setError(null);
+            setCurrentStep(1);
+          }}
+          className="flex items-center gap-1 px-4 py-2 rounded-[10px] text-[13px] font-semibold transition-colors"
+          style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+        >
+          次へ <span className="material-icons text-[16px]">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  /* ── Step 2: 日程回答 ─────────────────────────────── */
+  const step2Content = (
+    <div>
+      <StepHeader
+        step={2}
+        label="候補日程に回答してください"
+        description="各日程に OK / NG / 未定 で回答してください。参加できない場合は NG を選んでください。"
+        active={currentStep === 1}
+      />
+
+      <div className="space-y-2 pl-8">
+        {sortedDatePairs.map(({ date, originalIndex }) => {
+          const key = originalIndex.toString();
+          const val = dates[key];
+          return (
+            <Card key={originalIndex} noPadding>
+              <div className="flex flex-wrap items-center gap-2 px-3 py-3 w-full">
+                <span className="flex-1 min-w-0 text-sm text-text">
+                  {format(date, 'M月d日(E) HH:mm', { locale: ja })}
+                </span>
+                <div className="flex gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => toggleDate(originalIndex, 'ok')}
+                    className={`px-2 sm:px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
+                      val === 'ok'
+                        ? 'bg-green/15 border border-green/40 text-green'
+                        : 'bg-surface border border-border text-muted hover:text-green hover:border-green/40'
+                    }`}
+                    aria-label="OK"
+                  >
+                    ○ OK
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleDate(originalIndex, 'ng')}
+                    className={`px-2 sm:px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
+                      val === 'ng'
+                        ? 'bg-live/10 border border-live/30 text-live'
+                        : 'bg-surface border border-border text-muted hover:text-live hover:border-live/30'
+                    }`}
+                    aria-label="NG"
+                  >
+                    × NG
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleDate(originalIndex, 'pending')}
+                    className={`px-2 sm:px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
+                      val === 'pending'
+                        ? 'bg-amber/15 border border-amber/40 text-amber-l'
+                        : 'bg-surface border border-border text-muted hover:text-amber-l hover:border-amber/40'
+                    }`}
+                    aria-label="未定"
+                  >
+                    ? 未定
+                  </button>
                 </div>
-              </Card>
-            );
-          })}
-        </div>
+              </div>
+            </Card>
+          );
+        })}
       </div>
 
-      {/* 別の日程を提案する */}
-      <div>
-        <label className="block text-sm font-medium text-text mb-2">
+      {/* 別の日程を提案 */}
+      <div className="mt-4 pl-8">
+        <label className="block text-[12px] font-semibold text-muted mb-2">
           別の日程を提案する（任意）
         </label>
         <input
           type="datetime-local"
           value={alternativeDate}
           onChange={(e) => setAlternativeDate(e.target.value)}
-          className="w-full min-w-0 border border-border rounded-[6px] px-3 py-2 text-sm bg-surface text-text focus:ring-1 focus:ring-purple focus:border-purple outline-none"
+          className="w-full min-w-0 border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text focus:ring-1 focus:ring-purple focus:border-purple outline-none"
           aria-label="別の日程を提案"
         />
       </div>
 
-      {/* メモ */}
-      <div>
-        <label className="block text-sm font-medium text-text mb-2">
-          メモ（任意・200文字以内）
-        </label>
+      {/* モバイル: 前へ / 次へボタン */}
+      <div className="md:hidden mt-4 pl-8 flex gap-2">
+        <button
+          type="button"
+          onClick={() => setCurrentStep(0)}
+          className="flex items-center gap-1 px-3 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-muted hover:text-text transition-colors"
+        >
+          <span className="material-icons text-[16px]">arrow_back</span>
+          戻る
+        </button>
+        <button
+          type="button"
+          onClick={() => setCurrentStep(2)}
+          className="flex items-center gap-1 px-4 py-2 rounded-[10px] text-[13px] font-semibold transition-colors"
+          style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+        >
+          次へ <span className="material-icons text-[16px]">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  /* ── Step 3: コメント + 送信 ──────────────────────── */
+  const step3Content = (
+    <div>
+      <StepHeader
+        step={3}
+        label="コメント（任意）"
+        description="一言コメントや都合のつかない理由など、自由に記入してください。"
+        active={currentStep === 2}
+      />
+
+      <div className="pl-8 space-y-4">
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
           maxLength={200}
           rows={3}
-          className="w-full border border-border rounded-[6px] px-3 py-2 text-sm bg-surface text-text placeholder:text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none resize-none"
-          placeholder="コメントがあればどうぞ"
+          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none resize-none"
+          placeholder="コメントがあればどうぞ（任意）"
         />
-        <p className="text-[10px] text-muted mt-1 text-right font-num">{note.length}/200</p>
+        <p className="text-[10px] text-muted text-right font-num">{note.length}/200</p>
+
+        {error && currentStep === 2 && (
+          <p className="text-live text-sm">{error}</p>
+        )}
+
+        {/* 未選択確認 */}
+        {showConfirm && (
+          <div className="bg-amber/10 border border-amber/30 rounded-[10px] p-4">
+            <p className="text-sm text-amber-l mb-3">
+              {unselected.length}件の候補日程が未選択です。このまま送信しますか？
+            </p>
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setShowConfirm(false)}>
+                戻る
+              </Button>
+              <Button variant="amber" size="sm" onClick={handleSubmit} loading={submitting}>
+                このまま送信する
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {!showConfirm && (
+          <Button variant="amber" onClick={handleSubmitClick} loading={submitting} className="w-full">
+            回答を送信する
+          </Button>
+        )}
       </div>
 
-      {error && <p className="text-live text-sm">{error}</p>}
+      {/* モバイル: 前へボタン */}
+      <div className="md:hidden mt-2 pl-8">
+        <button
+          type="button"
+          onClick={() => setCurrentStep(1)}
+          className="flex items-center gap-1 px-3 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-muted hover:text-text transition-colors"
+        >
+          <span className="material-icons text-[16px]">arrow_back</span>
+          戻る
+        </button>
+      </div>
+    </div>
+  );
 
-      {/* 未選択確認 */}
-      {showConfirm && (
-        <div className="bg-amber/10 border border-amber/30 rounded-[10px] p-4">
-          <p className="text-sm text-amber-l mb-3">
-            {unselected.length}件の候補日程が未選択です。このまま送信しますか？
-          </p>
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setShowConfirm(false)}>
-              戻る
-            </Button>
-            <Button variant="amber" size="sm" onClick={handleSubmit} loading={submitting}>
-              このまま送信する
-            </Button>
-          </div>
+  return (
+    <div className="overflow-x-hidden">
+      {sessionHeader}
+
+      {/* PC: 3カラム横並び（md以上で全ステップ常時表示） */}
+      <div className="hidden md:grid md:grid-cols-3 md:gap-6">
+        {step1Content}
+        {step2Content}
+        {step3Content}
+      </div>
+
+      {/* モバイル: currentStep に応じて1ステップずつ表示 */}
+      <div className="md:hidden">
+        {/* ステップインジケーター */}
+        <div className="flex items-center gap-1 mb-5">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="h-1 flex-1 rounded-full transition-colors"
+              style={{
+                background: i <= currentStep ? 'var(--purple)' : 'var(--border)',
+              }}
+            />
+          ))}
         </div>
-      )}
 
-      {!showConfirm && (
-        <Button variant="amber" onClick={handleSubmitClick} loading={submitting} className="w-full">
-          回答を送信する
-        </Button>
-      )}
+        {currentStep === 0 && step1Content}
+        {currentStep === 1 && step2Content}
+        {currentStep === 2 && step3Content}
+      </div>
     </div>
   );
 }

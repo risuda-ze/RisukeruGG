@@ -126,7 +126,14 @@ export default function CollabPublicPage() {
             <Card className="text-center py-10">
               <p className="text-3xl mb-3">🎉</p>
               <h1 className="text-base font-semibold text-text mb-2">回答を送信しました</h1>
-              <p className="text-sm text-muted">ご回答ありがとうございます</p>
+              <p className="text-sm text-muted mb-4">ご回答ありがとうございます</p>
+              <div
+                className="text-left rounded-[10px] px-4 py-3 text-[12px] text-muted"
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+              >
+                <p className="font-semibold text-text mb-1">回答を修正したい場合は</p>
+                <p>このページの URL を再度開いて、同じお名前で回答し直してください。最後に送信した回答が有効になります。</p>
+              </div>
             </Card>
           )}
 
