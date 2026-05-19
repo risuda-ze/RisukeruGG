@@ -85,9 +85,10 @@ export default function CollabsPage() {
   const [selectedSession, setSelectedSession] = useState<CollabSession | null>(null);
   const [duplicateSource, setDuplicateSource] = useState<CollabSession | null>(null);
 
-  /* 再調整確認・実行中 state */
+  /* 再調整確認・実行中・エラー state */
   const [confirmReopenId, setConfirmReopenId] = useState<string | null>(null);
   const [reopeningId, setReopeningId] = useState<string | null>(null);
+  const [reopenError, setReopenError] = useState<string | null>(null);
 
   /* 新規コラボ調整フォーム */
   const [formTitle, setFormTitle] = useState('');
@@ -225,12 +226,13 @@ export default function CollabsPage() {
   async function handleReopen(sessionId: string) {
     if (!teamId) return;
     setReopeningId(sessionId);
+    setReopenError(null);
     try {
       await reopenCollabSession({ teamId, sessionId });
       setConfirmReopenId(null);
-    } catch {
-      /* エラーは静かに失敗（ユーザーに見える変化がないため再試行可能） */
-      console.error('再調整に失敗しました');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '再調整に失敗しました';
+      setReopenError(msg);
     } finally {
       setReopeningId(null);
     }
@@ -414,10 +416,16 @@ export default function CollabsPage() {
                         <p className="text-muted mb-2">
                           再調整すると確定日時とカレンダー予定が削除されます。よろしいですか？
                         </p>
+                        {/* エラー表示 */}
+                        {reopenError && confirmReopenId === session.id && (
+                          <p className="text-[12px] mb-2" style={{ color: 'var(--live)' }}>
+                            {reopenError}
+                          </p>
+                        )}
                         <div className="flex gap-2">
                           <button
                             className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-muted hover:text-text transition-colors"
-                            onClick={() => setConfirmReopenId(null)}
+                            onClick={() => { setConfirmReopenId(null); setReopenError(null); }}
                             disabled={isReopening}
                           >
                             キャンセル
@@ -437,7 +445,7 @@ export default function CollabsPage() {
                         <button
                           className="self-start flex items-center gap-1 px-3 py-1.5 rounded-[10px] text-[12px] font-semibold border border-dashed transition-colors hover:border-amber"
                           style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
-                          onClick={() => setConfirmReopenId(session.id)}
+                          onClick={() => { setConfirmReopenId(session.id); setReopenError(null); }}
                         >
                           <span className="material-icons text-[14px]">refresh</span>
                           再調整する
