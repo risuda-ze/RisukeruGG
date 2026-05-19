@@ -53,7 +53,7 @@ export default function CollabForm({
         teamId,
         title: title.trim(),
         partnerName: partnerName.trim(),
-        proposedDates: validDates,
+        proposedDates: validDates.map((d) => new Date(d).toISOString()),
         expiresInDays,
       });
       onSuccess(result.data.shareUrl);

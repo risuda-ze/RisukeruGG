@@ -68,6 +68,17 @@ export const respondToCollab = onCall(
       updatePayload['proposedDates'] = FieldValue.arrayUnion(...altTimestamps);
     }
 
+    /* メモをコメントとして追記（Timestamp.now() を使用 — serverTimestamp は arrayUnion 内で使用不可） */
+    if (note?.trim()) {
+      updatePayload['comments'] = FieldValue.arrayUnion({
+        id: `resp_${Date.now()}`,
+        authorId: respondentKey,
+        authorName: respondentName ?? 'anonymous',
+        text: note.trim(),
+        createdAt: Timestamp.now(),
+      });
+    }
+
     await db.runTransaction(async (tx) => {
       tx.update(sessionRef, updatePayload);
 

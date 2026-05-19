@@ -32,6 +32,11 @@ export default function CollabResponseForm({
   const [showConfirm, setShowConfirm] = useState(false);
 
   const daysLeft = differenceInDays(session.expiresAt, new Date());
+  /* 候補日程を日時の昇順でソート（originalIndex で dates キーを参照） */
+  const sortedDatePairs = session.proposedDates
+    .map((date, i) => ({ date, originalIndex: i }))
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
   /* OK/NG/未定のどれも未選択の日程 */
   const unselected = session.proposedDates.filter((_, i) => !dates[i.toString()]);
 
@@ -71,7 +76,7 @@ export default function CollabResponseForm({
         sessionId,
         respondentName: respondentName.trim(),
         dates,
-        alternativeDates: alternativeDate ? [alternativeDate] : [],
+        alternativeDates: alternativeDate ? [new Date(alternativeDate).toISOString()] : [],
         note: note.trim() || null,
       });
       onSuccess();
@@ -83,7 +88,7 @@ export default function CollabResponseForm({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 overflow-x-hidden">
       {/* セッション情報 */}
       <div>
         <p className="text-[11px] text-muted">{session.partnerName}さんからのコラボ調整</p>
@@ -115,20 +120,21 @@ export default function CollabResponseForm({
       <div>
         <p className="text-sm font-medium text-text mb-2">候補日程</p>
         <div className="space-y-2">
-          {session.proposedDates.map((date, index) => {
-            const key = index.toString();
+          {/* 日時の昇順でソート（originalIndex で dates キーを参照） */}
+          {sortedDatePairs.map(({ date, originalIndex }) => {
+            const key = originalIndex.toString();
             const val = dates[key];
             return (
-              <Card key={index} noPadding>
-                <div className="flex items-center gap-3 px-3 py-3 w-full">
-                  <span className="flex-1 text-sm text-text">
+              <Card key={originalIndex} noPadding>
+                <div className="flex flex-wrap items-center gap-2 px-3 py-3 w-full">
+                  <span className="flex-1 min-w-0 text-sm text-text">
                     {format(date, 'M月d日(E) HH:mm', { locale: ja })}
                   </span>
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-1 shrink-0">
                     <button
                       type="button"
-                      onClick={() => toggleDate(index, 'ok')}
-                      className={`px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
+                      onClick={() => toggleDate(originalIndex, 'ok')}
+                      className={`px-2 sm:px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
                         val === 'ok'
                           ? 'bg-green/15 border border-green/40 text-green'
                           : 'bg-surface border border-border text-muted hover:text-green hover:border-green/40'
@@ -139,8 +145,8 @@ export default function CollabResponseForm({
                     </button>
                     <button
                       type="button"
-                      onClick={() => toggleDate(index, 'ng')}
-                      className={`px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
+                      onClick={() => toggleDate(originalIndex, 'ng')}
+                      className={`px-2 sm:px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
                         val === 'ng'
                           ? 'bg-live/10 border border-live/30 text-live'
                           : 'bg-surface border border-border text-muted hover:text-live hover:border-live/30'
@@ -151,8 +157,8 @@ export default function CollabResponseForm({
                     </button>
                     <button
                       type="button"
-                      onClick={() => toggleDate(index, 'pending')}
-                      className={`px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
+                      onClick={() => toggleDate(originalIndex, 'pending')}
+                      className={`px-2 sm:px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
                         val === 'pending'
                           ? 'bg-amber/15 border border-amber/40 text-amber-l'
                           : 'bg-surface border border-border text-muted hover:text-amber-l hover:border-amber/40'
@@ -178,7 +184,7 @@ export default function CollabResponseForm({
           type="datetime-local"
           value={alternativeDate}
           onChange={(e) => setAlternativeDate(e.target.value)}
-          className="w-full border border-border rounded-[6px] px-3 py-2 text-sm bg-surface text-text focus:ring-1 focus:ring-purple focus:border-purple outline-none"
+          className="w-full min-w-0 border border-border rounded-[6px] px-3 py-2 text-sm bg-surface text-text focus:ring-1 focus:ring-purple focus:border-purple outline-none"
           aria-label="別の日程を提案"
         />
       </div>

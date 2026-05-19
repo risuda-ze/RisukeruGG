@@ -12,7 +12,8 @@ import {
   updateCollabSession,
   addCollabProposedDate,
   addCollabComment,
-  updateParticipantResponse,
+  replaceCollabProposedDates,
+  reopenCollabSession,
 } from '@/lib/repositories/collabs';
 import { useAuthStore } from '@/stores/auth';
 import { COLLAB_STATUS_LABELS } from '@/types/entities';
@@ -25,6 +26,8 @@ interface CollabDetailModalProps {
   canEdit: boolean;
   onClose: () => void;
   onDeleted: () => void;
+  onReopen?: () => void;
+  onDuplicate?: (session: CollabSession) => void;
 }
 
 /* コラボアイコン候補 */
@@ -120,6 +123,8 @@ export function CollabDetailModal({
   canEdit,
   onClose,
   onDeleted,
+  onReopen,
+  onDuplicate,
 }: CollabDetailModalProps) {
   const { currentUser, currentTeam, members } = useAuthStore();
   const teamId = currentTeam?.id ?? '';
@@ -170,6 +175,14 @@ export function CollabDetailModal({
   const [confirming, setConfirming] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  /* 候補日程の編集 */
+  const [editingDateIndex, setEditingDateIndex] = useState<number | null>(null);
+  const [editDateValue, setEditDateValue] = useState('');
+
+  /* 再調整の確認ダイアログ */
+  const [showReopenConfirm, setShowReopenConfirm] = useState(false);
+  const [reopening, setReopening] = useState(false);
 
   /* 変更を確定ボタン */
   const [saving, setSaving] = useState(false);
@@ -396,6 +409,58 @@ export function CollabDetailModal({
     await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  /* 候補日程を編集して保存 */
+  async function handleEditDate(originalIndex: number, newDateValue: string) {
+    if (!newDateValue) return;
+    const newDate = new Date(newDateValue);
+    const newDates = proposedDates.map((d, i) => (i === originalIndex ? newDate : d));
+    await replaceCollabProposedDates(teamId, session.id, newDates, participantResponses);
+    setEditingDateIndex(null);
+    setEditDateValue('');
+  }
+
+  /* 削除時に participantResponses のインデックスを再マッピング */
+  function remapParticipantResponses(
+    responses: Record<string, Record<string, 'ok' | 'ng' | 'pending'>>,
+    deletedIndex: number
+  ): Record<string, Record<string, 'ok' | 'ng' | 'pending'>> {
+    const result: Record<string, Record<string, 'ok' | 'ng' | 'pending'>> = {};
+    for (const [respondent, dateResponses] of Object.entries(responses)) {
+      const newDateResponses: Record<string, 'ok' | 'ng' | 'pending'> = {};
+      for (const [idx, val] of Object.entries(dateResponses)) {
+        const n = parseInt(idx, 10);
+        if (n === deletedIndex) continue;
+        newDateResponses[(n > deletedIndex ? n - 1 : n).toString()] = val;
+      }
+      result[respondent] = newDateResponses;
+    }
+    return result;
+  }
+
+  /* 候補日程を削除 */
+  async function handleDeleteDate(originalIndex: number) {
+    const newDates = proposedDates.filter((_, i) => i !== originalIndex);
+    const newResponses = remapParticipantResponses(participantResponses, originalIndex);
+    await replaceCollabProposedDates(teamId, session.id, newDates, newResponses);
+    /* 承諾選択リストからも除去してインデックスを調整 */
+    setSelectedDateIdxs((prev) =>
+      prev.filter((i) => i !== originalIndex).map((i) => (i > originalIndex ? i - 1 : i))
+    );
+  }
+
+  /* 確定済みコラボを再調整状態に戻す */
+  async function handleReopen() {
+    setReopening(true);
+    try {
+      await reopenCollabSession({ teamId, sessionId: session.id });
+      onReopen?.();
+      onClose();
+    } finally {
+      setReopening(false);
+      setShowReopenConfirm(false);
+    }
   }
 
   const availableMembers = members.filter((m) => !participants.some((p) => p.id === m.userId));
@@ -697,42 +762,96 @@ export function CollabDetailModal({
             <div>
               <div className="text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-3">候補日程</div>
               <div className="flex flex-col gap-2 mb-3">
-                {proposedDates.map((date, i) => {
-                  const { okNames, ngNames, pendingNames } = getDateAggregates(i);
-                  const isSelected = selectedDateIdxs.includes(i);
+                {/* 日時の昇順でソート（originalIndex で participantResponses を参照） */}
+                {proposedDates
+                  .map((date, i) => ({ date, originalIndex: i }))
+                  .sort((a, b) => a.date.getTime() - b.date.getTime())
+                  .map(({ date, originalIndex }) => {
+                  const { okNames, ngNames, pendingNames } = getDateAggregates(originalIndex);
+                  const isSelected = selectedDateIdxs.includes(originalIndex);
+                  const isEditing = editingDateIndex === originalIndex;
                   return (
                     <div
-                      key={i}
+                      key={originalIndex}
                       className="flex items-center justify-between rounded-[12px] px-4 py-3 border transition-colors"
                       style={{ background: 'var(--surface)', borderColor: isSelected ? 'var(--purple)' : 'var(--border)' }}
                     >
-                      <div
-                        className="text-[14px] font-bold font-num text-text"
-                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                      >
-                        {format(date, 'M月 dd日（E） HH:mm 〜', { locale: ja })}
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <ResponseAggregate icon="check_circle" iconClass="text-green" count={okNames.length} names={okNames} />
-                        <ResponseAggregate icon="cancel" iconClass="text-live" count={ngNames.length} names={ngNames} />
-                        <ResponseAggregate icon="help" iconClass="text-amber" count={pendingNames.length} names={pendingNames} />
-                        {isOpen && canEdit && (
+                      {isEditing ? (
+                        /* インライン編集モード */
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <input
+                            type="datetime-local"
+                            value={editDateValue}
+                            onChange={(e) => setEditDateValue(e.target.value)}
+                            className="flex-1 min-w-0 bg-bg border border-purple text-text px-2 py-1.5 rounded-[8px] text-[13px] outline-none"
+                            autoFocus
+                          />
                           <button
-                            onClick={() => toggleDateSelection(i)}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border transition-colors"
-                            style={{
-                              background: isSelected ? 'var(--purple-d)' : 'var(--purple-sm)',
-                              color: 'var(--purple-l)',
-                              borderColor: 'var(--purple)',
-                            }}
+                            onClick={() => handleEditDate(originalIndex, editDateValue)}
+                            disabled={!editDateValue}
+                            className="px-2 py-1.5 rounded-[8px] text-[12px] font-semibold disabled:opacity-40"
+                            style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
                           >
-                            <span className="material-icons text-[16px]">
-                              {isSelected ? 'check_box' : 'check_box_outline_blank'}
-                            </span>
-                            {isSelected ? '選択中' : '承諾'}
+                            保存
                           </button>
-                        )}
-                      </div>
+                          <button
+                            onClick={() => { setEditingDateIndex(null); setEditDateValue(''); }}
+                            className="px-2 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-muted"
+                          >
+                            取消
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div
+                            className="text-[14px] font-bold font-num text-text"
+                            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                          >
+                            {format(date, 'M月 dd日（E） HH:mm 〜', { locale: ja })}
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <ResponseAggregate icon="check_circle" iconClass="text-green" count={okNames.length} names={okNames} />
+                            <ResponseAggregate icon="cancel" iconClass="text-live" count={ngNames.length} names={ngNames} />
+                            <ResponseAggregate icon="help" iconClass="text-amber" count={pendingNames.length} names={pendingNames} />
+                            {isOpen && canEdit && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setEditingDateIndex(originalIndex);
+                                    setEditDateValue(format(date, "yyyy-MM-dd'T'HH:mm"));
+                                  }}
+                                  className="text-muted hover:text-purple-l transition-colors"
+                                  title="編集"
+                                >
+                                  <span className="material-icons text-[16px]">edit</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteDate(originalIndex)}
+                                  disabled={proposedDates.length <= 1}
+                                  className="text-muted hover:text-live transition-colors disabled:opacity-30"
+                                  title="削除"
+                                >
+                                  <span className="material-icons text-[16px]">delete</span>
+                                </button>
+                                <button
+                                  onClick={() => toggleDateSelection(originalIndex)}
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border transition-colors"
+                                  style={{
+                                    background: isSelected ? 'var(--purple-d)' : 'var(--purple-sm)',
+                                    color: 'var(--purple-l)',
+                                    borderColor: 'var(--purple)',
+                                  }}
+                                >
+                                  <span className="material-icons text-[16px]">
+                                    {isSelected ? 'check_box' : 'check_box_outline_blank'}
+                                  </span>
+                                  {isSelected ? '選択中' : '承諾'}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   );
                 })}
@@ -929,6 +1048,33 @@ export function CollabDetailModal({
           className="px-8 py-4 pr-10 shrink-0 flex flex-col gap-3"
           style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}
         >
+          {/* 再調整確認ダイアログ */}
+          {showReopenConfirm && (
+            <div
+              className="rounded-[10px] px-4 py-3 text-[12px]"
+              style={{ background: 'rgba(239,159,39,0.1)', color: 'var(--amber-l)', border: '1px solid rgba(239,159,39,0.3)' }}
+            >
+              <p className="font-semibold mb-2">確定済みのコラボを「調整中」に戻しますか？</p>
+              <p className="text-[11px] text-muted mb-3">確定日・リンクスケジュールが削除されます。候補日程・参加者・コメントは保持されます。</p>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setShowReopenConfirm(false)}
+                  className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-muted"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleReopen}
+                  disabled={reopening}
+                  className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold disabled:opacity-40"
+                  style={{ background: 'rgba(239,159,39,0.2)', color: 'var(--amber-l)', border: '1px solid rgba(239,159,39,0.4)' }}
+                >
+                  {reopening ? '処理中...' : '再調整する'}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* 複数選択時の確定日程ヒント */}
           {isOpen && canEdit && selectedDateIdxs.length > 1 && (
             <div
@@ -940,7 +1086,7 @@ export function CollabDetailModal({
               {' '}（承諾リストの最初の日程で確定されます）
             </div>
           )}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {canEdit && (
               <button
                 onClick={handleCancel}
@@ -960,6 +1106,30 @@ export function CollabDetailModal({
               <span className="material-icons text-[16px]">link</span>
               {copied ? '✓ コピー済み' : 'URLをコピー'}
             </button>
+            {/* confirmed ステータス: 再調整・複製ボタン */}
+            {canEdit && session.status === 'confirmed' && (
+              <>
+                <button
+                  onClick={() => {
+                    onDuplicate?.(session);
+                    onClose();
+                  }}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold border transition-colors"
+                  style={{ background: 'var(--surface)', color: 'var(--muted)', borderColor: 'var(--border)' }}
+                >
+                  <span className="material-icons text-[16px]">content_copy</span>
+                  コピーして新規作成
+                </button>
+                <button
+                  onClick={() => setShowReopenConfirm(true)}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold border transition-colors"
+                  style={{ background: 'rgba(239,159,39,0.15)', color: 'var(--amber-l)', borderColor: 'rgba(239,159,39,0.3)' }}
+                >
+                  <span className="material-icons text-[16px]">replay</span>
+                  再調整する
+                </button>
+              </>
+            )}
             {canEdit && isOpen && isDirty && (
               <button
                 onClick={handleSaveChanges}
