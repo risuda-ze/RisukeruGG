@@ -25,6 +25,7 @@ export * from './collab/createCollabSession';
 export * from './collab/respondToCollab';
 export * from './collab/confirmCollabDate';
 export * from './collab/cancelCollabSession';
+export * from './collab/reopenCollabSession';
 export * from './collab/expireCollabSessions';
 
 // Phase 8: US6 — 通知
