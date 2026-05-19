@@ -17,7 +17,8 @@
       "Bash(grep -E \"\\\\.\\(ts|tsx|js|jsx\\)$\")",
       "PowerShell(pnpm typecheck 2>&1)",
       "PowerShell(npx tsc --noEmit --project functions/tsconfig.json 2>&1)",
-      "Bash(grep -v \"planUpdatedAt\\\\|planned\\\\|#\\\\|//\")"
+      "Bash(grep -v \"planUpdatedAt\\\\|planned\\\\|#\\\\|//\")",
+      "Bash(bash -x .specify/scripts/bash/setup-plan.sh --json)"
     ]
   }
 }

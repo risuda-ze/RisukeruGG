@@ -26,6 +26,7 @@ function toSchedule(id: string, data: Record<string, unknown>): ScheduleEntry {
     updatedAt: (data.updatedAt as Timestamp | null)?.toDate() ?? new Date(),
     createdBy: data.createdBy as string,
     createdAt: (data.createdAt as Timestamp | null)?.toDate() ?? new Date(),
+    allDay: (data.allDay as boolean | undefined) ?? false,
   };
 }
 

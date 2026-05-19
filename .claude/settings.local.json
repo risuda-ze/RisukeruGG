@@ -101,7 +101,9 @@
       "PowerShell(Copy-Item \"c:\\\\dev\\\\RisukeruGG\\\\icon.png\" \"c:\\\\dev\\\\RisukeruGG\\\\public\\\\icon-192x192.png\" -Force)",
       "PowerShell(Copy-Item \"c:\\\\dev\\\\RisukeruGG\\\\icon.png\" \"c:\\\\dev\\\\RisukeruGG\\\\public\\\\icon-512x512.png\" -Force)",
       "Bash(node -e \"require\\('sharp'\\)\")",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(mkdir -p specs/004-schedule-task-fixes)",
+      "Bash(echo '{\"feature_directory\": \"specs/004-schedule-task-fixes\"}')"
     ]
   }
 }

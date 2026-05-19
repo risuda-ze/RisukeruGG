@@ -71,15 +71,18 @@ export function WeekCalendar({
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
-  /* 複数日イベント（開始日 ≠ 終了日）と単日イベントに分類 */
+  /* allDay フラグ付き・複数日・単日イベントに分類 */
+  const allDaySchedules = schedules.filter((s) => s.allDay);
   const multiDaySchedules = schedules.filter(
-    (s) => startOfDay(s.startAt).getTime() < startOfDay(s.endAt).getTime()
+    (s) => !s.allDay && startOfDay(s.startAt).getTime() < startOfDay(s.endAt).getTime()
   );
   const singleDaySchedules = schedules.filter(
-    (s) => startOfDay(s.startAt).getTime() === startOfDay(s.endAt).getTime()
+    (s) => !s.allDay && startOfDay(s.startAt).getTime() === startOfDay(s.endAt).getTime()
   );
-  /* 今週に表示すべき複数日イベント */
-  const multiDayInWeek = multiDaySchedules.filter((s) => getEventWeekCols(s, days) !== null);
+  /* all-day ストリップ: allDay + 複数日 */
+  const allDayInWeek = [...allDaySchedules, ...multiDaySchedules].filter(
+    (s) => getEventWeekCols(s, days) !== null
+  );
 
   return (
     <div className="flex flex-col flex-1 bg-surface overflow-hidden">
@@ -111,13 +114,13 @@ export function WeekCalendar({
         })}
       </div>
 
-      {/* ── 複数日イベント用 all-day ストリップ（デスクトップ） ── */}
-      {multiDayInWeek.length > 0 && (
+      {/* ── all-day ストリップ（デスクトップ） ── */}
+      {allDayInWeek.length > 0 && (
         <div
           className="hidden md:grid grid-cols-7 border-b border-border shrink-0 bg-card/20 py-1 gap-y-0.5"
           style={{ gridAutoRows: '22px' }}
         >
-          {multiDayInWeek.map((event) => {
+          {allDayInWeek.map((event) => {
             const cols = getEventWeekCols(event, days)!;
             const evStyle = getEventStyle(event.categoryId, categories, event.source);
             const cat = categories.find((c) => c.id === event.categoryId);
@@ -129,11 +132,11 @@ export function WeekCalendar({
               <button
                 key={event.id}
                 className={[
-                  'flex items-center gap-1 text-[11px] font-semibold text-white',
+                  'flex items-center gap-1.5 text-[12px] font-semibold text-white px-2 py-1',
                   'transition-opacity hover:opacity-80 overflow-hidden border-l-[3px]',
                   'animate-puni',
-                  !startsBefore ? 'ml-1 rounded-l-[4px]' : 'ml-0 border-l-transparent',
-                  !endsAfter ? 'mr-1 rounded-r-[4px]' : 'mr-0',
+                  !startsBefore ? 'ml-1 rounded-l-[6px]' : 'ml-0 border-l-transparent',
+                  !endsAfter ? 'mr-1 rounded-r-[6px]' : 'mr-0',
                 ]
                   .filter(Boolean)
                   .join(' ')}
@@ -141,8 +144,6 @@ export function WeekCalendar({
                   gridColumn: `${cols.start + 1} / ${cols.end + 2}`,
                   background: evStyle.background,
                   borderLeftColor: !startsBefore ? evStyle.borderLeftColor : 'transparent',
-                  paddingLeft: !startsBefore ? '6px' : '4px',
-                  paddingRight: '6px',
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -273,7 +274,7 @@ export function WeekCalendar({
                   return (
                     <button
                       key={s.id}
-                      className="w-full text-left px-2 py-1.5 rounded-[6px] text-white border-l-[3px] transition-opacity hover:opacity-80 shrink-0 min-h-[44px] flex flex-col justify-center"
+                      className="w-full text-left px-2 py-1.5 rounded-[6px] text-white border-l-[3px] transition-opacity hover:opacity-80 shrink-0 min-h-[44px] flex flex-col justify-center animate-puni"
                       style={style}
                       onClick={(e) => {
                         e.stopPropagation();

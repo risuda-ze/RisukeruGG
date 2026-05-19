@@ -58,6 +58,7 @@ export function ScheduleDetailModal({
   const [editingDate, setEditingDate] = useState(false);
   const [startAt, setStartAt] = useState<Date>(schedule.startAt);
   const [endAt, setEndAt] = useState<Date>(schedule.endAt);
+  const [isAllDay, setIsAllDay] = useState(schedule.allDay ?? false);
   const [savingDate, setSavingDate] = useState(false);
   const [dateError, setDateError] = useState<string | null>(null);
 
@@ -83,14 +84,14 @@ export function ScheduleDetailModal({
 
   /* ── 日時保存 ─────────────────────────────── */
   async function handleSaveDate() {
-    if (endAt <= startAt) {
+    if (!isAllDay && endAt <= startAt) {
       setDateError('終了日時は開始日時より後にしてください');
       return;
     }
     setDateError(null);
     setSavingDate(true);
     try {
-      await updateSchedule(teamId, schedule.id, { startAt, endAt }, schedule.updatedAt);
+      await updateSchedule(teamId, schedule.id, { startAt, endAt, allDay: isAllDay }, schedule.updatedAt);
       setEditingDate(false);
     } catch {
       setDateError('保存に失敗しました。もう一度お試しください');
@@ -298,11 +299,12 @@ export function ScheduleDetailModal({
                         const s = new Date(startAt);
                         s.setHours(0, 0, 0, 0);
                         const e = new Date(startAt);
-                        e.setHours(23, 59, 0, 0);
+                        e.setHours(0, 0, 0, 0);
                         setStartAt(s);
                         setEndAt(e);
+                        setIsAllDay(true);
                       }}
-                      className="mb-0.5 px-3 py-2.5 rounded-[12px] text-[12px] font-semibold border border-border text-muted hover:text-purple-l hover:border-purple-l transition-colors whitespace-nowrap"
+                      className={`mb-0.5 px-3 py-2.5 rounded-[12px] text-[12px] font-semibold border transition-colors whitespace-nowrap ${isAllDay ? 'border-purple text-purple' : 'border-border text-muted hover:text-purple-l hover:border-purple-l'}`}
                     >
                       終日
                     </button>
@@ -321,6 +323,7 @@ export function ScheduleDetailModal({
                         setDateError(null);
                         setStartAt(schedule.startAt);
                         setEndAt(schedule.endAt);
+                        setIsAllDay(schedule.allDay ?? false);
                       }}
                       className="px-3 py-1 text-[12px] text-muted border border-border rounded-[6px] hover:text-text transition-colors"
                     >

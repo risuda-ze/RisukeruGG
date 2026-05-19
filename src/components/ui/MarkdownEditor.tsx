@@ -75,16 +75,16 @@ const MD_COMPONENTS: Components = {
   ),
   li: ({ children }) => <li className="text-[14px]">{children}</li>,
 
-  /* コードブロック（pre が Context を提供して code にブロック判定を伝達） */
+  /* コードブロック（pre 内に Provider を配置してコンテキスト伝播を確実にする） */
   pre: ({ children }) => (
-    <InsidePreCtx.Provider value={true}>
-      <pre
-        className="bg-surface px-3 py-2.5 rounded-[8px] text-[12px] font-mono overflow-x-auto mb-2"
-        style={{ whiteSpace: 'pre', lineHeight: 1.6 }}
-      >
+    <pre
+      className="bg-surface px-3 py-2.5 rounded-[8px] text-[12px] font-mono overflow-x-auto mb-2"
+      style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}
+    >
+      <InsidePreCtx.Provider value={true}>
         {children}
-      </pre>
-    </InsidePreCtx.Provider>
+      </InsidePreCtx.Provider>
+    </pre>
   ),
   code: CodeComp,
 

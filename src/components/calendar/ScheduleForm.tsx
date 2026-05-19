@@ -48,6 +48,7 @@ export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: Sc
   const [description, setDescription] = useState(
     savedDraft?.description ?? initialData?.description ?? ''
   );
+  const [isAllDay, setIsAllDay] = useState(initialData?.allDay ?? false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,9 +71,10 @@ export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: Sc
     const start = new Date(startAt);
     start.setHours(0, 0, 0, 0);
     const end = new Date(startAt);
-    end.setHours(23, 59, 0, 0);
+    end.setHours(0, 0, 0, 0);
     setStartAt(start);
     setEndAt(end);
+    setIsAllDay(true);
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,7 +83,7 @@ export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: Sc
       setError('必須項目を入力してください');
       return;
     }
-    if (endAt <= startAt) {
+    if (!isAllDay && endAt <= startAt) {
       setError('終了日時は開始日時より後にしてください');
       return;
     }
@@ -98,6 +100,7 @@ export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: Sc
         participantIds: initialData?.participantIds ?? [],
         collabPartnerName: initialData?.collabPartnerName ?? null,
         linkedTaskIds: initialData?.linkedTaskIds ?? [],
+        allDay: isAllDay,
       });
       clearDraft(draftKey);
     } catch {
@@ -146,7 +149,7 @@ export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: Sc
           type="button"
           onClick={handleAllDay}
           disabled={!startAt}
-          className="mb-0.5 px-3 py-2.5 rounded-[12px] text-[12px] font-semibold border border-border text-muted hover:text-purple-l hover:border-purple-l transition-colors disabled:opacity-40 whitespace-nowrap"
+          className={`mb-0.5 px-3 py-2.5 rounded-[12px] text-[12px] font-semibold border transition-colors disabled:opacity-40 whitespace-nowrap ${isAllDay ? 'border-purple text-purple' : 'border-border text-muted hover:text-purple-l hover:border-purple-l'}`}
         >
           終日
         </button>

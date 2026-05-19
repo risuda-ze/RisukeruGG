@@ -145,6 +145,8 @@ export interface CollabComment {
   authorName: string;
   text: string;
   createdAt: Date;
+  /** 返信先コメントの ID。未設定はルートコメント、設定済みは返信（1階層のみ） */
+  parentId?: string;
 }
 
 export interface CollabSession {

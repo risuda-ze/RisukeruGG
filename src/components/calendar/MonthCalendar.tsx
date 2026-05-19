@@ -174,7 +174,7 @@ function WeekRow({
                   return (
                     <button
                       key={s.id}
-                      className="w-full text-left px-1.5 rounded-[4px] text-[10px] font-semibold text-white whitespace-nowrap overflow-hidden shrink-0 border-l-[3px] transition-opacity hover:opacity-80 flex items-center gap-1"
+                      className="w-full text-left px-1.5 rounded-[4px] text-[10px] font-semibold text-white whitespace-nowrap overflow-hidden shrink-0 border-l-[3px] transition-opacity hover:opacity-80 flex items-center gap-1 animate-puni"
                       style={{ height: `${EVENT_H}px`, background: `${color}28`, borderLeftColor: color }}
                       onClick={(e) => { e.stopPropagation(); onEventClick(s); }}
                       title={s.title}
@@ -349,11 +349,12 @@ export function MonthCalendar({
   /* ホバーツールチップの状態 */
   const [dayTooltip, setDayTooltip] = useState<DayTooltip>(null);
 
+  /* allDay フラグ付き単日イベントも複数日バーとして扱う */
   const multiDaySchedules = schedules.filter(
-    (s) => startOfDay(s.startAt).getTime() < startOfDay(s.endAt).getTime()
+    (s) => s.allDay || startOfDay(s.startAt).getTime() < startOfDay(s.endAt).getTime()
   );
   const singleDaySchedules = schedules.filter(
-    (s) => startOfDay(s.startAt).getTime() === startOfDay(s.endAt).getTime()
+    (s) => !s.allDay && startOfDay(s.startAt).getTime() === startOfDay(s.endAt).getTime()
   );
 
   return (

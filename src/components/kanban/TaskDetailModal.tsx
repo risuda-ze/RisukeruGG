@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Avatar } from '@/components/ui/Avatar';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -8,20 +8,13 @@ import { Timestamp } from 'firebase/firestore';
 import { updateTask, deleteTask, addTaskComment } from '@/lib/repositories/tasks';
 import { useAuthStore } from '@/stores/auth';
 import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
+import { DateInput } from '@/components/ui/DateInput';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import type { Task, TeamMember, TaskCategory, KanbanColumn, CollabComment } from '@/types/entities';
 
 interface TaskDetailDraft {
   description: string;
   editingDesc: boolean;
-}
-
-interface LocalReply {
-  id: string;
-  authorId: string;
-  authorName: string;
-  text: string;
-  time: string;
 }
 
 interface TaskDetailModalProps {
@@ -78,15 +71,17 @@ export function TaskDetailModal({
   const [commentText, setCommentText] = useState('');
   const [sendingComment, setSendingComment] = useState(false);
 
-  /* 返信（ローカル保存 — モーダルを閉じても維持） */
-  const repliesKey = `draft:task:replies:${task.id}`;
-  const [localReplies, setLocalReplies] = useState<Record<string, LocalReply[]>>(
-    () => loadDraft<Record<string, LocalReply[]>>(repliesKey) ?? {}
-  );
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState('');
+  /* 返信入力テキスト（コメントID をキーとする Map） */
+  const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
 
   const myName = currentUser?.displayName ?? 'あなた';
+
+  /* task.id が変わったときにコメントを最新状態に同期 */
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setComments(task.comments ?? []);
+  }, [task.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const currentCategory = categories.find((c) => c.id === categoryId);
   const currentColumn = columns.find((c) => c.id === columnId);
   const currentAssignee = members.find((m) => m.userId === assigneeId);
@@ -190,26 +185,24 @@ export function TaskDetailModal({
     }
   }
 
-  /* 返信追加（ローカル保存付き） */
-  function addReply(commentId: string) {
-    if (!replyText.trim()) return;
-    const reply: LocalReply = {
-      id: `r-${Date.now()}`,
-      authorId: currentUser?.uid ?? '',
+  /* 返信追加（Firestore 永続化 + 楽観的ローカル更新） */
+  async function addReply(parentId: string) {
+    if (!replyInputs[parentId]?.trim() || !currentUser) return;
+    const reply = {
+      id: `${Date.now()}`, // eslint-disable-line react-hooks/purity
+      authorId: currentUser.uid,
       authorName: myName,
-      text: replyText.trim(),
-      time: format(new Date(), 'HH:mm', { locale: ja }),
+      text: replyInputs[parentId].trim(),
+      createdAt: Timestamp.now(),
+      parentId,
     };
-    setLocalReplies((prev) => {
-      const next = {
-        ...prev,
-        [commentId]: [...(prev[commentId] ?? []), reply],
-      };
-      saveDraft<Record<string, LocalReply[]>>(repliesKey, next);
-      return next;
-    });
-    setReplyText('');
-    setReplyingTo(null);
+    try {
+      await addTaskComment(teamId, task.id, reply);
+      setComments((prev) => [...prev, { ...reply, createdAt: reply.createdAt.toDate() }]);
+      setReplyInputs((prev) => ({ ...prev, [parentId]: '' }));
+    } catch {
+      /* 送信失敗時は入力欄を維持 */
+    }
   }
 
   /* タスク削除 */
@@ -454,15 +447,17 @@ export function TaskDetailModal({
 
               {/* 締切日 */}
               <div>
-                <label className="block text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-1.5">
-                  締切日
-                </label>
                 {canEdit ? (
-                  <input type="date" value={dueDate} onChange={(e) => handleDueDateChange(e.target.value)} className={selectClass} />
+                  <DateInput label="締切日" value={dueDate} onChange={handleDueDateChange} />
                 ) : (
-                  <span className="text-[13px] text-text font-num py-2 block">
-                    {task.dueDate ? format(task.dueDate, 'yyyy/MM/dd', { locale: ja }) : '—'}
-                  </span>
+                  <>
+                    <label className="block text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-1.5">
+                      締切日
+                    </label>
+                    <span className="text-[13px] text-text font-num py-2 block">
+                      {task.dueDate ? format(task.dueDate, 'yyyy/MM/dd', { locale: ja }) : '—'}
+                    </span>
+                  </>
                 )}
               </div>
             </div>
@@ -532,112 +527,114 @@ export function TaskDetailModal({
               <p className="text-[11px] font-semibold text-muted tracking-[0.06em] uppercase">コメント / メモ</p>
             </div>
 
-            {/* コメントリスト */}
+            {/* コメントリスト（ルートコメント → 返信のツリー表示） */}
             <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4" style={{ minHeight: 0 }}>
-              {comments.length === 0 && (
+              {comments.filter((c) => !c.parentId).length === 0 && (
                 <p className="text-[12px] text-muted italic text-center mt-4">まだコメントはありません</p>
               )}
-              {comments.map((c) => {
-                const replies = localReplies[c.id] ?? [];
-                return (
-                  <div key={c.id}>
-                    {/* コメント本体 */}
-                    <div className="flex gap-2.5">
-                      {memberAvatarUrl(c.authorId) ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={memberAvatarUrl(c.authorId)!} alt={c.authorName} className="w-7 h-7 rounded-full object-cover shrink-0" />
-                      ) : (
-                        <div
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
-                          style={{ background: avatarBg(c.authorName), color: avatarColor(c.authorName) }}
-                        >
-                          {c.authorName.slice(0, 2).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div
-                          className="rounded-[0_10px_10px_10px] px-3 py-2"
-                          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
-                        >
-                          <div className="flex justify-between mb-1 text-[11px] text-muted">
-                            <strong className="text-text font-semibold">{c.authorName}</strong>
-                            <span>{format(c.createdAt, 'HH:mm', { locale: ja })}</span>
-                          </div>
-                          <div className="text-[13px] text-text leading-relaxed">{c.text}</div>
-                        </div>
-                        <button
-                          onClick={() => { setReplyingTo(c.id); setReplyText(''); }}
-                          className="mt-1 text-[11px] text-muted hover:text-purple-l transition-colors ml-1"
-                        >
-                          返信
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* 返信リスト */}
-                    {replies.length > 0 && (
-                      <div className="ml-9 mt-2 flex flex-col gap-2 border-l-2 pl-3" style={{ borderColor: 'var(--border)' }}>
-                        {replies.map((r) => (
-                          <div key={r.id} className="flex gap-2">
-                            {memberAvatarUrl(r.authorId) ? (
-                              /* eslint-disable-next-line @next/next/no-img-element */
-                              <img src={memberAvatarUrl(r.authorId)!} alt={r.authorName} className="w-5 h-5 rounded-full object-cover shrink-0 mt-0.5" />
-                            ) : (
-                              <div
-                                className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5"
-                                style={{ background: avatarBg(r.authorName), color: avatarColor(r.authorName) }}
-                              >
-                                {r.authorName.slice(0, 2).toUpperCase()}
-                              </div>
-                            )}
-                            <div
-                              className="flex-1 rounded-[0_8px_8px_8px] px-2.5 py-1.5"
-                              style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
-                            >
-                              <div className="flex justify-between mb-0.5 text-[10px] text-muted">
-                                <strong className="text-text font-semibold">{r.authorName}</strong>
-                                <span>{r.time}</span>
-                              </div>
-                              <div className="text-[12px] text-text leading-relaxed">{r.text}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* 返信入力 */}
-                    {replyingTo === c.id && (
-                      <div className="ml-9 mt-2 flex flex-col gap-1.5 border-l-2 pl-3" style={{ borderColor: 'var(--purple)' }}>
-                        <textarea
-                          value={replyText}
-                          onChange={(e) => setReplyText(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addReply(c.id); }}
-                          placeholder="返信を入力..."
-                          rows={2}
-                          className="w-full bg-bg border border-border text-text px-2.5 py-2 rounded-[8px] text-[12px] outline-none focus:border-purple resize-none"
-                          autoFocus
-                        />
-                        <div className="flex gap-1.5 justify-end">
-                          <button
-                            onClick={() => setReplyingTo(null)}
-                            className="px-2.5 py-1 rounded-[6px] text-[11px] font-semibold border border-border text-muted"
+              {comments
+                .filter((c) => !c.parentId)
+                .map((c) => {
+                  const replies = comments.filter((r) => r.parentId === c.id);
+                  return (
+                    <div key={c.id}>
+                      {/* コメント本体 */}
+                      <div className="flex gap-2.5">
+                        {memberAvatarUrl(c.authorId) ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img src={memberAvatarUrl(c.authorId)!} alt={c.authorName} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
+                            style={{ background: avatarBg(c.authorName), color: avatarColor(c.authorName) }}
                           >
-                            キャンセル
-                          </button>
+                            {c.authorName.slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div
+                            className="rounded-[0_10px_10px_10px] px-3 py-2"
+                            style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+                          >
+                            <div className="flex justify-between mb-1 text-[11px] text-muted">
+                              <strong className="text-text font-semibold">{c.authorName}</strong>
+                              <span>{format(c.createdAt, 'HH:mm', { locale: ja })}</span>
+                            </div>
+                            <div className="text-[13px] text-text leading-relaxed">{c.text}</div>
+                          </div>
                           <button
-                            onClick={() => addReply(c.id)}
-                            disabled={!replyText.trim()}
-                            className="px-2.5 py-1 rounded-[6px] text-[11px] font-semibold disabled:opacity-40"
-                            style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+                            onClick={() => setReplyInputs((prev) => ({ ...prev, [c.id]: prev[c.id] ?? '' }))}
+                            className="mt-1 text-[11px] text-muted hover:text-purple-l transition-colors ml-1"
                           >
                             返信
                           </button>
                         </div>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+
+                      {/* 返信リスト */}
+                      {replies.length > 0 && (
+                        <div className="ml-9 mt-2 flex flex-col gap-2 border-l-2 pl-3" style={{ borderColor: 'var(--border)' }}>
+                          {replies.map((r) => (
+                            <div key={r.id} className="flex gap-2">
+                              {memberAvatarUrl(r.authorId) ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img src={memberAvatarUrl(r.authorId)!} alt={r.authorName} className="w-5 h-5 rounded-full object-cover shrink-0 mt-0.5" />
+                              ) : (
+                                <div
+                                  className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5"
+                                  style={{ background: avatarBg(r.authorName), color: avatarColor(r.authorName) }}
+                                >
+                                  {r.authorName.slice(0, 2).toUpperCase()}
+                                </div>
+                              )}
+                              <div
+                                className="flex-1 rounded-[0_8px_8px_8px] px-2.5 py-1.5"
+                                style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+                              >
+                                <div className="flex justify-between mb-0.5 text-[10px] text-muted">
+                                  <strong className="text-text font-semibold">{r.authorName}</strong>
+                                  <span>{format(r.createdAt, 'HH:mm', { locale: ja })}</span>
+                                </div>
+                                <div className="text-[12px] text-text leading-relaxed">{r.text}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 返信入力（c.id が replyInputs に存在するとき表示） */}
+                      {c.id in replyInputs && (
+                        <div className="ml-9 mt-2 flex flex-col gap-1.5 border-l-2 pl-3" style={{ borderColor: 'var(--purple)' }}>
+                          <textarea
+                            value={replyInputs[c.id]}
+                            onChange={(e) => setReplyInputs((prev) => ({ ...prev, [c.id]: e.target.value }))}
+                            onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addReply(c.id); }}
+                            placeholder="返信を入力..."
+                            rows={2}
+                            className="w-full bg-bg border border-border text-text px-2.5 py-2 rounded-[8px] text-[12px] outline-none focus:border-purple resize-none"
+                            autoFocus
+                          />
+                          <div className="flex gap-1.5 justify-end">
+                            <button
+                              onClick={() => setReplyInputs((prev) => { const next = { ...prev }; delete next[c.id]; return next; })}
+                              className="px-2.5 py-1 rounded-[6px] text-[11px] font-semibold border border-border text-muted"
+                            >
+                              キャンセル
+                            </button>
+                            <button
+                              onClick={() => addReply(c.id)}
+                              disabled={!replyInputs[c.id]?.trim()}
+                              className="px-2.5 py-1 rounded-[6px] text-[11px] font-semibold disabled:opacity-40"
+                              style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+                            >
+                              返信
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
 
             {/* コメント入力 */}

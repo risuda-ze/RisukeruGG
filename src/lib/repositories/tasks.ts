@@ -24,6 +24,7 @@ function toTask(id: string, data: Record<string, unknown>): Task {
     authorName: c.authorName as string,
     text: c.text as string,
     createdAt: (c.createdAt as Timestamp).toDate(),
+    parentId: (c.parentId as string | undefined) ?? undefined,
   }));
   return {
     id,
@@ -81,7 +82,7 @@ export async function updateTask(
 export async function addTaskComment(
   teamId: string,
   taskId: string,
-  comment: { id: string; authorId: string; authorName: string; text: string; createdAt: Timestamp }
+  comment: { id: string; authorId: string; authorName: string; text: string; createdAt: Timestamp; parentId?: string }
 ): Promise<void> {
   const ref = doc(db, 'teams', teamId, 'tasks', taskId);
   await updateDoc(ref, { comments: arrayUnion(comment) });

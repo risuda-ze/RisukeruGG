@@ -6,7 +6,7 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT START -->
 
-現在進行中の スケジュール・UI改善計画: `specs/003-schedule-ui-improvements/plan.md`
+現在進行中の スケジュール・タスク修正＆終日フラグ対応: `specs/004-schedule-task-fixes/plan.md`
 
 <!-- SPECKIT END -->
 
