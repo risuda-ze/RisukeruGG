@@ -186,3 +186,21 @@ export const cancelCollabSession = httpsCallable<
   { teamId: string; sessionId: string },
   { success: boolean }
 >(functions, 'cancelCollabSession');
+
+export const reopenCollabSession = httpsCallable<
+  { teamId: string; sessionId: string },
+  { success: boolean }
+>(functions, 'reopenCollabSession');
+
+/** 候補日程・参加者回答を一括置換（編集・削除時に使用） */
+export async function replaceCollabProposedDates(
+  teamId: string,
+  sessionId: string,
+  newDates: Date[],
+  newParticipantResponses: Record<string, Record<string, 'ok' | 'ng' | 'pending'>>
+): Promise<void> {
+  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), {
+    proposedDates: newDates.map((d) => Timestamp.fromDate(d)),
+    participantResponses: newParticipantResponses,
+  });
+}

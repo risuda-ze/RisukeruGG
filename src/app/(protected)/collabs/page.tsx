@@ -78,6 +78,7 @@ export default function CollabsPage() {
   const [sessions, setSessions] = useState<CollabSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSession, setSelectedSession] = useState<CollabSession | null>(null);
+  const [duplicateSource, setDuplicateSource] = useState<CollabSession | null>(null);
 
   /* 新規コラボ調整フォーム */
   const [formTitle, setFormTitle] = useState('');
@@ -124,6 +125,18 @@ export default function CollabsPage() {
     }
   }, [myMember]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /* 複製元が変化したらフォームをプリフィル */
+  useEffect(() => {
+    if (!duplicateSource) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFormTitle(duplicateSource.title);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setContent(duplicateSource.content ?? '');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFormParticipants(duplicateSource.participants ?? []);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [duplicateSource]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!teamId || !formTitle.trim()) {
@@ -165,6 +178,7 @@ export default function CollabsPage() {
       setFormParticipants(
         myMember ? [{ id: myMember.userId, name: myMember.displayName, type: 'member' }] : []
       );
+      setDuplicateSource(null);
     } catch {
       setFormError('作成に失敗しました。Firebaseエミュレータが起動しているか確認してください。');
     } finally {
@@ -515,6 +529,8 @@ export default function CollabsPage() {
           canEdit={canEdit}
           onClose={() => setSelectedSession(null)}
           onDeleted={() => setSelectedSession(null)}
+          onReopen={() => setSelectedSession(null)}
+          onDuplicate={(s) => setDuplicateSource(s)}
         />
       )}
     </div>
