@@ -6,7 +6,7 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT START -->
 
-現在進行中の コラボ調整画面 UI リデザイン: `specs/006-collab-ui-redesign/plan.md`
+現在進行中の スケジュール管理カレンダー UI 改善: `specs/007-schedule-calendar-ui-improvements/plan.md`
 
 <!-- SPECKIT END -->
 

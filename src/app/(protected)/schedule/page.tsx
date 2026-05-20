@@ -96,22 +96,10 @@ export default function SchedulePage() {
   return (
     <div className="flex flex-col flex-1 overflow-hidden relative">
       {/* トップバー */}
-      <TopBar title="スケジュール">
-        {canEdit && (
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-[12px] text-[12px] font-semibold text-white transition-colors"
-            style={{ background: 'var(--amber-d)' }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--amber)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--amber-d)')}
-          >
-            <span className="material-icons text-[16px]">add</span>予定を追加
-          </button>
-        )}
-      </TopBar>
+      <TopBar title="スケジュール" />
 
       {/* カレンダーナビゲーションバー */}
-      <div className="flex items-center justify-between px-3 md:px-6 py-1 md:py-1.5 bg-card border-b border-border shrink-0">
+      <div className="flex items-center justify-between px-3 md:px-6 py-0.5 md:py-1 bg-card shrink-0">
         {/* 週/月トグル + ラベル */}
         <div className="flex items-center gap-2 md:gap-4">
           <div className="flex bg-surface border border-border rounded-[6px] overflow-hidden">
@@ -196,6 +184,10 @@ export default function SchedulePage() {
           categories={categories}
           onEventClick={setSelectedSchedule}
           onDateClick={canEdit ? () => setShowCreate(true) : undefined}
+          onDateLabelClick={(date) => {
+            setCurrentDate(date);
+            setView('week');
+          }}
         />
       ) : (
         <WeekCalendar

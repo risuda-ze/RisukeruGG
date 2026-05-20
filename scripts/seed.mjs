@@ -491,6 +491,20 @@ async function main() {
     { id: 'sched_may_s2', title: '【動画】#18 視聴者参加回ダイジェスト', catId: 'scat002', start: d(2026, 5, 10, 15, 0), end: d(2026, 5, 10, 18, 0), pIds: [UID1, UID2, UID3] },
     { id: 'sched_may_s3', title: '【動画】新MAP徹底解説', catId: 'scat002', start: d(2026, 5, 23, 15, 0), end: d(2026, 5, 23, 18, 0), pIds: [UID1, UID2] },
     { id: 'sched_may_s4', title: '【動画】5月ベストシーン集', catId: 'scat002', start: d(2026, 5, 30, 15, 0), end: d(2026, 5, 30, 18, 0), pIds: [UID1, UID2, UID3] },
+    // ─── 当月 (5月) 追加予定 ────────────────────────────
+    // 5月21日: この日は予定が3件入る（sched_may_w3 と合わせて）
+    { id: 'sched_may_21_prep', title: '配信前ミーティング（機材・構成確認）', catId: 'scat001', start: d(2026, 5, 21, 10, 0), end: d(2026, 5, 21, 11, 30), pIds: [UID1, UID2, UID3] },
+    { id: 'sched_may_21_rec', title: '【収録】コメント読み動画 アーカイブ用', catId: 'scat002', start: d(2026, 5, 21, 14, 0), end: d(2026, 5, 21, 16, 0), pIds: [UID1, UID2] },
+    // 5月17日（土）: 特別週末配信
+    { id: 'sched_may_17_live', title: '特別週末配信 〜リスナー感謝祭〜', catId: 'scat001', start: d(2026, 5, 17, 18, 0), end: d(2026, 5, 17, 21, 0), pIds: [UID1, UID2, UID3, UID4] },
+    // 5月22日（木）: 6月企画会議
+    { id: 'sched_may_22_mtg', title: '6月コンテンツ企画会議', catId: null, start: d(2026, 5, 22, 13, 0), end: d(2026, 5, 22, 14, 30), pIds: [UID1, UID2, UID3] },
+    // 5月25日（月）: コラボ事前打合せ
+    { id: 'sched_may_25_collab', title: 'コラボ事前打合せ w/ ゲーム実況者B', catId: 'scat003', start: d(2026, 5, 25, 20, 0), end: d(2026, 5, 25, 21, 30), pIds: [UID1, UID3] },
+    // 5月27日（水）: 来月分動画収録
+    { id: 'sched_may_27_rec', title: '【前倒し収録】6月第1回動画素材', catId: 'scat002', start: d(2026, 5, 27, 14, 0), end: d(2026, 5, 27, 17, 0), pIds: [UID1, UID2] },
+    // 5月29日（金）: 月末振り返り
+    { id: 'sched_may_29_retro', title: '5月月末振り返りミーティング', catId: null, start: d(2026, 5, 29, 11, 0), end: d(2026, 5, 29, 12, 0), pIds: [UID1, UID2, UID3] },
     // ─── 来月 (6月) 配信 (水曜) ───────────────────────────
     { id: 'sched_jun_w1', title: '週次配信 #21 〜6月開幕！〜', catId: 'scat001', start: d(2026, 6, 3, 20, 0), end: d(2026, 6, 3, 22, 0), pIds: [UID1, UID3] },
     { id: 'sched_jun_w2', title: '週次配信 #22 〜コラボ配信 w/ ゲーム実況者B〜', catId: 'scat003', start: d(2026, 6, 10, 20, 0), end: d(2026, 6, 10, 22, 0), pIds: [UID1, UID2, UID3, UID4] },
@@ -501,6 +515,32 @@ async function main() {
     { id: 'sched_jun_s2', title: '【動画】コラボ配信ダイジェスト', catId: 'scat002', start: d(2026, 6, 13, 15, 0), end: d(2026, 6, 13, 18, 0), pIds: [UID1, UID2, UID3] },
     { id: 'sched_jun_s3', title: '【動画】夏ゲーム期待作レビュー', catId: 'scat002', start: d(2026, 6, 20, 15, 0), end: d(2026, 6, 20, 18, 0), pIds: [UID1, UID2] },
     { id: 'sched_jun_s4', title: '【動画】6月ベストプレイ集', catId: 'scat002', start: d(2026, 6, 27, 15, 0), end: d(2026, 6, 27, 18, 0), pIds: [UID1, UID2, UID3] },
+
+    // ─── テスト: 複数日バー重なり確認 (6/22週) ────────────
+    // Mon 6/22: 1件 (バーA のみ、オーバーフローなし)
+    // Tue 6/23: 2件 (A+B、オーバーフローなし)
+    // Wed 6/24: 3件 (A+B+C → +1件 表示)
+    // Thu 6/25: 4件 (A+B+C+D → +2件 表示)
+    { id: 'sched_test_md_a', title: '[テスト] 複数日バーA（6/22〜28）', allDay: true, catId: 'scat001',
+      start: d(2026, 6, 22, 0, 0), end: d(2026, 6, 28, 23, 59), pIds: [UID1] },
+    { id: 'sched_test_md_b', title: '[テスト] 複数日バーB（6/23〜28）', allDay: true, catId: 'scat002',
+      start: d(2026, 6, 23, 0, 0), end: d(2026, 6, 28, 23, 59), pIds: [UID1] },
+    { id: 'sched_test_md_c', title: '[テスト] 複数日バーC（6/24〜28）', allDay: true, catId: 'scat003',
+      start: d(2026, 6, 24, 0, 0), end: d(2026, 6, 28, 23, 59), pIds: [UID1] },
+    { id: 'sched_test_md_d', title: '[テスト] 複数日バーD（6/25〜28）', allDay: true, catId: null,
+      start: d(2026, 6, 25, 0, 0), end: d(2026, 6, 28, 23, 59), pIds: [UID1] },
+
+    // ─── テスト: 単日予定10件 (5/20 水) ──────────────────
+    { id: 'sched_test_10_01', title: '[テスト] ①朝のMTG', catId: 'scat001', start: d(2026, 5, 20, 8, 0), end: d(2026, 5, 20, 9, 0), pIds: [UID1] },
+    { id: 'sched_test_10_02', title: '[テスト] ②企画レビュー', catId: 'scat002', start: d(2026, 5, 20, 9, 30), end: d(2026, 5, 20, 10, 30), pIds: [UID1] },
+    { id: 'sched_test_10_03', title: '[テスト] ③サムネイル確認', catId: 'scat001', start: d(2026, 5, 20, 11, 0), end: d(2026, 5, 20, 12, 0), pIds: [UID1] },
+    { id: 'sched_test_10_04', title: '[テスト] ④昼食ミーティング', catId: null, start: d(2026, 5, 20, 13, 0), end: d(2026, 5, 20, 14, 0), pIds: [UID1, UID2] },
+    { id: 'sched_test_10_05', title: '[テスト] ⑤台本作成', catId: 'scat003', start: d(2026, 5, 20, 14, 30), end: d(2026, 5, 20, 15, 30), pIds: [UID1] },
+    { id: 'sched_test_10_06', title: '[テスト] ⑥収録準備', catId: 'scat001', start: d(2026, 5, 20, 16, 0), end: d(2026, 5, 20, 17, 0), pIds: [UID1] },
+    { id: 'sched_test_10_07', title: '[テスト] ⑦収録', catId: 'scat002', start: d(2026, 5, 20, 17, 30), end: d(2026, 5, 20, 18, 30), pIds: [UID1, UID2] },
+    { id: 'sched_test_10_08', title: '[テスト] ⑧編集作業', catId: 'scat002', start: d(2026, 5, 20, 19, 0), end: d(2026, 5, 20, 20, 0), pIds: [UID2] },
+    { id: 'sched_test_10_09', title: '[テスト] ⑨配信前チェック', catId: 'scat001', start: d(2026, 5, 20, 20, 30), end: d(2026, 5, 20, 21, 30), pIds: [UID1, UID3] },
+    { id: 'sched_test_10_10', title: '[テスト] ⑩深夜配信', catId: 'scat001', start: d(2026, 5, 20, 22, 0), end: d(2026, 5, 20, 23, 30), pIds: [UID1] },
   ];
 
   for (const s of schedules) {
@@ -509,6 +549,7 @@ async function main() {
       categoryId: s.catId,
       startAt: s.start,
       endAt: s.end,
+      allDay: s.allDay ?? false,
       participantIds: s.pIds,
       description: '',
       collabPartnerName: null,
@@ -518,7 +559,7 @@ async function main() {
       createdAt: d(2026, 4, 1),
     });
   }
-  console.log(`  ✓ schedules (${schedules.length}件 — 先月8・当月8・来月8)`);
+  console.log(`  ✓ schedules (${schedules.length}件 — 先月8・当月${schedules.filter(s => s.id.startsWith('sched_may')).length}・来月${schedules.filter(s => s.id.startsWith('sched_jun')).length}・テスト${schedules.filter(s => s.id.startsWith('sched_test')).length})`);
 
   // ── コラボセッション ──────────────────────────────────────
   await setDoc(`teams/${TEAM_ID}/collabSessions/collab001`, {
@@ -676,7 +717,18 @@ async function main() {
   console.log(`  マネージャー健太  (editor) : kenta@example.com   uid=${UID3}`);
   console.log(`  視聴者三郎        (viewer) : saburo@example.com  uid=${UID4}`);
   console.log('\n投入データ件数:');
-  console.log(`  スケジュール : ${schedules.length}件 (先月8・当月8・来月8)`);
+  console.log(`  スケジュール : ${schedules.length}件`);
+  console.log('    先月(4月): 8件');
+  console.log('    当月(5月): 15件  ※ 5/20 は単日10件テスト, 5/21 は3件');
+  console.log('    来月(6月): 8件   ※ 6/22週は複数日バー重なりテスト');
+  console.log('    テスト    : 14件 (複数日バー×4 + 単日10件)');
+  console.log('');
+  console.log('  テスト確認日:');
+  console.log('    5/20 (水) — 単日10件スクロールテスト');
+  console.log('    6/22 (月) — 複数日バー 1件（オーバーフローなし）');
+  console.log('    6/23 (火) — 複数日バー 2件（オーバーフローなし）');
+  console.log('    6/24 (水) — 複数日バー 3件（+1件 表示）');
+  console.log('    6/25 (木) — 複数日バー 4件（+2件 表示）');
   console.log(`  タスク       : ${tasks.length}件 (未着手4・進行中3・完了3)`);
   console.log(`  通知         : ${notifications.length}件 (すべて未読)`);
   console.log(`  コラボ       : 2件`);

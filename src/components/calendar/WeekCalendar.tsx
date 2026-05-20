@@ -24,11 +24,11 @@ function getEventStyle(
   source?: 'google'
 ): { background: string; borderLeftColor: string } {
   if (source === 'google') {
-    return { background: `${GCAL_EVENT_COLOR}28`, borderLeftColor: GCAL_EVENT_COLOR };
+    return { background: `${GCAL_EVENT_COLOR}55`, borderLeftColor: GCAL_EVENT_COLOR };
   }
   const cat = categories.find((c) => c.id === categoryId);
   const color = cat?.color ?? DEFAULT_EVENT_COLOR;
-  return { background: `${color}28`, borderLeftColor: color };
+  return { background: `${color}55`, borderLeftColor: color };
 }
 
 /** 曜日インデックスから色クラスを返す（0=日, 6=土） */
@@ -97,12 +97,12 @@ export function WeekCalendar({
               className="flex items-center justify-center gap-1 py-2 border-r border-border last:border-r-0"
             >
               <span
-                className={`text-[9px] font-bold tracking-wide leading-none whitespace-nowrap ${getDowColorClass(i)}/50`}
+                className={`text-[9px] font-medium tracking-wide leading-none whitespace-nowrap ${getDowColorClass(i)}/50`}
               >
                 {DOW_LABELS[i]}&thinsp;{format(day, 'M/')}
               </span>
               <span
-                className={`text-[16px] font-bold font-num leading-none ${
+                className={`text-[16px] font-medium font-num leading-none ${
                   isCurrentDay ? 'text-purple-l' : getDowColorClass(i)
                 }`}
               >
@@ -132,7 +132,7 @@ export function WeekCalendar({
               <button
                 key={event.id}
                 className={[
-                  'flex items-center gap-1.5 text-[12px] font-semibold text-white px-2 py-1',
+                  'flex items-center gap-1.5 text-[13px] font-medium text-white px-2 py-1',
                   'transition-opacity hover:opacity-80 overflow-hidden border-l-[3px]',
                   'animate-puni',
                   !startsBefore ? 'ml-1 rounded-l-[6px]' : 'ml-0 border-l-transparent',
@@ -177,18 +177,18 @@ export function WeekCalendar({
                   isCurrentDay ? 'bg-[rgba(127,119,221,0.08)]' : 'bg-card/40'
                 }`}
               >
-                <span className={`text-[10px] font-bold tracking-widest ${getDowColorClass(i)}/60`}>
+                <span className={`text-[10px] font-medium tracking-widest ${getDowColorClass(i)}/60`}>
                   {DOW_LABELS[i]}
                 </span>
                 <span
-                  className={`text-[14px] font-bold font-num ${
+                  className={`text-[14px] font-medium font-num ${
                     isCurrentDay ? 'text-purple-l' : getDowColorClass(i)
                   }`}
                 >
                   {format(day, 'M/d', { locale: ja })}
                 </span>
                 {isCurrentDay && (
-                  <span className="text-[10px] font-semibold text-purple-l bg-purple-d/40 px-1.5 py-0.5 rounded-full">
+                  <span className="text-[10px] font-medium text-purple-l bg-purple-d/40 px-1.5 py-0.5 rounded-full">
                     今日
                   </span>
                 )}
@@ -224,10 +224,10 @@ export function WeekCalendar({
                             {cat.icon}
                           </span>
                         )}
-                        <span className="text-[11px] font-num text-white/60 shrink-0 w-10">
+                        <span className="text-[12px] font-num text-white/60 shrink-0 w-10">
                           {format(s.startAt, 'HH:mm')}
                         </span>
-                        <span className="text-[13px] font-semibold text-white truncate flex-1">
+                        <span className="text-[14px] font-medium text-white truncate flex-1">
                           {s.title}
                         </span>
                       </button>
@@ -283,17 +283,17 @@ export function WeekCalendar({
                       title={s.title}
                     >
                       {/* 時刻 */}
-                      <div className="text-[10px] font-bold opacity-70 mb-0.5 font-num">
+                      <div className="text-[11px] font-medium opacity-70 mb-0.5 font-num">
                         {format(s.startAt, 'HH:mm')} – {format(s.endAt, 'HH:mm')}
                       </div>
                       {/* アイコン + タイトル */}
                       <div className="flex items-center gap-1">
                         {cat?.icon && (
-                          <span className="material-icons text-[13px] opacity-80 shrink-0">
+                          <span className="material-icons text-[14px] opacity-80 shrink-0">
                             {cat.icon}
                           </span>
                         )}
-                        <div className="text-[12px] font-semibold leading-tight truncate">
+                        <div className="text-[13px] font-medium leading-tight truncate">
                           {s.title}
                         </div>
                       </div>

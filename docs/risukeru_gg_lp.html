@@ -19,10 +19,12 @@
         --purple-d: #534ab7;
         --amber: #ef9f27;
         --amber-l: #fac775;
+        --amber-d: #c77b15;
         --text: #eeeeff;
         --muted: #6666aa;
         --live: #ff4d6d;
         --green: #3fcf7f;
+        --alert: #ff4d6d;
       }
       * {
         box-sizing: border-box;
@@ -37,6 +39,57 @@
         background: var(--bg);
         color: var(--text);
         overflow-x: hidden;
+        font-size: 16px;
+      }
+
+      /* ── アニメーションユーティリティ ── */
+      .fade-up {
+        opacity: 0;
+        transform: translateY(40px);
+        transition:
+          opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+          transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .fade-up.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .delay-100 {
+        transition-delay: 100ms;
+      }
+      .delay-200 {
+        transition-delay: 200ms;
+      }
+      .delay-300 {
+        transition-delay: 300ms;
+      }
+
+      @keyframes float {
+        0% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-12px);
+        }
+        100% {
+          transform: translateY(0px);
+        }
+      }
+      @keyframes pulse-soft {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.05);
+          opacity: 0.8;
+        }
+      }
+
+      /* ── テキストユーティリティ ── */
+      .no-wrap-pc {
+        white-space: nowrap;
       }
 
       /* ── NAV ── */
@@ -46,7 +99,7 @@
         left: 0;
         right: 0;
         z-index: 100;
-        height: 60px;
+        height: 68px;
         background: rgba(8, 8, 26, 0.85);
         backdrop-filter: blur(16px);
         border-bottom: 0.5px solid var(--border);
@@ -54,16 +107,17 @@
         align-items: center;
         padding: 0 32px;
         gap: 20px;
+        transition: transform 0.3s ease;
       }
       .nav-logo {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         flex: 1;
       }
       .nav-logo-icon {
-        width: 34px;
-        height: 34px;
+        width: 38px;
+        height: 38px;
         background: var(--purple-d);
         border-radius: 9px;
         display: flex;
@@ -71,7 +125,7 @@
         justify-content: center;
       }
       .nav-name {
-        font-size: 15px;
+        font-size: 18px;
         font-weight: 700;
       }
       .nav-name span {
@@ -79,32 +133,51 @@
       }
       .nav-links {
         display: flex;
-        gap: 24px;
+        gap: 28px;
       }
       .nav-links a {
-        font-size: 13px;
+        font-size: 15px;
         color: var(--muted);
         text-decoration: none;
-        transition: color 0.15s;
+        transition: color 0.2s;
       }
       .nav-links a:hover {
         color: var(--text);
+      }
+
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+      .nav-login {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text);
+        text-decoration: none;
+        transition: color 0.2s;
+        white-space: nowrap;
+      }
+      .nav-login:hover {
+        color: var(--amber);
       }
       .nav-cta {
         background: var(--amber);
         color: #1a0800;
         border: none;
         border-radius: 8px;
-        font-size: 13px;
+        font-size: 15px;
         font-weight: 700;
-        padding: 8px 20px;
+        padding: 10px 24px;
         cursor: pointer;
         font-family: inherit;
-        transition: background 0.15s;
+        transition: all 0.2s;
         white-space: nowrap;
       }
       .nav-cta:hover {
         background: var(--amber-l);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 159, 39, 0.3);
       }
 
       /* ── HERO ── */
@@ -115,7 +188,7 @@
         align-items: center;
         justify-content: center;
         position: relative;
-        padding: 100px 24px 80px;
+        padding: 120px 24px 80px;
         overflow: hidden;
         text-align: center;
       }
@@ -147,97 +220,110 @@
         background: rgba(127, 119, 221, 0.12);
         border: 0.5px solid rgba(127, 119, 221, 0.4);
         border-radius: 99px;
-        padding: 6px 16px;
-        font-size: 12px;
+        padding: 8px 20px;
+        font-size: 14px;
         color: var(--purple-l);
         margin-bottom: 28px;
         animation: fadeUp 0.6s ease both;
       }
       .hero-badge-dot {
-        width: 6px;
-        height: 6px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
         background: var(--live);
-        animation: pulse 1.4s infinite;
+        animation: pulse-soft 1.4s infinite;
       }
-      @keyframes pulse {
-        0%,
-        100% {
+
+      @keyframes fadeUpInit {
+        from {
+          opacity: 0;
+          transform: translateY(24px);
+        }
+        to {
           opacity: 1;
-        }
-        50% {
-          opacity: 0.3;
+          transform: translateY(0);
         }
       }
+
       .hero-title {
         font-family: 'Dela Gothic One', sans-serif;
-        font-size: clamp(36px, 7vw, 80px);
-        line-height: 1.05;
+        font-size: clamp(40px, 7vw, 84px);
+        line-height: 1.1;
         letter-spacing: -0.02em;
-        margin-bottom: 20px;
-        animation: fadeUp 0.7s 0.1s ease both;
+        margin-bottom: 24px;
+        animation: fadeUpInit 0.7s 0.1s ease both;
       }
       .hero-title .gg {
         color: var(--amber);
+        text-shadow: 0 0 20px rgba(239, 159, 39, 0.4);
       }
       .hero-title .br {
         display: block;
       }
+
       .hero-sub {
-        font-size: clamp(15px, 2.5vw, 20px);
+        font-size: clamp(18px, 2.5vw, 22px);
         color: var(--muted);
-        max-width: 580px;
-        line-height: 1.7;
-        margin-bottom: 40px;
-        animation: fadeUp 0.7s 0.2s ease both;
+        max-width: 800px;
+        line-height: 1.8;
+        margin-bottom: 48px;
+        animation: fadeUpInit 0.7s 0.2s ease both;
       }
       .hero-sub strong {
         color: var(--text);
       }
+
       .hero-btns {
         display: flex;
-        gap: 12px;
+        gap: 20px;
         flex-wrap: wrap;
         justify-content: center;
-        animation: fadeUp 0.7s 0.3s ease both;
-        margin-bottom: 64px;
+        animation: fadeUpInit 0.7s 0.3s ease both;
+        margin-bottom: 72px;
       }
       .btn-primary {
-        background: var(--amber);
+        background: linear-gradient(135deg, var(--amber) 0%, #ffc061 100%);
         color: #1a0800;
         border: none;
-        border-radius: 10px;
-        font-size: 15px;
+        border-radius: 12px;
+        font-size: 18px;
         font-weight: 700;
-        padding: 14px 32px;
+        padding: 18px 40px;
         cursor: pointer;
         font-family: inherit;
-        transition: all 0.15s;
-        box-shadow: 0 0 32px rgba(239, 159, 39, 0.3);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 8px 24px rgba(239, 159, 39, 0.4);
       }
       .btn-primary:hover {
-        background: var(--amber-l);
-        box-shadow: 0 0 48px rgba(239, 159, 39, 0.5);
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 12px 32px rgba(239, 159, 39, 0.6);
       }
       .btn-secondary {
         background: rgba(127, 119, 221, 0.12);
         color: var(--purple-l);
         border: 0.5px solid rgba(127, 119, 221, 0.4);
-        border-radius: 10px;
-        font-size: 15px;
-        font-weight: 500;
-        padding: 14px 32px;
+        border-radius: 12px;
+        font-size: 18px;
+        font-weight: 700;
+        padding: 18px 40px;
         cursor: pointer;
         font-family: inherit;
-        transition: all 0.15s;
+        transition: all 0.3s;
       }
       .btn-secondary:hover {
-        background: rgba(127, 119, 221, 0.2);
+        background: rgba(127, 119, 221, 0.25);
+        border-color: var(--purple-l);
+        transform: translateY(-2px);
       }
 
       /* Hero mockup */
+      .hero-mockup-wrapper {
+        animation:
+          fadeUpInit 0.8s 0.4s ease both,
+          float 6s ease-in-out infinite 0.8s;
+        width: min(800px, 100%);
+      }
       .hero-mockup {
-        width: min(760px, 100%);
         background: var(--surface);
         border: 0.5px solid var(--border);
         border-radius: 16px;
@@ -245,7 +331,6 @@
         box-shadow:
           0 40px 120px rgba(0, 0, 0, 0.6),
           0 0 0 0.5px var(--border);
-        animation: fadeUp 0.8s 0.4s ease both;
       }
       .mockup-bar {
         height: 36px;
@@ -271,13 +356,13 @@
         display: flex;
         align-items: center;
         padding: 0 10px;
-        font-size: 10px;
+        font-size: 11px;
         color: var(--muted);
       }
       .mockup-body {
         display: grid;
-        grid-template-columns: 180px 1fr;
-        height: 360px;
+        grid-template-columns: 200px 1fr;
+        height: 380px;
       }
       .mock-sidebar {
         background: var(--card);
@@ -302,7 +387,7 @@
         justify-content: center;
       }
       .mock-s-name {
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 700;
       }
       .mock-s-name span {
@@ -311,13 +396,13 @@
       .mock-nav {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 4px;
         padding: 0 8px;
       }
       .mock-nav-item {
-        padding: 7px 10px;
+        padding: 8px 12px;
         border-radius: 6px;
-        font-size: 11px;
+        font-size: 12px;
         color: var(--muted);
         display: flex;
         align-items: center;
@@ -334,51 +419,51 @@
       .mock-stats {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
-        margin-bottom: 14px;
+        gap: 10px;
+        margin-bottom: 16px;
       }
       .mock-stat {
         background: var(--card);
         border: 0.5px solid var(--border);
         border-radius: 8px;
-        padding: 10px 12px;
+        padding: 12px 14px;
       }
       .mock-stat-l {
-        font-size: 9px;
+        font-size: 10px;
         color: var(--muted);
         margin-bottom: 4px;
       }
       .mock-stat-v {
-        font-size: 18px;
+        font-size: 20px;
         font-weight: 700;
       }
       .mock-2col {
         display: grid;
-        grid-template-columns: 1fr 140px;
-        gap: 10px;
+        grid-template-columns: 1fr 160px;
+        gap: 12px;
       }
       .mock-cal {
         background: var(--card);
         border: 0.5px solid var(--border);
         border-radius: 8px;
-        padding: 12px;
+        padding: 14px;
       }
       .mock-cal-title {
-        font-size: 10px;
+        font-size: 11px;
         font-weight: 700;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
         color: var(--muted);
       }
       .mock-cal-days {
         display: flex;
-        gap: 5px;
+        gap: 6px;
       }
       .mock-day {
         flex: 1;
         background: var(--surface);
         border: 0.5px solid var(--border);
         border-radius: 6px;
-        padding: 6px 2px;
+        padding: 8px 4px;
         text-align: center;
       }
       .mock-day.today {
@@ -386,112 +471,110 @@
         border-color: var(--purple);
       }
       .mock-day-d {
-        font-size: 9px;
+        font-size: 10px;
         color: var(--muted);
       }
       .mock-day.today .mock-day-d {
         color: var(--purple-l);
       }
       .mock-day-n {
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 700;
       }
       .mock-day-dot {
-        width: 4px;
-        height: 4px;
+        width: 5px;
+        height: 5px;
         border-radius: 50%;
-        margin: 3px auto 0;
+        margin: 4px auto 0;
       }
       .mock-tasks {
         background: var(--card);
         border: 0.5px solid var(--border);
         border-radius: 8px;
-        padding: 12px;
+        padding: 14px;
       }
       .mock-tasks-title {
-        font-size: 10px;
+        font-size: 11px;
         font-weight: 700;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
         color: var(--muted);
       }
       .mock-task {
-        padding: 7px 8px;
+        padding: 8px 10px;
         background: var(--surface);
         border: 0.5px solid var(--border);
         border-radius: 6px;
-        font-size: 10px;
-        margin-bottom: 5px;
+        font-size: 11px;
+        margin-bottom: 6px;
       }
       .mock-task-tag {
         display: inline-block;
-        font-size: 9px;
-        padding: 1px 6px;
+        font-size: 10px;
+        padding: 2px 8px;
         border-radius: 99px;
-        margin-top: 3px;
-      }
-
-      @keyframes fadeUp {
-        from {
-          opacity: 0;
-          transform: translateY(24px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        margin-top: 4px;
       }
 
       /* ── SECTION COMMON ── */
       section {
-        padding: 100px 24px;
+        padding: 120px 24px;
       }
       .section-inner {
         max-width: 1040px;
         margin: 0 auto;
       }
       .section-eyebrow {
-        font-size: 12px;
+        font-size: 15px;
         font-weight: 700;
         color: var(--amber);
         letter-spacing: 0.14em;
         text-transform: uppercase;
-        margin-bottom: 14px;
+        margin-bottom: 16px;
       }
       .section-title {
         font-family: 'Dela Gothic One', sans-serif;
-        font-size: clamp(28px, 5vw, 52px);
-        line-height: 1.1;
+        font-size: clamp(32px, 5vw, 56px);
+        line-height: 1.25;
         letter-spacing: -0.02em;
-        margin-bottom: 18px;
+        margin-bottom: 24px;
       }
       .section-sub {
-        font-size: clamp(14px, 2vw, 17px);
+        font-size: clamp(17px, 2vw, 20px);
         color: var(--muted);
-        max-width: 560px;
+        max-width: 680px;
         line-height: 1.8;
       }
 
-      /* ── PROBLEM ── */
+      /* ── PROBLEM (Pain Points) ── */
       .problem {
-        background: var(--bg);
+        background: linear-gradient(180deg, var(--bg) 0%, #0c0c1f 100%);
+        position: relative;
+      }
+      .problem .section-inner {
+        max-width: 1280px;
       }
       .problem-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 16px;
-        margin-top: 52px;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 24px;
+        margin-top: 60px;
       }
       .problem-card {
         background: var(--surface);
-        border: 0.5px solid var(--border);
-        border-radius: 14px;
-        padding: 24px 24px;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 32px 24px;
         position: relative;
         overflow: hidden;
-        transition: border-color 0.2s;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
       }
       .problem-card:hover {
-        border-color: var(--purple);
+        border-color: var(--alert);
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(255, 77, 109, 0.15);
       }
       .problem-card::before {
         content: '';
@@ -499,56 +582,83 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, var(--purple), transparent);
+        height: 3px;
+        background: linear-gradient(90deg, var(--border), transparent);
+        transition: background 0.3s ease;
+      }
+      .problem-card:hover::before {
+        background: linear-gradient(90deg, var(--alert), transparent);
       }
       .problem-icon {
-        font-size: 28px;
-        margin-bottom: 14px;
+        font-size: 36px;
+        margin-bottom: 20px;
+        display: inline-block;
+        transition: transform 0.3s;
+      }
+      .problem-card:hover .problem-icon {
+        transform: scale(1.1) rotate(-5deg);
       }
       .problem-head {
-        font-size: 16px;
+        font-size: 19px;
         font-weight: 700;
-        margin-bottom: 8px;
+        margin-bottom: 12px;
+        color: #fff;
+        line-height: 1.4;
       }
       .problem-text {
-        font-size: 13px;
+        font-size: 16px;
         color: var(--muted);
         line-height: 1.7;
+        flex: 1;
+      }
+
+      .problem-arrow-container {
+        text-align: center;
+        margin-top: 80px;
       }
       .problem-arrow {
-        display: flex;
+        display: inline-flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
-        gap: 12px;
-        margin: 48px 0 0;
-        font-size: 14px;
-        color: var(--muted);
-      }
-      .problem-arrow .line {
-        flex: 1;
-        height: 0.5px;
-        background: var(--border);
+        gap: 16px;
+        font-size: 18px;
+        color: var(--text);
+        text-decoration: none;
       }
       .problem-arrow .label {
-        background: rgba(127, 119, 221, 0.12);
-        border: 0.5px solid rgba(127, 119, 221, 0.3);
+        background: linear-gradient(135deg, var(--purple-d) 0%, var(--purple) 100%);
         border-radius: 99px;
-        padding: 8px 20px;
-        color: var(--purple-l);
+        padding: 14px 36px;
+        color: #fff;
         font-weight: 700;
-        white-space: nowrap;
+        box-shadow: 0 8px 24px rgba(127, 119, 221, 0.4);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .problem-arrow:hover .label {
+        transform: translateY(-4px) scale(1.05);
+        box-shadow: 0 12px 32px rgba(127, 119, 221, 0.6);
+      }
+      .problem-arrow .arrow-down {
+        width: 2px;
+        height: 60px;
+        background: linear-gradient(to bottom, var(--purple), transparent);
+        position: relative;
+        animation: float 2s infinite ease-in-out;
       }
 
       /* ── FEATURES ── */
       .features {
         background: var(--surface);
+        position: relative;
       }
       .feature-blocks {
         display: flex;
         flex-direction: column;
-        gap: 80px;
-        margin-top: 60px;
+        gap: 120px;
+        margin-top: 80px;
       }
       .feature-block {
         display: grid;
@@ -562,147 +672,115 @@
       .feature-block.rev > * {
         direction: ltr;
       }
+
       .feat-label {
         display: inline-block;
-        font-size: 11px;
+        font-size: 14px;
         font-weight: 700;
         color: var(--amber);
         background: rgba(239, 159, 39, 0.1);
-        border: 0.5px solid rgba(239, 159, 39, 0.3);
+        border: 1px solid rgba(239, 159, 39, 0.3);
         border-radius: 99px;
-        padding: 4px 12px;
-        letter-spacing: 0.08em;
-        margin-bottom: 16px;
+        padding: 8px 20px;
+        letter-spacing: 0.1em;
+        margin-bottom: 24px;
       }
       .feat-title {
         font-family: 'Dela Gothic One', sans-serif;
-        font-size: clamp(22px, 3.5vw, 36px);
-        line-height: 1.15;
-        margin-bottom: 16px;
+        font-size: clamp(28px, 4vw, 44px);
+        line-height: 1.35;
+        margin-bottom: 24px;
       }
       .feat-desc {
-        font-size: 14px;
+        font-size: 17px;
         color: var(--muted);
         line-height: 1.8;
-        margin-bottom: 20px;
+        margin-bottom: 32px;
       }
       .feat-points {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 16px;
       }
       .feat-point {
         display: flex;
         align-items: flex-start;
-        gap: 10px;
-        font-size: 13px;
+        gap: 12px;
+        font-size: 16px;
         color: var(--text);
         line-height: 1.6;
       }
       .feat-point-dot {
-        width: 18px;
-        height: 18px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
         background: rgba(127, 119, 221, 0.15);
-        border: 0.5px solid var(--purple);
+        border: 1px solid var(--purple);
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
         margin-top: 2px;
-        font-size: 9px;
+        font-size: 12px;
         color: var(--purple-l);
       }
 
-      /* Feature mockups */
       .feat-visual {
         background: var(--card);
-        border: 0.5px solid var(--border);
-        border-radius: 16px;
+        border: 1px solid var(--border);
+        border-radius: 20px;
         overflow: hidden;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+        transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
       }
+      .feature-block:hover .feat-visual {
+        transform: translateY(-10px) scale(1.02);
+        border-color: var(--purple-d);
+      }
+
       .fv-header {
         background: var(--surface);
-        border-bottom: 0.5px solid var(--border);
-        padding: 12px 16px;
-        font-size: 12px;
+        border-bottom: 1px solid var(--border);
+        padding: 16px 24px;
+        font-size: 14px;
         font-weight: 700;
         display: flex;
         align-items: center;
         justify-content: space-between;
       }
-      .fv-badge {
-        font-size: 10px;
-        padding: 3px 9px;
-        border-radius: 99px;
-        font-weight: 700;
-      }
 
-      /* Cal mockup */
-      .cal-mock {
-        padding: 16px;
-      }
-      .cal-week {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 5px;
-        margin-bottom: 10px;
-      }
-      .cal-wday {
-        font-size: 9px;
-        color: var(--muted);
+      /* UI Mockups inside features */
+      .flow-arrow {
         text-align: center;
-        padding-bottom: 4px;
-      }
-      .cal-wcell {
-        min-height: 62px;
-        background: var(--surface);
-        border: 0.5px solid var(--border);
-        border-radius: 7px;
-        padding: 5px;
-      }
-      .cal-wcell.today {
-        border-color: var(--purple-d);
-        background: rgba(127, 119, 221, 0.07);
-      }
-      .cal-cell-date {
-        font-size: 10px;
+        color: var(--purple-l);
+        margin: 12px 0;
+        font-size: 14px;
         font-weight: 700;
-        margin-bottom: 4px;
-      }
-      .cal-event {
-        font-size: 9px;
-        padding: 2px 5px;
-        border-radius: 4px;
-        margin-bottom: 2px;
-        line-height: 1.3;
+        letter-spacing: 0.05em;
       }
 
-      /* Collab mockup */
       .collab-mock {
-        padding: 14px;
+        padding: 24px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
       }
       .collab-card {
         background: var(--surface);
-        border: 0.5px solid var(--border);
-        border-radius: 10px;
-        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 20px;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 16px;
       }
       .collab-av {
-        width: 36px;
-        height: 36px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 13px;
+        font-size: 16px;
         font-weight: 700;
         flex-shrink: 0;
       }
@@ -710,53 +788,40 @@
         flex: 1;
       }
       .collab-name {
-        font-size: 13px;
-        font-weight: 500;
-        margin-bottom: 2px;
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 4px;
       }
       .collab-date {
-        font-size: 11px;
+        font-size: 13px;
         color: var(--muted);
       }
-      .collab-btn-row {
-        display: flex;
-        gap: 5px;
-      }
-      .c-btn {
-        border: none;
-        border-radius: 6px;
-        font-size: 11px;
-        font-weight: 600;
-        padding: 5px 11px;
-        cursor: pointer;
-        font-family: inherit;
-      }
 
-      /* Kanban mockup */
       .kb-mock {
-        padding: 14px;
+        padding: 24px;
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
+        gap: 16px;
       }
       .kb-col-h {
-        font-size: 10px;
+        font-size: 12px;
         font-weight: 700;
         color: var(--muted);
         letter-spacing: 0.06em;
-        margin-bottom: 7px;
+        margin-bottom: 12px;
       }
       .kb-c {
         background: var(--surface);
-        border: 0.5px solid var(--border);
-        border-radius: 7px;
-        padding: 9px 10px;
-        margin-bottom: 6px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 10px;
+        transition: transform 0.2s;
+        cursor: default;
       }
       .kb-c-title {
-        font-size: 11px;
-        font-weight: 500;
-        margin-bottom: 5px;
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 10px;
         line-height: 1.4;
       }
       .kb-c-foot {
@@ -765,75 +830,116 @@
         justify-content: space-between;
       }
       .kb-av {
-        width: 18px;
-        height: 18px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
-        font-size: 8px;
+        font-size: 10px;
         font-weight: 700;
         display: flex;
         align-items: center;
         justify-content: center;
       }
       .kb-due {
-        font-size: 9px;
+        font-size: 12px;
         color: var(--muted);
       }
 
-      /* Notify mockup */
+      .cal-mock {
+        padding: 24px;
+      }
+      .cal-week {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+      .cal-wday {
+        font-size: 11px;
+        color: var(--muted);
+        text-align: center;
+        padding-bottom: 6px;
+      }
+      .cal-wcell {
+        min-height: 76px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px;
+      }
+      .cal-wcell.today {
+        border-color: var(--purple-d);
+        background: rgba(127, 119, 221, 0.07);
+      }
+      .cal-cell-date {
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .cal-event {
+        font-size: 11px;
+        padding: 4px 6px;
+        border-radius: 4px;
+        margin-bottom: 4px;
+        line-height: 1.3;
+        font-weight: 700;
+      }
+
       .notif-mock {
-        padding: 14px;
+        padding: 24px;
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 14px;
       }
       .notif-row {
         display: flex;
-        gap: 10px;
+        gap: 14px;
         align-items: flex-start;
-        padding: 10px 12px;
+        padding: 16px 20px;
         background: var(--surface);
-        border: 0.5px solid var(--border);
-        border-radius: 9px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
       }
       .notif-icon {
-        font-size: 16px;
+        font-size: 20px;
         flex-shrink: 0;
-        margin-top: 1px;
+        margin-top: 2px;
       }
       .notif-text {
-        font-size: 12px;
-        line-height: 1.5;
+        font-size: 15px;
+        line-height: 1.6;
         color: var(--muted);
       }
       .notif-text strong {
         color: var(--text);
       }
       .notif-time {
-        font-size: 10px;
+        font-size: 12px;
         color: var(--muted);
-        margin-top: 2px;
+        margin-top: 8px;
       }
 
       /* ── HOW IT WORKS ── */
       .how {
         background: var(--bg);
+        text-align: center;
       }
       .how-steps {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 0;
-        margin-top: 52px;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 40px;
+        margin-top: 60px;
         position: relative;
       }
       .how-steps::before {
         content: '';
         position: absolute;
-        top: 32px;
+        top: 48px;
         left: 10%;
         right: 10%;
-        height: 0.5px;
-        background: var(--border);
+        height: 1px;
+        background: dashed 1px var(--border);
         z-index: 0;
+        border-bottom: 2px dashed var(--border);
       }
       .how-step {
         position: relative;
@@ -841,38 +947,36 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        text-align: center;
-        padding: 0 20px;
       }
       .how-num {
-        width: 64px;
-        height: 64px;
+        width: 96px;
+        height: 96px;
         border-radius: 50%;
         background: var(--card);
-        border: 0.5px solid var(--border);
+        border: 2px solid var(--purple);
         display: flex;
         align-items: center;
         justify-content: center;
         font-family: 'Dela Gothic One', sans-serif;
-        font-size: 22px;
+        font-size: 32px;
         color: var(--purple-l);
-        margin-bottom: 20px;
-        position: relative;
+        margin-bottom: 24px;
+        box-shadow: 0 10px 20px rgba(127, 119, 221, 0.2);
+        transition: transform 0.3s;
       }
-      .how-num::after {
-        content: '';
-        position: absolute;
-        inset: -4px;
-        border-radius: 50%;
-        border: 0.5px solid rgba(127, 119, 221, 0.3);
+      .how-step:hover .how-num {
+        transform: scale(1.1) rotate(5deg);
+        background: var(--purple-d);
+        color: #fff;
       }
       .how-step-title {
-        font-size: 16px;
+        font-size: 20px;
         font-weight: 700;
-        margin-bottom: 8px;
+        margin-bottom: 16px;
+        line-height: 1.4;
       }
       .how-step-text {
-        font-size: 13px;
+        font-size: 16px;
         color: var(--muted);
         line-height: 1.7;
       }
@@ -882,18 +986,30 @@
         background: var(--surface);
       }
       .plan-inner {
-        max-width: 700px;
+        max-width: 900px;
         margin: 0 auto;
         text-align: center;
       }
+      .plan-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        margin-top: 60px;
+      }
       .plan-card {
         background: var(--card);
-        border: 0.5px solid var(--border);
-        border-radius: 20px;
-        padding: 40px;
-        margin-top: 48px;
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 56px 40px;
         position: relative;
         overflow: hidden;
+        transition:
+          transform 0.3s,
+          box-shadow 0.3s;
+      }
+      .plan-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
       }
       .plan-card::before {
         content: '';
@@ -901,126 +1017,98 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 3px;
+        height: 4px;
+        background: var(--muted);
+      }
+      .plan-card.pro::before {
         background: linear-gradient(90deg, var(--purple), var(--amber));
       }
+      .plan-card.pro {
+        border-color: var(--purple-d);
+      }
+
       .plan-name {
         font-family: 'Dela Gothic One', sans-serif;
-        font-size: 28px;
-        margin-bottom: 8px;
+        font-size: 36px;
+        margin-bottom: 12px;
       }
       .plan-price {
         font-family: 'Dela Gothic One', sans-serif;
-        font-size: 52px;
+        font-size: 60px;
+        color: var(--text);
+        margin-bottom: 12px;
+      }
+      .plan-card.pro .plan-price {
         color: var(--amber);
-        margin-bottom: 6px;
       }
       .plan-price span {
-        font-size: 20px;
+        font-size: 22px;
         color: var(--muted);
       }
       .plan-note {
-        font-size: 13px;
+        font-size: 15px;
         color: var(--muted);
-        margin-bottom: 28px;
+        margin-bottom: 36px;
       }
+
       .plan-items {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
         text-align: left;
-        margin-bottom: 32px;
+        margin-bottom: 48px;
       }
       .plan-item {
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 13px;
+        gap: 12px;
+        font-size: 16px;
       }
       .plan-item::before {
         content: '✓';
         color: var(--green);
-        font-weight: 700;
+        font-weight: 900;
+        font-size: 18px;
       }
+
       .plan-cta {
         width: 100%;
-        padding: 16px;
+        padding: 20px;
         background: var(--amber);
         color: #1a0800;
         border: none;
         border-radius: 12px;
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 700;
         cursor: pointer;
         font-family: inherit;
-        transition: all 0.15s;
-        box-shadow: 0 0 40px rgba(239, 159, 39, 0.25);
+        transition: all 0.2s;
+        box-shadow: 0 8px 24px rgba(239, 159, 39, 0.3);
       }
       .plan-cta:hover {
         background: var(--amber-l);
-        box-shadow: 0 0 60px rgba(239, 159, 39, 0.4);
+        transform: scale(1.02);
       }
+      .plan-cta.outline {
+        background: rgba(127, 119, 221, 0.1);
+        color: var(--purple-l);
+        box-shadow: none;
+        border: 1px solid var(--purple-d);
+      }
+      .plan-cta.outline:hover {
+        background: rgba(127, 119, 221, 0.2);
+      }
+
       .plan-sub {
-        font-size: 12px;
+        font-size: 14px;
         color: var(--muted);
-        margin-top: 12px;
+        margin-top: 20px;
       }
 
-      /* ── TESTIMONIALS ── */
-      .testi {
-        background: var(--bg);
-      }
-      .testi-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 16px;
-        margin-top: 52px;
-      }
-      .testi-card {
-        background: var(--surface);
-        border: 0.5px solid var(--border);
-        border-radius: 14px;
-        padding: 24px;
-      }
-      .testi-stars {
-        font-size: 14px;
-        color: var(--amber);
-        margin-bottom: 12px;
-      }
-      .testi-text {
-        font-size: 14px;
-        line-height: 1.8;
-        color: var(--text);
-        margin-bottom: 16px;
-      }
-      .testi-user {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .testi-av {
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        font-weight: 700;
-      }
-      .testi-name {
-        font-size: 13px;
-        font-weight: 700;
-      }
-      .testi-role {
-        font-size: 11px;
-        color: var(--muted);
-      }
-
-      /* ── CTA ── */
+      /* ── FINAL CTA ── */
       .final-cta {
-        background: var(--bg);
-        padding: 120px 24px;
+        background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+        padding: 160px 24px;
         text-align: center;
         position: relative;
         overflow: hidden;
@@ -1038,55 +1126,65 @@
       }
       .final-cta-title {
         font-family: 'Dela Gothic One', sans-serif;
-        font-size: clamp(28px, 5vw, 56px);
-        line-height: 1.1;
-        margin-bottom: 20px;
+        font-size: clamp(36px, 6vw, 68px);
+        line-height: 1.15;
+        margin-bottom: 32px;
       }
       .final-cta-title .accent {
         color: var(--amber);
+        text-shadow: 0 0 20px rgba(239, 159, 39, 0.4);
       }
       .final-cta-sub {
-        font-size: 16px;
+        font-size: 20px;
         color: var(--muted);
-        margin-bottom: 40px;
+        margin-bottom: 56px;
         line-height: 1.7;
       }
 
       /* ── FOOTER ── */
       footer {
         background: var(--surface);
-        border-top: 0.5px solid var(--border);
-        padding: 32px;
+        border-top: 1px solid var(--border);
+        padding: 48px 40px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         flex-wrap: wrap;
-        gap: 16px;
+        gap: 24px;
       }
       .footer-logo {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
       }
       .footer-name {
-        font-size: 14px;
+        font-size: 18px;
         font-weight: 700;
       }
       .footer-name span {
         color: var(--amber);
       }
       .footer-copy {
-        font-size: 12px;
+        font-size: 15px;
         color: var(--muted);
       }
 
       /* ── RESPONSIVE ── */
+      @media (max-width: 1024px) {
+        .problem-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
       @media (max-width: 768px) {
         nav .nav-links {
           display: none;
         }
+        nav .nav-actions .nav-login {
+          display: none;
+        }
         .feature-block {
           grid-template-columns: 1fr;
+          gap: 40px;
         }
         .feature-block.rev {
           direction: ltr;
@@ -1100,19 +1198,32 @@
         .how-steps::before {
           display: none;
         }
-        .plan-items {
+        .plan-grid {
           grid-template-columns: 1fr;
         }
         footer {
           justify-content: center;
           text-align: center;
         }
+        section {
+          padding: 80px 24px;
+        }
+        .problem-arrow .arrow-down {
+          height: 40px;
+        }
+      }
+      @media (max-width: 640px) {
+        .problem-grid {
+          grid-template-columns: 1fr;
+        }
+        .no-wrap-pc {
+          white-space: normal;
+        }
       }
     </style>
   </head>
   <body>
-    <!-- NAV -->
-    <nav>
+    <nav id="navbar">
       <div class="nav-logo">
         <div class="nav-logo-icon">
           <svg width="22" height="22" viewBox="0 0 56 56" fill="none">
@@ -1142,10 +1253,12 @@
         <a href="#how">使い方</a>
         <a href="#plan">料金</a>
       </div>
-      <button class="nav-cta">無料で始める</button>
+      <div class="nav-actions">
+        <a href="#" class="nav-login">ログインする</a>
+        <button class="nav-cta">無料で始める</button>
+      </div>
     </nav>
 
-    <!-- ═══════════════════════════════ HERO ═══════════════════════════════ -->
     <section class="hero">
       <div class="hero-bg"></div>
       <div class="hero-grid"></div>
@@ -1163,136 +1276,139 @@
 
       <p class="hero-sub">
         配信スケジュールの管理からコラボ調整、編集タスクまで——<br />
-        <strong>配信者とチームが必要なものだけ</strong>を、ひとつのアプリにまとめました。
+        <span class="no-wrap-pc"
+          ><strong>配信者とチームが必要なものだけ</strong>を、ひとつのアプリにまとめました。</span
+        >
       </p>
 
       <div class="hero-btns">
         <button class="btn-primary">無料で始める →</button>
-        <button class="btn-secondary">デモを見る</button>
+        <button class="btn-secondary">ログインする</button>
       </div>
 
-      <!-- Mini dashboard mockup -->
-      <div class="hero-mockup">
-        <div class="mockup-bar">
-          <div class="mockup-dot" style="background: #ff5f56"></div>
-          <div class="mockup-dot" style="background: #ffbd2e"></div>
-          <div class="mockup-dot" style="background: #27c93f"></div>
-          <div class="mockup-url">risukeru.gg/dashboard</div>
-        </div>
-        <div class="mockup-body">
-          <div class="mock-sidebar">
-            <div class="mock-s-logo">
-              <div class="mock-s-icon">
-                <svg width="16" height="16" viewBox="0 0 56 56" fill="none">
-                  <ellipse cx="32" cy="37" rx="11" ry="9" fill="#EEEDFE" />
-                  <ellipse cx="33" cy="23" rx="9" ry="8" fill="#EEEDFE" />
-                  <ellipse cx="27" cy="14" rx="3.5" ry="5" fill="#EEEDFE" />
-                  <ellipse cx="38" cy="12" rx="3.5" ry="5" fill="#EEEDFE" />
-                  <circle cx="30" cy="22" r="1.8" fill="#26215C" />
-                  <circle cx="37" cy="22" r="1.8" fill="#26215C" />
-                  <ellipse cx="33" cy="38" rx="3" ry="2" fill="#EF9F27" opacity="0.8" />
-                </svg>
-              </div>
-              <div class="mock-s-name">リスケる<span>GG</span></div>
-            </div>
-            <div class="mock-nav">
-              <div class="mock-nav-item active">▦ ダッシュボード</div>
-              <div class="mock-nav-item">◷ スケジュール</div>
-              <div class="mock-nav-item">▤ タスク</div>
-              <div class="mock-nav-item">⊕ コラボ調整</div>
-              <div class="mock-nav-item">◎ チーム</div>
-            </div>
+      <div class="hero-mockup-wrapper">
+        <div class="hero-mockup">
+          <div class="mockup-bar">
+            <div class="mockup-dot" style="background: #ff5f56"></div>
+            <div class="mockup-dot" style="background: #ffbd2e"></div>
+            <div class="mockup-dot" style="background: #27c93f"></div>
+            <div class="mockup-url">risukeru.gg/dashboard</div>
           </div>
-          <div class="mock-content">
-            <div class="mock-stats">
-              <div class="mock-stat">
-                <div class="mock-stat-l">今月の配信</div>
-                <div class="mock-stat-v" style="color: var(--purple-l)">18</div>
+          <div class="mockup-body">
+            <div class="mock-sidebar">
+              <div class="mock-s-logo">
+                <div class="mock-s-icon">
+                  <svg width="16" height="16" viewBox="0 0 56 56" fill="none">
+                    <ellipse cx="32" cy="37" rx="11" ry="9" fill="#EEEDFE" />
+                    <ellipse cx="33" cy="23" rx="9" ry="8" fill="#EEEDFE" />
+                    <ellipse cx="27" cy="14" rx="3.5" ry="5" fill="#EEEDFE" />
+                    <ellipse cx="38" cy="12" rx="3.5" ry="5" fill="#EEEDFE" />
+                    <circle cx="30" cy="22" r="1.8" fill="#26215C" />
+                    <circle cx="37" cy="22" r="1.8" fill="#26215C" />
+                    <ellipse cx="33" cy="38" rx="3" ry="2" fill="#EF9F27" opacity="0.8" />
+                  </svg>
+                </div>
+                <div class="mock-s-name">リスケる<span>GG</span></div>
               </div>
-              <div class="mock-stat">
-                <div class="mock-stat-l">コラボ予定</div>
-                <div class="mock-stat-v" style="color: var(--amber-l)">4</div>
-              </div>
-              <div class="mock-stat">
-                <div class="mock-stat-l">LIVE視聴者</div>
-                <div class="mock-stat-v" style="color: var(--live)">1,204</div>
-              </div>
-              <div class="mock-stat">
-                <div class="mock-stat-l">タスク完了</div>
-                <div class="mock-stat-v" style="color: var(--green)">72%</div>
+              <div class="mock-nav">
+                <div class="mock-nav-item active">▦ ダッシュボード</div>
+                <div class="mock-nav-item">◷ スケジュール</div>
+                <div class="mock-nav-item">▤ タスク</div>
+                <div class="mock-nav-item">⊕ コラボ調整</div>
+                <div class="mock-nav-item">◎ チーム</div>
               </div>
             </div>
-            <div class="mock-2col">
-              <div class="mock-cal">
-                <div class="mock-cal-title">今週のスケジュール</div>
-                <div class="mock-cal-days">
-                  <div class="mock-day">
-                    <div class="mock-day-d">月</div>
-                    <div class="mock-day-n">11</div>
-                    <div class="mock-day-dot" style="background: var(--purple)"></div>
-                  </div>
-                  <div class="mock-day today">
-                    <div class="mock-day-d">火</div>
-                    <div class="mock-day-n">12</div>
-                    <div class="mock-day-dot" style="background: var(--amber)"></div>
-                  </div>
-                  <div class="mock-day">
-                    <div class="mock-day-d">水</div>
-                    <div class="mock-day-n">13</div>
-                    <div class="mock-day-dot" style="background: var(--amber-d)"></div>
-                  </div>
-                  <div class="mock-day">
-                    <div class="mock-day-d">木</div>
-                    <div class="mock-day-n">14</div>
-                    <div class="mock-day-dot" style="background: transparent"></div>
-                  </div>
-                  <div class="mock-day">
-                    <div class="mock-day-d">金</div>
-                    <div class="mock-day-n">15</div>
-                    <div class="mock-day-dot" style="background: var(--live)"></div>
-                  </div>
-                  <div class="mock-day">
-                    <div class="mock-day-d">土</div>
-                    <div class="mock-day-n">16</div>
-                    <div class="mock-day-dot" style="background: var(--purple)"></div>
-                  </div>
-                  <div class="mock-day">
-                    <div class="mock-day-d">日</div>
-                    <div class="mock-day-n">17</div>
-                    <div class="mock-day-dot" style="background: transparent"></div>
-                  </div>
+            <div class="mock-content">
+              <div class="mock-stats">
+                <div class="mock-stat">
+                  <div class="mock-stat-l">今月の配信</div>
+                  <div class="mock-stat-v" style="color: var(--purple-l)">18</div>
+                </div>
+                <div class="mock-stat">
+                  <div class="mock-stat-l">コラボ予定</div>
+                  <div class="mock-stat-v" style="color: var(--amber-l)">4</div>
+                </div>
+                <div class="mock-stat">
+                  <div class="mock-stat-l">LIVE視聴者</div>
+                  <div class="mock-stat-v" style="color: var(--live)">1,204</div>
+                </div>
+                <div class="mock-stat">
+                  <div class="mock-stat-l">タスク完了</div>
+                  <div class="mock-stat-v" style="color: var(--green)">72%</div>
                 </div>
               </div>
-              <div class="mock-tasks">
-                <div class="mock-tasks-title">本日のタスク</div>
-                <div class="mock-task">
-                  サムネ確認
-                  <div>
-                    <span
-                      class="mock-task-tag"
-                      style="background: rgba(127, 119, 221, 0.2); color: var(--purple-l)"
-                      >編集</span
-                    >
+              <div class="mock-2col">
+                <div class="mock-cal">
+                  <div class="mock-cal-title">今週のスケジュール</div>
+                  <div class="mock-cal-days">
+                    <div class="mock-day">
+                      <div class="mock-day-d">月</div>
+                      <div class="mock-day-n">11</div>
+                      <div class="mock-day-dot" style="background: var(--purple)"></div>
+                    </div>
+                    <div class="mock-day today">
+                      <div class="mock-day-d">火</div>
+                      <div class="mock-day-n">12</div>
+                      <div class="mock-day-dot" style="background: var(--amber)"></div>
+                    </div>
+                    <div class="mock-day">
+                      <div class="mock-day-d">水</div>
+                      <div class="mock-day-n">13</div>
+                      <div class="mock-day-dot" style="background: var(--amber-d)"></div>
+                    </div>
+                    <div class="mock-day">
+                      <div class="mock-day-d">木</div>
+                      <div class="mock-day-n">14</div>
+                      <div class="mock-day-dot" style="background: transparent"></div>
+                    </div>
+                    <div class="mock-day">
+                      <div class="mock-day-d">金</div>
+                      <div class="mock-day-n">15</div>
+                      <div class="mock-day-dot" style="background: var(--live)"></div>
+                    </div>
+                    <div class="mock-day">
+                      <div class="mock-day-d">土</div>
+                      <div class="mock-day-n">16</div>
+                      <div class="mock-day-dot" style="background: var(--purple)"></div>
+                    </div>
+                    <div class="mock-day">
+                      <div class="mock-day-d">日</div>
+                      <div class="mock-day-n">17</div>
+                      <div class="mock-day-dot" style="background: transparent"></div>
+                    </div>
                   </div>
                 </div>
-                <div class="mock-task">
-                  LIVE配信 20:00〜
-                  <div>
-                    <span
-                      class="mock-task-tag"
-                      style="background: rgba(255, 77, 109, 0.15); color: var(--live)"
-                      >LIVE</span
-                    >
+                <div class="mock-tasks">
+                  <div class="mock-tasks-title">本日のタスク</div>
+                  <div class="mock-task">
+                    サムネ確認
+                    <div>
+                      <span
+                        class="mock-task-tag"
+                        style="background: rgba(127, 119, 221, 0.2); color: var(--purple-l)"
+                        >編集</span
+                      >
+                    </div>
                   </div>
-                </div>
-                <div class="mock-task">
-                  コラボ打ち合わせ
-                  <div>
-                    <span
-                      class="mock-task-tag"
-                      style="background: rgba(239, 159, 39, 0.15); color: var(--amber-l)"
-                      >コラボ</span
-                    >
+                  <div class="mock-task">
+                    LIVE配信 20:00〜
+                    <div>
+                      <span
+                        class="mock-task-tag"
+                        style="background: rgba(255, 77, 109, 0.15); color: var(--live)"
+                        >LIVE</span
+                      >
+                    </div>
+                  </div>
+                  <div class="mock-task">
+                    コラボ打ち合わせ
+                    <div>
+                      <span
+                        class="mock-task-tag"
+                        style="background: rgba(239, 159, 39, 0.15); color: var(--amber-l)"
+                        >コラボ</span
+                      >
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1302,38 +1418,42 @@
       </div>
     </section>
 
-    <!-- ═══════════════════════════ PROBLEM ════════════════════════════ -->
     <section class="problem" id="problem">
-      <div class="section-inner">
-        <div class="section-eyebrow">こんな悩みありませんか？</div>
-        <h2 class="section-title">配信者の「あるある」を<br />全部解決</h2>
-        <p class="section-sub">
-          専用ツールがないせいで、本来配信に使うべき時間が管理業務に消えていませんか？
+      <div class="section-inner text-center" style="text-align: center">
+        <div class="section-eyebrow fade-up">こんな悩みありませんか？</div>
+        <h2 class="section-title fade-up delay-100">配信者の「あるある」を<br />全部解決</h2>
+
+        <p class="section-sub fade-up delay-200" style="margin: 0 auto; text-align: center">
+          <span class="no-wrap-pc"
+            >専用ツールがないせいで、<strong style="color: var(--amber)"
+              >本来配信に使えた時間</strong
+            >が管理業務に消えていませんか？</span
+          >
         </p>
 
         <div class="problem-grid">
-          <div class="problem-card">
+          <div class="problem-card fade-up delay-100" style="text-align: left">
             <div class="problem-icon">📅</div>
-            <div class="problem-head">コラボの日程がDMだらけ</div>
+            <div class="problem-head">DMがコラボの日程だらけ</div>
             <div class="problem-text">
-              TwitterのDMやDiscordで調整して、結局どこかに記録が残っていない。当日になって「あれ、何時だっけ？」が起きる。
+              TwitterのDMやDiscordで調整して、結局どこに記録が残っているかわかりづらい。当日になって「あれ、何時だっけ？」が起きる。
             </div>
           </div>
-          <div class="problem-card">
+          <div class="problem-card fade-up delay-200" style="text-align: left">
             <div class="problem-icon">🎬</div>
             <div class="problem-head">編集スタッフへの連絡が大変</div>
             <div class="problem-text">
               「この動画いつアップ？」「サムネどうする？」——毎回LINEやDMで確認しているうちに、締切を過ぎてしまう。
             </div>
           </div>
-          <div class="problem-card">
+          <div class="problem-card fade-up delay-300" style="text-align: left">
             <div class="problem-icon">🔔</div>
             <div class="problem-head">告知を忘れる・ミスる</div>
             <div class="problem-text">
-              配信前の告知ツイートを忘れたり、時間を間違えてツイートしたり。ファンへの信頼が少しずつ削れていく。
+              配信前の告知ツイートを忘れたり、時間を間違えてツイートしたり…。ファンからの信頼が少しずつ削れていく。
             </div>
           </div>
-          <div class="problem-card">
+          <div class="problem-card fade-up delay-100" style="text-align: left">
             <div class="problem-icon">😰</div>
             <div class="problem-head">スケジュールが頭の中にしかない</div>
             <div class="problem-text">
@@ -1342,105 +1462,163 @@
           </div>
         </div>
 
-        <div class="problem-arrow">
-          <div class="line"></div>
-          <div class="label">リスケるGGなら全部まとめて解決 🐿️</div>
-          <div class="line"></div>
+        <div class="problem-arrow-container fade-up delay-300">
+          <a href="#features" class="problem-arrow">
+            <div class="arrow-down"></div>
+            <div class="label">
+              リスケるGGなら全部まとめて解決 🐿️ <span style="margin-left: 8px">↓</span>
+            </div>
+          </a>
         </div>
       </div>
     </section>
 
-    <!-- ═══════════════════════════ FEATURES ════════════════════════════ -->
     <section class="features" id="features">
       <div class="section-inner">
-        <div class="section-eyebrow">機能紹介</div>
-        <h2 class="section-title">必要なものだけ。<br />全部入ってる。</h2>
-        <p class="section-sub">
-          「あれば便利」じゃなく「これがないと困る」機能だけを厳選。複雑な設定なし、すぐ使えます。
-        </p>
+        <div style="text-align: center; margin-bottom: 80px">
+          <div class="section-eyebrow fade-up">シームレスな連携</div>
+          <h2 class="section-title fade-up delay-100">
+            一元管理だからできる、<br />GGなチーム連携。
+          </h2>
+
+          <p class="section-sub fade-up delay-200" style="margin: 0 auto; text-align: center">
+            <span class="no-wrap-pc"
+              >「あれば便利」じゃなく「これがないと困る」機能だけを厳選。複雑な設定なし、すぐ使えます。</span
+            >
+          </p>
+        </div>
 
         <div class="feature-blocks">
-          <!-- 機能1: スケジュール -->
-          <div class="feature-block">
+          <div class="feature-block fade-up">
             <div>
-              <div class="feat-label">機能 01</div>
-              <h3 class="feat-title">配信スケジュールを<br />チーム全員で共有</h3>
+              <div class="feat-label">ユースケース 01</div>
+              <h3 class="feat-title">
+                <span
+                  style="
+                    display: inline-block;
+                    white-space: nowrap;
+                    font-size: clamp(24px, 3.5vw, 38px);
+                  "
+                  >コラボ打診からタスク化まで</span
+                ><br />シームレスに連携
+              </h3>
               <p class="feat-desc">
-                今週どの日にLIVEするか、コラボはいつか——カレンダーにまとめるだけでスタッフ全員が同じ情報を見られます。もう毎回連絡しなくて大丈夫。
+                日程調整ツールとタスク管理が別々だと、予定をコピペしてスタッフに伝える手間が発生します。リスケるGGなら、相手のOKでカレンダーに自動登録され、そのままサムネ作成などのタスクへ繋がります。
               </p>
               <div class="feat-points">
                 <div class="feat-point">
                   <div class="feat-point-dot">✓</div>
-                  配信日・コラボ日・撮影日を色分けして管理
+                  候補日を提示して、相手がワンタップでOK/NGを返答
                 </div>
                 <div class="feat-point">
                   <div class="feat-point-dot">✓</div>
-                  登録した予定がチーム全員にリアルタイムで反映
+                  確定したコラボ予定は、チームの共有カレンダーに自動反映
                 </div>
                 <div class="feat-point">
                   <div class="feat-point-dot">✓</div>
-                  週表示・月表示を切り替えて全体を把握
+                  <span
+                    style="
+                      display: inline-block;
+                      white-space: nowrap;
+                      font-size: clamp(12px, 1.8vw, 16px);
+                      letter-spacing: -0.02em;
+                    "
+                    >「サムネ依頼」「告知ツイート」などの関連タスクを即座に紐付け</span
+                  >
                 </div>
               </div>
             </div>
             <div class="feat-visual">
               <div class="fv-header">
-                <span>📅 スケジュール</span>
-                <span
-                  class="fv-badge"
-                  style="background: rgba(127, 119, 221, 0.15); color: var(--purple-l)"
-                  >5月 第3週</span
-                >
+                <span>🤝 コラボ から ▤ タスク生成</span>
               </div>
-              <div class="cal-mock">
-                <div class="cal-week">
-                  <div class="cal-wday">月</div>
-                  <div class="cal-wday">火</div>
-                  <div class="cal-wday">水</div>
+              <div class="collab-mock">
+                <div class="collab-card" style="border-color: var(--green)">
+                  <div
+                    class="collab-av"
+                    style="background: rgba(255, 77, 109, 0.2); color: #ff4d6d"
+                  >
+                    KZ
+                  </div>
+                  <div class="collab-info">
+                    <div class="collab-name">カズくんGames</div>
+                    <div class="collab-date">Apex コラボ — 5/18 20:00〜</div>
+                  </div>
+                  <div style="font-size: 12px; color: var(--green); font-weight: 700">✓ 確定済</div>
+                </div>
+                <div class="flow-arrow">↓ そのままタスクを追加</div>
+                <div class="kb-c" style="margin-bottom: 0; border-color: var(--amber-d)">
+                  <div class="kb-c-title">【コラボ】サムネイル作成（カズくんGames）</div>
+                  <div class="kb-c-foot">
+                    <div
+                      class="kb-av"
+                      style="background: rgba(239, 159, 39, 0.3); color: var(--amber-l)"
+                    >
+                      MG
+                    </div>
+                    <div class="kb-due">5/16〆</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-block rev fade-up">
+            <div>
+              <div class="feat-label">ユースケース 02</div>
+              <h3 class="feat-title">
+                <span
+                  style="
+                    display: inline-block;
+                    white-space: nowrap;
+                    font-size: clamp(24px, 3.5vw, 38px);
+                  "
+                  >スケジュールと制作進捗が連動</span
+                ><br />「あれ、どうなってる？」をゼロに
+              </h3>
+              <p class="feat-desc">
+                「明日の配信サムネ、誰にお願いしたっけ？」「週末の動画、編集どこまで進んでる？」——見えない進捗に対する確認作業はもう不要です。配信カレンダーとタスクボードが一体化しているため、予定を開くだけでチーム全体の「今」が直感的に把握できます。
+              </p>
+              <div class="feat-points">
+                <div class="feat-point">
+                  <div class="feat-point-dot">✓</div>
+                  週表示カレンダーで、チーム全員が一目で予定を把握
+                </div>
+                <div class="feat-point">
+                  <div class="feat-point-dot">✓</div>
+                  カンバンボードで「TODO」「進行中」「完了」を可視化
+                </div>
+                <div class="feat-point">
+                  <div class="feat-point-dot">✓</div>
+                  担当者と締切を設定し、作業の抜け漏れを防止
+                </div>
+              </div>
+            </div>
+            <div class="feat-visual">
+              <div class="fv-header">
+                <span>📅 週間予定 ＆ ▤ タスク進行</span>
+              </div>
+              <div class="cal-mock" style="padding-bottom: 12px">
+                <div class="cal-week" style="grid-template-columns: repeat(3, 1fr)">
                   <div class="cal-wday">木</div>
                   <div class="cal-wday">金</div>
                   <div class="cal-wday">土</div>
-                  <div class="cal-wday">日</div>
                 </div>
-                <div class="cal-week" style="grid-template-columns: repeat(7, 1fr)">
+                <div
+                  class="cal-week"
+                  style="grid-template-columns: repeat(3, 1fr); margin-bottom: 0"
+                >
                   <div class="cal-wcell">
-                    <div class="cal-cell-date">11</div>
+                    <div class="cal-cell-date">14</div>
                     <div
                       class="cal-event"
-                      style="background: rgba(127, 119, 221, 0.2); color: var(--purple-l)"
+                      style="background: rgba(239, 159, 39, 0.15); color: var(--amber-l)"
                     >
-                      LIVE配信
+                      動画UP
                     </div>
                   </div>
                   <div class="cal-wcell today">
-                    <div class="cal-cell-date" style="color: var(--purple-l)">12</div>
-                    <div
-                      class="cal-event"
-                      style="background: rgba(255, 77, 109, 0.15); color: var(--live)"
-                    >
-                      🔴 LIVE中
-                    </div>
-                    <div
-                      class="cal-event"
-                      style="background: rgba(239, 159, 39, 0.15); color: var(--amber-l)"
-                    >
-                      コラボMTG
-                    </div>
-                  </div>
-                  <div class="cal-wcell">
-                    <div class="cal-cell-date">13</div>
-                    <div
-                      class="cal-event"
-                      style="background: rgba(239, 159, 39, 0.15); color: var(--amber-l)"
-                    >
-                      撮影
-                    </div>
-                  </div>
-                  <div class="cal-wcell">
-                    <div class="cal-cell-date">14</div>
-                  </div>
-                  <div class="cal-wcell">
-                    <div class="cal-cell-date">15</div>
+                    <div class="cal-cell-date" style="color: var(--purple-l)">15</div>
                     <div
                       class="cal-event"
                       style="background: rgba(127, 119, 221, 0.2); color: var(--purple-l)"
@@ -1454,178 +1632,17 @@
                       class="cal-event"
                       style="background: rgba(63, 207, 127, 0.15); color: var(--green)"
                     >
-                      コラボ確定
-                    </div>
-                  </div>
-                  <div class="cal-wcell">
-                    <div class="cal-cell-date">17</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 機能2: コラボ調整 -->
-          <div class="feature-block rev">
-            <div>
-              <div class="feat-label">機能 02</div>
-              <h3 class="feat-title">コラボ打診から確定まで<br />アプリ内で完結</h3>
-              <p class="feat-desc">
-                「この日どう？」「その日はちょっと…」——DM往復をなくして、候補日を提示するだけで相手がOK/NGを返せます。確定した日程は自動でカレンダーに入ります。
-              </p>
-              <div class="feat-points">
-                <div class="feat-point">
-                  <div class="feat-point-dot">✓</div>
-                  候補日を複数提示して相手がワンタップで返答
-                </div>
-                <div class="feat-point">
-                  <div class="feat-point-dot">✓</div>
-                  確定した日程が自動でスケジュールに追加
-                </div>
-                <div class="feat-point">
-                  <div class="feat-point-dot">✓</div>
-                  コラボ履歴が残るので過去のやりとりも確認可能
-                </div>
-              </div>
-            </div>
-            <div class="feat-visual">
-              <div class="fv-header">
-                <span>🤝 コラボ調整</span>
-                <span
-                  class="fv-badge"
-                  style="background: rgba(239, 159, 39, 0.15); color: var(--amber-l)"
-                  >2件 返答待ち</span
-                >
-              </div>
-              <div class="collab-mock">
-                <div class="collab-card">
-                  <div
-                    class="collab-av"
-                    style="background: rgba(255, 77, 109, 0.2); color: #ff4d6d"
-                  >
-                    KZ
-                  </div>
-                  <div class="collab-info">
-                    <div class="collab-name">カズくんGames</div>
-                    <div class="collab-date">Apex コラボ希望 — 5/18 20:00〜</div>
-                  </div>
-                  <div class="collab-btn-row">
-                    <button
-                      class="c-btn"
-                      style="background: rgba(63, 207, 127, 0.15); color: var(--green)"
-                    >
-                      OK
-                    </button>
-                    <button
-                      class="c-btn"
-                      style="background: rgba(255, 77, 109, 0.1); color: var(--live)"
-                    >
-                      NG
-                    </button>
-                  </div>
-                </div>
-                <div class="collab-card">
-                  <div
-                    class="collab-av"
-                    style="background: rgba(127, 119, 221, 0.2); color: var(--purple-l)"
-                  >
-                    HN
-                  </div>
-                  <div class="collab-info">
-                    <div class="collab-name">ひなたch</div>
-                    <div class="collab-date">雑談コラボ — 5/20 or 5/21</div>
-                  </div>
-                  <div class="collab-btn-row">
-                    <button
-                      class="c-btn"
-                      style="background: rgba(63, 207, 127, 0.15); color: var(--green)"
-                    >
-                      OK
-                    </button>
-                    <button
-                      class="c-btn"
-                      style="background: rgba(255, 77, 109, 0.1); color: var(--live)"
-                    >
-                      NG
-                    </button>
-                  </div>
-                </div>
-                <div class="collab-card" style="opacity: 0.6">
-                  <div
-                    class="collab-av"
-                    style="background: rgba(63, 207, 127, 0.2); color: var(--green)"
-                  >
-                    PK
-                  </div>
-                  <div class="collab-info">
-                    <div class="collab-name">ぺこらch</div>
-                    <div class="collab-date">確定済 — 5/22 21:00〜</div>
-                  </div>
-                  <div style="font-size: 11px; color: var(--green); font-weight: 700">✓ 確定</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 機能3: タスクカンバン -->
-          <div class="feature-block">
-            <div>
-              <div class="feat-label">機能 03</div>
-              <h3 class="feat-title">編集・サムネ・告知——<br />作業の進み具合を見える化</h3>
-              <p class="feat-desc">
-                「あの動画の編集、どこまで進んでる？」を毎回聞かなくても大丈夫。カードを動かすだけで進捗が全員に伝わります。
-              </p>
-              <div class="feat-points">
-                <div class="feat-point">
-                  <div class="feat-point-dot">✓</div>
-                  「やること」「進行中」「完了」の3ステップで管理
-                </div>
-                <div class="feat-point">
-                  <div class="feat-point-dot">✓</div>
-                  担当者・締切日を設定してスタッフに依頼
-                </div>
-                <div class="feat-point">
-                  <div class="feat-point-dot">✓</div>
-                  完了したら自動で通知が届く
-                </div>
-              </div>
-            </div>
-            <div class="feat-visual">
-              <div class="fv-header">
-                <span>▤ タスクボード</span>
-              </div>
-              <div class="kb-mock">
-                <div>
-                  <div class="kb-col-h">TODO</div>
-                  <div class="kb-c">
-                    <div class="kb-c-title">概要欄テンプレ更新</div>
-                    <div class="kb-c-foot">
-                      <div
-                        class="kb-av"
-                        style="background: rgba(127, 119, 221, 0.3); color: var(--purple-l)"
-                      >
-                        RK
-                      </div>
-                      <div class="kb-due">5/14</div>
-                    </div>
-                  </div>
-                  <div class="kb-c">
-                    <div class="kb-c-title">Shorts台本 3本</div>
-                    <div class="kb-c-foot">
-                      <div
-                        class="kb-av"
-                        style="background: rgba(239, 159, 39, 0.3); color: var(--amber-l)"
-                      >
-                        TK
-                      </div>
-                      <div class="kb-due">5/16</div>
+                      コラボ
                     </div>
                   </div>
                 </div>
+              </div>
+              <div style="border-top: 1px dashed var(--border); margin: 0 24px"></div>
+              <div class="kb-mock" style="grid-template-columns: repeat(2, 1fr); padding-top: 16px">
                 <div>
                   <div class="kb-col-h" style="color: var(--amber)">進行中</div>
-                  <div class="kb-c" style="border-color: var(--amber-d)">
-                    <div class="kb-c-title">4月振り返り動画 編集</div>
+                  <div class="kb-c" style="border-color: var(--amber-d); margin-bottom: 0">
+                    <div class="kb-c-title">14日分 動画編集</div>
                     <div class="kb-c-foot">
                       <div
                         class="kb-av"
@@ -1633,26 +1650,14 @@
                       >
                         SA
                       </div>
-                      <div class="kb-due">5/13</div>
-                    </div>
-                  </div>
-                  <div class="kb-c" style="border-color: var(--amber-d)">
-                    <div class="kb-c-title">サムネイル 3本</div>
-                    <div class="kb-c-foot">
-                      <div
-                        class="kb-av"
-                        style="background: rgba(239, 159, 39, 0.3); color: var(--amber-l)"
-                      >
-                        MG
-                      </div>
-                      <div class="kb-due">5/12</div>
+                      <div class="kb-due">本日〆</div>
                     </div>
                   </div>
                 </div>
                 <div>
                   <div class="kb-col-h" style="color: var(--green)">完了</div>
-                  <div class="kb-c" style="opacity: 0.55">
-                    <div class="kb-c-title">先週LIVE アーカイブ公開</div>
+                  <div class="kb-c" style="opacity: 0.6; margin-bottom: 0">
+                    <div class="kb-c-title">15日分 配信枠作成</div>
                     <div class="kb-c-foot">
                       <div
                         class="kb-av"
@@ -1660,19 +1665,7 @@
                       >
                         RK
                       </div>
-                      <div class="kb-due">5/11</div>
-                    </div>
-                  </div>
-                  <div class="kb-c" style="opacity: 0.55">
-                    <div class="kb-c-title">Short素材 撮影 2本</div>
-                    <div class="kb-c-foot">
-                      <div
-                        class="kb-av"
-                        style="background: rgba(127, 119, 221, 0.3); color: var(--purple-l)"
-                      >
-                        RK
-                      </div>
-                      <div class="kb-due">5/12</div>
+                      <div class="kb-due">昨日</div>
                     </div>
                   </div>
                 </div>
@@ -1680,73 +1673,66 @@
             </div>
           </div>
 
-          <!-- 機能4: 通知 -->
-          <div class="feature-block rev">
+          <div class="feature-block fade-up">
             <div>
-              <div class="feat-label">機能 04</div>
-              <h3 class="feat-title">大事なことを<br />見逃さない通知</h3>
+              <div class="feat-label">ユースケース 03</div>
+              <h3 class="feat-title">配信前のバタバタを防ぐ<br />確実な通知とリマインド</h3>
               <p class="feat-desc">
-                LIVE前のリマインダーは無料でも届きます。PARTYプランならコラボの返答やタスク完了もリアルタイムで通知。配信者とチームの全員が同じ情報を同じタイミングで受け取れます。
+                予定とタスクが一元管理されているからこそできる、正確でタイムリーな通知。スタッフの作業完了や、配信開始のリマインドが適切なタイミングで届くため、あなたは本番に全集中できます。
               </p>
               <div class="feat-points">
                 <div class="feat-point">
                   <div class="feat-point-dot">✓</div>
-                  LIVE開始前に自動リマインダー（全プラン）
+                  編集スタッフがタスクを「完了」にすると即座に通知
                 </div>
                 <div class="feat-point">
                   <div class="feat-point-dot">✓</div>
-                  コラボ返答・タスク完了を即通知（PARTYプラン）
+                  LIVE開始前に自動リマインダーを受信
                 </div>
                 <div class="feat-point">
                   <div class="feat-point-dot">✓</div>
-                  スマホのホーム画面にアプリとして追加可能
+                  スマホのホーム画面に追加して、プッシュ通知で受け取り可能
                 </div>
               </div>
             </div>
             <div class="feat-visual">
               <div class="fv-header">
-                <span>🔔 通知センター</span>
-                <span
-                  class="fv-badge"
-                  style="background: rgba(255, 77, 109, 0.15); color: var(--live)"
-                  >3件 未読</span
-                >
+                <span>🔔 タイムラインとアラート</span>
               </div>
               <div class="notif-mock">
-                <div class="notif-row">
-                  <div class="notif-icon">🔴</div>
-                  <div>
-                    <div class="notif-text">
-                      <strong>LIVE開始まで1時間</strong>です。配信タイトルを確認しましょう。
-                    </div>
-                    <div class="notif-time">全プラン — 19:00 に通知予定</div>
-                  </div>
-                </div>
-                <div class="notif-row">
-                  <div class="notif-icon">🤝</div>
-                  <div>
-                    <div class="notif-text">
-                      <strong>カズくんGames</strong> からコラボ打診が届きました。
-                    </div>
-                    <div class="notif-time">PARTYプランのみ — 2時間前</div>
-                  </div>
-                </div>
-                <div class="notif-row">
+                <div
+                  class="notif-row"
+                  style="border-color: var(--green); background: rgba(63, 207, 127, 0.05)"
+                >
                   <div class="notif-icon">✅</div>
                   <div>
                     <div class="notif-text">
-                      タスク「サムネイルデザイン」が<strong>完了</strong>しました。
+                      タスク「14日分
+                      動画編集」が<strong>完了</strong>しました。サムネイルの確認をお願いします。
                     </div>
-                    <div class="notif-time">PARTYプランのみ — 3時間前</div>
+                    <div class="notif-time">たった今</div>
                   </div>
                 </div>
-                <div class="notif-row" style="opacity: 0.5">
+                <div
+                  class="notif-row"
+                  style="border-color: var(--live); background: rgba(255, 77, 109, 0.05)"
+                >
+                  <div class="notif-icon">🔴</div>
+                  <div>
+                    <div class="notif-text">
+                      <strong>LIVE開始まで1時間</strong>です。配信タイトルと概要欄を確認しましょう。
+                    </div>
+                    <div class="notif-time">1時間前</div>
+                  </div>
+                </div>
+                <div class="notif-row" style="opacity: 0.6">
                   <div class="notif-icon">📅</div>
                   <div>
                     <div class="notif-text">
-                      <strong>明日 20:00</strong> にLIVE配信が予定されています。
+                      <strong>明日 20:00</strong>
+                      にカズくんGamesさんとのコラボ配信が予定されています。
                     </div>
-                    <div class="notif-time">全プラン — 昨日</div>
+                    <div class="notif-time">昨日</div>
                   </div>
                 </div>
               </div>
@@ -1756,31 +1742,30 @@
       </div>
     </section>
 
-    <!-- ═══════════════════════════ HOW IT WORKS ════════════════════════════ -->
     <section class="how" id="how">
       <div class="section-inner">
-        <div class="section-eyebrow">使い方</div>
-        <h2 class="section-title">3ステップで<br />今日から使える</h2>
-        <p class="section-sub">
+        <div class="section-eyebrow fade-up">使い方</div>
+        <h2 class="section-title fade-up delay-100">3ステップで<br />今日から使える</h2>
+        <p class="section-sub fade-up delay-200" style="margin: 0 auto">
           アカウント作成から実際に使い始めるまで、5分もかかりません。難しい設定は一切なし。
         </p>
 
         <div class="how-steps">
-          <div class="how-step">
+          <div class="how-step fade-up delay-100">
             <div class="how-num">1</div>
             <div class="how-step-title">Googleで<br />ログイン</div>
             <div class="how-step-text">
               Googleアカウントがあればすぐ始められます。パスワード登録も不要。
             </div>
           </div>
-          <div class="how-step">
+          <div class="how-step fade-up delay-200">
             <div class="how-num">2</div>
             <div class="how-step-title">チームを作って<br />メンバーを招待</div>
             <div class="how-step-text">
               編集スタッフ、マネージャーをリンクで招待するだけ。すぐに共有カレンダーが使えます。
             </div>
           </div>
-          <div class="how-step">
+          <div class="how-step fade-up delay-300">
             <div class="how-num">3</div>
             <div class="how-step-title">配信枠を登録して<br />GGスタート</div>
             <div class="how-step-text">
@@ -1791,66 +1776,44 @@
       </div>
     </section>
 
-    <!-- ═══════════════════════════ PLAN ════════════════════════════ -->
     <section class="plan" id="plan">
       <div class="plan-inner">
-        <div style="text-align: center">
-          <div class="section-eyebrow">料金プラン</div>
-          <h2 class="section-title">2つのプランで<br />どんなチームにも対応</h2>
-          <p class="section-sub" style="margin: 0 auto">
+        <div>
+          <div class="section-eyebrow fade-up">料金プラン</div>
+          <h2 class="section-title fade-up delay-100">2つのプランで<br />どんなチームにも対応</h2>
+          <p class="section-sub fade-up delay-200" style="margin: 0 auto">
             まずはLIGHTで無料スタート。チームが動き始めたらPARTYへ。
           </p>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 40px">
-          <!-- LIGHT -->
-          <div class="plan-card" style="position: relative">
+        <div class="plan-grid">
+          <div class="plan-card fade-up delay-100">
             <div class="plan-name">LIGHT</div>
             <div class="plan-price">¥0 <span>/ 月</span></div>
             <div class="plan-note">クレジットカード不要・ずっと無料</div>
-            <div class="plan-items" style="margin-bottom: 8px">
+            <div class="plan-items">
               <div class="plan-item">メンバー 2人まで</div>
               <div class="plan-item">スケジュール登録 無制限</div>
               <div class="plan-item">タスク 月5件まで</div>
               <div class="plan-item">コラボ調整 月3件まで</div>
               <div class="plan-item">LIVEリマインダー通知</div>
-              <div class="plan-item">スマホ・PC 両対応</div>
             </div>
-            <div
-              style="
-                font-size: 12px;
-                color: #ef9f27;
-                background: rgba(239, 159, 39, 0.1);
-                border-radius: 8px;
-                padding: 8px 12px;
-                margin-bottom: 16px;
-              "
-            >
-              ⚠️ バナー広告あり
-            </div>
-            <button
-              class="plan-cta"
-              style="background: rgba(127, 119, 221, 0.15); color: #a0a0ff; box-shadow: none"
-            >
-              無料で始める →
-            </button>
+            <button class="plan-cta outline">無料で始める →</button>
           </div>
 
-          <!-- PARTY -->
-          <div class="plan-card" style="position: relative">
+          <div class="plan-card pro fade-up delay-200">
             <div
               style="
                 position: absolute;
-                top: -12px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: #ef9f27;
+                top: 20px;
+                right: -40px;
+                background: var(--amber);
                 color: #1a0800;
-                font-size: 11px;
+                font-size: 12px;
                 font-weight: 700;
-                padding: 4px 16px;
-                border-radius: 99px;
-                white-space: nowrap;
+                padding: 6px 44px;
+                transform: rotate(45deg);
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
               "
             >
               おすすめ
@@ -1858,25 +1821,12 @@
             <div class="plan-name">PARTY</div>
             <div class="plan-price">¥1,500 <span>/ 人・月</span></div>
             <div class="plan-note">メンバー全員が個別に支払う方式 · 14日間無料</div>
-            <div class="plan-items" style="margin-bottom: 8px">
+            <div class="plan-items">
               <div class="plan-item">メンバー 無制限</div>
               <div class="plan-item">スケジュール登録 無制限</div>
               <div class="plan-item">タスク 無制限</div>
               <div class="plan-item">コラボ調整 無制限</div>
               <div class="plan-item">全通知（コラボ返答・タスク更新）</div>
-              <div class="plan-item">スマホ・PC 両対応</div>
-            </div>
-            <div
-              style="
-                font-size: 12px;
-                color: #3fcf7f;
-                background: rgba(63, 207, 127, 0.1);
-                border-radius: 8px;
-                padding: 8px 12px;
-                margin-bottom: 16px;
-              "
-            >
-              ✓ 広告なし
             </div>
             <button class="plan-cta">14日無料で試す →</button>
             <div class="plan-sub">例）3人チームで ¥4,500 / 月</div>
@@ -1885,89 +1835,27 @@
       </div>
     </section>
 
-    <!-- ═══════════════════════════ TESTIMONIALS ════════════════════════════ -->
-    <section class="testi">
-      <div class="section-inner">
-        <div class="section-eyebrow">ユーザーの声</div>
-        <h2 class="section-title">使った配信者から<br />届いた声</h2>
-        <div class="testi-grid">
-          <div class="testi-card">
-            <div class="testi-stars">★★★★★</div>
-            <div class="testi-text">
-              「コラボの日程調整がDMじゃなくなっただけで、めちゃくちゃ楽になりました。相手もOKをタップするだけなので断然スムーズ。」
-            </div>
-            <div class="testi-user">
-              <div class="testi-av" style="background: rgba(255, 77, 109, 0.2); color: var(--live)">
-                KZ
-              </div>
-              <div>
-                <div class="testi-name">カズくんGames</div>
-                <div class="testi-role">Twitch配信者 / フォロワー4.2万</div>
-              </div>
-            </div>
-          </div>
-          <div class="testi-card">
-            <div class="testi-stars">★★★★★</div>
-            <div class="testi-text">
-              「編集スタッフとのやりとりが全部ここで完結するようになってから、LINEの未読が激減しました。配信に集中できるようになった！」
-            </div>
-            <div class="testi-user">
-              <div
-                class="testi-av"
-                style="background: rgba(127, 119, 221, 0.2); color: var(--purple-l)"
-              >
-                HN
-              </div>
-              <div>
-                <div class="testi-name">ひなたch</div>
-                <div class="testi-role">YouTube配信者 / 登録者1.8万</div>
-              </div>
-            </div>
-          </div>
-          <div class="testi-card">
-            <div class="testi-stars">★★★★☆</div>
-            <div class="testi-text">
-              「スケジュールをマネージャーと共有できるのがすごく助かってます。『今週どうする？』ってSlackで聞かれることがなくなった。」
-            </div>
-            <div class="testi-user">
-              <div
-                class="testi-av"
-                style="background: rgba(63, 207, 127, 0.2); color: var(--green)"
-              >
-                RN
-              </div>
-              <div>
-                <div class="testi-name">レイノスゲーム</div>
-                <div class="testi-role">YouTube / Twitch配信者 / 登録者8.6万</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ═══════════════════════════ FINAL CTA ════════════════════════════ -->
     <section class="final-cta">
       <div class="section-inner" style="max-width: 700px; margin: 0 auto">
-        <h2 class="final-cta-title">
+        <h2 class="final-cta-title fade-up">
           今日から配信に<br />
           <span class="accent">全集中</span>しよう
         </h2>
-        <p class="final-cta-sub">
+        <p class="final-cta-sub fade-up delay-100">
           スケジュール管理、コラボ調整、チーム連携——<br />
           面倒なことはリスケるGGに任せて、あなたは配信だけ考えていてください。
         </p>
-        <div class="hero-btns">
-          <button class="btn-primary">無料で始める →</button>
-          <button class="btn-secondary">機能をもっと見る</button>
+        <div class="hero-btns fade-up delay-200" style="margin-bottom: 0">
+          <button class="btn-primary" style="font-size: 20px; padding: 22px 56px">
+            ログインする
+          </button>
         </div>
       </div>
     </section>
 
-    <!-- FOOTER -->
     <footer>
       <div class="footer-logo">
-        <div class="nav-logo-icon" style="width: 28px; height: 28px; border-radius: 7px">
+        <div class="nav-logo-icon" style="width: 32px; height: 32px; border-radius: 7px">
           <svg width="18" height="18" viewBox="0 0 56 56" fill="none">
             <ellipse cx="32" cy="37" rx="11" ry="9" fill="#EEEDFE" />
             <ellipse cx="33" cy="23" rx="9" ry="8" fill="#EEEDFE" />
@@ -1982,5 +1870,28 @@
       </div>
       <div class="footer-copy">© 2026 リスケるGG — 撮影も、コラボも、編集もGGなスケジュールを</div>
     </footer>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const observerOptions = {
+          root: null,
+          rootMargin: '0px',
+          threshold: 0.15,
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-up').forEach((elem) => {
+          observer.observe(elem);
+        });
+      });
+    </script>
   </body>
 </html>

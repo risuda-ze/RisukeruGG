@@ -142,6 +142,7 @@ export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: Sc
           label="開始日時"
           value={startAt}
           onChange={handleStartAtChange}
+          allDay={isAllDay}
           required
           className="flex-1"
         />
@@ -160,6 +161,7 @@ export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: Sc
         value={endAt}
         onChange={setEndAt}
         min={startAt ?? undefined}
+        allDay={isAllDay}
         required
       />
 

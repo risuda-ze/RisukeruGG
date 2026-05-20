@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { format, isSameDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { updateSchedule, deleteSchedule } from '@/lib/repositories/schedules';
 import { useAuthStore } from '@/stores/auth';
 import { DateTimeInput } from '@/components/ui/DateTimeInput';
-import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
+import { Textarea } from '@/components/ui/Textarea';
+import { MarkdownView } from '@/components/ui/MarkdownEditor';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import type { ScheduleEntry, ScheduleCategory } from '@/types/entities';
 
@@ -38,7 +39,6 @@ interface ScheduleDetailModalProps {
   onClose: () => void;
   onDeleted: () => void;
 }
-
 
 export function ScheduleDetailModal({
   schedule,
@@ -77,9 +77,11 @@ export function ScheduleDetailModal({
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
 
+  /* オーバーレイ上でマウスダウンされたかを追跡（ドラッグ誤閉じ防止） */
+  const mouseDownOnOverlay = useRef<boolean>(false);
+
   const myInitials = (currentUser?.displayName ?? 'ME').slice(0, 2).toUpperCase();
   const myName = currentUser?.displayName ?? 'あなた';
-
   const currentCategory = categories.find((c) => c.id === categoryId);
 
   /* ── 日時保存 ─────────────────────────────── */
@@ -159,7 +161,7 @@ export function ScheduleDetailModal({
   function addComment() {
     if (!commentText.trim()) return;
     const newComment: LocalComment = {
-      id: `c-${Date.now()}`,
+      id: `c-${Date.now()}`, // eslint-disable-line react-hooks/purity
       authorName: myName,
       authorInitials: myInitials,
       text: commentText.trim(),
@@ -197,14 +199,27 @@ export function ScheduleDetailModal({
   }
 
   return (
+    /* オーバーレイ — CollabDetailModal と同じ中央配置パターン */
     <div
-      className="absolute inset-0 z-[290] flex items-center justify-center p-10"
+      className="fixed inset-0 z-[280] flex items-center justify-center p-4"
       style={{ background: 'rgba(6,6,16,0.85)', backdropFilter: 'blur(6px)' }}
-      onClick={handleCloseWithDraft}
+      onMouseDown={(e) => { mouseDownOnOverlay.current = e.target === e.currentTarget; }}
+      onClick={() => { if (mouseDownOnOverlay.current) handleCloseWithDraft(); }}
     >
+      {/* モーダル本体 */}
       <div
-        className="w-[720px] max-h-[90vh] bg-card-2 border border-border-l rounded-[24px] flex flex-col overflow-hidden"
-        style={{ boxShadow: 'var(--shadow-xl)' }}
+        className="flex flex-col overflow-hidden rounded-[24px]"
+        style={{
+          width: 'min(720px, calc(100vw - 32px))',
+          minWidth: '320px',
+          height: 'min(650px, 92vh)',
+          minHeight: '400px',
+          maxHeight: 'calc(100vh - 32px)',
+          resize: 'both',
+          background: 'var(--card-2)',
+          border: '1px solid var(--border-l)',
+          boxShadow: 'var(--shadow-xl)',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* カテゴリカラーのグラデーションバー */}
@@ -256,7 +271,7 @@ export function ScheduleDetailModal({
 
           <button
             onClick={handleCloseWithDraft}
-            className="shrink-0 w-9 h-9 rounded-full bg-surface border border-border text-muted hover:text-text flex items-center justify-center transition-colors"
+            className="shrink-0 w-9 h-9 rounded-full bg-surface border border-border text-muted hover:text-text flex items-center justify-center transition-colors cursor-pointer"
           >
             <span className="material-icons text-[20px]">close</span>
           </button>
@@ -291,6 +306,7 @@ export function ScheduleDetailModal({
                       label="開始"
                       value={startAt}
                       onChange={(d) => d && setStartAt(d)}
+                      allDay={isAllDay}
                       className="flex-1"
                     />
                     <button
@@ -314,6 +330,7 @@ export function ScheduleDetailModal({
                     value={endAt}
                     onChange={(d) => d && setEndAt(d)}
                     min={startAt}
+                    allDay={isAllDay}
                   />
                   {dateError && <p className="text-[12px] text-live">{dateError}</p>}
                   <div className="flex gap-2 justify-end pt-1">
@@ -348,15 +365,25 @@ export function ScheduleDetailModal({
                   </span>
                 </div>
               ) : (
-                /* 複数日: 左「開始日時」中「-」右「終了日時」 */
-                <div className="flex items-center gap-3 text-[14px] font-medium text-text font-num flex-wrap">
-                  <span className="text-purple-l font-bold">
-                    {format(schedule.startAt, 'yyyy年MM月dd日 HH:mm', { locale: ja })}
-                  </span>
-                  <span className="text-muted text-[16px] font-normal">—</span>
-                  <span className="text-purple-l font-bold">
-                    {format(schedule.endAt, 'yyyy年MM月dd日 HH:mm', { locale: ja })}
-                  </span>
+                /* 複数日（単日スタイルに合わせて開始・終了を縦並び） */
+                <div className="text-[15px] font-medium text-text font-num flex flex-col gap-2">
+                  <div>
+                    {format(schedule.startAt, 'yyyy年 MM月 dd日（E）', { locale: ja })}
+                    <br />
+                    <span className="text-[20px] text-purple-l font-bold">
+                      {format(schedule.startAt, 'HH:mm')}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 text-muted text-[13px]">
+                    <span className="material-icons text-[14px]">arrow_downward</span>
+                  </div>
+                  <div>
+                    {format(schedule.endAt, 'yyyy年 MM月 dd日（E）', { locale: ja })}
+                    <br />
+                    <span className="text-[20px] text-purple-l font-bold">
+                      {format(schedule.endAt, 'HH:mm')}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -393,7 +420,7 @@ export function ScheduleDetailModal({
             </div>
           </div>
 
-          {/* 内容 */}
+          {/* 内容（プレビュー機能なし・Textarea使用） */}
           <div className="flex gap-4">
             <span className="material-icons text-muted text-[22px] w-7 text-center pt-0.5 shrink-0">
               description
@@ -414,12 +441,13 @@ export function ScheduleDetailModal({
 
               {editingDesc ? (
                 <div className="flex flex-col gap-2">
-                  <MarkdownEditor
+                  <Textarea
                     value={description}
-                    onChange={setDescription}
+                    onChange={(e) => setDescription(e.target.value)}
                     placeholder="予定の詳細を入力..."
                     maxLength={1000}
                     rows={4}
+                    className="text-[14px] bg-bg border-border rounded-[12px] px-3.5 py-2.5 focus:border-purple"
                   />
                   <div className="flex gap-2 justify-end pt-1">
                     <button
@@ -441,11 +469,9 @@ export function ScheduleDetailModal({
                   </div>
                 </div>
               ) : (
-                <MarkdownEditor
-                  value={description}
-                  placeholder="内容なし"
-                  readOnly
-                />
+                <div className="min-h-[40px]">
+                  <MarkdownView value={description} placeholder="内容なし" />
+                </div>
               )}
             </div>
           </div>
