@@ -134,6 +134,29 @@ const MD_COMPONENTS: Components = {
   ),
 };
 
+/** マークダウンをレンダリングする読み取り専用ビュー */
+export function MarkdownView({
+  value,
+  placeholder,
+  className,
+}: {
+  value: string;
+  placeholder?: string;
+  className?: string;
+}) {
+  return (
+    <div className={`text-[14px] text-text leading-relaxed ${className ?? ''}`}>
+      {value ? (
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS}>
+          {value}
+        </ReactMarkdown>
+      ) : (
+        <span className="text-muted/50 italic text-[13px]">{placeholder ?? '内容なし'}</span>
+      )}
+    </div>
+  );
+}
+
 /** マークダウン記法の入力とプレビュー切替をサポートするテキストエリア */
 export function MarkdownEditor({
   label,

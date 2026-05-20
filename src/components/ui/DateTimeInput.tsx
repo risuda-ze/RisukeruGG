@@ -1,12 +1,17 @@
 'use client';
 
-/** Date | null と datetime-local 文字列の変換を一元管理する入力コンポーネント */
+/** Date | null と date/time 2入力の変換を一元管理するコンポーネント。
+ *  ChromeとEdgeでdatetime-localの表示書式が異なる問題を回避するため
+ *  type="date" + type="time" の2 inputに分割している。
+ */
 
 interface DateTimeInputProps {
   label: string;
   value: Date | null;
   onChange: (date: Date | null) => void;
   min?: Date;
+  /** true の場合は時刻 input を非表示（終日イベント） */
+  allDay?: boolean;
   required?: boolean;
   error?: string;
   hint?: string;
@@ -16,14 +21,24 @@ interface DateTimeInputProps {
 const BASE_CLASS =
   'w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple';
 
-/** Date を datetime-local 入力値（YYYY-MM-DDTHH:mm）に変換する */
-function toLocalString(date: Date): string {
+/** Date を "YYYY-MM-DD" に変換する */
+function toDateString(date: Date): string {
   const y = date.getFullYear();
   const mo = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${mo}-${d}`;
+}
+
+/** Date を "HH:mm" に変換する */
+function toTimeString(date: Date): string {
   const h = String(date.getHours()).padStart(2, '0');
   const mi = String(date.getMinutes()).padStart(2, '0');
-  return `${y}-${mo}-${d}T${h}:${mi}`;
+  return `${h}:${mi}`;
+}
+
+/** "YYYY-MM-DD" と "HH:mm" を合成して Date を返す */
+function toDate(dateStr: string, timeStr: string): Date {
+  return new Date(`${dateStr}T${timeStr}`);
 }
 
 export function DateTimeInput({
@@ -31,22 +46,34 @@ export function DateTimeInput({
   value,
   onChange,
   min,
+  allDay = false,
   required,
   error,
   hint,
   className,
 }: DateTimeInputProps) {
-  const inputValue = value ? toLocalString(value) : '';
-  const minValue = min ? toLocalString(min) : undefined;
+  const dateValue = value ? toDateString(value) : '';
+  const timeValue = value ? toTimeString(value) : '';
+  const minDate = min ? toDateString(min) : undefined;
+  const minTime = min && value && toDateString(value) === toDateString(min)
+    ? toTimeString(min)
+    : undefined;
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw = e.target.value;
-    if (!raw) {
+  function handleDateChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const newDate = e.target.value;
+    if (!newDate) {
       onChange(null);
       return;
     }
-    // datetime-local の値はローカルタイムとして解釈する
-    onChange(new Date(raw));
+    const time = timeValue || '00:00';
+    onChange(toDate(newDate, time));
+  }
+
+  function handleTimeChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const newTime = e.target.value;
+    if (!newTime) return;
+    const date = dateValue || toDateString(new Date());
+    onChange(toDate(date, newTime));
   }
 
   return (
@@ -55,14 +82,26 @@ export function DateTimeInput({
         {label}
         {required && <span className="text-live ml-0.5">*</span>}
       </label>
-      <input
-        type="datetime-local"
-        value={inputValue}
-        min={minValue}
-        required={required}
-        onChange={handleChange}
-        className={`${BASE_CLASS} ${error ? 'border-live' : ''}`}
-      />
+      <div className="flex gap-2">
+        <input
+          type="date"
+          value={dateValue}
+          min={minDate}
+          required={required}
+          onChange={handleDateChange}
+          className={`${BASE_CLASS} flex-1 ${error ? 'border-live' : ''}`}
+        />
+        {!allDay && (
+          <input
+            type="time"
+            value={timeValue}
+            min={minTime}
+            required={required}
+            onChange={handleTimeChange}
+            className={`${BASE_CLASS} w-[110px] ${error ? 'border-live' : ''}`}
+          />
+        )}
+      </div>
       {hint && !error && <p className="text-[11px] text-muted">{hint}</p>}
       {error && <p className="text-[11px] text-live">{error}</p>}
     </div>
