@@ -26,14 +26,28 @@ export const removeTeamMember = onCall(
 
     const targetUserData = await getUserDoc(targetUserId);
 
+    // ソロチームIDをトランザクション外で先行生成（ID生成はFirestore読み書き不要）
+    const soloTeamCode = randomBytes(6)
+      .toString('base64url')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .slice(0, 8)
+      .toUpperCase();
+    const soloTeamRef = db.collection('teams').doc();
+    const soloTeamId = soloTeamRef.id;
+
     return await db.runTransaction(async (tx) => {
       const now = FieldValue.serverTimestamp();
 
-      tx.delete(db.doc(`teams/${teamId}/members/${targetUserId}`));
-
+      // Firestoreトランザクションの制約: 読み取りは書き込みより前に実行する必要がある
       const tasksSnap = await tx.get(
         db.collection(`teams/${teamId}/tasks`).where('assigneeId', '==', targetUserId)
       );
+      const userSnap = await tx.get(db.doc(`users/${targetUserId}`));
+      const currentTeamIds = (userSnap.data()?.teamIds as string[]) ?? [];
+      const newTeamIds = currentTeamIds.filter((id) => id !== teamId).concat(soloTeamId);
+
+      tx.delete(db.doc(`teams/${teamId}/members/${targetUserId}`));
+
       for (const taskDoc of tasksSnap.docs) {
         tx.update(taskDoc.ref, { assigneeId: null });
       }
@@ -51,14 +65,6 @@ export const removeTeamMember = onCall(
         createdAt: now,
       });
 
-      const soloTeamCode = randomBytes(6)
-        .toString('base64url')
-        .replace(/[^a-zA-Z0-9]/g, '')
-        .slice(0, 8)
-        .toUpperCase();
-      const soloTeamRef = db.collection('teams').doc();
-      const soloTeamId = soloTeamRef.id;
-
       tx.set(soloTeamRef, {
         name: `${targetUserData.displayName}のチーム`,
         ownerId: targetUserId,
@@ -73,7 +79,10 @@ export const removeTeamMember = onCall(
         plan: targetUserData.plan,
         joinedAt: now,
       });
-      tx.update(db.doc(`users/${targetUserId}`), { currentTeamId: soloTeamId });
+      tx.update(db.doc(`users/${targetUserId}`), {
+        currentTeamId: soloTeamId,
+        teamIds: newTeamIds,
+      });
 
       return { success: true };
     });
