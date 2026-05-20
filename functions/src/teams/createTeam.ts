@@ -45,7 +45,7 @@ export const createTeam = onCall(
       tx.set(teamRef, { name: name.trim(), ownerId: uid, teamCode, createdAt: now });
       tx.set(db.doc(`teamCodes/${teamCode}`), { teamId, createdAt: now });
       tx.set(db.doc(`teams/${teamId}/members/${uid}`), {
-        role: 'owner',
+        role: 'operator',
         displayName: userData.displayName,
         avatarUrl: userData.avatarUrl ?? null,
         plan: userData.plan,

@@ -11,12 +11,13 @@ interface PlanStatusProps {
 }
 
 export function PlanStatus({ monthlyTaskCount, monthlyCollabCount }: PlanStatusProps) {
-  const { currentUser } = useAuthStore();
+  const { currentUser, members } = useAuthStore();
 
   if (!currentUser) return null;
 
   const signupUrl = process.env.NEXT_PUBLIC_PARTY_SIGNUP_URL;
-  const isLight = true; // TODO: Firestoreからプラン情報を取得
+  const myMember = members.find((m) => m.userId === currentUser.uid);
+  const isLight = myMember?.plan !== 'party';
 
   return (
     <div className="space-y-3">

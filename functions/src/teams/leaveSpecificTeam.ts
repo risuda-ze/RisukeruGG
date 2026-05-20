@@ -29,8 +29,8 @@ export const leaveSpecificTeam = onCall(
     if (!memberDoc.exists) {
       throw new HttpsError('not-found', 'このチームに所属していません');
     }
-    if (memberDoc.data()!.role === 'owner') {
-      throw new HttpsError('failed-precondition', '先に所有権を移譲してください');
+    if (memberDoc.data()!.role === 'operator') {
+      throw new HttpsError('failed-precondition', '先に別のメンバーをオペレーターに指名してください');
     }
 
     return await db.runTransaction(async (tx) => {
@@ -84,7 +84,7 @@ export const leaveSpecificTeam = onCall(
         });
         tx.set(db.doc(`teamCodes/${soloTeamCode}`), { teamId: newActiveTeamId, createdAt: now });
         tx.set(db.doc(`teams/${newActiveTeamId}/members/${uid}`), {
-          role: 'owner',
+          role: 'operator',
           displayName: userData.displayName,
           avatarUrl: userData.avatarUrl ?? null,
           plan: userData.plan,

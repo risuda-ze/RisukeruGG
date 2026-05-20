@@ -6,7 +6,6 @@ export * from './teams/joinTeam';
 export * from './teams/leaveTeam';
 export * from './teams/leaveSpecificTeam';
 export * from './teams/switchActiveTeam';
-export * from './teams/transferOwnership';
 export * from './teams/resetTeamCode';
 export * from './teams/removeTeamMember';
 export * from './teams/dissolveTeam';

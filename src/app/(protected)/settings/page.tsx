@@ -104,7 +104,7 @@ function ScheduleCategorySettings() {
   const teamId = currentTeam?.id;
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const isOwner = myMember?.role === 'owner';
+  const isOwner = myMember?.role === 'operator';
 
   useEffect(() => {
     if (!teamId) return;
@@ -453,7 +453,7 @@ function KanbanSettings() {
   const teamId = currentTeam?.id;
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const isOwner = myMember?.role === 'owner';
+  const isOwner = myMember?.role === 'operator';
 
   useEffect(() => {
     if (!teamId) return;
@@ -775,7 +775,7 @@ function TaskCategorySettings() {
   const teamId = currentTeam?.id;
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const canEdit = myMember?.role === 'owner' || myMember?.role === 'editor';
+  const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
 
   useEffect(() => {
     if (!teamId) return;

@@ -33,7 +33,7 @@ export default function SchedulePage() {
   const [gcalError, setGcalError] = useState<GCalFetchError>(null);
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const canEdit = myMember?.role === 'owner' || myMember?.role === 'editor';
+  const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
 
   useEffect(() => {
     if (!currentTeamId) return;

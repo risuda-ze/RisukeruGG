@@ -47,7 +47,7 @@ export default function ProfileSettingsPage() {
   const router = useRouter();
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const isOwnerWithMembers = myMember?.role === 'owner' && members.length > 1;
+  const isOperatorWithMembers = myMember?.role === 'operator' && members.length > 1;
   const isParty = myMember?.plan === 'party';
 
   /* ── プロフィール ──────────────────────────────────────────── */
@@ -167,12 +167,25 @@ export default function ProfileSettingsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [newOperatorId, setNewOperatorId] = useState('');
+
+  function openDeleteDialog() {
+    setDeleteError(null);
+    // オペレーター指名が必要な場合は先頭候補を初期選択
+    const candidates = members.filter((m) => m.userId !== currentUser?.uid);
+    setNewOperatorId(candidates[0]?.userId ?? '');
+    setShowDeleteDialog(true);
+  }
 
   async function handleDeleteAccount() {
     setDeleting(true);
     setDeleteError(null);
     try {
-      await deleteAccount();
+      const operatorAssignments =
+        isOperatorWithMembers && newOperatorId && currentTeam
+          ? [{ teamId: currentTeam.id, newOperatorId }]
+          : [];
+      await deleteAccount({ operatorAssignments });
       await signOut();
       router.replace('/login');
     } catch (err: unknown) {
@@ -180,15 +193,7 @@ export default function ProfileSettingsPage() {
         err && typeof err === 'object' && 'code' in err
           ? String((err as { code: unknown }).code)
           : 'unknown';
-      const message =
-        err && typeof err === 'object' && 'message' in err
-          ? String((err as { message: unknown }).message)
-          : '';
-      if (code === 'functions/failed-precondition') {
-        setDeleteError(message || '先に所有権を移譲してください');
-      } else {
-        setDeleteError(`削除に失敗しました（${code}）`);
-      }
+      setDeleteError(`削除に失敗しました（${code}）`);
     } finally {
       setDeleting(false);
     }
@@ -470,31 +475,18 @@ export default function ProfileSettingsPage() {
                   <div>
                     <p className="text-sm font-semibold text-text mb-0.5">アカウントを削除する</p>
                     <p className="text-[12px] text-muted">
-                      {isOwnerWithMembers
-                        ? '先にチームの所有権を別のメンバーに移譲してください。'
+                      {isOperatorWithMembers
+                        ? '削除前に新しいオペレーターを選択してください。'
                         : 'アカウント・チームデータ・スケジュールがすべて削除されます。'}
                     </p>
                   </div>
                   <button
-                    onClick={() => {
-                      setDeleteError(null);
-                      setShowDeleteDialog(true);
-                    }}
-                    disabled={isOwnerWithMembers}
-                    className="shrink-0 px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-live/40 text-live hover:bg-live/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    onClick={openDeleteDialog}
+                    className="shrink-0 px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-live/40 text-live hover:bg-live/10 transition-colors"
                   >
                     削除する
                   </button>
                 </div>
-                {isOwnerWithMembers && (
-                  <div className="mt-3 flex items-center gap-2 text-[11px] text-amber-l">
-                    <span className="material-icons text-[14px]">info</span>
-                    <a href="/team" className="underline hover:no-underline">
-                      チームページ
-                    </a>
-                    から所有権を移譲してください。
-                  </div>
-                )}
               </Card>
             </div>
           </div>
@@ -515,13 +507,39 @@ export default function ProfileSettingsPage() {
             >
               キャンセル
             </Button>
-            <Button variant="danger" loading={deleting} onClick={handleDeleteAccount}>
+            <Button
+              variant="danger"
+              loading={deleting}
+              disabled={isOperatorWithMembers && !newOperatorId}
+              onClick={handleDeleteAccount}
+            >
               削除する
             </Button>
           </>
         }
       >
         <div className="space-y-3 text-sm">
+          {/* オペレーターが複数メンバーチームを持つ場合は指名UIを表示 */}
+          {isOperatorWithMembers && (
+            <div className="rounded-[10px] border border-amber/30 bg-amber/10 p-3 space-y-2">
+              <p className="text-[12px] font-semibold text-amber-l">
+                新しいオペレーターを選択してください
+              </p>
+              <select
+                value={newOperatorId}
+                onChange={(e) => setNewOperatorId(e.target.value)}
+                className="w-full border border-border rounded-[8px] px-3 py-2 text-sm bg-surface text-text focus:outline-none focus:ring-2 focus:ring-purple"
+              >
+                {members
+                  .filter((m) => m.userId !== currentUser?.uid)
+                  .map((m) => (
+                    <option key={m.userId} value={m.userId}>
+                      {m.displayName}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
           <p className="text-text">以下のデータが完全に削除されます：</p>
           <ul className="space-y-1 text-[13px] text-muted list-none">
             <li className="flex items-center gap-2">

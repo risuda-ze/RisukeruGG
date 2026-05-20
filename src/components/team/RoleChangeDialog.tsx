@@ -7,15 +7,15 @@ import { Button } from '@/components/ui/Button';
 import type { TeamMember, UserRole } from '@/types/entities';
 
 const ROLE_LABELS: Record<UserRole, string> = {
-  owner: 'Owner',
-  editor: 'Editor',
-  viewer: 'Viewer',
+  operator: 'オペレーター',
+  member: 'メンバー',
+  rom: 'ROM専',
 };
 
 interface RoleChangeDialogProps {
   teamId: string;
   member: TeamMember;
-  newRole: 'editor' | 'viewer';
+  newRole: 'member' | 'rom';
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -64,9 +64,9 @@ export function RoleChangeDialog({
           <span className="font-medium">{member.displayName}</span> のロールを{' '}
           <span className="font-medium">{ROLE_LABELS[newRole]}</span> に変更しますか？
         </p>
-        {newRole === 'viewer' && (
+        {newRole === 'rom' && (
           <p className="text-amber-l bg-amber/10 border border-amber/30 rounded-[8px] p-3">
-            Viewerになると、スケジュール・タスクの作成・編集ができなくなります。
+            ROM専になると、スケジュール・タスクの作成・編集ができなくなります。
           </p>
         )}
         {error && <p className="text-live">{error}</p>}

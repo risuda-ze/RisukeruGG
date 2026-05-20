@@ -31,7 +31,7 @@ export default function ScheduleDetailPage() {
 
   const schedule = schedules.find((s) => s.id === scheduleId);
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const canEdit = myMember?.role === 'owner' || myMember?.role === 'editor';
+  const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
 
   if (!schedule) {
     return (

@@ -108,7 +108,7 @@ export default function CollabsPage() {
 
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const canEdit = myMember?.role === 'owner' || myMember?.role === 'editor';
+  const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
   /* 当月の作成数のみカウント（monthlyCollabs は月次制限） */
   const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const myCollabCount = sessions.filter(

@@ -1,7 +1,7 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomBytes } from 'crypto';
-import { db, getAuthContext, requireOwner, getUserDoc } from '../lib/validateAuth';
+import { db, getAuthContext, requireOperator, getUserDoc } from '../lib/validateAuth';
 
 interface RemoveTeamMemberData {
   teamId: string;
@@ -18,7 +18,7 @@ export const removeTeamMember = onCall(
     }
 
     const ctx = await getAuthContext(request, teamId);
-    requireOwner(ctx);
+    requireOperator(ctx);
 
     if (ctx.uid === targetUserId) {
       throw new HttpsError('invalid-argument', '自分自身は削除できません');
@@ -67,7 +67,7 @@ export const removeTeamMember = onCall(
       });
       tx.set(db.doc(`teamCodes/${soloTeamCode}`), { teamId: soloTeamId, createdAt: now });
       tx.set(db.doc(`teams/${soloTeamId}/members/${targetUserId}`), {
-        role: 'owner',
+        role: 'operator',
         displayName: targetUserData.displayName,
         avatarUrl: targetUserData.avatarUrl ?? null,
         plan: targetUserData.plan,
