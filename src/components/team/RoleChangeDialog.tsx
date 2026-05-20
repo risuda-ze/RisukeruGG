@@ -15,7 +15,9 @@ const ROLE_LABELS: Record<UserRole, string> = {
 interface RoleChangeDialogProps {
   teamId: string;
   member: TeamMember;
-  newRole: 'member' | 'rom';
+  newRole: 'member' | 'rom' | 'operator';
+  /** オペレーターへ昇格する際に降格させる現在のオペレーターID */
+  currentOperatorId?: string;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -24,6 +26,7 @@ export function RoleChangeDialog({
   teamId,
   member,
   newRole,
+  currentOperatorId,
   onClose,
   onSuccess,
 }: RoleChangeDialogProps) {
@@ -34,6 +37,10 @@ export function RoleChangeDialog({
     setSaving(true);
     setError(null);
     try {
+      // オペレーターへ昇格する場合は現在のオペレーターをメンバーに降格してから昇格する
+      if (newRole === 'operator' && currentOperatorId) {
+        await updateMemberRole(teamId, currentOperatorId, 'member');
+      }
       await updateMemberRole(teamId, member.userId, newRole);
       onSuccess();
     } catch (err) {
@@ -64,6 +71,11 @@ export function RoleChangeDialog({
           <span className="font-medium">{member.displayName}</span> のロールを{' '}
           <span className="font-medium">{ROLE_LABELS[newRole]}</span> に変更しますか？
         </p>
+        {newRole === 'operator' && (
+          <p className="text-amber-l bg-amber/10 border border-amber/30 rounded-[8px] p-3">
+            オペレーターに昇格すると、現在のオペレーターはメンバーに降格されます。
+          </p>
+        )}
         {newRole === 'rom' && (
           <p className="text-amber-l bg-amber/10 border border-amber/30 rounded-[8px] p-3">
             ROM専になると、スケジュール・タスクの作成・編集ができなくなります。

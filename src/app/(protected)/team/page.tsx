@@ -17,7 +17,7 @@ import { createTeam, dissolveTeam } from '@/lib/repositories/teams';
 import type { TeamMember, UserRole } from '@/types/entities';
 
 type DialogState =
-  | { type: 'roleChange'; member: TeamMember; newRole: 'member' | 'rom' }
+  | { type: 'roleChange'; member: TeamMember; newRole: 'member' | 'rom' | 'operator' }
   | { type: 'remove'; member: TeamMember }
   | { type: 'leave' }
   | null;
@@ -116,7 +116,7 @@ export default function TeamPage() {
   }
 
   function handleRoleChange(member: TeamMember, value: string) {
-    if (value === 'member' || value === 'rom') {
+    if (value === 'member' || value === 'rom' || value === 'operator') {
       setDialog({ type: 'roleChange', member, newRole: value });
     }
   }
@@ -292,6 +292,7 @@ export default function TeamPage() {
                           onChange={(e) => handleRoleChange(member, e.target.value)}
                           className="text-[11px] border border-border rounded-[6px] px-2 py-1 bg-card text-text outline-none"
                         >
+                          <option value="operator">オペレーター</option>
                           <option value="member">メンバー</option>
                           <option value="rom">ROM専</option>
                         </select>
@@ -465,6 +466,7 @@ export default function TeamPage() {
           teamId={teamId}
           member={dialog.member}
           newRole={dialog.newRole}
+          currentOperatorId={myMember?.userId}
           onClose={() => setDialog(null)}
           onSuccess={() => setDialog(null)}
         />
