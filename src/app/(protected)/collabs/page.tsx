@@ -109,7 +109,11 @@ export default function CollabsPage() {
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const canEdit = myMember?.role === 'owner' || myMember?.role === 'editor';
-  const myCollabCount = sessions.filter((s) => s.createdBy === currentUser?.uid).length;
+  /* 当月の作成数のみカウント（monthlyCollabs は月次制限） */
+  const currentMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const myCollabCount = sessions.filter(
+    (s) => s.createdBy === currentUser?.uid && s.createdAt >= currentMonthStart
+  ).length;
   const isLightPlanFull =
     myMember?.plan === 'light' && myCollabCount >= LIGHT_PLAN_LIMITS.monthlyCollabs;
 
