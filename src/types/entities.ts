@@ -1,4 +1,4 @@
-export type UserRole = 'owner' | 'editor' | 'viewer';
+export type UserRole = 'operator' | 'member' | 'rom';
 export type PlanType = 'light' | 'party';
 /** @deprecated 新規コードでは TaskCategory インターフェースと categoryId を使用すること */
 export type TaskCategoryKey = 'shooting' | 'editing' | 'thumbnail' | 'announcement' | 'other';
@@ -47,6 +47,8 @@ export interface User {
     syncError: string | null;
     lastSyncedAt: Date | null;
   } | null;
+  deleted?: boolean;
+  deletedAt?: Date | null;
 }
 
 export interface TeamMember {

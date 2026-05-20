@@ -86,7 +86,7 @@ export const respondToCollab = onCall(
       const membersSnap = await db.collection(`teams/${teamId}/members`).get();
       for (const memberDoc of membersSnap.docs) {
         const member = memberDoc.data();
-        if (member.role === 'owner' || member.role === 'editor') {
+        if (member.role === 'operator' || member.role === 'member') {
           const notifRef = db.collection(`teams/${teamId}/notifications`).doc();
           tx.set(notifRef, {
             recipientId: memberDoc.id,

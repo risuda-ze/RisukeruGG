@@ -14,8 +14,8 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
 
   const ctx = await getAuthContext(request, teamId);
 
-  if (ctx.role === 'owner') {
-    throw new HttpsError('failed-precondition', '先に所有権を移譲してください');
+  if (ctx.role === 'operator') {
+    throw new HttpsError('failed-precondition', '先に別のメンバーをオペレーターに指名してください');
   }
 
   return await db.runTransaction(async (tx) => {
@@ -61,7 +61,7 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
     });
     tx.set(db.doc(`teamCodes/${soloTeamCode}`), { teamId: soloTeamId, createdAt: now });
     tx.set(db.doc(`teams/${soloTeamId}/members/${uid}`), {
-      role: 'owner',
+      role: 'operator',
       displayName: userData.displayName,
       avatarUrl: userData.avatarUrl ?? null,
       plan: userData.plan,

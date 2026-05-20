@@ -7,7 +7,14 @@ export { HttpsError };
 export interface AuthContext {
   uid: string;
   teamId: string;
-  role: 'owner' | 'editor' | 'viewer';
+  role: 'operator' | 'member' | 'rom';
+}
+
+function normalizeRole(raw: string): 'operator' | 'member' | 'rom' {
+  if (raw === 'owner') return 'operator';
+  if (raw === 'editor') return 'member';
+  if (raw === 'viewer') return 'rom';
+  return raw as 'operator' | 'member' | 'rom';
 }
 
 /** 認証済みユーザーのチームメンバー情報を取得する */
@@ -29,19 +36,19 @@ export async function getAuthContext(
   return {
     uid,
     teamId,
-    role: memberSnap.data()!.role as 'owner' | 'editor' | 'viewer',
+    role: normalizeRole(memberSnap.data()!.role as string),
   };
 }
 
-export function requireOwner(ctx: AuthContext): void {
-  if (ctx.role !== 'owner') {
-    throw new HttpsError('permission-denied', 'Owner権限が必要です');
+export function requireOperator(ctx: AuthContext): void {
+  if (ctx.role !== 'operator') {
+    throw new HttpsError('permission-denied', 'オペレーター権限が必要です');
   }
 }
 
-export function requireOwnerOrEditor(ctx: AuthContext): void {
-  if (ctx.role !== 'owner' && ctx.role !== 'editor') {
-    throw new HttpsError('permission-denied', 'Owner または Editor 権限が必要です');
+export function requireOperatorOrMember(ctx: AuthContext): void {
+  if (ctx.role !== 'operator' && ctx.role !== 'member') {
+    throw new HttpsError('permission-denied', 'オペレーターまたはメンバー権限が必要です');
   }
 }
 

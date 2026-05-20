@@ -16,10 +16,17 @@ function toTeam(id: string, data: Record<string, unknown>): Team {
   };
 }
 
+function normalizeRole(raw: string): UserRole {
+  if (raw === 'owner') return 'operator';
+  if (raw === 'editor') return 'member';
+  if (raw === 'viewer') return 'rom';
+  return raw as UserRole;
+}
+
 function toTeamMember(id: string, data: Record<string, unknown>): TeamMember {
   return {
     userId: id,
-    role: data.role as UserRole,
+    role: normalizeRole(data.role as string),
     displayName: data.displayName as string,
     avatarUrl: (data.avatarUrl as string | null) ?? null,
     plan: data.plan as 'light' | 'party',
@@ -78,11 +85,6 @@ export const leaveTeam = httpsCallable<void, { success: boolean; newSoloTeamId: 
   'leaveTeam'
 );
 
-export const transferOwnership = httpsCallable<
-  { teamId: string; newOwnerId: string },
-  { success: boolean }
->(functions, 'transferOwnership');
-
 export const resetTeamCode = httpsCallable<{ teamId: string }, { newTeamCode: string }>(
   functions,
   'resetTeamCode'
@@ -93,10 +95,10 @@ export const removeTeamMember = httpsCallable<
   { success: boolean }
 >(functions, 'removeTeamMember');
 
-export const deleteAccount = httpsCallable<void, { success: boolean }>(
-  functions,
-  'deleteAccount'
-);
+export const deleteAccount = httpsCallable<
+  { operatorAssignments?: { teamId: string; newOperatorId: string }[] },
+  { success: boolean }
+>(functions, 'deleteAccount');
 
 export const dissolveTeam = httpsCallable<void, { success: boolean }>(
   functions,

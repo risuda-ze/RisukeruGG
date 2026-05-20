@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { RoleChangeDialog } from '@/components/team/RoleChangeDialog';
 import { RemoveMemberDialog } from '@/components/team/RemoveMemberDialog';
-import { TransferOwnershipDialog } from '@/components/team/TransferOwnershipDialog';
 import { LeaveTeamDialog } from '@/components/team/LeaveTeamDialog';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
 import { Card, CardHeader } from '@/components/ui/Card';
@@ -18,31 +17,30 @@ import { createTeam, dissolveTeam } from '@/lib/repositories/teams';
 import type { TeamMember, UserRole } from '@/types/entities';
 
 type DialogState =
-  | { type: 'roleChange'; member: TeamMember; newRole: 'editor' | 'viewer' }
+  | { type: 'roleChange'; member: TeamMember; newRole: 'member' | 'rom' }
   | { type: 'remove'; member: TeamMember }
-  | { type: 'transfer' }
   | { type: 'leave' }
   | null;
 
 const ROLE_LABELS: Record<UserRole, string> = {
-  owner: '配信者 / オーナー',
-  editor: 'Editor',
-  viewer: 'Viewer',
+  operator: 'オペレーター',
+  member: 'メンバー',
+  rom: 'ROM専',
 };
 
 /* ロール別バッジ色 */
 const ROLE_BADGE: Record<UserRole, { bg: string; text: string; border: string }> = {
-  owner: {
+  operator: {
     bg: 'var(--purple-sm)',
     text: 'var(--purple-l)',
     border: 'var(--purple)',
   },
-  editor: {
+  member: {
     bg: 'rgba(239,159,39,0.15)',
     text: 'var(--amber-l)',
     border: 'var(--amber)',
   },
-  viewer: {
+  rom: {
     bg: 'rgba(102,102,170,0.15)',
     text: 'var(--muted-l)',
     border: 'var(--border-l)',
@@ -76,7 +74,7 @@ export default function TeamPage() {
 
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const isOwner = myMember?.role === 'owner';
+  const isOperator = myMember?.role === 'operator';
   const isSolo = members.length <= 1 && !teamId;
 
   async function handleSaveName(e: React.FormEvent) {
@@ -118,7 +116,7 @@ export default function TeamPage() {
   }
 
   function handleRoleChange(member: TeamMember, value: string) {
-    if (value === 'editor' || value === 'viewer') {
+    if (value === 'member' || value === 'rom') {
       setDialog({ type: 'roleChange', member, newRole: value });
     }
   }
@@ -224,18 +222,7 @@ export default function TeamPage() {
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* トップバー */}
-      <TopBar title="チームメンバー" subtitle={`${members.length}名`}>
-        {isOwner && (
-          <button
-            onClick={() => setDialog({ type: 'transfer' })}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-[12px] text-[12px] font-semibold transition-colors"
-            style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
-          >
-            <span className="material-icons text-[16px]">person_add</span>
-            メンバーを招待
-          </button>
-        )}
-      </TopBar>
+      <TopBar title="チームメンバー" subtitle={`${members.length}名`} />
 
       <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 space-y-4">
         {/* メンバーカード */}
@@ -269,7 +256,7 @@ export default function TeamPage() {
                       ) : (
                         initials
                       )}
-                      {(isMe || member.role === 'owner') && (
+                      {(isMe || member.role === 'operator') && (
                         <span
                           className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-surface z-10"
                           style={{ background: 'var(--green)' }}
@@ -297,16 +284,16 @@ export default function TeamPage() {
                       </div>
                     </div>
 
-                    {/* オーナー向けアクション */}
-                    {isOwner && !isMe && member.role !== 'owner' && (
+                    {/* オペレーター向けアクション */}
+                    {isOperator && !isMe && member.role !== 'operator' && (
                       <div className="flex items-center gap-1.5 shrink-0">
                         <select
                           value={member.role}
                           onChange={(e) => handleRoleChange(member, e.target.value)}
                           className="text-[11px] border border-border rounded-[6px] px-2 py-1 bg-card text-text outline-none"
                         >
-                          <option value="editor">Editor</option>
-                          <option value="viewer">Viewer</option>
+                          <option value="member">メンバー</option>
+                          <option value="rom">ROM専</option>
                         </select>
                         <button
                           onClick={() => setDialog({ type: 'remove', member })}
@@ -321,8 +308,8 @@ export default function TeamPage() {
               })}
             </div>
 
-            {/* 脱退ボタン（非オーナー） */}
-            {!isOwner && (
+            {/* 脱退ボタン（非オペレーター） */}
+            {!isOperator && (
               <div className="mt-4">
                 <button
                   onClick={() => setDialog({ type: 'leave' })}
@@ -341,7 +328,7 @@ export default function TeamPage() {
             <CardHeader
               title="チームの基本情報"
               action={
-                isOwner ? (
+                isOperator ? (
                   <button
                     onClick={() => { setEditNameValue(currentTeam.name); setShowEditName(true); }}
                     className="text-[11px] text-muted hover:text-text transition-colors px-2 py-1 rounded-[6px] hover:bg-surface border border-border"
@@ -367,7 +354,7 @@ export default function TeamPage() {
         )}
 
         {/* チームを解散する（オーナーのみ） */}
-        {isOwner && (
+        {isOperator && (
           <div className="bg-card border border-live/30 rounded-lg overflow-hidden">
             <CardHeader title="危険ゾーン" />
             <div className="p-[18px]">
@@ -491,18 +478,10 @@ export default function TeamPage() {
           onSuccess={() => setDialog(null)}
         />
       )}
-      {dialog?.type === 'transfer' && teamId && (
-        <TransferOwnershipDialog
-          teamId={teamId}
-          members={members}
-          onClose={() => setDialog(null)}
-          onSuccess={() => setDialog(null)}
-        />
-      )}
       <LeaveTeamDialog
         open={dialog?.type === 'leave'}
         onClose={() => setDialog(null)}
-        isOwner={isOwner}
+        isOwner={isOperator}
       />
     </div>
   );

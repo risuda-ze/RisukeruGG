@@ -56,7 +56,7 @@ export const onUserCreate = v1.auth.user().onCreate(async (user) => {
   });
 
   batch.set(db.doc(`teams/${soloTeamId}/members/${uid}`), {
-    role: 'owner',
+    role: 'operator',
     displayName,
     avatarUrl,
     plan: 'light',

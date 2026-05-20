@@ -19,8 +19,8 @@ export const dissolveTeam = onCall(
     }
 
     const memberSnap = await db.doc(`teams/${teamId}/members/${uid}`).get();
-    if (!memberSnap.exists || memberSnap.data()!.role !== 'owner') {
-      throw new HttpsError('permission-denied', 'オーナーのみチームを解散できます');
+    if (!memberSnap.exists || memberSnap.data()!.role !== 'operator') {
+      throw new HttpsError('permission-denied', 'オペレーターのみチームを解散できます');
     }
 
     const teamSnap = await db.doc(`teams/${teamId}`).get();
@@ -59,7 +59,7 @@ export const dissolveTeam = onCall(
       });
       batch.set(db.doc(`teamCodes/${soloCode}`), { teamId: soloRef.id, createdAt: now });
       batch.set(db.doc(`teams/${soloRef.id}/members/${memberId}`), {
-        role: 'owner',
+        role: 'operator',
         displayName: memberData.displayName,
         avatarUrl: memberData.avatarUrl ?? null,
         plan: memberData.plan,
@@ -85,7 +85,7 @@ export const dissolveTeam = onCall(
     });
     batch.set(db.doc(`teamCodes/${ownerSoloCode}`), { teamId: ownerSoloRef.id, createdAt: now });
     batch.set(db.doc(`teams/${ownerSoloRef.id}/members/${uid}`), {
-      role: 'owner',
+      role: 'operator',
       displayName: userData.displayName,
       avatarUrl: userData.avatarUrl ?? null,
       plan: userData.plan,

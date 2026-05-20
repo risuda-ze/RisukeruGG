@@ -39,7 +39,7 @@ export default function CollabDetailPage() {
 
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const canEdit = myMember?.role === 'owner' || myMember?.role === 'editor';
+  const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
 
   useEffect(() => {
     if (!teamId) return;
