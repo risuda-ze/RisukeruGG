@@ -45,7 +45,7 @@
 - `LeaveTeamDialog.tsx` を更新:
   - ソロチーム（メンバー数 ≤ 1）のオペレーター: 退出ボタンを有効化 → `leaveSpecificTeam` を呼び出す
   - 複数メンバーのオペレーター: 「先に所有権を移譲してください」メッセージ（ボタン無効）
-  - 非オペレーター: 既存の `leaveTeam` フローをそのまま使用
+  - 非オペレーター: `leaveSpecificTeam({ teamId })` を呼び出す（`leaveTeam` は `teamIds` を更新しない古い実装のため統一）
 - `LeaveTeamDialog` のプロパティを `isOwner: boolean` から `isSoloOperator: boolean` に改名・再定義
 
 ---
@@ -80,4 +80,4 @@
 
 - チーム間メンバー移動 UI（ドラッグ&ドロップ等）
 - BottomNav の同様バグ（`/settings/profile` 系アイテムが BottomNav にないため影響なし）
-- `leaveTeam.ts` のリファクタリング（`leaveSpecificTeam` への統合）
+- `leaveTeam.ts` の `leaveSpecificTeam` への**統合・廃止**（T002 はソロチーム対応の個別修正のみであり、2関数の統合・既存 export の削除は本スコープ外）

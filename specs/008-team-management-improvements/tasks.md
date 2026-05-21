@@ -35,7 +35,7 @@
 2. オペレーター（複数メンバー）: 退出ボタンが表示され、クリックで「先に所有権を移譲してください」メッセージが出る（脱退ボタンなし）
 3. 非オペレーター: 退出ボタンが表示され、クリックで従来の脱退フローが動作する
 
-- [ ] T004 [US2] `src/components/team/LeaveTeamDialog.tsx` を更新: props を `{isOwner: boolean}` から `{teamId: string; isSoloOperator: boolean; isMultiOperator: boolean}` に変更。UI: `isMultiOperator` → 「先に所有権を移譲してください」（ボタンなし）、`isSoloOperator` → 「ソロチームを退出します」＋退出ボタン、それ以外（非オペレーター）→ 既存メッセージ。`handleLeave` で `leaveSpecificTeam({ teamId })` に統一（`leaveTeam` を廃止）
+- [ ] T004 [US2] `src/components/team/LeaveTeamDialog.tsx` を更新: props を `{isOwner: boolean}` から `{teamId: string; isSoloOperator: boolean; isMultiOperator: boolean}` に変更。UI: `isMultiOperator` → 「先に所有権を移譲してください」（ボタンなし）、`isSoloOperator` → 「ソロチームを退出します」＋退出ボタン、それ以外（非オペレーター）→ 既存メッセージ。`handleLeave` で `leaveSpecificTeam({ teamId })` に統一。変更後に `src/lib/repositories/teams.ts` 内の `leaveTeam` 関数が他から呼び出されていないことを grep で確認し、呼び出し元がなければ export を削除する
 - [ ] T005 [US2] `src/app/(protected)/team/page.tsx` を更新: 退出ボタンの条件 `{!isOperator && ...}` を削除して全ロールに表示。ラベルを「現在のチームから退出する」に変更。`LeaveTeamDialog` の props を `teamId={teamId ?? ''}`, `isSoloOperator={isOperator && members.length <= 1}`, `isMultiOperator={isOperator && members.length > 1}` に更新
 
 **Checkpoint**: `/team` ページを開き、全ロールで退出ボタンが表示されること・それぞれのケースで正しい動作をすることを確認
@@ -65,7 +65,7 @@
 
 **Purpose**: 全修正の型安全を検証
 
-- [ ] T007 `pnpm typecheck` を実行して TypeScript 型エラーがゼロであることを確認。エラーがある場合は各タスクのファイルを修正して再実行
+- [ ] T007 `pnpm typecheck` を実行して TypeScript 型エラーがゼロであることを確認（エラーがある場合は T001–T006 の該当タスクに戻り修正する）
 
 ---
 

@@ -142,23 +142,28 @@ if (ctx.role === 'operator') {
 
 ### C. `removeTeamMember.ts` — 防御的チーム削除
 
-**変更箇所**: トランザクション内のメンバー削除後にチェックを追加
+**変更箇所**: トランザクションの**読み取りフェーズ**（既存の `tasksSnap`・`userSnap` と同タイミング）に `membersSnap` と `teamDocSnap` を追加し、書き込みフェーズでチェックする
 
 ```typescript
-// tx.delete(members/targetUserId) の後:
-const remainingMembersSnap = await tx.get(db.collection(`teams/${teamId}/members`));
-// 削除後に0メンバーになる場合（= 削除前が1人だった異常ケース）
-// 通常は起きないが防御として: チームを削除
-if (remainingMembersSnap.size <= 1) { // 1 = 削除前なので、削除後は0
-  const teamSnap = await tx.get(db.doc(`teams/${teamId}`));
-  const teamCode = teamSnap.data()?.teamCode as string | undefined;
+// 読み取りフェーズ（既存の tasksSnap・userSnap 読み取りと同タイミングで追加）
+const membersSnap = await tx.get(db.collection(`teams/${teamId}/members`));
+const teamDocSnap = await tx.get(db.doc(`teams/${teamId}`));
+
+// ...（既存の書き込み処理）...
+
+// 書き込みフェーズ: tx.delete(members/targetUserId) の後に追記
+// 通常 requireOperator(ctx) によりオペレーター（ctx.uid）が常にメンバーとして存在し、
+// かつ ctx.uid !== targetUserId が保証されるため membersSnap.size >= 2 が維持される。
+// ただしデータ破損等の異常状態で targetUserId のみが存在していた場合の防御として実施。
+if (membersSnap.size <= 1) {
+  const teamCode = teamDocSnap.data()?.teamCode as string | undefined;
   tx.delete(db.doc(`teams/${teamId}`));
   if (teamCode) tx.delete(db.doc(`teamCodes/${teamCode}`));
 }
 ```
 
-注意: Firestoreトランザクション内ではdelete後に再読み取りできないため、削除前のカウントを使う。
-`membersSnap.size === 1`（削除前に自分1人だけ）= 削除後に0人。
+注意: Firestore Admin SDK はトランザクション内で書き込み後の読み取りを禁止するため、
+`membersSnap` と `teamDocSnap` は必ず書き込みより前の読み取りフェーズで取得する。
 
 ---
 
@@ -168,11 +173,16 @@ if (remainingMembersSnap.size <= 1) { // 1 = 削除前なので、削除後は0
 interface LeaveTeamDialogProps {
   open: boolean;
   onClose: () => void;
-  teamId: string;           // leaveSpecificTeam に渡すチームID
-  isSoloOperator: boolean;  // ソロチームのオペレーター（退出ボタン表示）
-  isMultiOperator: boolean; // 複数メンバーのオペレーター（移譲メッセージ表示）
+  teamId: string;            // leaveSpecificTeam に渡すチームID
+  isSoloOperator: boolean;   // ソロチームのオペレーター（退出ボタン表示）
+  isMultiOperator: boolean;  // 複数メンバーのオペレーター（移譲メッセージ表示）
   onSuccess?: () => void;
 }
+// ケース判定:
+//   isMultiOperator === true  → 移譲メッセージのみ（ボタンなし）
+//   isSoloOperator  === true  → 退出確認 + 退出ボタン
+//   どちらも false（非オペレーター）→ 通常の脱退フロー
+// ※ isSoloOperator と isMultiOperator は排他的（両方 true にはならない）
 
 // ハンドラ: ソロチームオペレーターは leaveSpecificTeam を呼ぶ
 const handleLeave = async () => {
