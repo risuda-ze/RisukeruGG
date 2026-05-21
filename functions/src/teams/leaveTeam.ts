@@ -14,14 +14,30 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
 
   const ctx = await getAuthContext(request, teamId);
 
+  let isSoloOperator = false;
+  let existingTeamCode: string | undefined;
+
   if (ctx.role === 'operator') {
-    throw new HttpsError('failed-precondition', '先に別のメンバーをオペレーターに指名してください');
+    const membersSnap = await db.collection(`teams/${teamId}/members`).get();
+    if (membersSnap.size > 1) {
+      throw new HttpsError('failed-precondition', '先に別のメンバーをオペレーターに指名してください');
+    }
+    /* ソロチーム: トランザクション内で旧チームを削除して新ソロチーム生成フローに合流 */
+    isSoloOperator = true;
+    const teamDocSnap = await db.doc(`teams/${teamId}`).get();
+    existingTeamCode = teamDocSnap.data()?.teamCode as string | undefined;
   }
 
   return await db.runTransaction(async (tx) => {
     const now = FieldValue.serverTimestamp();
 
     tx.delete(db.doc(`teams/${teamId}/members/${uid}`));
+
+    /* ソロオペレーター脱退: 旧チームドキュメントと teamCode を削除 */
+    if (isSoloOperator) {
+      tx.delete(db.doc(`teams/${teamId}`));
+      if (existingTeamCode) tx.delete(db.doc(`teamCodes/${existingTeamCode}`));
+    }
 
     const tasksSnap = await tx.get(
       db.collection(`teams/${teamId}/tasks`).where('assigneeId', '==', uid)
@@ -30,20 +46,22 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
       tx.update(taskDoc.ref, { assigneeId: null });
     }
 
-    const teamSnap = await tx.get(db.doc(`teams/${teamId}`));
-    const ownerId = teamSnap.data()!.ownerId as string;
-    const notifRef = db.collection(`teams/${teamId}/notifications`).doc();
-    tx.set(notifRef, {
-      recipientId: ownerId,
-      category: 'system',
-      type: 'member_left',
-      title: 'メンバーが脱退しました',
-      body: `${userData.displayName} がチームを脱退しました`,
-      refType: 'team',
-      refId: teamId,
-      isRead: false,
-      createdAt: now,
-    });
+    if (!isSoloOperator) {
+      const teamSnap = await tx.get(db.doc(`teams/${teamId}`));
+      const ownerId = teamSnap.data()!.ownerId as string;
+      const notifRef = db.collection(`teams/${teamId}/notifications`).doc();
+      tx.set(notifRef, {
+        recipientId: ownerId,
+        category: 'system',
+        type: 'member_left',
+        title: 'メンバーが脱退しました',
+        body: `${userData.displayName} がチームを脱退しました`,
+        refType: 'team',
+        refId: teamId,
+        isRead: false,
+        createdAt: now,
+      });
+    }
 
     const soloTeamCode = randomBytes(6)
       .toString('base64url')

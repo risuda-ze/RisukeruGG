@@ -309,17 +309,15 @@ export default function TeamPage() {
               })}
             </div>
 
-            {/* 脱退ボタン（非オペレーター） */}
-            {!isOperator && (
-              <div className="mt-4">
-                <button
-                  onClick={() => setDialog({ type: 'leave' })}
-                  className="text-[12px] text-muted hover:text-live transition-colors"
-                >
-                  チームを脱退する
-                </button>
-              </div>
-            )}
+            {/* 退出ボタン（全ロール） */}
+            <div className="mt-4">
+              <button
+                onClick={() => setDialog({ type: 'leave' })}
+                className="text-[12px] text-muted hover:text-live transition-colors"
+              >
+                現在のチームから退出する
+              </button>
+            </div>
           </div>
         </Card>
 
@@ -483,7 +481,10 @@ export default function TeamPage() {
       <LeaveTeamDialog
         open={dialog?.type === 'leave'}
         onClose={() => setDialog(null)}
-        isOwner={isOperator}
+        teamId={teamId ?? ''}
+        isSoloOperator={isOperator && members.length <= 1}
+        isMultiOperator={isOperator && members.length > 1}
+        onSuccess={() => setDialog(null)}
       />
     </div>
   );

@@ -43,10 +43,21 @@ export const removeTeamMember = onCall(
         db.collection(`teams/${teamId}/tasks`).where('assigneeId', '==', targetUserId)
       );
       const userSnap = await tx.get(db.doc(`users/${targetUserId}`));
+      const membersSnap = await tx.get(db.collection(`teams/${teamId}/members`));
+      const teamDocSnap = await tx.get(db.doc(`teams/${teamId}`));
       const currentTeamIds = (userSnap.data()?.teamIds as string[]) ?? [];
       const newTeamIds = currentTeamIds.filter((id) => id !== teamId).concat(soloTeamId);
 
       tx.delete(db.doc(`teams/${teamId}/members/${targetUserId}`));
+
+      // 通常 requireOperator(ctx) によりオペレーター（ctx.uid）が常にメンバーとして存在し、
+      // かつ ctx.uid !== targetUserId が保証されるため membersSnap.size >= 2 が維持される。
+      // ただしデータ破損等の異常状態で targetUserId のみが存在していた場合の防御として実施。
+      if (membersSnap.size <= 1) {
+        const teamCode = teamDocSnap.data()?.teamCode as string | undefined;
+        tx.delete(db.doc(`teams/${teamId}`));
+        if (teamCode) tx.delete(db.doc(`teamCodes/${teamCode}`));
+      }
 
       for (const taskDoc of tasksSnap.docs) {
         tx.update(taskDoc.ref, { assigneeId: null });
