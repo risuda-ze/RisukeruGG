@@ -33,44 +33,68 @@ pnpm test:e2e:ui            # Playwright UI モード
 pnpm vitest run tests/unit/tasks/columnTransition.test.ts
 ```
 
-## アーキテクチャ
+## プロジェクトルール
 
-### 技術スタック
+このプロジェクトは3つのサブエージェント（Planner → Generator → Evaluator）による自動開発パイプラインで構築される。
 
-- Next.js 14 (App Router) + TypeScript 5
-- Tailwind CSS 4 — `@theme` ブロックでデザイントークンを定義（`src/app/globals.css`）
-- Firebase: Auth (Google SSO)・Firestore・Storage・FCM
-- Zustand — クライアント状態管理
-- React Hook Form + Zod — フォームバリデーション
-- react-big-calendar — スケジュールカレンダー
-- @hello-pangea/dnd — カンバンドラッグ&ドロップ
-- Vitest (unit) / Playwright (E2E)
-- docker-compose — ローカル開発環境（Firebase エミュレータ含む）
-
-### 注意事項
-
-- 認証フロー: `AuthProvider` が `initAuthListener()` を起動 → Zustand `useAuthStore` に状態保持。`(protected)/layout.tsx` が `currentUser` を監視してログインページへリダイレクト。開発環境では Google SSO をエミュレータで模倣。
-- Firestoreデータアクセス: `src/lib/repositories/` の関数経由のみ。コレクションパスは常に `teams/{teamId}/...` のサブコレクション構造。リアルタイム購読には `onSnapshot` を使用し、アンサブスクライバーを返す。
-- デザインシステム: ダークテーマ固定。`globals.css` の `@theme` ブロックで Tailwind カスタムカラー（`bg-bg`, `bg-surface`, `bg-card`, `text-purple`, `text-amber` 等）を定義。CSS変数（`--bg`, `--surface` 等）も `:root` に定義。
-- レスポンシブ: `md` (768px) ブレークポイントで Sidebar 表示・BottomNav 非表示を切り替え。AppShell がこの切り替えを担う。
-- 型安全: Props は全てインライン型注釈。バリアントは union 型。`any` 使用禁止。
-- コメント言語: ソースコード内のコメントは**日本語**で記述する（変数名・コンポーネント名は英語）。
-
-### 環境変数
-
-`.env.local.example` を参考に `.env.local` を作成:
+### エージェント構成
 
 ```
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
-NEXT_PUBLIC_USE_EMULATORS=true   # Firebase エミュレータ使用時
+Planner ──→ Generator ──→ Evaluator
+ (企画)      (実装)        (検証)
+              ↑               │
+              └── 不合格時 ──┘
 ```
 
-### テスト戦略
+### ファイル規約
 
-- **ユニットテスト**: `tests/unit/` — ビジネスロジック・バリデーション・状態変換のみ対象。UIコンポーネントテストは原則不要。
-- **E2E テスト**: `tests/e2e/` — login・schedule・tasks の主要フロー。`localhost:3000` を使用（`pnpm dev` が必要）。
+- **仕様書は Planner だけが書く。** Generator・Evaluator は読み取り専用。
+- **進捗は Generator だけが書く。** Evaluator は読み取り専用。
+- **フィードバックは Evaluator だけが書く。** Generator は読み取り専用。
+
+### ワークフロー
+
+#### Step 1: 企画（Planner）
+
+- ユーザーの短いプロンプトを受け取り `/docs/spec.md` を生成
+- 技術的な実装詳細（DB設計、API設計、技術スタック）には踏み込まない
+- 各スプリントに Evaluator がテスト可能な受け入れ基準を必ず記述する
+
+#### Step 2: 実装（Generator）
+
+- `/docs/spec.md` と `/docs/progress.md` を読み、次のスプリントを特定
+- **1回の呼び出しで1スプリントのみ実装する**
+- 完了時に `/docs/progress.md` へ自己評価と引き渡し事項（起動方法、テストURL、テストシナリオ）を記録
+- 前スプリントのフィードバック（`/docs/feedback/sprint-N.md`）があれば、修正を先に行う
+
+#### Step 3: 検証（Evaluator）
+
+- `/docs/spec.md` の受け入れ基準と `/docs/progress.md` の引き渡し事項を読む
+- Playwright MCP でアプリを実際に操作してテスト
+- 結果を `/docs/feedback/sprint-N.md` に出力
+- 不合格の場合 → Generator に戻って修正（Step 2 へ）
+- 合格の場合 → 次のスプリントへ（Step 2 へ）
+
+### 評価基準と閾値
+
+| 基準               | 閾値     | 不合格時の扱い       |
+| ------------------ | -------- | -------------------- |
+| 機能完全性         | 4/5 以上 | Generator に差し戻し |
+| 動作安定性         | 4/5 以上 | Generator に差し戻し |
+| UI/UX品質          | 3/5 以上 | Generator に差し戻し |
+| エラーハンドリング | 3/5 以上 | Generator に差し戻し |
+| 回帰なし           | 5/5 必須 | Generator に差し戻し |
+
+**1つでも閾値を下回ればスプリント不合格。**
+
+### 絶対ルール
+
+1. **責務を越境しない** - Planner は実装しない。Generator は仕様を変更しない。Evaluator はコードを修正しない。
+2. **スプリント順序を守る** - Sprint 1 → 2 → 3 と順番に実装する。スキップ禁止。
+3. **動作する状態を維持する** - 各スプリント完了時にアプリが正常に起動・動作すること。
+4. **フィードバックを最優先で処理する** - Generator は新スプリント着手前に、前スプリントの不合格フィードバックを修正すること。
+5. **起動手順を必ず記載する** - Generator は `/docs/progress.md` にアプリの起動コマンドを毎回明記する。Evaluator はそれに従って起動する。
+
+### コミュニケーションルール
+
+- コメント言語 : ソースコード内のコメントは**日本語**で記述する（変数名・コンポーネント名は英語）。
