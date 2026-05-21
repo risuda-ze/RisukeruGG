@@ -29,10 +29,68 @@ export const leaveSpecificTeam = onCall(
     if (!memberDoc.exists) {
       throw new HttpsError('not-found', 'このチームに所属していません');
     }
-    if (memberDoc.data()!.role === 'operator') {
-      throw new HttpsError('failed-precondition', '先に別のメンバーをオペレーターに指名してください');
+
+    const isOperator = memberDoc.data()!.role === 'operator';
+    if (isOperator) {
+      const membersSnap = await db.collection(`teams/${teamId}/members`).get();
+      if (membersSnap.size > 1) {
+        throw new HttpsError('failed-precondition', '先に別のメンバーをオペレーターに指名してください');
+      }
+      /* ソロチーム（自分のみ）: チームを削除して脱退 */
+      const teamDocSnap = await db.doc(`teams/${teamId}`).get();
+      const teamCode = teamDocSnap.data()?.teamCode as string | undefined;
+      const remainingTeamIds = currentTeamIds.filter((id) => id !== teamId);
+
+      return await db.runTransaction(async (tx) => {
+        const now = FieldValue.serverTimestamp();
+
+        tx.delete(db.doc(`teams/${teamId}/members/${uid}`));
+        tx.delete(db.doc(`teams/${teamId}`));
+        if (teamCode) tx.delete(db.doc(`teamCodes/${teamCode}`));
+
+        let newActiveTeamId: string;
+
+        if (remainingTeamIds.length === 0) {
+          /* 他チームなし: 新ソロチームを自動生成 */
+          const soloTeamCode = randomBytes(6)
+            .toString('base64url')
+            .replace(/[^a-zA-Z0-9]/g, '')
+            .slice(0, 8)
+            .toUpperCase();
+          const soloTeamRef = db.collection('teams').doc();
+          newActiveTeamId = soloTeamRef.id;
+
+          tx.set(soloTeamRef, {
+            name: `${userData.displayName}のチーム`,
+            ownerId: uid,
+            teamCode: soloTeamCode,
+            createdAt: now,
+          });
+          tx.set(db.doc(`teamCodes/${soloTeamCode}`), { teamId: newActiveTeamId, createdAt: now });
+          tx.set(db.doc(`teams/${newActiveTeamId}/members/${uid}`), {
+            role: 'operator',
+            displayName: userData.displayName,
+            avatarUrl: userData.avatarUrl ?? null,
+            plan: userData.plan,
+            joinedAt: now,
+          });
+          remainingTeamIds.push(newActiveTeamId);
+        } else {
+          /* 他チームあり: アクティブチームだった場合は最初の残チームに切替 */
+          newActiveTeamId =
+            userData.currentTeamId === teamId ? remainingTeamIds[0] : (userData.currentTeamId as string);
+        }
+
+        tx.update(db.doc(`users/${uid}`), {
+          teamIds: FieldValue.arrayRemove(teamId),
+          currentTeamId: newActiveTeamId,
+        });
+
+        return { success: true, newActiveTeamId };
+      });
     }
 
+    /* 非オペレーターの通常脱退フロー */
     return await db.runTransaction(async (tx) => {
       const now = FieldValue.serverTimestamp();
       const remainingTeamIds = currentTeamIds.filter((id) => id !== teamId);

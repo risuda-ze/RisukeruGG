@@ -18,9 +18,9 @@
 1. ソロチームのオペレーターが別チームに参加後、`leaveSpecificTeam({teamId: soloTeamId})` を呼ぶとエラーにならず成功すること
 2. 脱退後に `teams/{soloTeamId}` と `teamCodes/{code}` ドキュメントが Firestore に存在しないこと
 
-- [ ] T001 [P] [US1] `functions/src/teams/leaveSpecificTeam.ts` のオペレーターチェック（L32）を修正: ソロチーム（memberCount ≤ 1）の場合はチームドキュメント・teamCode・メンバードキュメントを削除して脱退許可。複数メンバーの場合は既存エラーを維持。新ソロチーム不要時は生成スキップ
-- [ ] T002 [P] [US1] `functions/src/teams/leaveTeam.ts` のオペレーターチェック（L17）を修正: ソロチーム確認ロジックを追加し、ソロチームの場合はトランザクション内で旧チームドキュメントと teamCode を削除してから既存の新ソロチーム生成フローに合流
-- [ ] T003 [P] [US1] `functions/src/teams/removeTeamMember.ts` に防御的チーム削除を追加: トランザクション内でメンバー削除前に `membersSnap.size === 1` を確認し、真の場合（削除後0メンバー）はチームドキュメントと teamCode も削除
+- [x] T001 [P] [US1] `functions/src/teams/leaveSpecificTeam.ts` のオペレーターチェック（L32）を修正: ソロチーム（memberCount ≤ 1）の場合はチームドキュメント・teamCode・メンバードキュメントを削除して脱退許可。複数メンバーの場合は既存エラーを維持。新ソロチーム不要時は生成スキップ
+- [x] T002 [P] [US1] `functions/src/teams/leaveTeam.ts` のオペレーターチェック（L17）を修正: ソロチーム確認ロジックを追加し、ソロチームの場合はトランザクション内で旧チームドキュメントと teamCode を削除してから既存の新ソロチーム生成フローに合流
+- [x] T003 [P] [US1] `functions/src/teams/removeTeamMember.ts` に防御的チーム削除を追加: トランザクション内でメンバー削除前に `membersSnap.size === 1` を確認し、真の場合（削除後0メンバー）はチームドキュメントと teamCode も削除
 
 **Checkpoint**: Cloud Functions をデプロイし、ソロチームオペレーターが `leaveSpecificTeam` で脱退できること・チームドキュメントが消えることを確認
 
@@ -35,8 +35,8 @@
 2. オペレーター（複数メンバー）: 退出ボタンが表示され、クリックで「先に所有権を移譲してください」メッセージが出る（脱退ボタンなし）
 3. 非オペレーター: 退出ボタンが表示され、クリックで従来の脱退フローが動作する
 
-- [ ] T004 [US2] `src/components/team/LeaveTeamDialog.tsx` を更新: props を `{isOwner: boolean}` から `{teamId: string; isSoloOperator: boolean; isMultiOperator: boolean}` に変更。UI: `isMultiOperator` → 「先に所有権を移譲してください」（ボタンなし）、`isSoloOperator` → 「ソロチームを退出します」＋退出ボタン、それ以外（非オペレーター）→ 既存メッセージ。`handleLeave` で `leaveSpecificTeam({ teamId })` に統一。変更後に `src/lib/repositories/teams.ts` 内の `leaveTeam` 関数が他から呼び出されていないことを grep で確認し、呼び出し元がなければ export を削除する
-- [ ] T005 [US2] `src/app/(protected)/team/page.tsx` を更新: 退出ボタンの条件 `{!isOperator && ...}` を削除して全ロールに表示。ラベルを「現在のチームから退出する」に変更。`LeaveTeamDialog` の props を `teamId={teamId ?? ''}`, `isSoloOperator={isOperator && members.length <= 1}`, `isMultiOperator={isOperator && members.length > 1}` に更新
+- [x] T004 [US2] `src/components/team/LeaveTeamDialog.tsx` を更新: props を `{isOwner: boolean}` から `{teamId: string; isSoloOperator: boolean; isMultiOperator: boolean}` に変更。UI: `isMultiOperator` → 「先に所有権を移譲してください」（ボタンなし）、`isSoloOperator` → 「ソロチームを退出します」＋退出ボタン、それ以外（非オペレーター）→ 既存メッセージ。`handleLeave` で `leaveSpecificTeam({ teamId })` に統一。変更後に `src/lib/repositories/teams.ts` 内の `leaveTeam` 関数が他から呼び出されていないことを grep で確認し、呼び出し元がなければ export を削除する
+- [x] T005 [US2] `src/app/(protected)/team/page.tsx` を更新: 退出ボタンの条件 `{!isOperator && ...}` を削除して全ロールに表示。ラベルを「現在のチームから退出する」に変更。`LeaveTeamDialog` の props を `teamId={teamId ?? ''}`, `isSoloOperator={isOperator && members.length <= 1}`, `isMultiOperator={isOperator && members.length > 1}` に更新
 
 **Checkpoint**: `/team` ページを開き、全ロールで退出ボタンが表示されること・それぞれのケースで正しい動作をすることを確認
 
@@ -48,7 +48,7 @@
 
 **Independent Test**: `/settings/profile` ページに遷移したとき、サイドバーで「個人設定」のみがアクティブハイライトされ、「チャンネル設定」はハイライトされないこと
 
-- [ ] T006 [US3] `src/components/layout/Sidebar.tsx` を更新: `usePathname()` の直下に最長一致アルゴリズムで `activeHref` を計算するコードを追加。通常表示ループ（L143）と折りたたみ表示ループ（L180）の両方で `pathname.startsWith(item.href)` を `item.href === activeHref` に変更
+- [x] T006 [US3] `src/components/layout/Sidebar.tsx` を更新: `usePathname()` の直下に最長一致アルゴリズムで `activeHref` を計算するコードを追加。通常表示ループ（L143）と折りたたみ表示ループ（L180）の両方で `pathname.startsWith(item.href)` を `item.href === activeHref` に変更
 
   ```typescript
   // usePathname() の直下に追加
@@ -65,7 +65,7 @@
 
 **Purpose**: 全修正の型安全を検証
 
-- [ ] T007 `pnpm typecheck` を実行して TypeScript 型エラーがゼロであることを確認（エラーがある場合は T001–T006 の該当タスクに戻り修正する）
+- [x] T007 `pnpm typecheck` を実行して TypeScript 型エラーがゼロであることを確認（エラーがある場合は T001–T006 の該当タスクに戻り修正する）
 
 ---
 

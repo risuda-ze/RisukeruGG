@@ -80,10 +80,6 @@ export const joinTeam = httpsCallable<{ teamCode: string }, { success: boolean; 
   'joinTeam'
 );
 
-export const leaveTeam = httpsCallable<void, { success: boolean; newSoloTeamId: string }>(
-  functions,
-  'leaveTeam'
-);
 
 export const resetTeamCode = httpsCallable<{ teamId: string }, { newTeamCode: string }>(
   functions,

@@ -59,6 +59,10 @@ const NAV_SECTIONS: NavSection[] = [
 /* ── Sidebarコンポーネント ──────────────────────────────────── */
 export function Sidebar() {
   const pathname = usePathname();
+  /* 最長一致アルゴリズム: 現在パスに最も長くマッチするナビアイテムのみをアクティブにする */
+  const activeHref = NAV_SECTIONS.flatMap((s) => s.items)
+    .filter((i) => !i.disabled && (pathname === i.href || pathname.startsWith(i.href + '/')))
+    .reduce((longest, i) => (i.href.length > longest.length ? i.href : longest), '');
   const { currentUser, signOut } = useAuthStore();
   const { collapsed, openSections, toggleCollapsed, toggleSection } = useSidebarStore();
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
@@ -140,7 +144,7 @@ export function Sidebar() {
               {isOpen && !collapsed && (
                 <ul className="mt-0.5 space-y-0.5">
                   {section.items.map((item) => {
-                    const active = !item.disabled && pathname.startsWith(item.href);
+                    const active = item.href === activeHref;
                     const showBadge = item.href === '/collabs' && unreadCount > 0;
                     return (
                       <li key={item.label}>
@@ -177,7 +181,7 @@ export function Sidebar() {
               {collapsed && (
                 <ul className="mt-0.5 space-y-0.5">
                   {section.items.map((item) => {
-                    const active = !item.disabled && pathname.startsWith(item.href);
+                    const active = item.href === activeHref;
                     return (
                       <li key={item.label}>
                         {item.disabled ? (
