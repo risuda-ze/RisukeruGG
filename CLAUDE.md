@@ -6,7 +6,7 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT START -->
 
-現在進行中の スケジュール管理カレンダー UI 改善: `specs/007-schedule-calendar-ui-improvements/plan.md`
+現在進行中の チーム管理改善・ナビ修正: `specs/008-team-management-improvements/plan.md`
 
 <!-- SPECKIT END -->
 
