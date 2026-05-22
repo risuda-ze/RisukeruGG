@@ -3,6 +3,8 @@
 
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
+import { AIChatWidget } from '@/components/ai/AIChatWidget';
+import { AIExtractModal } from '@/components/ai/AIExtractModal';
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -22,6 +24,10 @@ export function AppShell({ children }: AppShellProps) {
 
       {/* ── モバイル: 下部ナビゲーション ───────────────── */}
       <BottomNav />
+
+      {/* ── AI機能 ─────────────────────────────────────── */}
+      <AIChatWidget />
+      <AIExtractModal />
     </div>
   );
 }
