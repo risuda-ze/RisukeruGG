@@ -267,29 +267,6 @@ export function AIExtractModal() {
             </p>
           </div>
 
-          {/* ── テンプレート（常時表示） ── */}
-          <div className="flex flex-col gap-2">
-            <span className="text-[11px] font-semibold text-muted/70 uppercase tracking-wide select-none">
-              テンプレート
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {TEMPLATES.map((tpl) => (
-                <button
-                  key={tpl.id}
-                  onClick={() => applyTemplate(tpl)}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-medium transition-all ${
-                    selectedTemplateId === tpl.id
-                      ? 'border-purple bg-purple/10 text-purple-l'
-                      : 'border-border text-muted hover:border-purple-l hover:text-purple-l hover:bg-purple/5'
-                  }`}
-                >
-                  <span>{tpl.emoji}</span>
-                  {tpl.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* ── 検索バー風テキスト入力コンテナ ── */}
           <div
             className={`flex flex-col rounded-[16px] border bg-bg transition-colors ${
@@ -314,24 +291,41 @@ export function AIExtractModal() {
               <button
                 onClick={handleExtract}
                 disabled={!text.trim() || loading}
-                className={`flex items-center gap-1.5 h-8 px-4 rounded-full text-[13px] font-semibold transition-all ${
+                className={`flex items-center justify-center w-8 h-8 rounded-full transition-all ${
                   text.trim() && !loading
                     ? 'bg-purple text-white hover:bg-purple-l shadow-sm'
                     : 'bg-border/60 text-muted cursor-not-allowed'
                 }`}
               >
                 {loading ? (
-                  <>
-                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    解析中...
-                  </>
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
-                  <>
-                    <span className="material-icons text-[15px]">auto_awesome</span>
-                    解析する
-                  </>
+                  <span className="material-icons text-[18px]">arrow_forward</span>
                 )}
               </button>
+            </div>
+          </div>
+
+          {/* ── テンプレート（常時表示） ── */}
+          <div className="flex flex-col gap-2">
+            <span className="text-[11px] font-semibold text-muted/70 uppercase tracking-wide select-none">
+              テンプレート
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {TEMPLATES.map((tpl) => (
+                <button
+                  key={tpl.id}
+                  onClick={() => applyTemplate(tpl)}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-medium transition-all ${
+                    selectedTemplateId === tpl.id
+                      ? 'border-purple bg-purple/10 text-purple-l'
+                      : 'border-border text-muted hover:border-purple-l hover:text-purple-l hover:bg-purple/5'
+                  }`}
+                >
+                  <span>{tpl.emoji}</span>
+                  {tpl.label}
+                </button>
+              ))}
             </div>
           </div>
 
