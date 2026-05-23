@@ -5,7 +5,6 @@ import { format } from 'date-fns';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Spinner } from '@/components/ui/Spinner';
 import { useAIStore } from '@/stores/ai';
 import { useAuthStore } from '@/stores/auth';
 import { useTasksStore } from '@/stores/tasks';
@@ -13,6 +12,9 @@ import { createSchedule } from '@/lib/repositories/schedules';
 import { createTask } from '@/lib/repositories/tasks';
 import { createCollabSession } from '@/lib/repositories/collabs';
 
+// ────────────────────────────────────────────────
+// 型定義
+// ────────────────────────────────────────────────
 type ExtractType = 'schedule' | 'task' | 'collab';
 
 interface ScheduleData {
@@ -21,13 +23,11 @@ interface ScheduleData {
   endAt: string;
   description: string;
 }
-
 interface TaskData {
   title: string;
   description: string;
   dueDate: string;
 }
-
 interface CollabData {
   title: string;
   partnerName: string;
@@ -39,13 +39,64 @@ const TYPE_LABELS: Record<ExtractType, string> = {
   task: 'タスク',
   collab: 'コラボ調整',
 };
-
 const TYPE_ICONS: Record<ExtractType, string> = {
   schedule: 'event',
   task: 'task_alt',
   collab: 'handshake',
 };
 
+// ────────────────────────────────────────────────
+// テンプレート定義
+// ────────────────────────────────────────────────
+interface Template {
+  id: string;
+  emoji: string;
+  label: string;
+  text: string;
+}
+
+const TEMPLATES: Template[] = [
+  {
+    id: 'stream-announce',
+    emoji: '📅',
+    label: '配信告知',
+    text: '6月20日(土)21時より「マイクラ実況」を配信します！2時間くらいの予定です。よろしくお願いします🎮',
+  },
+  {
+    id: 'collab-stream',
+    emoji: '📅',
+    label: 'コラボ配信',
+    text: '○○さんとコラボ配信やります！6月25日(水)20時スタート予定、3時間くらいの見込みです。',
+  },
+  {
+    id: 'recording',
+    emoji: '🎬',
+    label: '収録予定',
+    text: '6月18日(火)14時〜17時で歌ってみたの収録を入れてます。スタジオ〇〇で3時間ブース予約済み。',
+  },
+  {
+    id: 'task-thumbnail',
+    emoji: '✅',
+    label: 'タスク追加',
+    text: 'サムネイル作成 ◆ 締切6月19日 ◆ 次回配信用のサムネをPhotoshopで仕上げる',
+  },
+  {
+    id: 'task-edit',
+    emoji: '✅',
+    label: '動画編集',
+    text: '動画編集 ◆ 締切6月22日 ◆ 先日収録した30分の歌ってみた動画をカット・ミックス・書き出し',
+  },
+  {
+    id: 'collab-request',
+    emoji: '🤝',
+    label: 'コラボ打診',
+    text: '○○さん、コラボしませんか？候補日は6/28(土)20時、6/29(日)15時、7/1(火)21時あたりで考えています。',
+  },
+];
+
+// ────────────────────────────────────────────────
+// コンポーネント本体
+// ────────────────────────────────────────────────
 export function AIExtractModal() {
   const { extractOpen, closeExtract } = useAIStore();
   const { currentUser, currentTeamId } = useAuthStore();
@@ -53,39 +104,42 @@ export function AIExtractModal() {
 
   const [step, setStep] = useState<'input' | 'review' | 'success'>('input');
   const [text, setText] = useState('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [type, setType] = useState<ExtractType>('schedule');
   const [scheduleData, setScheduleData] = useState<ScheduleData>({
-    title: '',
-    startAt: '',
-    endAt: '',
-    description: '',
+    title: '', startAt: '', endAt: '', description: '',
   });
   const [taskData, setTaskData] = useState<TaskData>({
-    title: '',
-    description: '',
-    dueDate: '',
+    title: '', description: '', dueDate: '',
   });
   const [collabData, setCollabData] = useState<CollabData>({
-    title: '',
-    partnerName: '',
-    proposedDates: [''],
+    title: '', partnerName: '', proposedDates: [''],
   });
 
+  // ── テンプレート選択 ────────────────────────────
+  function applyTemplate(tpl: Template) {
+    setText(tpl.text);
+    setSelectedTemplateId(tpl.id);
+  }
+
+  // ── モーダルを閉じる ────────────────────────────
   function handleClose() {
     closeExtract();
     setTimeout(() => {
       setStep('input');
       setText('');
+      setSelectedTemplateId(null);
       setError(null);
     }, 300);
   }
 
+  // ── Claude による解析 ────────────────────────────
   async function handleExtract() {
-    if (!text.trim()) return;
+    if (!text.trim() || loading) return;
     setLoading(true);
     setError(null);
 
@@ -95,13 +149,10 @@ export function AIExtractModal() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
       });
-
-      if (!res.ok) throw new Error('解析に失敗しました');
-
+      if (!res.ok) throw new Error();
       const data = await res.json();
 
       setType(data.type);
-
       if (data.type === 'schedule' && data.schedule) {
         setScheduleData({
           title: data.schedule.title ?? '',
@@ -119,13 +170,11 @@ export function AIExtractModal() {
         setCollabData({
           title: data.collab.title ?? '',
           partnerName: data.collab.partnerName ?? '',
-          proposedDates:
-            data.collab.proposedDates?.length > 0
-              ? data.collab.proposedDates.map(toLocalDateTimeString)
-              : [''],
+          proposedDates: data.collab.proposedDates?.length > 0
+            ? data.collab.proposedDates.map(toLocalDateTimeString)
+            : [''],
         });
       }
-
       setStep('review');
     } catch {
       setError('テキストの解析に失敗しました。もう一度お試しください。');
@@ -134,6 +183,7 @@ export function AIExtractModal() {
     }
   }
 
+  // ── Firestore 登録 ────────────────────────────
   async function handleSubmit() {
     if (!currentTeamId || !currentUser) return;
     setSubmitting(true);
@@ -175,7 +225,6 @@ export function AIExtractModal() {
           expiresInDays: 7,
         });
       }
-
       setStep('success');
     } catch {
       setError('登録に失敗しました。もう一度お試しください。');
@@ -184,55 +233,132 @@ export function AIExtractModal() {
     }
   }
 
+  // ── キーボード送信（Ctrl/Cmd + Enter）────────────
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      handleExtract();
+    }
+  }
+
   return (
     <Modal
       open={extractOpen}
       onClose={handleClose}
-      title={
-        step === 'success'
-          ? '登録完了！'
-          : step === 'review'
-            ? `AIが解析しました — ${TYPE_LABELS[type]}`
-            : 'AIでテキストから登録'
-      }
+      size={step === 'input' ? 'xl' : 'md'}
     >
+      {/* ══════════════════════════════════════
+          STEP: input — 検索バー風 入力 UI
+      ══════════════════════════════════════ */}
       {step === 'input' && (
         <div className="flex flex-col gap-4">
-          <p className="text-sm text-muted">
-            チャットのコピペ・告知文・メモなど、何でも貼り付けてください。
-            <br />
-            AIがスケジュール・タスク・コラボのどれかに自動解析します。
-          </p>
 
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="例: 「6/20の20時から歌ってみたコラボやりたい。○○さんと調整中」"
-            rows={7}
-            className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple resize-none placeholder:text-muted/50"
-          />
-
-          {error && <p className="text-sm text-live">{error}</p>}
-
-          <div className="flex justify-end gap-3 pt-1">
-            <Button variant="ghost" onClick={handleClose}>
-              キャンセル
-            </Button>
-            <Button
-              onClick={handleExtract}
-              disabled={!text.trim() || loading}
-              loading={loading}
-            >
-              <span className="material-icons text-[16px] mr-1">auto_awesome</span>
-              解析する
-            </Button>
+          {/* ── タイトル + 説明 ── */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-2">
+              <span className="material-icons text-[20px] text-purple">auto_awesome</span>
+              <h2 className="text-[16px] font-bold text-text tracking-tight">AIに相談</h2>
+            </div>
+            <p className="text-[12px] text-muted leading-relaxed pl-[28px]">
+              告知文・チャットのコピペ・メモなど、思ったままに書いてください。
+              AIがスケジュール・タスク・コラボのどれかに自動で整理します。
+              <br />
+              テンプレを選ぶと日付や名前を書き換えるだけで使えます。
+            </p>
           </div>
+
+          {/* ── テンプレート（常時表示） ── */}
+          <div className="flex flex-col gap-2">
+            <span className="text-[11px] font-semibold text-muted/70 uppercase tracking-wide select-none">
+              テンプレート
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {TEMPLATES.map((tpl) => (
+                <button
+                  key={tpl.id}
+                  onClick={() => applyTemplate(tpl)}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-medium transition-all ${
+                    selectedTemplateId === tpl.id
+                      ? 'border-purple bg-purple/10 text-purple-l'
+                      : 'border-border text-muted hover:border-purple-l hover:text-purple-l hover:bg-purple/5'
+                  }`}
+                >
+                  <span>{tpl.emoji}</span>
+                  {tpl.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── 検索バー風テキスト入力コンテナ ── */}
+          <div
+            className={`flex flex-col rounded-[16px] border bg-bg transition-colors ${
+              loading ? 'border-purple/50' : 'border-border focus-within:border-purple'
+            }`}
+          >
+            <textarea
+              value={text}
+              onChange={(e) => { setText(e.target.value); setSelectedTemplateId(null); }}
+              onKeyDown={handleKeyDown}
+              placeholder="ここにテキストを入力 または テンプレを選んで編集..."
+              disabled={loading}
+              rows={4}
+              className="w-full bg-transparent text-text text-[14px] leading-relaxed px-4 pt-4 pb-2 outline-none resize-none placeholder:text-muted/40 disabled:opacity-60"
+            />
+
+            {/* 送信バー（文字数 + ボタン） */}
+            <div className="flex items-center justify-between px-3 pb-3 pt-1">
+              <span className="text-[11px] text-muted/50 select-none">
+                {text.length > 0 ? `${text.length} 文字` : 'Ctrl+Enter でも送信'}
+              </span>
+              <button
+                onClick={handleExtract}
+                disabled={!text.trim() || loading}
+                className={`flex items-center gap-1.5 h-8 px-4 rounded-full text-[13px] font-semibold transition-all ${
+                  text.trim() && !loading
+                    ? 'bg-purple text-white hover:bg-purple-l shadow-sm'
+                    : 'bg-border/60 text-muted cursor-not-allowed'
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    解析中...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-icons text-[15px]">auto_awesome</span>
+                    解析する
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {error && (
+            <p className="text-[12px] text-live flex items-center gap-1">
+              <span className="material-icons text-[14px]">error_outline</span>
+              {error}
+            </p>
+          )}
         </div>
       )}
 
+      {/* ══════════════════════════════════════
+          STEP: review — 解析結果 確認フォーム
+      ══════════════════════════════════════ */}
       {step === 'review' && (
         <div className="flex flex-col gap-4">
-          {/* タイプ切り替え */}
+          {/* ヘッダー */}
+          <div className="flex items-center gap-2">
+            <span className="material-icons text-[18px] text-purple">{TYPE_ICONS[type]}</span>
+            <h2 className="text-[14px] font-semibold text-text">
+              AIが解析しました —{' '}
+              <span className="text-purple-l">{TYPE_LABELS[type]}</span>
+            </h2>
+          </div>
+
+          {/* タイプ切り替えピル */}
           <div className="flex gap-2">
             {(['schedule', 'task', 'collab'] as ExtractType[]).map((t) => (
               <button
@@ -244,7 +370,7 @@ export function AIExtractModal() {
                     : 'border-border text-muted hover:border-purple-l hover:text-purple-l'
                 }`}
               >
-                <span className="material-icons text-[14px]">{TYPE_ICONS[t]}</span>
+                <span className="material-icons text-[13px]">{TYPE_ICONS[t]}</span>
                 {TYPE_LABELS[t]}
               </button>
             ))}
@@ -258,31 +384,33 @@ export function AIExtractModal() {
                 value={scheduleData.title}
                 onChange={(e) => setScheduleData((d) => ({ ...d, title: e.target.value }))}
               />
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-semibold text-muted">開始日時</label>
-                <input
-                  type="datetime-local"
-                  value={scheduleData.startAt}
-                  onChange={(e) => setScheduleData((d) => ({ ...d, startAt: e.target.value }))}
-                  className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-semibold text-muted">終了日時</label>
-                <input
-                  type="datetime-local"
-                  value={scheduleData.endAt}
-                  onChange={(e) => setScheduleData((d) => ({ ...d, endAt: e.target.value }))}
-                  className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[12px] font-semibold text-muted">開始日時</label>
+                  <input
+                    type="datetime-local"
+                    value={scheduleData.startAt}
+                    onChange={(e) => setScheduleData((d) => ({ ...d, startAt: e.target.value }))}
+                    className="w-full bg-bg border border-border text-text px-3 py-2 rounded-[10px] text-[13px] outline-none transition-colors focus:border-purple"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[12px] font-semibold text-muted">終了日時</label>
+                  <input
+                    type="datetime-local"
+                    value={scheduleData.endAt}
+                    onChange={(e) => setScheduleData((d) => ({ ...d, endAt: e.target.value }))}
+                    className="w-full bg-bg border border-border text-text px-3 py-2 rounded-[10px] text-[13px] outline-none transition-colors focus:border-purple"
+                  />
+                </div>
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-[12px] font-semibold text-muted">説明</label>
                 <textarea
                   value={scheduleData.description}
                   onChange={(e) => setScheduleData((d) => ({ ...d, description: e.target.value }))}
-                  rows={3}
-                  className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple resize-none"
+                  rows={2}
+                  className="w-full bg-bg border border-border text-text px-3 py-2 rounded-[10px] text-[13px] outline-none transition-colors focus:border-purple resize-none"
                 />
               </div>
             </div>
@@ -301,8 +429,8 @@ export function AIExtractModal() {
                 <textarea
                   value={taskData.description ?? ''}
                   onChange={(e) => setTaskData((d) => ({ ...d, description: e.target.value }))}
-                  rows={3}
-                  className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple resize-none"
+                  rows={2}
+                  className="w-full bg-bg border border-border text-text px-3 py-2 rounded-[10px] text-[13px] outline-none transition-colors focus:border-purple resize-none"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
@@ -311,7 +439,7 @@ export function AIExtractModal() {
                   type="date"
                   value={taskData.dueDate}
                   onChange={(e) => setTaskData((d) => ({ ...d, dueDate: e.target.value }))}
-                  className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple"
+                  className="w-full bg-bg border border-border text-text px-3 py-2 rounded-[10px] text-[13px] outline-none transition-colors focus:border-purple"
                 />
               </div>
             </div>
@@ -346,7 +474,7 @@ export function AIExtractModal() {
                             ),
                           }))
                         }
-                        className="flex-1 bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple"
+                        className="flex-1 bg-bg border border-border text-text px-3 py-2 rounded-[10px] text-[13px] outline-none transition-colors focus:border-purple"
                       />
                       {collabData.proposedDates.length > 1 && (
                         <button
@@ -357,9 +485,9 @@ export function AIExtractModal() {
                               proposedDates: d.proposedDates.filter((_, idx) => idx !== i),
                             }))
                           }
-                          className="text-muted hover:text-live text-sm px-1"
+                          className="text-muted hover:text-live transition-colors"
                         >
-                          ✕
+                          <span className="material-icons text-[18px]">close</span>
                         </button>
                       )}
                     </div>
@@ -373,7 +501,7 @@ export function AIExtractModal() {
                           proposedDates: [...d.proposedDates, ''],
                         }))
                       }
-                      className="text-sm text-purple-l hover:text-purple transition-colors text-left"
+                      className="text-[12px] text-purple-l hover:text-purple transition-colors text-left"
                     >
                       + 候補日を追加
                     </button>
@@ -383,11 +511,16 @@ export function AIExtractModal() {
             </div>
           )}
 
-          {error && <p className="text-sm text-live">{error}</p>}
+          {error && (
+            <p className="text-[12px] text-live flex items-center gap-1">
+              <span className="material-icons text-[14px]">error_outline</span>
+              {error}
+            </p>
+          )}
 
           <div className="flex justify-end gap-3 pt-1">
             <Button variant="ghost" onClick={() => setStep('input')}>
-              戻る
+              ← 戻る
             </Button>
             <Button onClick={handleSubmit} loading={submitting}>
               登録する
@@ -396,6 +529,9 @@ export function AIExtractModal() {
         </div>
       )}
 
+      {/* ══════════════════════════════════════
+          STEP: success — 登録完了
+      ══════════════════════════════════════ */}
       {step === 'success' && (
         <div className="flex flex-col items-center gap-4 py-4">
           <div className="w-16 h-16 rounded-full bg-purple/10 flex items-center justify-center">

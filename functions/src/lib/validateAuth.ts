@@ -52,6 +52,9 @@ export function requireOperatorOrMember(ctx: AuthContext): void {
   }
 }
 
+/** @deprecated requireOperatorOrMember の旧エイリアス */
+export const requireOwnerOrEditor = requireOperatorOrMember;
+
 export function requireAuth(callableRequest: CallableRequest): string {
   if (!callableRequest.auth) {
     throw new HttpsError('unauthenticated', '認証が必要です');

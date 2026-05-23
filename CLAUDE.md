@@ -56,13 +56,13 @@ Planner ──→ Generator ──→ Evaluator
 
 #### Step 1: 企画（Planner）
 
-- ユーザーの短いプロンプトを受け取り `/docs/spec.md` を生成
+- ユーザーのプロンプトを受け取り、仕様書を生成
 - 技術的な実装詳細（DB設計、API設計、技術スタック）には踏み込まない
 - 各スプリントに Evaluator がテスト可能な受け入れ基準を必ず記述する
 
 #### Step 2: 実装（Generator）
 
-- `/docs/spec.md` と `/docs/progress.md` を読み、次のスプリントを特定
+- 各仕様書と実装計画書を読み、次のスプリントを特定
 - **1回の呼び出しで1スプリントのみ実装する**
 - 完了時に `/docs/progress.md` へ自己評価と引き渡し事項（起動方法、テストURL、テストシナリオ）を記録
 - 前スプリントのフィードバック（`/docs/feedback/sprint-N.md`）があれば、修正を先に行う
