@@ -115,6 +115,9 @@ importers:
         specifier: ^6.4.0
         version: 6.6.0(firebase-admin@13.9.0)
     devDependencies:
+      '@types/node':
+        specifier: ^20
+        version: 20.19.41
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
