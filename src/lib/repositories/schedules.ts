@@ -1,7 +1,6 @@
 import {
   collection,
   doc,
-  addDoc,
   deleteDoc,
   onSnapshot,
   Unsubscribe,
@@ -9,7 +8,8 @@ import {
   runTransaction,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '@/lib/firebase/client';
 import type { ScheduleEntry } from '@/types/entities';
 
 function toSchedule(id: string, data: Record<string, unknown>): ScheduleEntry {
@@ -30,16 +30,39 @@ function toSchedule(id: string, data: Record<string, unknown>): ScheduleEntry {
   };
 }
 
+const createScheduleFn = httpsCallable<
+  {
+    teamId: string;
+    title: string;
+    categoryId: string | null;
+    startAt: string;
+    endAt: string;
+    description: string;
+    participantIds: string[];
+    collabPartnerName: string | null;
+    linkedTaskIds: string[];
+    allDay?: boolean;
+  },
+  { scheduleId: string }
+>(functions, 'createSchedule');
+
 export async function createSchedule(
   teamId: string,
   data: Omit<ScheduleEntry, 'id' | 'updatedAt' | 'createdAt'>
 ): Promise<string> {
-  const ref = await addDoc(collection(db, 'teams', teamId, 'schedules'), {
-    ...data,
-    updatedAt: serverTimestamp(),
-    createdAt: serverTimestamp(),
+  const result = await createScheduleFn({
+    teamId,
+    title: data.title,
+    categoryId: data.categoryId,
+    startAt: data.startAt.toISOString(),
+    endAt: data.endAt.toISOString(),
+    description: data.description ?? '',
+    participantIds: data.participantIds ?? [],
+    collabPartnerName: data.collabPartnerName ?? null,
+    linkedTaskIds: data.linkedTaskIds ?? [],
+    allDay: data.allDay,
   });
-  return ref.id;
+  return result.data.scheduleId;
 }
 
 /** 楽観的ロック: updatedAt が一致しない場合はエラー */

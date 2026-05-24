@@ -19,6 +19,9 @@ export * from './calendar/syncGoogleCalendar';
 // Phase 5: US3 — タスク管理
 export * from './tasks/createTask';
 
+// スケジュール管理
+export * from './schedules/createSchedule';
+
 // Phase 6: US4 — コラボ日程調整
 export * from './collab/createCollabSession';
 export * from './collab/respondToCollab';
