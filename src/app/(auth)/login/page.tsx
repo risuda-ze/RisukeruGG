@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth';
 import { Button } from '@/components/ui/Button';
 
@@ -121,8 +122,18 @@ export default function LoginPage() {
             Googleでサインイン
           </Button>
 
+          {/* プライバシーポリシーへのリンクを含む同意テキスト */}
           <p className="text-center text-[11px] text-muted mt-5">
-            サインインすることで利用規約・プライバシーポリシーに同意します
+            サインインすることで利用規約・
+            <Link
+              href="/privacy-policy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-text transition-colors"
+            >
+              プライバシーポリシー
+            </Link>
+            に同意します
           </p>
         </div>
       </div>
