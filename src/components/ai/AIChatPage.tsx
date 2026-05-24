@@ -604,7 +604,7 @@ export function AIChatPage() {
               {EXAMPLE_CHIPS.map((chip) => (
                 <button
                   key={chip.label}
-                  onClick={() => sendMessage(chip.text)}
+                  onClick={() => { setInput(chip.text); textareaRef.current?.focus(); }}
                   disabled={isLoading}
                   className="text-[12px] text-purple-l bg-purple/5 hover:bg-purple/10 px-3 py-1.5 rounded-full transition-colors border border-purple/10 disabled:opacity-50"
                 >
