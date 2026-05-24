@@ -1,0 +1,77 @@
+import { create } from 'zustand';
+
+// ── 型定義 ──────────────────────────────────────────────────────
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface Proposal {
+  type: 'schedule' | 'task' | 'collab';
+  title: string;
+  // スケジュール用
+  startAt?: string;
+  endAt?: string;
+  description?: string;
+  // タスク用
+  dueDate?: string;
+  // コラボ調整用
+  partnerName?: string;
+  proposedDates?: string[];
+}
+
+export type ProposalStatus = 'pending' | 'loading' | 'done' | 'error';
+
+// ── ストア定義 ───────────────────────────────────────────────────
+
+interface AIChatStore {
+  messages: ChatMessage[];
+  isLoading: boolean;
+  pendingProposal: Proposal | null;
+  proposalStatus: ProposalStatus;
+  proposalMessageId: string | null;
+
+  // アクション
+  addMessage: (msg: ChatMessage) => void;
+  updateLastAssistantMessage: (id: string, chunk: string) => void;
+  setIsLoading: (v: boolean) => void;
+  setPendingProposal: (p: Proposal | null) => void;
+  setProposalStatus: (s: ProposalStatus) => void;
+  setProposalMessageId: (id: string | null) => void;
+  clearMessages: () => void;
+}
+
+export const useAIChatStore = create<AIChatStore>((set) => ({
+  messages: [],
+  isLoading: false,
+  pendingProposal: null,
+  proposalStatus: 'pending',
+  proposalMessageId: null,
+
+  addMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
+
+  // ストリーミングチャンクをアシスタントメッセージに追記する
+  updateLastAssistantMessage: (id, chunk) =>
+    set((s) => ({
+      messages: s.messages.map((m) =>
+        m.id === id ? { ...m, content: m.content + chunk } : m
+      ),
+    })),
+
+  setIsLoading: (v) => set({ isLoading: v }),
+  setPendingProposal: (p) => set({ pendingProposal: p }),
+  setProposalStatus: (s) => set({ proposalStatus: s }),
+  setProposalMessageId: (id) => set({ proposalMessageId: id }),
+
+  // 「会話をリセット」ボタン用: 全状態を初期化
+  clearMessages: () =>
+    set({
+      messages: [],
+      isLoading: false,
+      pendingProposal: null,
+      proposalStatus: 'pending',
+      proposalMessageId: null,
+    }),
+}));

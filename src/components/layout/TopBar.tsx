@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useNotificationsStore } from '@/stores/notifications';
-import { useAIStore } from '@/stores/ai';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 
 interface TopBarProps {
@@ -14,7 +13,6 @@ interface TopBarProps {
 
 export function TopBar({ title, subtitle, children }: TopBarProps) {
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
-  const { openExtract } = useAIStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
@@ -33,16 +31,6 @@ export function TopBar({ title, subtitle, children }: TopBarProps) {
         {children && (
           <div className="w-px h-6 bg-border" />
         )}
-
-        {/* AIで登録ボタン */}
-        <button
-          onClick={openExtract}
-          aria-label="AIでテキストから登録"
-          className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-purple/10 text-purple-l hover:bg-purple/20 transition-colors text-[12px] font-semibold"
-        >
-          <span className="material-icons text-[15px]">auto_awesome</span>
-          <span className="hidden sm:inline">AIで登録</span>
-        </button>
 
         {/* 通知ベル */}
         <div className="relative">

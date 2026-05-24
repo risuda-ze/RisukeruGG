@@ -84,24 +84,16 @@ export function BottomNav() {
           <CalendarIcon active={pathname.startsWith('/schedule')} />
         </NavLink>
 
-        {/* 追加ボタン（中央CTA） */}
+        {/* AIチャットボタン（中央CTA） */}
         <Link
-          href="/schedule"
+          href="/chat"
           className="flex flex-col items-center justify-center gap-0.5"
-          aria-label="スケジュールを追加"
+          aria-label="AIに相談"
         >
-          <span className="flex items-center justify-center w-11 h-11 bg-amber rounded-[10px] text-white shadow-md">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2.5}
-              className="h-5 w-5"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
+          <span className="flex items-center justify-center w-11 h-11 bg-purple rounded-[10px] text-white shadow-md">
+            <span className="material-icons text-[22px]">auto_awesome</span>
           </span>
-          <span className="text-[10px] text-muted">追加</span>
+          <span className="text-[10px] text-muted">AI</span>
         </Link>
 
         {/* タスク */}

@@ -29,6 +29,7 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'メイン',
     icon: 'dashboard',
     items: [
+      { href: '/chat', label: 'AIに相談', icon: 'auto_awesome' },
       { href: '/schedule', label: 'スケジュール', icon: 'calendar_month' },
       { href: '/tasks', label: 'タスク管理', icon: 'task_alt' },
       { href: '/collabs', label: 'コラボ調整', icon: 'handshake' },
