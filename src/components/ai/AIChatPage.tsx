@@ -40,7 +40,8 @@ const TYPE_ROUTES: Record<string, string> = {
 
 /** 入力欄の例示チップ */
 const EXAMPLE_CHIPS = [
-  { label: '📅 配信告知', text: '来週の配信スケジュールを入れたい' },
+  { label: '🗓️ 予定確認', text: '来週の予定を教えて' },
+  { label: '📅 配信登録', text: '来週の配信スケジュールを入れたい' },
   { label: '✅ タスク追加', text: '動画編集をタスクに追加して' },
   { label: '🤝 コラボ調整', text: 'コラボ配信の日程調整がしたい' },
 ];
@@ -231,6 +232,10 @@ export function AIChatPage() {
 
   // チームコンテキスト構築（AIへ渡すデータ）
   const buildContext = useCallback(() => {
+    const now = new Date();
+    // 7日前以降のスケジュールを日付昇順で最大60件渡す（来週・空き時間の確認に対応）
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
     return {
       tasks: tasks.map((t) => ({
         title: t.title,
@@ -238,11 +243,16 @@ export function AIChatPage() {
         assigneeName: members.find((m) => m.userId === t.assigneeId)?.displayName ?? null,
         dueDate: t.dueDate ? format(t.dueDate, 'yyyy/MM/dd') : null,
       })),
-      schedules: schedules.slice(0, 20).map((s) => ({
-        title: s.title,
-        startAt: format(s.startAt, 'yyyy/MM/dd HH:mm'),
-        endAt: format(s.endAt, 'HH:mm'),
-      })),
+      schedules: schedules
+        .filter((s) => s.startAt >= sevenDaysAgo)
+        .sort((a, b) => a.startAt.getTime() - b.startAt.getTime())
+        .slice(0, 60)
+        .map((s) => ({
+          title: s.title,
+          startAt: format(s.startAt, 'yyyy/MM/dd HH:mm'),
+          endAt: format(s.endAt, 'yyyy/MM/dd HH:mm'),
+          allDay: s.allDay ?? false,
+        })),
       collabs: [],
       members: members.map((m) => ({ displayName: m.displayName, role: m.role })),
       // タスクのカラム一覧（AIがステータスを指定するために使う）
