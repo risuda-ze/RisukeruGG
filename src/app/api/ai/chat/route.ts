@@ -15,6 +15,13 @@ export async function POST(req: NextRequest) {
       collabs: Array<Record<string, unknown>>;
       members: Array<Record<string, unknown>>;
       columns: Array<{ name: string }>;
+      memberCalendars?: Array<{
+        userId: string;
+        displayName: string;
+        startAt: string;
+        endAt: string;
+        allDay: boolean;
+      }>;
     };
   };
   // AI SDK の ModelMessage 型にキャスト
@@ -112,6 +119,9 @@ ${formatCollabs(context?.collabs ?? [])}
 
 【チームメンバー】
 ${formatMembers(context?.members ?? [])}
+
+【メンバーの予定（2週間以内）】
+${formatMemberCalendars(context?.memberCalendars ?? [])}
   `.trim();
 
   const result = streamText({
@@ -158,4 +168,17 @@ function formatCollabs(collabs: Array<Record<string, unknown>>): string {
 function formatMembers(members: Array<Record<string, unknown>>): string {
   if (members.length === 0) return 'メンバーなし';
   return members.map((m) => `- ${m.displayName}（${m.role}）`).join('\n');
+}
+
+function formatMemberCalendars(
+  events: Array<{ userId: string; displayName: string; startAt: string; endAt: string; allDay: boolean }>
+): string {
+  if (events.length === 0) return 'メンバーの予定なし';
+  return events
+    .map((e) =>
+      e.allDay
+        ? `- ${e.displayName}: ${e.startAt.slice(0, 10)} 終日`
+        : `- ${e.displayName}: ${e.startAt} ～ ${e.endAt}`
+    )
+    .join('\n');
 }

@@ -32,6 +32,7 @@ const DOW_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 const DEFAULT_EVENT_COLOR = '#7F77DD';
 const GCAL_EVENT_COLOR = '#4ade80';
+const MEMBER_EVENT_COLOR = '#60a5fa';
 
 /** イベントバーの高さ (px) */
 const EVENT_H = 24;
@@ -48,9 +49,10 @@ const CELL_PAD = 4;
 function getEventColor(
   categoryId: string | null,
   categories: ScheduleCategory[],
-  source?: 'google'
+  source?: 'google' | 'member'
 ): string {
   if (source === 'google') return GCAL_EVENT_COLOR;
+  if (source === 'member') return MEMBER_EVENT_COLOR;
   const cat = categories.find((c) => c.id === categoryId);
   return cat?.color ?? DEFAULT_EVENT_COLOR;
 }

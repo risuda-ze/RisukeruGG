@@ -129,6 +129,35 @@ export function initAuthListener() {
             unsubMembers = subscribeMembers(newTeamId, (members) =>
               useAuthStore.setState({ members })
             );
+
+            // Googleカレンダー同期: チームID確定時にアクセストークンがあれば同期
+            const { googleAccessToken } = useAuthStore.getState();
+            if (googleAccessToken) {
+              const displayName = user.displayName ?? 'メンバー';
+              const capturedTeamId = newTeamId;
+              (async () => {
+                try {
+                  const now = new Date();
+                  now.setHours(0, 0, 0, 0);
+                  const twoWeeksLater = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+                  twoWeeksLater.setHours(23, 59, 59, 999);
+                  const [{ fetchGCalEvents }, { saveMemberCalendarEvents }] = await Promise.all([
+                    import('@/lib/googleCalendar'),
+                    import('@/lib/repositories/memberCalendars'),
+                  ]);
+                  const { events } = await fetchGCalEvents(googleAccessToken, now, twoWeeksLater);
+                  const toSave = events.map((e) => ({
+                    sourceEventId: e.id.replace(/^gcal_/, ''),
+                    startAt: e.startAt,
+                    endAt: e.endAt,
+                    allDay: e.allDay ?? false,
+                  }));
+                  await saveMemberCalendarEvents(capturedTeamId, user.uid, displayName, toSave);
+                } catch {
+                  // Googleカレンダー同期エラーはサイレントに無視
+                }
+              })();
+            }
           } else {
             useAuthStore.setState({ currentTeam: null, members: [] });
           }

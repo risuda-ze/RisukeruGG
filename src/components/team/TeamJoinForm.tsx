@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import { joinTeam } from '@/lib/repositories/teams';
+import { joinTeam, leaveSpecificTeam } from '@/lib/repositories/teams';
+import { useAuthStore } from '@/stores/auth';
 
 interface TeamJoinFormProps {
   onSuccess?: (teamId: string) => void;
@@ -15,23 +16,31 @@ export function TeamJoinForm({ onSuccess }: TeamJoinFormProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const currentTeamId = useAuthStore((s) => s.currentTeamId);
+  const teamIds = useAuthStore((s) => s.teamIds);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!teamCode.trim()) return;
-    setShowConfirm(true);
+    if (currentTeamId && teamIds.length > 0) {
+      setShowConfirm(true);
+    } else {
+      void handleJoin(false);
+    }
   };
 
-  const handleConfirm = async () => {
+  const handleJoin = async (leaveFirst: boolean) => {
     setLoading(true);
     setError(null);
+    setShowConfirm(false);
     try {
+      if (leaveFirst && currentTeamId) {
+        await leaveSpecificTeam({ teamId: currentTeamId });
+      }
       const result = await joinTeam({ teamCode: teamCode.toUpperCase() });
-      setShowConfirm(false);
       setTeamCode('');
       onSuccess?.(result.data.teamId);
     } catch (err: unknown) {
-      setShowConfirm(false);
       if (err && typeof err === 'object' && 'code' in err) {
         const code = (err as { code: string }).code;
         if (code === 'not-found') {
@@ -68,21 +77,30 @@ export function TeamJoinForm({ onSuccess }: TeamJoinFormProps) {
       <Modal
         open={showConfirm}
         onClose={() => setShowConfirm(false)}
-        title="チームに参加しますか？"
+        title="現在のチームに所属したままにしますか？"
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowConfirm(false)}>
               キャンセル
             </Button>
-            <Button loading={loading} onClick={handleConfirm}>
-              参加する
+            <Button
+              variant="secondary"
+              loading={loading}
+              onClick={() => void handleJoin(false)}
+            >
+              はい（そのまま参加）
+            </Button>
+            <Button loading={loading} onClick={() => void handleJoin(true)}>
+              いいえ（脱退して参加）
             </Button>
           </>
         }
       >
-        <p>このチームに新たに所属します。現在のチームには引き続き所属できます。</p>
-        <p className="mt-2 text-muted">
-          チームコード: <strong className="text-text">{teamCode}</strong>
+        <p className="text-sm text-text">
+          チームコード <strong>{teamCode}</strong> のチームに参加します。
+        </p>
+        <p className="mt-2 text-sm text-muted">
+          現在のチームに引き続き所属するか、脱退してから参加するかを選択してください。
         </p>
       </Modal>
     </>

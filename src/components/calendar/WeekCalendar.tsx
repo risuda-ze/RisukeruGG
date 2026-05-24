@@ -17,14 +17,18 @@ const DOW_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 const DEFAULT_EVENT_COLOR = '#7F77DD';
 const GCAL_EVENT_COLOR = '#4ade80';
+const MEMBER_EVENT_COLOR = '#60a5fa';
 
 function getEventStyle(
   categoryId: string | null,
   categories: ScheduleCategory[],
-  source?: 'google'
+  source?: 'google' | 'member'
 ): { background: string; borderLeftColor: string } {
   if (source === 'google') {
     return { background: `${GCAL_EVENT_COLOR}55`, borderLeftColor: GCAL_EVENT_COLOR };
+  }
+  if (source === 'member') {
+    return { background: `${MEMBER_EVENT_COLOR}55`, borderLeftColor: MEMBER_EVENT_COLOR };
   }
   const cat = categories.find((c) => c.id === categoryId);
   const color = cat?.color ?? DEFAULT_EVENT_COLOR;
