@@ -20,6 +20,7 @@ export default defineConfig({
         '**/e2e/login.spec.ts',
         '**/e2e/schedule.spec.ts',
         '**/e2e/tasks.spec.ts',
+        '**/e2e/privacy-policy.spec.ts',
       ],
       use: { ...devices['Desktop Chrome'] },
     },

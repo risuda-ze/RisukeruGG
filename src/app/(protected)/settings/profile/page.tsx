@@ -5,6 +5,7 @@ import { updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { auth, db, storage } from '@/lib/firebase/client';
 import { useAuthStore } from '@/stores/auth';
 import { deleteAccount } from '@/lib/repositories/teams';
@@ -15,13 +16,15 @@ import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import type { NotificationPreferences } from '@/types/entities';
 
-type Tab = 'profile' | 'notifications' | 'plan' | 'account';
+// アプリ情報タブを含む5タブ構成
+type Tab = 'profile' | 'notifications' | 'plan' | 'account' | 'app-info';
 
 const TAB_LABELS: Record<Tab, string> = {
   profile: 'プロフィール',
   notifications: '通知設定',
   plan: 'プラン',
   account: 'アカウント',
+  'app-info': 'アプリ情報',
 };
 
 type NotifCategory = keyof NotificationPreferences;
@@ -489,6 +492,64 @@ export default function ProfileSettingsPage() {
                 </div>
               </Card>
             </div>
+          </div>
+        )}
+
+        {/* ── アプリ情報 ──────────────────────────────────────── */}
+        {activeTab === 'app-info' && (
+          <div className="space-y-6">
+            <Card>
+              <div className="space-y-6">
+                {/* アプリ基本情報 */}
+                <div>
+                  <h3 className="text-sm font-medium text-muted mb-3">アプリ情報</h3>
+                  <div className="space-y-0 text-sm">
+                    <div className="flex justify-between items-center border-b border-border py-3">
+                      <span className="text-muted">アプリ名</span>
+                      <span className="text-text font-medium">リスケるGG</span>
+                    </div>
+                    <div className="flex justify-between items-center py-3">
+                      <span className="text-muted">バージョン</span>
+                      {/* TODO: バージョンは package.json から動的取得も可（resolveJsonModule: true 有効）*/}
+                      <span className="text-text">0.1.0</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 法的情報 */}
+                <div>
+                  <h3 className="text-sm font-medium text-muted mb-3">法的情報</h3>
+                  <div className="space-y-0">
+                    <Link
+                      href="/privacy-policy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3 border-b border-border"
+                    >
+                      <span>プライバシーポリシー</span>
+                      <span className="material-icons text-base text-muted">open_in_new</span>
+                    </Link>
+                    <div className="flex items-center justify-between text-sm py-3 border-b border-border">
+                      <span className="text-muted">利用規約</span>
+                      <span className="text-xs text-muted/60">準備中</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* サポート */}
+                <div>
+                  <h3 className="text-sm font-medium text-muted mb-3">サポート</h3>
+                  {/* TODO: 問い合わせメールアドレスを記入してください */}
+                  <a
+                    href="mailto:contact@example.com"
+                    className="flex items-center gap-2 text-sm text-text hover:text-purple-l transition-colors"
+                  >
+                    <span className="material-icons text-base text-muted">mail_outline</span>
+                    お問い合わせ
+                  </a>
+                </div>
+              </div>
+            </Card>
           </div>
         )}
       </div>

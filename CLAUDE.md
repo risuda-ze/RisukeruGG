@@ -6,7 +6,7 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT START -->
 
-現在進行中の テストスイート見直し・CI信頼性向上: `specs/009-fix-test-suite/plan.md`
+現在進行中の プライバシーポリシー策定・実装: `specs/010-privacy-policy/plan.md`
 
 <!-- SPECKIT END -->
 
