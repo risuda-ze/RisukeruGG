@@ -2,9 +2,9 @@
 
 ## エンティティ定義
 
-### ChatMessage（セッションメモリ）
+### ChatMessage（セッション保持）
 
-Firestore への永続化なし。コンポーネント内 `useState` で管理する。
+Firestore への永続化なし。Zustand store (`aiChat.ts`) で管理し、同セッション内はページ遷移後も保持する。
 
 ```typescript
 interface ChatMessage {
@@ -40,49 +40,94 @@ interface Proposal {
 type ProposalStatus = 'pending' | 'loading' | 'done' | 'error';
 ```
 
+## Zustand Store 設計
+
+### `src/stores/aiChat.ts`
+
+チャット履歴をグローバルに保持し、ページ遷移後も同セッション内は残す。
+
+```typescript
+interface AIChatStore {
+  messages: ChatMessage[];
+  isLoading: boolean;
+  pendingProposal: Proposal | null;
+  proposalStatus: ProposalStatus;
+  proposalMessageId: string | null;
+
+  // アクション
+  addMessage: (msg: ChatMessage) => void;
+  updateLastAssistantMessage: (id: string, chunk: string) => void;
+  setIsLoading: (v: boolean) => void;
+  setPendingProposal: (p: Proposal | null) => void;
+  setProposalStatus: (s: ProposalStatus) => void;
+  setProposalMessageId: (id: string | null) => void;
+  clearMessages: () => void;  // 「会話をリセット」ボタン用
+}
+```
+
 ## コンポーネント状態設計
 
 ### AIChatPage（全画面チャット）
 
 ```typescript
-// ローカル state
-const [messages, setMessages] = useState<ChatMessage[]>([]);
-const messagesRef = useRef<ChatMessage[]>([]);  // stale closure 対策
+// Zustand store から取得（ページ遷移後も保持）
+const {
+  messages, isLoading, pendingProposal, proposalStatus, proposalMessageId,
+  addMessage, updateLastAssistantMessage, setIsLoading,
+  setPendingProposal, setProposalStatus, setProposalMessageId,
+} = useAIChatStore();
 
+// ローカル state（UI のみ）
 const [input, setInput] = useState('');
-const [isLoading, setIsLoading] = useState(false);
 const [error, setError] = useState<string | null>(null);
-
-// 提案管理
-const [pendingProposal, setPendingProposal] = useState<Proposal | null>(null);
-const [proposalStatus, setProposalStatus] = useState<ProposalStatus>('pending');
-const [proposalMessageId, setProposalMessageId] = useState<string | null>(null);
+const messagesRef = useRef<ChatMessage[]>([]);  // stale closure 対策
 const proposalMessageIdRef = useRef<string | null>(null);
 ```
 
 ## ページレイアウト設計
 
+### 空の状態（messages.length === 0）: 中央配置
+
 ```
 ┌─────────────────────────────────────────────┐
-│ TopBar: "AIに相談"                            │  h-14
+│ TopBar: "AIに相談"                    [🗑️]   │  h-14
 ├─────────────────────────────────────────────┤
 │                                             │
-│  [空の状態: 例示ボタン]                      │  flex-1 overflow-y-auto
 │                                             │
-│  [ユーザー]  こんにちは                →    │
-│  ← [AI]     ...                            │
+│           ✨ AIアシスタント                 │  flex-1 flex items-center
+│       スケジュールやタスクの登録、           │  justify-center flex-col
+│       チームデータへの質問ができます         │
 │                                             │
-│  [ユーザー]  タスク追加して          →    │
-│  ← [AI]     どんなタスク？                  │
+│   ┌─────────────────────────────────────┐  │
+│   │ メッセージを入力... (textarea)    → │  │  中央配置の入力欄
+│   └─────────────────────────────────────┘  │
+│    [📅 配信告知] [✅ タスク追加] [🤝 コラボ]  │  例示チップ
+│                                             │
+└─────────────────────────────────────────────┘
+```
+
+### 会話中（messages.length > 0）: 下部固定
+
+```
+┌─────────────────────────────────────────────┐
+│ TopBar: "AIに相談"                    [🗑️]   │  h-14
+├─────────────────────────────────────────────┤
+│                                             │
+│  [ユーザー]  コラボ配信を入れたい     →    │  flex-1 overflow-y-auto
+│  ← [AI]     誰と？いつ？                   │
+│                                             │
+│  [ユーザー]  ○○さんと6/5 20時〜    →    │
+│  ← [AI]     じゃあこれでどう？             │
 │              ┌──────────────────────┐      │
-│              │ ✅ タスク            │      │
-│              │ 動画編集              │      │
+│              │ 📅 スケジュール       │      │
+│              │ コラボ配信（○○さん） │      │
+│              │ 開始: 6/5 20:00       │      │
 │              │ [登録する] [修正する]  │      │
 │              └──────────────────────┘      │
 │                                             │
 ├─────────────────────────────────────────────┤
 │ ┌─────────────────────────────────────────┐ │
-│ │ メッセージを入力...（自動伸縮textarea）  │→│  h-auto min-h-[48px]
+│ │ メッセージを入力...（自動伸縮textarea）  │→│  下部固定
 │ └─────────────────────────────────────────┘ │
 └─────────────────────────────────────────────┘
 ```
@@ -93,18 +138,31 @@ const proposalMessageIdRef = useRef<string | null>(null);
 |------|--------------|------|
 | `/chat` | `AIChatPage` | AIチャット専用ページ |
 
-## ナビゲーション追加
+## ナビゲーション変更
+
+### Sidebar.tsx — セクション追加
 
 ```typescript
-// Sidebar.tsx の NAV_SECTIONS にセクション追加
-{
-  label: 'AIアシスタント',
-  icon: 'auto_awesome',
-  items: [
-    { href: '/chat', label: 'AIに相談', icon: 'auto_awesome' },
-  ],
-}
+// メインセクションの末尾または先頭に追加
+{ href: '/chat', label: 'AIに相談', icon: 'auto_awesome' }
 ```
+
+### BottomNav.tsx — 中央ボタンを置き換え
+
+```tsx
+{/* Before: スケジュール追加ボタン（アンバー色） */}
+{/* After: AIチャットボタン（パープル色） */}
+<Link href="/chat" aria-label="AIに相談">
+  <span className="flex items-center justify-center w-11 h-11 bg-purple rounded-[10px] text-white shadow-md">
+    <span className="material-icons text-[22px]">auto_awesome</span>
+  </span>
+  <span className="text-[10px] text-muted">AI</span>
+</Link>
+```
+
+### TopBar.tsx — 「AIで登録」ボタン削除
+
+`openExtract()` の呼び出しと `useAIStore` のインポートを削除する。
 
 ## プロポーザルブロック解析
 
