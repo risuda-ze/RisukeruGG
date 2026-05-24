@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     messages: Array<{ role: 'user' | 'assistant'; content: string }>;
     context: {
       tasks: Array<Record<string, unknown>>;
-      schedules: Array<Record<string, unknown>>;
+      schedules: Array<{ title: string; startAt: string; endAt: string; allDay: boolean }>;
       collabs: Array<Record<string, unknown>>;
       members: Array<Record<string, unknown>>;
       columns: Array<{ name: string }>;
@@ -20,12 +20,15 @@ export async function POST(req: NextRequest) {
   // AI SDK の ModelMessage 型にキャスト
   const messages = rawMessages as ModelMessage[];
 
-  const today = new Date().toLocaleDateString('ja-JP', {
+  const todayDate = new Date();
+  const today = todayDate.toLocaleDateString('ja-JP', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     weekday: 'long',
   });
+  // ISO形式（日付計算用）
+  const todayISO = todayDate.toISOString().split('T')[0];
 
   const systemPrompt = `
 あなたは配信者向けチーム管理アプリ「RisukeruGG」のAIアシスタントです。
@@ -33,20 +36,51 @@ export async function POST(req: NextRequest) {
 ## 対応範囲（厳守）
 以下のみ対応する。それ以外は必ず断る:
 - スケジュール・タスク・コラボ調整の登録サポート
+- スケジュール確認（来週の予定・今日の予定・空き時間の照会など）
 - チームデータ（タスク・スケジュール・メンバー）への質問
 - アプリの使い方の案内
 
 アプリと無関係な話題（雑談・料理・コーディング・ゲーム攻略・一般的な質問など）には、**必ず次の1文だけ返す**:
-「ごめん！それはRisukeruGGのことしか答えられないよ。スケジュールやタスクの登録、チームデータの確認なら任せて！」
+「ごめん！リスケるGGの範囲でしか答えられないよ。スケジュールやタスクの登録、チームデータの確認なら任せて！」
 
 ## 会話スタイル
 - 友達のような口調（「だよ」「ね」「よ」）
 - 短く簡潔に答える
 - 質問はするが、会話のキャッチボールを楽しむ感じで（返答したら次の質問や提案をする）
 
+## スケジュール確認フロー
+
+今日: ${today}（ISO: ${todayISO}）
+
+「来週の予定を教えて」「今日は何がある？」「週末空いてる時間は？」などのスケジュール照会には以下で回答する:
+
+### 期間の計算基準（週の起点は月曜日）
+- 「今日」→ ${todayISO} のみ
+- 「明日」→ 翌日
+- 「今週」→ 今週の月曜〜日曜
+- 「来週」→ 翌週の月曜〜日曜
+- 「今週末」「週末」→ 直近の土曜・日曜
+- 「来週末」→ 翌週の土曜・日曜
+- 「〇月〇日」→ その日付
+
+### 回答の仕方
+1. 【スケジュール一覧（直近）】から該当期間の予定を抽出する
+2. 日付・時刻順に整理して答える（終日予定は「終日」と明記）
+3. 「空き時間を教えて」と言われたら、9:00〜23:00 を活動時間として2時間以上の空き時間を列挙する
+4. 予定がなければ「その期間は予定なしだよ！」と答える
+
+### 回答フォーマット例
+（例）
+【来週の予定】
+月曜（6/2）
+  - 20:00〜22:00 マイクラ配信
+火曜（6/3） 予定なし
+...
+空き時間: 月曜 9:00〜20:00、22:00〜23:00 など
+
 ## 登録フロー
 
-今日: ${today}
+今日: ${today}（ISO: ${todayISO}）
 
 **優先ルール（順番に適用）:**
 
@@ -90,7 +124,7 @@ export async function POST(req: NextRequest) {
 %%/PROPOSAL%%
 
 **フォーマットの注意:**
-- %%PROPOSAL%%は1メッセージに1つだけ
+- 複数の登録が必要な場合（例: 毎週のスケジュール）は、%%PROPOSAL%%ブロックを複数並べてよい
 - JSONは必ず有効な形式（文字列はダブルクォート、末尾カンマなし）
 - 提案の前後に一言添えてOK（例:「じゃあこれでどう？」「これでOK？修正があれば言ってね！」）
 - assigneeName / participantNames は【チームメンバー】に存在する displayName のみ使う。存在しない名前は省略する
@@ -104,7 +138,7 @@ ${formatColumns(context?.columns ?? [])}
 【タスク一覧】
 ${formatTasks(context?.tasks ?? [])}
 
-【スケジュール一覧（直近）】
+【スケジュール一覧（過去7日〜今後の予定、日付昇順）】
 ${formatSchedules(context?.schedules ?? [])}
 
 【コラボ調整一覧】
@@ -139,11 +173,15 @@ function formatTasks(tasks: Array<Record<string, unknown>>): string {
     .join('\n');
 }
 
-function formatSchedules(schedules: Array<Record<string, unknown>>): string {
+function formatSchedules(schedules: Array<{ title: string; startAt: string; endAt: string; allDay: boolean }>): string {
   if (schedules.length === 0) return 'スケジュールなし';
   return schedules
-    .slice(0, 20)
-    .map((s) => `- ${s.title}（${s.startAt} ～ ${s.endAt}）`)
+    .map((s) => {
+      if (s.allDay) {
+        return `- ${s.title}（${s.startAt.split(' ')[0]} 終日）`;
+      }
+      return `- ${s.title}（${s.startAt} ～ ${s.endAt}）`;
+    })
     .join('\n');
 }
 

@@ -1,4 +1,4 @@
-# RisukeruGG — 統合仕様書
+# RisukeruGG
 
 **最終更新**: 2026-05-21  
 **対象ブランチ**: 001〜007 の全 spec を統合
@@ -10,18 +10,18 @@
 
 ## ユビキタス言語
 
-| 用語               | 定義                                                                                          |
-| ------------------ | --------------------------------------------------------------------------------------------- |
-| **LIGHTユーザー**  | LIGHTプラン（無料）を利用しているユーザー                                                     |
-| **PARTYユーザー**  | PARTYプラン（有料）を利用しているユーザー                                                     |
-| **チーム（TEAM）** | ゲーム配信者グループ。チームコードを入力することでチームに参加できる                          |
-| **チームコード**   | チームへの参加に使用する固有の英数字コード。Owner/Editor が設定画面から確認・リセットできる   |
-| **LIGHTプラン**    | 無料プラン。チームメンバー上限 2 名、タスク月 5 件、コラボ月 3 件等の制限あり                 |
-| **PARTYプラン**    | 有料プラン。全機能無制限、バナー広告なし                                                      |
-| **Owner**          | チームの全権限を持つロール。チーム作成者が自動付与される                                      |
-| **Editor**         | スケジュール・タスクの作成・編集ができるロール。チームコードで参加したユーザーに付与           |
-| **Viewer**         | 閲覧のみ可能なロール。Owner が設定から変更できる                                              |
-| **ソロチーム**     | 初回ログイン時に自動生成される自分だけのチーム                                                |
+| 用語                 | 定義                                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| **LIGHTユーザー**    | LIGHTプラン（無料）を利用しているユーザー                                                   |
+| **PARTYユーザー**    | PARTYプラン（有料）を利用しているユーザー                                                   |
+| **チーム（TEAM）**   | ゲーム配信者グループ。チームコードを入力することでチームに参加できる                        |
+| **チームコード**     | チームへの参加に使用する固有の英数字コード。Owner/Editor が設定画面から確認・リセットできる |
+| **LIGHTプラン**      | 無料プラン。チームメンバー上限 2 名、タスク月 5 件、コラボ月 3 件等の制限あり               |
+| **PARTYプラン**      | 有料プラン。全機能無制限、バナー広告なし                                                    |
+| **Owner**            | チームの全権限を持つロール。チーム作成者が自動付与される                                    |
+| **Editor**           | スケジュール・タスクの作成・編集ができるロール。チームコードで参加したユーザーに付与        |
+| **Viewer**           | 閲覧のみ可能なロール。Owner が設定から変更できる                                            |
+| **ソロチーム**       | 初回ログイン時に自動生成される自分だけのチーム                                              |
 | **コラボセッション** | コラボ日程調整の単位。`open` / `confirmed` / `cancelled` / `expired` のステータスを持つ     |
 
 ---
@@ -253,20 +253,20 @@
 
 ## データモデル（主要エンティティ）
 
-| エンティティ      | 主要フィールド                                                                                                                   |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| **User**         | uid, displayName, email, avatarUrl, plan（light/party）, planUpdatedAt                                                          |
-| **Plan**         | userId, planType, monthlyTaskCount, monthlyCollabCount（毎月 1 日 0:00 JST にリセット）                                          |
-| **Team**         | name, ownerUid, teamCode, createdAt                                                                                              |
-| **TeamMember**   | userId, role（owner/editor/viewer）, displayName, avatarUrl, teamIds（複数チーム所属対応）                                        |
-| **KanbanColumn** | teamId, name, order, color, role（'done' \| null）                                                                               |
-| **TaskCategory** | id, name, color, order, createdAt（`teams/{teamId}/taskCategories/{categoryId}`）                                                |
-| **ScheduleEntry** | title, startAt, endAt, allDay, platform, status, description, participantIds, version（楽観的ロック用）                         |
-| **Task**         | title, columnId, categoryId（string \| null）, description（string \| null）, assigneeId, dueDate, createdBy, linkedScheduleId  |
+| エンティティ      | 主要フィールド                                                                                                                                                |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **User**          | uid, displayName, email, avatarUrl, plan（light/party）, planUpdatedAt                                                                                        |
+| **Plan**          | userId, planType, monthlyTaskCount, monthlyCollabCount（毎月 1 日 0:00 JST にリセット）                                                                       |
+| **Team**          | name, ownerUid, teamCode, createdAt                                                                                                                           |
+| **TeamMember**    | userId, role（owner/editor/viewer）, displayName, avatarUrl, teamIds（複数チーム所属対応）                                                                    |
+| **KanbanColumn**  | teamId, name, order, color, role（'done' \| null）                                                                                                            |
+| **TaskCategory**  | id, name, color, order, createdAt（`teams/{teamId}/taskCategories/{categoryId}`）                                                                             |
+| **ScheduleEntry** | title, startAt, endAt, allDay, platform, status, description, participantIds, version（楽観的ロック用）                                                       |
+| **Task**          | title, columnId, categoryId（string \| null）, description（string \| null）, assigneeId, dueDate, createdBy, linkedScheduleId                                |
 | **CollabSession** | title, partnerName, creatorId, teamId, proposedDates, sharedUrl, urlToken, expiresAt, status, confirmedDate, linkedScheduleId, participantResponses, comments |
-| **CollabComment** | id, authorId, authorName, text, parentId（返信対応）, createdAt                                                                 |
-| **Notification** | receiverId, type, refEntityId, isRead, createdAt                                                                                 |
-| **SidebarState** | collapsed（boolean）, openSections（string[]）— Zustand ストア（localStorage 永続化）                                           |
+| **CollabComment** | id, authorId, authorName, text, parentId（返信対応）, createdAt                                                                                               |
+| **Notification**  | receiverId, type, refEntityId, isRead, createdAt                                                                                                              |
+| **SidebarState**  | collapsed（boolean）, openSections（string[]）— Zustand ストア（localStorage 永続化）                                                                         |
 
 ---
 
@@ -285,13 +285,13 @@
 
 ## 実装状況サマリー
 
-| Branch | 内容                                     | 状態      |
-| ------ | ---------------------------------------- | --------- |
-| 001    | MVP 基盤（認証・チーム・スケジュール・タスク・コラボ・通知） | 実装済み |
-| 002    | UI リデザイン（サイドバー・ダッシュボード・タスク管理画面） | 実装済み |
-| 003    | スケジュール UI 改善・複数チーム所属      | 実装済み |
-| 004-s  | スケジュール・タスク修正（終日フラグ等） | 実装済み |
-| 004-c  | コラボ機能改善（ソート・タイムゾーン・再調整・複製） | 実装済み |
-| 005    | コラボ再調整・復元（004-c に統合）        | 実装済み |
-| 006    | コラボ調整画面 UI リデザイン              | 実装済み |
-| 007    | スケジュール管理カレンダー UI 改善        | **進行中** |
+| Branch | 内容                                                         | 状態       |
+| ------ | ------------------------------------------------------------ | ---------- |
+| 001    | MVP 基盤（認証・チーム・スケジュール・タスク・コラボ・通知） | 実装済み   |
+| 002    | UI リデザイン（サイドバー・ダッシュボード・タスク管理画面）  | 実装済み   |
+| 003    | スケジュール UI 改善・複数チーム所属                         | 実装済み   |
+| 004-s  | スケジュール・タスク修正（終日フラグ等）                     | 実装済み   |
+| 004-c  | コラボ機能改善（ソート・タイムゾーン・再調整・複製）         | 実装済み   |
+| 005    | コラボ再調整・復元（004-c に統合）                           | 実装済み   |
+| 006    | コラボ調整画面 UI リデザイン                                 | 実装済み   |
+| 007    | スケジュール管理カレンダー UI 改善                           | **進行中** |

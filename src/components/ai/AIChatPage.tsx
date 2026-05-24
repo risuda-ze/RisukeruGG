@@ -16,7 +16,7 @@ import { createCollabSession } from '@/lib/repositories/collabs';
 
 // ── 定数 ───────────────────────────────────────────────────────
 
-const PROPOSAL_REGEX = /%%PROPOSAL%%([\s\S]*?)%%\/PROPOSAL%%/;
+const PROPOSAL_REGEX = /%%PROPOSAL%%([\s\S]*?)%%\/PROPOSAL%%/g;
 
 /** ユーザーが確認の意思を示すパターン */
 const CONFIRM_PATTERN =
@@ -40,23 +40,29 @@ const TYPE_ROUTES: Record<string, string> = {
 
 /** 入力欄の例示チップ */
 const EXAMPLE_CHIPS = [
-  { label: '📅 配信告知', text: '来週の配信スケジュールを入れたい' },
+  { label: '🗓️ 予定確認', text: '来週の予定を教えて' },
+  { label: '📅 配信登録', text: '来週の配信スケジュールを入れたい' },
   { label: '✅ タスク追加', text: '動画編集をタスクに追加して' },
   { label: '🤝 コラボ調整', text: 'コラボ配信の日程調整がしたい' },
 ];
 
 // ── ヘルパー関数 ─────────────────────────────────────────────
 
-function parseProposalFromContent(content: string): { text: string; proposal: Proposal | null } {
-  const match = PROPOSAL_REGEX.exec(content);
-  if (!match) return { text: content, proposal: null };
-  try {
-    const proposal = JSON.parse(match[1].trim()) as Proposal;
-    const text = content.replace(PROPOSAL_REGEX, '').trim();
-    return { text, proposal };
-  } catch {
-    return { text: content, proposal: null };
+function parseProposalFromContent(content: string): { text: string; proposals: Proposal[] } {
+  const proposals: Proposal[] = [];
+  // グローバルフラグ付き正規表現は lastIndex を再利用するので、毎回リセットする
+  PROPOSAL_REGEX.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = PROPOSAL_REGEX.exec(content)) !== null) {
+    try {
+      proposals.push(JSON.parse(match[1].trim()) as Proposal);
+    } catch {
+      // 無効な JSON はスキップ
+    }
   }
+  const text = content.replace(PROPOSAL_REGEX, '').trim();
+  PROPOSAL_REGEX.lastIndex = 0;
+  return { text, proposals };
 }
 
 function formatDateTimeDisplay(iso: string): string {
@@ -70,104 +76,58 @@ function formatDateTimeDisplay(iso: string): string {
 // ── 提案カード ─────────────────────────────────────────────────
 
 interface ProposalCardProps {
-  proposal: Proposal;
+  proposals: Proposal[];
   status: ProposalStatus;
   onConfirm: () => void;
   onReject: () => void;
 }
 
-function ProposalCard({ proposal, status, onConfirm, onReject }: ProposalCardProps) {
+function ProposalItemDetail({ proposal }: { proposal: Proposal }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <p className="text-[14px] font-medium text-text">{proposal.title}</p>
+      {proposal.type === 'schedule' && (
+        <p className="text-[12px] text-muted">
+          {proposal.startAt ? formatDateTimeDisplay(proposal.startAt) : ''}
+          {proposal.endAt ? ` 〜 ${format(new Date(proposal.endAt), 'HH:mm')}` : ''}
+        </p>
+      )}
+      {proposal.type === 'task' && (
+        <p className="text-[12px] text-muted">
+          {[proposal.columnName, proposal.assigneeName, proposal.dueDate]
+            .filter(Boolean)
+            .join(' · ')}
+        </p>
+      )}
+      {proposal.type === 'collab' && proposal.partnerName && (
+        <p className="text-[12px] text-muted">相手: {proposal.partnerName}</p>
+      )}
+    </div>
+  );
+}
+
+function ProposalCard({ proposals, status, onConfirm, onReject }: ProposalCardProps) {
+  const first = proposals[0];
+  if (!first) return null;
+  const isMultiple = proposals.length > 1;
+  const confirmLabel = isMultiple ? `まとめて登録する（${proposals.length}件）` : '登録する';
+
   return (
     <div className="mt-3 rounded-[14px] border border-purple/20 bg-purple/5 p-4 flex flex-col gap-2.5">
       {/* ヘッダー */}
       <div className="flex items-center gap-1.5">
-        <span className="material-icons text-[16px] text-purple">{TYPE_ICONS[proposal.type]}</span>
+        <span className="material-icons text-[16px] text-purple">{TYPE_ICONS[first.type]}</span>
         <span className="text-[12px] font-bold text-purple uppercase tracking-wide">
-          {TYPE_LABELS[proposal.type]}
+          {TYPE_LABELS[first.type]}
+          {isMultiple && <span className="ml-1 normal-case font-normal">× {proposals.length}件</span>}
         </span>
       </div>
 
-      {/* タイトル */}
-      <p className="text-[15px] font-semibold text-text">{proposal.title}</p>
-
-      {/* 詳細情報 */}
-      <div className="flex flex-col gap-1">
-        {proposal.type === 'schedule' && (
-          <>
-            {proposal.startAt && (
-              <p className="text-[13px] text-muted">
-                <span className="text-muted/60">開始: </span>
-                {formatDateTimeDisplay(proposal.startAt)}
-              </p>
-            )}
-            {proposal.endAt && (
-              <p className="text-[13px] text-muted">
-                <span className="text-muted/60">終了: </span>
-                {formatDateTimeDisplay(proposal.endAt)}
-              </p>
-            )}
-            {(proposal.participantNames ?? []).length > 0 && (
-              <p className="text-[13px] text-muted">
-                <span className="text-muted/60">参加者: </span>
-                {(proposal.participantNames ?? []).join('、')}
-              </p>
-            )}
-            {proposal.description && (
-              <p className="text-[13px] text-muted">
-                <span className="text-muted/60">メモ: </span>
-                {proposal.description}
-              </p>
-            )}
-          </>
-        )}
-        {proposal.type === 'task' && (
-          <>
-            {proposal.columnName && (
-              <p className="text-[13px] text-muted">
-                <span className="text-muted/60">カラム: </span>
-                {proposal.columnName}
-              </p>
-            )}
-            {proposal.assigneeName && (
-              <p className="text-[13px] text-muted">
-                <span className="text-muted/60">担当者: </span>
-                {proposal.assigneeName}
-              </p>
-            )}
-            {proposal.dueDate && (
-              <p className="text-[13px] text-muted">
-                <span className="text-muted/60">締切: </span>
-                {proposal.dueDate}
-              </p>
-            )}
-            {proposal.description && (
-              <p className="text-[13px] text-muted">
-                <span className="text-muted/60">説明: </span>
-                {proposal.description}
-              </p>
-            )}
-          </>
-        )}
-        {proposal.type === 'collab' && (
-          <>
-            {proposal.partnerName && (
-              <p className="text-[13px] text-muted">
-                <span className="text-muted/60">相手: </span>
-                {proposal.partnerName}
-              </p>
-            )}
-            {(proposal.proposedDates ?? []).length > 0 && (
-              <div>
-                <p className="text-[13px] text-muted/60">候補日:</p>
-                {(proposal.proposedDates ?? []).slice(0, 4).map((d, i) => (
-                  <p key={i} className="text-[13px] text-muted pl-2">
-                    ・{formatDateTimeDisplay(d)}
-                  </p>
-                ))}
-              </div>
-            )}
-          </>
-        )}
+      {/* 提案リスト */}
+      <div className="flex flex-col gap-2">
+        {proposals.map((p, i) => (
+          <ProposalItemDetail key={i} proposal={p} />
+        ))}
       </div>
 
       {/* アクションボタン / 完了状態 */}
@@ -178,7 +138,7 @@ function ProposalCard({ proposal, status, onConfirm, onReject }: ProposalCardPro
             登録しました！
           </div>
           <Link
-            href={TYPE_ROUTES[proposal.type]}
+            href={TYPE_ROUTES[first.type]}
             className="text-[13px] text-purple-l hover:underline"
           >
             確認する →
@@ -198,7 +158,7 @@ function ProposalCard({ proposal, status, onConfirm, onReject }: ProposalCardPro
             ) : (
               <>
                 <span className="material-icons text-[15px]">check</span>
-                登録する
+                {confirmLabel}
               </>
             )}
           </button>
@@ -224,13 +184,13 @@ export function AIChatPage() {
   const {
     messages,
     isLoading,
-    pendingProposal,
+    pendingProposals,
     proposalStatus,
     proposalMessageId,
     addMessage,
     updateLastAssistantMessage,
     setIsLoading,
-    setPendingProposal,
+    setPendingProposals,
     setProposalStatus,
     setProposalMessageId,
     clearMessages,
@@ -272,6 +232,10 @@ export function AIChatPage() {
 
   // チームコンテキスト構築（AIへ渡すデータ）
   const buildContext = useCallback(() => {
+    const now = new Date();
+    // 7日前以降のスケジュールを日付昇順で最大60件渡す（来週・空き時間の確認に対応）
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
     return {
       tasks: tasks.map((t) => ({
         title: t.title,
@@ -279,11 +243,16 @@ export function AIChatPage() {
         assigneeName: members.find((m) => m.userId === t.assigneeId)?.displayName ?? null,
         dueDate: t.dueDate ? format(t.dueDate, 'yyyy/MM/dd') : null,
       })),
-      schedules: schedules.slice(0, 20).map((s) => ({
-        title: s.title,
-        startAt: format(s.startAt, 'yyyy/MM/dd HH:mm'),
-        endAt: format(s.endAt, 'HH:mm'),
-      })),
+      schedules: schedules
+        .filter((s) => s.startAt >= sevenDaysAgo)
+        .sort((a, b) => a.startAt.getTime() - b.startAt.getTime())
+        .slice(0, 60)
+        .map((s) => ({
+          title: s.title,
+          startAt: format(s.startAt, 'yyyy/MM/dd HH:mm'),
+          endAt: format(s.endAt, 'yyyy/MM/dd HH:mm'),
+          allDay: s.allDay ?? false,
+        })),
       collabs: [],
       members: members.map((m) => ({ displayName: m.displayName, role: m.role })),
       // タスクのカラム一覧（AIがステータスを指定するために使う）
@@ -296,14 +265,14 @@ export function AIChatPage() {
     if (isLoading) return;
     const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
     if (!lastAssistant) return;
-    const { proposal } = parseProposalFromContent(lastAssistant.content);
-    if (proposal && lastAssistant.id !== proposalMessageIdRef.current) {
+    const { proposals } = parseProposalFromContent(lastAssistant.content);
+    if (proposals.length > 0 && lastAssistant.id !== proposalMessageIdRef.current) {
       proposalMessageIdRef.current = lastAssistant.id;
       setProposalMessageId(lastAssistant.id);
-      setPendingProposal(proposal);
+      setPendingProposals(proposals);
       setProposalStatus('pending');
     }
-  }, [isLoading, messages, setProposalMessageId, setPendingProposal, setProposalStatus]);
+  }, [isLoading, messages, setProposalMessageId, setPendingProposals, setProposalStatus]);
 
   // ── APIへのメッセージ送信（ストリーミング）─────────────────────
   async function sendMessage(text: string) {
@@ -350,68 +319,68 @@ export function AIChatPage() {
 
   // ── Firestore への登録実行 ────────────────────────────────────
   async function handleRegister() {
-    if (!pendingProposal || !currentTeamId || !currentUser) return;
+    if (pendingProposals.length === 0 || !currentTeamId || !currentUser) return;
     setProposalStatus('loading');
 
     try {
-      const p = pendingProposal;
+      await Promise.all(
+        pendingProposals.map(async (p) => {
+          if (p.type === 'schedule') {
+            const participantIds = (p.participantNames ?? [])
+              .map((name) => members.find((m) => m.displayName === name)?.userId)
+              .filter((id): id is string => !!id);
 
-      if (p.type === 'schedule') {
-        // participantNames → userId に解決
-        const participantIds = (p.participantNames ?? [])
-          .map((name) => members.find((m) => m.displayName === name)?.userId)
-          .filter((id): id is string => !!id);
+            await createSchedule(currentTeamId, {
+              title: p.title,
+              categoryId: null,
+              startAt: new Date(p.startAt ?? ''),
+              endAt: new Date(p.endAt ?? ''),
+              description: p.description ?? '',
+              participantIds,
+              collabPartnerName: null,
+              linkedTaskIds: [],
+              createdBy: currentUser.uid,
+              allDay: false,
+            });
+          } else if (p.type === 'task') {
+            const targetColumn =
+              columns.find(
+                (c) => c.name === p.columnName || c.name.includes(p.columnName ?? '')
+              ) ?? columns[0];
+            if (!targetColumn) throw new Error('カラムが見つかりません');
 
-        await createSchedule(currentTeamId, {
-          title: p.title,
-          categoryId: null,
-          startAt: new Date(p.startAt ?? ''),
-          endAt: new Date(p.endAt ?? ''),
-          description: p.description ?? '',
-          participantIds,
-          collabPartnerName: null,
-          linkedTaskIds: [],
-          createdBy: currentUser.uid,
-          allDay: false,
-        });
-      } else if (p.type === 'task') {
-        // columnName → columnId に解決（見つからなければ先頭カラム）
-        const targetColumn =
-          columns.find(
-            (c) => c.name === p.columnName || c.name.includes(p.columnName ?? '')
-          ) ?? columns[0];
-        if (!targetColumn) throw new Error('カラムが見つかりません');
+            const assigneeId =
+              members.find((m) => m.displayName === p.assigneeName)?.userId ?? null;
 
-        // assigneeName → userId に解決
-        const assigneeId =
-          members.find((m) => m.displayName === p.assigneeName)?.userId ?? null;
+            await createTask({
+              teamId: currentTeamId,
+              title: p.title,
+              columnId: targetColumn.id,
+              categoryId: null,
+              description: p.description ?? null,
+              assigneeId,
+              dueDate: p.dueDate ? new Date(p.dueDate).toISOString() : null,
+              linkedScheduleId: null,
+            });
+          } else if (p.type === 'collab') {
+            await createCollabSession({
+              teamId: currentTeamId,
+              title: p.title,
+              partnerName: p.partnerName ?? '',
+              proposedDates: (p.proposedDates ?? []).map((d) => new Date(d).toISOString()),
+              expiresInDays: 7,
+            });
+          }
+        })
+      );
 
-        await createTask({
-          teamId: currentTeamId,
-          title: p.title,
-          columnId: targetColumn.id,
-          categoryId: null,
-          description: p.description ?? null,
-          assigneeId,
-          dueDate: p.dueDate ? new Date(p.dueDate).toISOString() : null,
-          linkedScheduleId: null,
-        });
-      } else if (p.type === 'collab') {
-        await createCollabSession({
-          teamId: currentTeamId,
-          title: p.title,
-          partnerName: p.partnerName ?? '',
-          proposedDates: (p.proposedDates ?? []).map((d) => new Date(d).toISOString()),
-          expiresInDays: 7,
-        });
-      }
-
+      const first = pendingProposals[0];
+      const countLabel = pendingProposals.length > 1 ? `${pendingProposals.length}件の` : '';
       setProposalStatus('done');
-      // 登録成功メッセージをチャットに追加
       addMessage({
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: `登録したよ！「${p.title}」を${TYPE_LABELS[p.type]}に追加したよ 🎉 他にも何かあれば気軽に話しかけてね！`,
+        content: `登録したよ！${countLabel}「${first.title}」を${TYPE_LABELS[first.type]}に追加したよ 🎉 他にも何かあれば気軽に話しかけてね！`,
       });
     } catch {
       setProposalStatus('error');
@@ -422,7 +391,7 @@ export function AIChatPage() {
   function handleReject() {
     proposalMessageIdRef.current = null;
     setProposalMessageId(null);
-    setPendingProposal(null);
+    setPendingProposals([]);
     setProposalStatus('pending');
     addMessage({
       id: crypto.randomUUID(),
@@ -438,7 +407,7 @@ export function AIChatPage() {
     if (!trimmed || isLoading || proposalStatus === 'loading') return;
 
     // 確認パターン + 提案中 → ユーザーメッセージを追加してそのまま登録実行
-    if (CONFIRM_PATTERN.test(trimmed) && pendingProposal && proposalStatus === 'pending') {
+    if (CONFIRM_PATTERN.test(trimmed) && pendingProposals.length > 0 && proposalStatus === 'pending') {
       addMessage({ id: crypto.randomUUID(), role: 'user', content: trimmed });
       setInput('');
       handleRegister();
@@ -459,19 +428,20 @@ export function AIChatPage() {
 
   // ── メッセージ内容のレンダリング ─────────────────────────────
   function renderMessageContent(msg: ChatMessage) {
-    const { text, proposal } = parseProposalFromContent(msg.content);
+    const { text, proposals } = parseProposalFromContent(msg.content);
     const isActiveProposal = msg.id === proposalMessageId;
+    const hasProposals = proposals.length > 0;
 
     return (
       <>
         {/* %%PROPOSAL%% ブロックを除いたテキスト */}
-        {(proposal ? text : msg.content) && (
-          <span className="whitespace-pre-wrap">{proposal ? text : msg.content}</span>
+        {(hasProposals ? text : msg.content) && (
+          <span className="whitespace-pre-wrap">{hasProposals ? text : msg.content}</span>
         )}
         {/* アクティブな提案カードをインライン描画 */}
-        {isActiveProposal && proposal && (
+        {isActiveProposal && hasProposals && (
           <ProposalCard
-            proposal={proposal}
+            proposals={proposals}
             status={proposalStatus}
             onConfirm={handleRegister}
             onReject={handleReject}
@@ -573,7 +543,7 @@ export function AIChatPage() {
                 onKeyDown={handleKeyDown}
                 rows={1}
                 placeholder={
-                  pendingProposal && proposalStatus === 'pending'
+                  pendingProposals.length > 0 && proposalStatus === 'pending'
                     ? '「OK」で登録、修正内容も話せます'
                     : 'メッセージを入力...'
                 }
@@ -634,7 +604,7 @@ export function AIChatPage() {
               {EXAMPLE_CHIPS.map((chip) => (
                 <button
                   key={chip.label}
-                  onClick={() => sendMessage(chip.text)}
+                  onClick={() => { setInput(chip.text); textareaRef.current?.focus(); }}
                   disabled={isLoading}
                   className="text-[12px] text-purple-l bg-purple/5 hover:bg-purple/10 px-3 py-1.5 rounded-full transition-colors border border-purple/10 disabled:opacity-50"
                 >

@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Firebase CLI と pnpm をグローバルインストール
-RUN npm install -g firebase-tools@latest pnpm
+RUN npm install -g firebase-tools@14 pnpm
 
 WORKDIR /workspace
 
