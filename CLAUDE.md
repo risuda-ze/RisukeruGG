@@ -6,7 +6,7 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT START -->
 
-現在進行中の チーム管理改善・ナビ修正: `specs/008-team-management-improvements/plan.md`
+現在進行中の テストスイート見直し・CI信頼性向上: `specs/009-fix-test-suite/plan.md`
 
 <!-- SPECKIT END -->
 

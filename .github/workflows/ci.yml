@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, '001-*']
+    # フィーチャーブランチ（000-xxx 形式）と main を対象にする
+    # エージェントフィードバックループのため全フィーチャーブランチでCIを実行する
+    branches: [main, '[0-9][0-9][0-9]-*']
   pull_request:
     branches: [main]
 
@@ -39,7 +41,9 @@ jobs:
       - run: pnpm test
 
   e2e-tests:
-    name: E2E Tests (Playwright)
+    # smokeプロジェクトのみ実行（Firebase Emulator不要のテスト）
+    # visual.spec.ts はローカル専用の emulator プロジェクトに分離済み
+    name: E2E Tests (Playwright / smoke)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,7 +56,7 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
+      - run: pnpm test:e2e:smoke
         env:
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
