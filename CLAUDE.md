@@ -6,7 +6,7 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT START -->
 
-現在進行中の AI機能バグ修正 & Docker環境起動エラー修正: `specs/010-fix-ai-docker-bugs/plan.md`
+現在進行中のチーム権限バグ修正 & メンバースケジュール閲覧機能: `specs/011-team-permission-member-schedule/plan.md`
 
 <!-- SPECKIT END -->
 
