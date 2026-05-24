@@ -43,6 +43,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: '/notifications', label: '通知', icon: 'notifications' },
       { href: '/settings', label: 'チャンネル設定', icon: 'settings' },
       { href: '/settings/profile', label: '個人設定', icon: 'manage_accounts' },
+      { href: '/settings/contact', label: 'お問い合わせ', icon: 'mail_outline' },
     ],
   },
   {

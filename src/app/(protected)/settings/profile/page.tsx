@@ -539,14 +539,16 @@ export default function ProfileSettingsPage() {
                 {/* サポート */}
                 <div>
                   <h3 className="text-sm font-medium text-muted mb-3">サポート</h3>
-                  {/* TODO: 問い合わせメールアドレスを記入してください */}
-                  <a
-                    href="mailto:contact@example.com"
-                    className="flex items-center gap-2 text-sm text-text hover:text-purple-l transition-colors"
+                  <Link
+                    href="/settings/contact"
+                    className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3"
                   >
-                    <span className="material-icons text-base text-muted">mail_outline</span>
-                    お問い合わせ
-                  </a>
+                    <span className="flex items-center gap-2">
+                      <span className="material-icons text-base text-muted">mail_outline</span>
+                      お問い合わせ
+                    </span>
+                    <span className="material-icons text-base text-muted">chevron_right</span>
+                  </Link>
                 </div>
               </div>
             </Card>

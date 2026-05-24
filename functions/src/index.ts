@@ -33,3 +33,6 @@ export * from './collab/expireCollabSessions';
 // Phase 8: US6 — 通知
 export * from './notifications/markNotificationRead';
 export * from './notifications/scheduleReminders';
+
+// お問い合わせフォーム
+export * from './contact/sendContactEmail';
