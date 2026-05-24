@@ -106,6 +106,12 @@ function ProposalCard({ proposal, status, onConfirm, onReject }: ProposalCardPro
                 {formatDateTimeDisplay(proposal.endAt)}
               </p>
             )}
+            {(proposal.participantNames ?? []).length > 0 && (
+              <p className="text-[13px] text-muted">
+                <span className="text-muted/60">参加者: </span>
+                {(proposal.participantNames ?? []).join('、')}
+              </p>
+            )}
             {proposal.description && (
               <p className="text-[13px] text-muted">
                 <span className="text-muted/60">メモ: </span>
@@ -116,6 +122,18 @@ function ProposalCard({ proposal, status, onConfirm, onReject }: ProposalCardPro
         )}
         {proposal.type === 'task' && (
           <>
+            {proposal.columnName && (
+              <p className="text-[13px] text-muted">
+                <span className="text-muted/60">カラム: </span>
+                {proposal.columnName}
+              </p>
+            )}
+            {proposal.assigneeName && (
+              <p className="text-[13px] text-muted">
+                <span className="text-muted/60">担当者: </span>
+                {proposal.assigneeName}
+              </p>
+            )}
             {proposal.dueDate && (
               <p className="text-[13px] text-muted">
                 <span className="text-muted/60">締切: </span>
@@ -252,7 +270,7 @@ export function AIChatPage() {
     el.style.height = `${el.scrollHeight}px`;
   }, [input]);
 
-  // チームコンテキスト構築
+  // チームコンテキスト構築（AIへ渡すデータ）
   const buildContext = useCallback(() => {
     return {
       tasks: tasks.map((t) => ({
@@ -268,6 +286,8 @@ export function AIChatPage() {
       })),
       collabs: [],
       members: members.map((m) => ({ displayName: m.displayName, role: m.role })),
+      // タスクのカラム一覧（AIがステータスを指定するために使う）
+      columns: columns.map((c) => ({ name: c.name })),
     };
   }, [tasks, columns, schedules, members]);
 
@@ -337,27 +357,42 @@ export function AIChatPage() {
       const p = pendingProposal;
 
       if (p.type === 'schedule') {
+        // participantNames → userId に解決
+        const participantIds = (p.participantNames ?? [])
+          .map((name) => members.find((m) => m.displayName === name)?.userId)
+          .filter((id): id is string => !!id);
+
         await createSchedule(currentTeamId, {
           title: p.title,
           categoryId: null,
           startAt: new Date(p.startAt ?? ''),
           endAt: new Date(p.endAt ?? ''),
           description: p.description ?? '',
-          participantIds: [],
+          participantIds,
           collabPartnerName: null,
           linkedTaskIds: [],
           createdBy: currentUser.uid,
           allDay: false,
         });
       } else if (p.type === 'task') {
-        const firstColumn = columns[0];
-        if (!firstColumn) throw new Error('カラムが見つかりません');
+        // columnName → columnId に解決（見つからなければ先頭カラム）
+        const targetColumn =
+          columns.find(
+            (c) => c.name === p.columnName || c.name.includes(p.columnName ?? '')
+          ) ?? columns[0];
+        if (!targetColumn) throw new Error('カラムが見つかりません');
+
+        // assigneeName → userId に解決
+        const assigneeId =
+          members.find((m) => m.displayName === p.assigneeName)?.userId ?? null;
+
         await createTask({
           teamId: currentTeamId,
           title: p.title,
-          columnId: firstColumn.id,
+          columnId: targetColumn.id,
           categoryId: null,
-          assigneeId: null,
+          description: p.description ?? null,
+          assigneeId,
           dueDate: p.dueDate ? new Date(p.dueDate).toISOString() : null,
           linkedScheduleId: null,
         });

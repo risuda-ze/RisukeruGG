@@ -1,4 +1,4 @@
-import { streamText } from 'ai';
+import { streamText, type ModelMessage } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { NextRequest } from 'next/server';
 
@@ -7,7 +7,18 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'ANTHROPIC_API_KEY が設定されていません' }, { status: 503 });
   }
 
-  const { messages, context } = await req.json();
+  const { messages: rawMessages, context } = await req.json() as {
+    messages: Array<{ role: 'user' | 'assistant'; content: string }>;
+    context: {
+      tasks: Array<Record<string, unknown>>;
+      schedules: Array<Record<string, unknown>>;
+      collabs: Array<Record<string, unknown>>;
+      members: Array<Record<string, unknown>>;
+      columns: Array<{ name: string }>;
+    };
+  };
+  // AI SDK の ModelMessage 型にキャスト
+  const messages = rawMessages as ModelMessage[];
 
   const today = new Date().toLocaleDateString('ja-JP', {
     year: 'numeric',
@@ -62,13 +73,16 @@ export async function POST(req: NextRequest) {
 
 スケジュール:
 %%PROPOSAL%%
-{"type":"schedule","title":"タイトル","startAt":"2024-05-21T20:00:00","endAt":"2024-05-21T22:00:00","description":"説明（省略可）"}
+{"type":"schedule","title":"タイトル","startAt":"2024-05-21T20:00:00","endAt":"2024-05-21T22:00:00","description":"説明（省略可）","participantNames":["田中さん"]}
 %%/PROPOSAL%%
+- participantNames: チームメンバーの displayName リスト（省略可。不明なら省略）
 
 タスク:
 %%PROPOSAL%%
-{"type":"task","title":"タイトル","dueDate":"2024-05-21","description":"説明（省略可）"}
+{"type":"task","title":"タイトル","dueDate":"2024-05-21","description":"説明（省略可）","assigneeName":"田中さん","columnName":"ToDo"}
 %%/PROPOSAL%%
+- assigneeName: チームメンバーの displayName（省略可。不明なら省略）
+- columnName: カラム名（省略可。不明なら省略してデフォルトカラムに追加）
 
 コラボ調整:
 %%PROPOSAL%%
@@ -79,8 +93,13 @@ export async function POST(req: NextRequest) {
 - %%PROPOSAL%%は1メッセージに1つだけ
 - JSONは必ず有効な形式（文字列はダブルクォート、末尾カンマなし）
 - 提案の前後に一言添えてOK（例:「じゃあこれでどう？」「これでOK？修正があれば言ってね！」）
+- assigneeName / participantNames は【チームメンバー】に存在する displayName のみ使う。存在しない名前は省略する
+- columnName は【タスクカラム】に存在するカラム名のみ使う。存在しない場合は省略する
 
 ## 現在のチームデータ
+
+【タスクカラム（ステータス）】
+${formatColumns(context?.columns ?? [])}
 
 【タスク一覧】
 ${formatTasks(context?.tasks ?? [])}
@@ -102,6 +121,11 @@ ${formatMembers(context?.members ?? [])}
   });
 
   return result.toTextStreamResponse();
+}
+
+function formatColumns(columns: Array<{ name: string }>): string {
+  if (columns.length === 0) return 'カラムなし';
+  return columns.map((c) => `- ${c.name}`).join('\n');
 }
 
 function formatTasks(tasks: Array<Record<string, unknown>>): string {

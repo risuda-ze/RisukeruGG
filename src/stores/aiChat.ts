@@ -15,8 +15,14 @@ export interface Proposal {
   startAt?: string;
   endAt?: string;
   description?: string;
+  /** スケジュール参加者: メンバーの displayName リスト（登録時に userId に解決する） */
+  participantNames?: string[];
   // タスク用
   dueDate?: string;
+  /** タスク担当者: メンバーの displayName（登録時に userId に解決する） */
+  assigneeName?: string;
+  /** タスクを追加するカラム名（登録時に columnId に解決する） */
+  columnName?: string;
   // コラボ調整用
   partnerName?: string;
   proposedDates?: string[];
