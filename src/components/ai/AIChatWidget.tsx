@@ -225,6 +225,10 @@ export function AIChatWidget() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // stale closure を防ぐため messages の最新値を ref でも保持
+  const messagesRef = useRef<ChatMessage[]>([]);
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
+
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -233,7 +237,6 @@ export function AIChatWidget() {
   const [pendingProposal, setPendingProposal] = useState<Proposal | null>(null);
   const [proposalStatus, setProposalStatus] = useState<ProposalStatus>('pending');
   const [proposalMessageId, setProposalMessageId] = useState<string | null>(null);
-  // stale closure を防ぐため ref でも保持
   const proposalMessageIdRef = useRef<string | null>(null);
 
   // チームコンテキスト構築
@@ -287,8 +290,8 @@ export function AIChatWidget() {
     setError(null);
 
     try {
-      // 全会話履歴を送信（マルチターン対応）
-      const apiMessages = [...messages, userMsg].map((m) => ({
+      // 全会話履歴を送信（messagesRef で常に最新を参照）
+      const apiMessages = [...messagesRef.current, userMsg].map((m) => ({
         role: m.role,
         content: m.content,
       }));
