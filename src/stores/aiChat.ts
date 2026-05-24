@@ -35,7 +35,7 @@ export type ProposalStatus = 'pending' | 'loading' | 'done' | 'error';
 interface AIChatStore {
   messages: ChatMessage[];
   isLoading: boolean;
-  pendingProposal: Proposal | null;
+  pendingProposals: Proposal[];
   proposalStatus: ProposalStatus;
   proposalMessageId: string | null;
 
@@ -43,7 +43,7 @@ interface AIChatStore {
   addMessage: (msg: ChatMessage) => void;
   updateLastAssistantMessage: (id: string, chunk: string) => void;
   setIsLoading: (v: boolean) => void;
-  setPendingProposal: (p: Proposal | null) => void;
+  setPendingProposals: (p: Proposal[]) => void;
   setProposalStatus: (s: ProposalStatus) => void;
   setProposalMessageId: (id: string | null) => void;
   clearMessages: () => void;
@@ -52,7 +52,7 @@ interface AIChatStore {
 export const useAIChatStore = create<AIChatStore>((set) => ({
   messages: [],
   isLoading: false,
-  pendingProposal: null,
+  pendingProposals: [],
   proposalStatus: 'pending',
   proposalMessageId: null,
 
@@ -67,7 +67,7 @@ export const useAIChatStore = create<AIChatStore>((set) => ({
     })),
 
   setIsLoading: (v) => set({ isLoading: v }),
-  setPendingProposal: (p) => set({ pendingProposal: p }),
+  setPendingProposals: (p) => set({ pendingProposals: p }),
   setProposalStatus: (s) => set({ proposalStatus: s }),
   setProposalMessageId: (id) => set({ proposalMessageId: id }),
 
@@ -76,7 +76,7 @@ export const useAIChatStore = create<AIChatStore>((set) => ({
     set({
       messages: [],
       isLoading: false,
-      pendingProposal: null,
+      pendingProposals: [],
       proposalStatus: 'pending',
       proposalMessageId: null,
     }),
