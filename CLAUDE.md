@@ -10,6 +10,10 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT END -->
 
+## コミュニケーションルール
+
+**日本語**で応答する
+
 ## コマンド
 
 ```bash
@@ -56,14 +60,13 @@ Planner ──→ Generator ──→ Evaluator
 
 #### Step 1: 企画（Planner）
 
-- ユーザーの短いプロンプトを受け取り `/docs/spec.md` を生成
+- ユーザーのプロンプトを受け取り、仕様書を生成
 - 技術的な実装詳細（DB設計、API設計、技術スタック）には踏み込まない
 - 各スプリントに Evaluator がテスト可能な受け入れ基準を必ず記述する
 
 #### Step 2: 実装（Generator）
 
-- `/docs/spec.md` と `/docs/progress.md` を読み、次のスプリントを特定
-- **1回の呼び出しで1スプリントのみ実装する**
+- 各仕様書と実装計画書を読み、次の実装を行う
 - 完了時に `/docs/progress.md` へ自己評価と引き渡し事項（起動方法、テストURL、テストシナリオ）を記録
 - 前スプリントのフィードバック（`/docs/feedback/sprint-N.md`）があれば、修正を先に行う
 
@@ -94,7 +97,4 @@ Planner ──→ Generator ──→ Evaluator
 3. **動作する状態を維持する** - 各スプリント完了時にアプリが正常に起動・動作すること。
 4. **フィードバックを最優先で処理する** - Generator は新スプリント着手前に、前スプリントの不合格フィードバックを修正すること。
 5. **起動手順を必ず記載する** - Generator は `/docs/progress.md` にアプリの起動コマンドを毎回明記する。Evaluator はそれに従って起動する。
-
-### コミュニケーションルール
-
-- コメント言語 : ソースコード内のコメントは**日本語**で記述する（変数名・コンポーネント名は英語）。
+6. **仕様書同期** - Generator は実装前に必ず最新の `/docs/risukeru_gg_spec.md` を読み、仕様変更がないか確認すること。変更があれば Planner に問い合わせること。

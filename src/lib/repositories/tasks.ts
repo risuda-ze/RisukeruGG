@@ -48,6 +48,7 @@ export const createTask = httpsCallable<
     title: string;
     columnId: string;
     categoryId?: string | null;
+    description?: string | null;
     assigneeId?: string | null;
     dueDate?: string | null;
     linkedScheduleId?: string | null;

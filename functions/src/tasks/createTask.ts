@@ -8,6 +8,7 @@ interface CreateTaskData {
   title: string;
   columnId: string;
   categoryId?: string | null;
+  description?: string | null;
   assigneeId?: string | null;
   dueDate?: string | null;
   linkedScheduleId?: string | null;
@@ -16,7 +17,7 @@ interface CreateTaskData {
 export const createTask = onCall(
   { region: 'asia-northeast1' },
   async (request: CallableRequest<CreateTaskData>) => {
-    const { teamId, title, columnId, categoryId, assigneeId, dueDate, linkedScheduleId } =
+    const { teamId, title, columnId, categoryId, description, assigneeId, dueDate, linkedScheduleId } =
       request.data;
 
     if (!teamId || !title || !columnId) {
@@ -44,6 +45,7 @@ export const createTask = onCall(
         title,
         columnId,
         categoryId: categoryId ?? null,
+        description: description ?? null,
         assigneeId: assigneeId ?? null,
         dueDate: dueDate ? new Date(dueDate) : null,
         linkedScheduleId: linkedScheduleId ?? null,

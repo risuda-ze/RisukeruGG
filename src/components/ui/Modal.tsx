@@ -13,13 +13,14 @@ export interface ModalProps {
   /** フッターエリア（OK/キャンセルボタン等） */
   footer?: ReactNode;
   /** モーダルサイズ */
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 const sizeClasses = {
   sm: 'max-w-[360px]',
   md: 'max-w-[480px]',
   lg: 'max-w-[640px]',
+  xl: 'max-w-[760px]',
 };
 
 export function Modal({ open, onClose, title, children, footer, size = 'md' }: ModalProps) {
