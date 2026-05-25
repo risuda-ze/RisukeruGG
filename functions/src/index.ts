@@ -8,6 +8,7 @@ export * from './teams/leaveSpecificTeam';
 export * from './teams/switchActiveTeam';
 export * from './teams/resetTeamCode';
 export * from './teams/removeTeamMember';
+export * from './teams/updateMemberRole';
 export * from './teams/dissolveTeam';
 export * from './auth/onUserCreate';
 export * from './auth/deleteAccount';

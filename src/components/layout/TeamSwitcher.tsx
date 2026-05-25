@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { switchActiveTeam } from '@/lib/repositories/teams';
 import { getTeam } from '@/lib/repositories/teams';
@@ -13,10 +12,10 @@ interface TeamSwitcherProps {
 
 export function TeamSwitcher({ collapsed = false }: TeamSwitcherProps) {
   const { currentTeamId, teamIds, currentTeam } = useAuthStore();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [teams, setTeams] = useState<Team[]>([]);
   const [switching, setSwitching] = useState(false);
+  const [switchError, setSwitchError] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   /* 所属チームの情報を取得 */
@@ -41,12 +40,16 @@ export function TeamSwitcher({ collapsed = false }: TeamSwitcherProps) {
   async function handleSwitch(teamId: string) {
     if (teamId === currentTeamId || switching) return;
     setSwitching(true);
+    setSwitchError(null);
     try {
       await switchActiveTeam({ teamId });
-      router.refresh();
-    } finally {
-      setSwitching(false);
       setOpen(false);
+      // ページ全体をリロードしてサブスクリプションを確実に更新する
+      window.location.reload();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setSwitchError(msg || 'チームの切り替えに失敗しました');
+      setSwitching(false);
     }
   }
 
@@ -74,6 +77,12 @@ export function TeamSwitcher({ collapsed = false }: TeamSwitcherProps) {
           </>
         )}
       </button>
+
+      {switchError && (
+        <div className="mt-1 px-2 py-1 text-[10px] text-live bg-live/10 border border-live/30 rounded-[6px]">
+          {switchError}
+        </div>
+      )}
 
       {open && (
         <div className="absolute bottom-full left-0 right-0 mb-1 bg-card border border-border rounded-[12px] shadow-lg z-50 overflow-hidden min-w-[200px]">

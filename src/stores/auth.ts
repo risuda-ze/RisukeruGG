@@ -46,11 +46,42 @@ export const useAuthStore = create<AuthState>((set) => ({
     const result = await signInWithPopup(auth, provider);
     const credential = GoogleAuthProvider.credentialFromResult(result);
     if (credential?.accessToken) {
+      const accessToken = credential.accessToken;
       const expiresAt = Date.now() + 3500 * 1000;
       try {
-        sessionStorage.setItem('gcal_token', JSON.stringify({ token: credential.accessToken, expiresAt }));
+        sessionStorage.setItem('gcal_token', JSON.stringify({ token: accessToken, expiresAt }));
       } catch {}
-      set({ googleAccessToken: credential.accessToken });
+      set({ googleAccessToken: accessToken });
+
+      // Googleカレンダー接続直後に同期を実行
+      // （onSnapshot は onAuthStateChanged より先に token が設定されないことがあるため、ここでも同期する）
+      const { currentTeamId } = useAuthStore.getState();
+      const user = useAuthStore.getState().currentUser;
+      if (currentTeamId && user) {
+        const displayName = user.displayName ?? 'メンバー';
+        (async () => {
+          try {
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            const twoWeeksLater = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+            twoWeeksLater.setHours(23, 59, 59, 999);
+            const [{ fetchGCalEvents }, { saveMemberCalendarEvents }] = await Promise.all([
+              import('@/lib/googleCalendar'),
+              import('@/lib/repositories/memberCalendars'),
+            ]);
+            const { events } = await fetchGCalEvents(accessToken, now, twoWeeksLater);
+            const toSave = events.map((e) => ({
+              sourceEventId: e.id.replace(/^gcal_/, ''),
+              startAt: e.startAt,
+              endAt: e.endAt,
+              allDay: e.allDay ?? false,
+            }));
+            await saveMemberCalendarEvents(currentTeamId, user.uid, displayName, toSave);
+          } catch {
+            // GCal同期エラーはサイレントに無視
+          }
+        })();
+      }
     }
   },
 

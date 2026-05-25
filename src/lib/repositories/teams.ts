@@ -1,4 +1,4 @@
-import { doc, getDoc, collection, onSnapshot, Unsubscribe, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '@/lib/firebase/client';
 import type { Team, TeamMember, UserRole } from '@/types/entities';
@@ -61,12 +61,18 @@ export function subscribeMembers(
   });
 }
 
+// 直接 Firestore 書き込みは Security Rules の影響を受けるため Cloud Function 経由に変更
+const _updateMemberRoleCF = httpsCallable<
+  { teamId: string; targetUserId: string; role: UserRole },
+  { success: boolean }
+>(functions, 'updateMemberRole');
+
 export async function updateMemberRole(
   teamId: string,
   memberId: string,
   role: UserRole
 ): Promise<void> {
-  await updateDoc(doc(db, 'teams', teamId, 'members', memberId), { role });
+  await _updateMemberRoleCF({ teamId, targetUserId: memberId, role });
 }
 
 // Cloud Functions 呼び出し
