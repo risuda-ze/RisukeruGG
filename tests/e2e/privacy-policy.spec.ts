@@ -47,7 +47,8 @@ test.describe('プライバシーポリシー', () => {
   test('委託先（Firebase・Vercel）の情報が記載されている', async ({ page }) => {
     await page.goto('/privacy-policy');
     await expect(page.getByText('Google LLC（Firebase）')).toBeVisible();
-    await expect(page.getByText('Vercel Inc.')).toBeVisible();
+    // "Vercel Inc." はテーブルセル・本文・リンクの複数箇所に出現するため、委託先テーブルのセルを対象にする
+    await expect(page.getByRole('cell', { name: 'Vercel Inc.' })).toBeVisible();
   });
 
   // ページ内に外部リンク（Google・Vercel プライバシーポリシー）があること
@@ -64,10 +65,10 @@ test.describe('プライバシーポリシー', () => {
   // ログインに戻るリンクが存在すること
   test('ログインに戻るリンクがある', async ({ page }) => {
     await page.goto('/privacy-policy');
-    await expect(page.getByRole('link', { name: /ログインに戻る/ })).toHaveAttribute(
-      'href',
-      '/login',
-    );
+    // ヘッダー・フッターの両方に「ログインに戻る」リンクがあるため、ヘッダー内を対象にする
+    await expect(
+      page.locator('header').getByRole('link', { name: /ログインに戻る/ }),
+    ).toHaveAttribute('href', '/login');
   });
 });
 
