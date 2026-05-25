@@ -6,7 +6,7 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT START -->
 
-現在進行中の プライバシーポリシー策定・実装: `specs/010-privacy-policy/plan.md`
+現在進行中の お問い合わせフォーム実装: `specs/011-contact-form/spec.md`
 
 <!-- SPECKIT END -->
 

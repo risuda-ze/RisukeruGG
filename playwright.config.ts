@@ -21,6 +21,7 @@ export default defineConfig({
         '**/e2e/schedule.spec.ts',
         '**/e2e/tasks.spec.ts',
         '**/e2e/privacy-policy.spec.ts',
+        '**/e2e/contact.spec.ts',
       ],
       use: { ...devices['Desktop Chrome'] },
     },
