@@ -285,7 +285,7 @@ export default function TeamPage() {
                     </div>
 
                     {/* オペレーター向けアクション */}
-                    {isOperator && !isMe && member.role !== 'operator' && (
+                    {isOperator && !isMe && (
                       <div className="flex items-center gap-1.5 shrink-0">
                         <select
                           value={member.role}
@@ -376,7 +376,7 @@ export default function TeamPage() {
           <CardHeader title="別のチームに所属する" />
           <div className="p-[18px]">
             <p className="text-[12px] text-muted mb-4">
-              チームコードを入力して、追加のチームに所属できます。現在のチームには引き続き所属します。
+              チームコードを入力して、追加のチームに所属できます。現在のチームから脱退して参加することもできます。
             </p>
             <TeamJoinForm />
           </div>
@@ -464,7 +464,6 @@ export default function TeamPage() {
           teamId={teamId}
           member={dialog.member}
           newRole={dialog.newRole}
-          currentOperatorId={myMember?.userId}
           onClose={() => setDialog(null)}
           onSuccess={() => setDialog(null)}
         />

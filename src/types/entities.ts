@@ -109,10 +109,23 @@ export interface ScheduleEntry {
   updatedAt: Date;
   createdBy: string;
   createdAt: Date;
-  /** Googleカレンダーから取得した予定は 'google'、チーム予定は undefined */
-  source?: 'google';
+  /** Googleカレンダーから取得した予定は 'google'、メンバーのFirestore同期予定は 'member'、チーム予定は undefined */
+  source?: 'google' | 'member';
   /** 終日フラグ。後方互換のため optional（未設定は false 扱い） */
   allDay?: boolean;
+}
+
+/** Googleカレンダーから同期してFirestoreに保存したメンバーの予定エントリ */
+export interface MemberCalendarEvent {
+  id: string;
+  title: string;
+  startAt: Date;
+  endAt: Date;
+  allDay: boolean;
+  sourceEventId: string;
+  syncedAt: Date;
+  userId: string;
+  teamId: string;
 }
 
 export interface Task {

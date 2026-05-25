@@ -3,16 +3,18 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
+import { format, addDays, startOfDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useAIChatStore } from '@/stores/aiChat';
 import type { ChatMessage, Proposal, ProposalStatus } from '@/stores/aiChat';
 import { useAuthStore } from '@/stores/auth';
 import { useTasksStore } from '@/stores/tasks';
 import { useScheduleStore } from '@/stores/schedule';
+import { subscribeMemberCalendarEvents } from '@/lib/repositories/memberCalendars';
 import { createSchedule } from '@/lib/repositories/schedules';
 import { createTask } from '@/lib/repositories/tasks';
 import { createCollabSession } from '@/lib/repositories/collabs';
+import type { MemberCalendarEvent } from '@/types/entities';
 
 // ── 定数 ───────────────────────────────────────────────────────
 
@@ -200,6 +202,13 @@ export function AIChatPage() {
   const { members, currentUser, currentTeamId } = useAuthStore();
   const { tasks, columns } = useTasksStore();
   const { schedules } = useScheduleStore();
+  const [memberCalendarEvents, setMemberCalendarEvents] = useState<MemberCalendarEvent[]>([]);
+
+  // メンバーの予定をFirestoreから購読（AIコンテキスト用）
+  useEffect(() => {
+    if (!currentTeamId) return;
+    return subscribeMemberCalendarEvents(currentTeamId, setMemberCalendarEvents);
+  }, [currentTeamId]);
 
   // ローカル UI 状態
   const [input, setInput] = useState('');
@@ -235,6 +244,22 @@ export function AIChatPage() {
     const now = new Date();
     // 7日前以降のスケジュールを日付昇順で最大60件渡す（来週・空き時間の確認に対応）
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const todayStart = startOfDay(now);
+    const twoWeeksLater = addDays(todayStart, 14);
+
+    // メンバーごとに最大20件、今日〜14日先、自分のイベントは除外
+    const memberCalendarsForAI = memberCalendarEvents
+      .filter(
+        (e) =>
+          e.userId !== currentUser?.uid &&
+          e.startAt >= todayStart &&
+          e.startAt <= twoWeeksLater
+      )
+      .reduce<Record<string, typeof memberCalendarEvents>>((acc, e) => {
+        acc[e.userId] = acc[e.userId] ?? [];
+        if (acc[e.userId].length < 20) acc[e.userId].push(e);
+        return acc;
+      }, {});
 
     return {
       tasks: tasks.map((t) => ({
@@ -257,8 +282,17 @@ export function AIChatPage() {
       members: members.map((m) => ({ displayName: m.displayName, role: m.role })),
       // タスクのカラム一覧（AIがステータスを指定するために使う）
       columns: columns.map((c) => ({ name: c.name })),
+      memberCalendars: Object.values(memberCalendarsForAI)
+        .flat()
+        .map((e) => ({
+          userId: e.userId,
+          displayName: members.find((m) => m.userId === e.userId)?.displayName ?? e.userId,
+          startAt: format(e.startAt, 'yyyy/MM/dd HH:mm'),
+          endAt: format(e.endAt, 'HH:mm'),
+          allDay: e.allDay,
+        })),
     };
-  }, [tasks, columns, schedules, members]);
+  }, [tasks, columns, schedules, members, memberCalendarEvents, currentUser?.uid]);
 
   // ── ストリーミング完了後: アシスタントメッセージから提案を解析 ───────
   useEffect(() => {

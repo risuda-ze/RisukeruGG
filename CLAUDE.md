@@ -6,7 +6,7 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT START -->
 
-現在進行中の お問い合わせフォーム実装: `specs/011-contact-form/spec.md`
+現在進行中のチーム権限バグ修正 & メンバースケジュール閲覧機能: `specs/011-team-permission-member-schedule/plan.md`
 
 <!-- SPECKIT END -->
 

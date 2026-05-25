@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useScheduleStore } from '@/stores/schedule';
 import { useScheduleCategoryStore } from '@/stores/scheduleCategories';
 import { createSchedule } from '@/lib/repositories/schedules';
+import { subscribeMemberCalendarEvents } from '@/lib/repositories/memberCalendars';
 import { fetchGCalEvents } from '@/lib/googleCalendar';
 import type { GCalFetchError } from '@/lib/googleCalendar';
 import { TopBar } from '@/components/layout/TopBar';
@@ -19,7 +20,7 @@ import { ScheduleDetailModal } from '@/components/calendar/ScheduleDetailModal';
 import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { ScheduleForm } from '@/components/calendar/ScheduleForm';
-import type { ScheduleEntry } from '@/types/entities';
+import type { ScheduleEntry, MemberCalendarEvent } from '@/types/entities';
 
 export default function SchedulePage() {
   const { currentUser, currentTeamId, members, googleAccessToken, signIn } = useAuthStore();
@@ -31,6 +32,8 @@ export default function SchedulePage() {
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleEntry | null>(null);
   const [gcalEvents, setGcalEvents] = useState<ScheduleEntry[]>([]);
   const [gcalError, setGcalError] = useState<GCalFetchError>(null);
+  const [showMemberCalendars, setShowMemberCalendars] = useState(false);
+  const [memberCalendarEvents, setMemberCalendarEvents] = useState<MemberCalendarEvent[]>([]);
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
@@ -44,6 +47,12 @@ export default function SchedulePage() {
       u2();
     };
   }, [currentTeamId, subscribe, subscribeCategories]);
+
+  // メンバーの予定をFirestoreからリアルタイム取得（トグルON時のみ購読）
+  useEffect(() => {
+    if (!currentTeamId || !showMemberCalendars) return;
+    return subscribeMemberCalendarEvents(currentTeamId, setMemberCalendarEvents);
+  }, [currentTeamId, showMemberCalendars]);
 
   // Googleカレンダーの個人予定を取得
   useEffect(() => {
@@ -72,6 +81,29 @@ export default function SchedulePage() {
       setSelectedSchedule(updated);
     }
   }, [schedules, selectedSchedule?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // メンバーの予定をScheduleEntry形式に変換 (T027/T029/T030)
+  const memberScheduleEntries: ScheduleEntry[] = (showMemberCalendars ? memberCalendarEvents : [])
+    // 自分のGoogleカレンダーが有効な場合、自分のFirestore同期予定は除外して重複を防ぐ
+    .filter((e) => !(e.userId === currentUser?.uid && googleAccessToken))
+    .map((e) => ({
+      id: `mcal_${e.id}`,
+      title: e.title,
+      categoryId: null,
+      startAt: e.startAt,
+      endAt: e.endAt,
+      description: '',
+      participantIds: [],
+      collabPartnerName: null,
+      linkedTaskIds: [],
+      updatedAt: e.syncedAt,
+      createdBy: e.userId,
+      createdAt: e.syncedAt,
+      source: 'member' as const,
+      allDay: e.allDay,
+    }));
+
+  const allSchedules = [...schedules, ...gcalEvents, ...memberScheduleEntries];
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
@@ -150,6 +182,21 @@ export default function SchedulePage() {
         </div>
       </div>
 
+      {/* 表示オプション */}
+      <div className="flex items-center gap-2 px-3 md:px-6 py-1 bg-card border-b border-border shrink-0">
+        <button
+          onClick={() => setShowMemberCalendars((v) => !v)}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] text-[11px] font-semibold transition-colors border ${
+            showMemberCalendars
+              ? 'bg-[#60a5fa]/20 border-[#60a5fa]/50 text-[#60a5fa]'
+              : 'border-border text-muted hover:text-text hover:bg-surface'
+          }`}
+        >
+          <span className="material-icons text-[14px]">group</span>
+          メンバーの予定
+        </button>
+      </div>
+
       {/* Googleカレンダー認証期限切れバナー */}
       {gcalError === 'auth_expired' && (
         <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-amber/10 border-b border-amber/30 text-[12px] text-amber-l">
@@ -180,7 +227,7 @@ export default function SchedulePage() {
         <MonthCalendar
           year={year}
           month={month}
-          schedules={[...schedules, ...gcalEvents]}
+          schedules={allSchedules}
           categories={categories}
           onEventClick={setSelectedSchedule}
           onDateClick={canEdit ? () => setShowCreate(true) : undefined}
@@ -192,7 +239,7 @@ export default function SchedulePage() {
       ) : (
         <WeekCalendar
           currentDate={currentDate}
-          schedules={[...schedules, ...gcalEvents]}
+          schedules={allSchedules}
           categories={categories}
           onEventClick={setSelectedSchedule}
           onDateClick={canEdit ? () => setShowCreate(true) : undefined}
@@ -203,7 +250,7 @@ export default function SchedulePage() {
       {!loading && (
         <div className="shrink-0 border-t border-border bg-card px-4 md:px-6 py-2 flex items-center justify-between">
           <span className="text-[11px] text-muted">
-            {[...schedules, ...gcalEvents].filter((s) => {
+            {allSchedules.filter((s) => {
               if (view === 'month') {
                 return (
                   s.startAt.getFullYear() === year && s.startAt.getMonth() + 1 === month
@@ -216,6 +263,38 @@ export default function SchedulePage() {
           <span className="text-[11px] text-muted/50 font-num">
             {view === 'month' ? `${year}年${month}月` : `${year}年${month}月 週表示`}
           </span>
+        </div>
+      )}
+
+      {/* メンバーの予定の詳細（読み取り専用） */}
+      {selectedSchedule?.source === 'member' && (
+        <div
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+          onClick={() => setSelectedSchedule(null)}
+        >
+          <div className="absolute inset-0 bg-black/50" />
+          <div
+            className="relative z-10 w-full md:max-w-md bg-card border border-border rounded-t-[20px] md:rounded-[20px] p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2">
+                <span className="material-icons text-[18px]" style={{ color: '#60a5fa' }}>group</span>
+                <span className="text-[11px] font-semibold" style={{ color: '#60a5fa' }}>メンバーの予定</span>
+              </div>
+              <button onClick={() => setSelectedSchedule(null)} className="text-muted hover:text-text">
+                <span className="material-icons text-[20px]">close</span>
+              </button>
+            </div>
+            <h3 className="text-[17px] font-bold text-text mb-3">{selectedSchedule.title}</h3>
+            <p className="text-[13px] text-muted">
+              {selectedSchedule.allDay
+                ? format(selectedSchedule.startAt, 'M月d日(E)', { locale: ja }) + ' 終日'
+                : format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja }) +
+                  ' – ' +
+                  format(selectedSchedule.endAt, 'HH:mm')}
+            </p>
+          </div>
         </div>
       )}
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { switchActiveTeam } from '@/lib/repositories/teams';
 import { getTeam } from '@/lib/repositories/teams';
@@ -12,6 +13,7 @@ interface TeamSwitcherProps {
 
 export function TeamSwitcher({ collapsed = false }: TeamSwitcherProps) {
   const { currentTeamId, teamIds, currentTeam } = useAuthStore();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [teams, setTeams] = useState<Team[]>([]);
   const [switching, setSwitching] = useState(false);
@@ -41,6 +43,7 @@ export function TeamSwitcher({ collapsed = false }: TeamSwitcherProps) {
     setSwitching(true);
     try {
       await switchActiveTeam({ teamId });
+      router.refresh();
     } finally {
       setSwitching(false);
       setOpen(false);
