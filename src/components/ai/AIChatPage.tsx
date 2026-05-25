@@ -241,15 +241,18 @@ export function AIChatPage() {
 
   // チームコンテキスト構築（AIへ渡すデータ）
   const buildContext = useCallback(() => {
-    const now = startOfDay(new Date());
-    const twoWeeksLater = addDays(now, 14);
+    const now = new Date();
+    // 7日前以降のスケジュールを日付昇順で最大60件渡す（来週・空き時間の確認に対応）
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const todayStart = startOfDay(now);
+    const twoWeeksLater = addDays(todayStart, 14);
 
     // メンバーごとに最大20件、今日〜14日先、自分のイベントは除外
     const memberCalendarsForAI = memberCalendarEvents
       .filter(
         (e) =>
           e.userId !== currentUser?.uid &&
-          e.startAt >= now &&
+          e.startAt >= todayStart &&
           e.startAt <= twoWeeksLater
       )
       .reduce<Record<string, typeof memberCalendarEvents>>((acc, e) => {
