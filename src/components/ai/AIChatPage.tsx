@@ -42,7 +42,8 @@ const TYPE_ROUTES: Record<string, string> = {
 
 /** 入力欄の例示チップ */
 const EXAMPLE_CHIPS = [
-  { label: '📅 配信告知', text: '来週の配信スケジュールを入れたい' },
+  { label: '🗓️ 予定確認', text: '来週の予定を教えて' },
+  { label: '📅 配信登録', text: '来週の配信スケジュールを入れたい' },
   { label: '✅ タスク追加', text: '動画編集をタスクに追加して' },
   { label: '🤝 コラボ調整', text: 'コラボ配信の日程調整がしたい' },
 ];
@@ -264,11 +265,16 @@ export function AIChatPage() {
         assigneeName: members.find((m) => m.userId === t.assigneeId)?.displayName ?? null,
         dueDate: t.dueDate ? format(t.dueDate, 'yyyy/MM/dd') : null,
       })),
-      schedules: schedules.slice(0, 20).map((s) => ({
-        title: s.title,
-        startAt: format(s.startAt, 'yyyy/MM/dd HH:mm'),
-        endAt: format(s.endAt, 'HH:mm'),
-      })),
+      schedules: schedules
+        .filter((s) => s.startAt >= sevenDaysAgo)
+        .sort((a, b) => a.startAt.getTime() - b.startAt.getTime())
+        .slice(0, 60)
+        .map((s) => ({
+          title: s.title,
+          startAt: format(s.startAt, 'yyyy/MM/dd HH:mm'),
+          endAt: format(s.endAt, 'yyyy/MM/dd HH:mm'),
+          allDay: s.allDay ?? false,
+        })),
       collabs: [],
       members: members.map((m) => ({ displayName: m.displayName, role: m.role })),
       // タスクのカラム一覧（AIがステータスを指定するために使う）
@@ -629,7 +635,7 @@ export function AIChatPage() {
               {EXAMPLE_CHIPS.map((chip) => (
                 <button
                   key={chip.label}
-                  onClick={() => sendMessage(chip.text)}
+                  onClick={() => { setInput(chip.text); textareaRef.current?.focus(); }}
                   disabled={isLoading}
                   className="text-[12px] text-purple-l bg-purple/5 hover:bg-purple/10 px-3 py-1.5 rounded-full transition-colors border border-purple/10 disabled:opacity-50"
                 >
