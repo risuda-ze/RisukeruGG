@@ -8,15 +8,13 @@ service cloud.firestore {
     }
 
     function isTeamOwner(teamId) {
-      // 旧スキーマ（owner）との後方互換を維持: migrateRoles CF 実行後に 'operator' のみに簡素化可
       return isTeamMember(teamId) &&
-             get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role in ['owner', 'operator'];
+             get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role == 'operator';
     }
 
     function isOwnerOrEditor(teamId) {
-      // 旧スキーマ（owner/editor）との後方互換を維持: migrateRoles CF 実行後に ['operator', 'member'] に簡素化可
       return isTeamMember(teamId) &&
-             get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role in ['owner', 'editor', 'operator', 'member'];
+             get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role in ['operator', 'member'];
     }
 
     // ユーザードキュメント（自分のみ読み書き）
