@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { format, isSameDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { updateSchedule, deleteSchedule } from '@/lib/repositories/schedules';
@@ -79,6 +79,32 @@ export function ScheduleDetailModal({
 
   /* オーバーレイ上でマウスダウンされたかを追跡（ドラッグ誤閉じ防止） */
   const mouseDownOnOverlay = useRef<boolean>(false);
+
+  /* ── ドラッグ移動 ─────────────────────────────── */
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const isDragging = useRef(false);
+  const dragStart = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 });
+
+  useEffect(() => {
+    function onMove(e: MouseEvent) {
+      if (!isDragging.current) return;
+      setPosition({
+        x: dragStart.current.posX + e.clientX - dragStart.current.mouseX,
+        y: dragStart.current.posY + e.clientY - dragStart.current.mouseY,
+      });
+    }
+    function onUp() { isDragging.current = false; }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+  }, []);
+
+  function handleDragStart(e: React.MouseEvent) {
+    if ((e.target as HTMLElement).closest('button, input, select, a')) return;
+    isDragging.current = true;
+    dragStart.current = { mouseX: e.clientX, mouseY: e.clientY, posX: position.x, posY: position.y };
+    e.preventDefault();
+  }
 
   const myInitials = (currentUser?.displayName ?? 'ME').slice(0, 2).toUpperCase();
   const myName = currentUser?.displayName ?? 'あなた';
@@ -219,6 +245,7 @@ export function ScheduleDetailModal({
           background: 'var(--card-2)',
           border: '1px solid var(--border-l)',
           boxShadow: 'var(--shadow-xl)',
+          transform: `translate(${position.x}px, ${position.y}px)`,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -232,8 +259,11 @@ export function ScheduleDetailModal({
           }}
         />
 
-        {/* ヘッダー */}
-        <div className="px-8 pt-6 pb-5 border-b border-border flex items-start gap-4 shrink-0">
+        {/* ヘッダー（ドラッグハンドル） */}
+        <div
+          className="px-8 pt-6 pb-5 border-b border-border flex items-start gap-4 shrink-0 cursor-move"
+          onMouseDown={handleDragStart}
+        >
           <div
             className="w-14 h-14 rounded-[18px] flex items-center justify-center shrink-0"
             style={{

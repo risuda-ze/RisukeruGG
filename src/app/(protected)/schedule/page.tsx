@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   addMonths, subMonths, addWeeks, subWeeks, format, startOfWeek,
   startOfMonth, endOfMonth, endOfWeek,
@@ -35,6 +35,13 @@ export default function SchedulePage() {
   const [showMemberCalendars, setShowMemberCalendars] = useState(false);
   const [memberCalendarEvents, setMemberCalendarEvents] = useState<MemberCalendarEvent[]>([]);
 
+  /* 読み取り専用ポップアップのドラッグ移動 */
+  const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
+  const popupIsDragging = useRef(false);
+  const popupDragStart = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 });
+  const popupMouseDownOnOverlay = useRef(false);
+  const popupPanelRef = useRef<HTMLDivElement>(null);
+
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
 
@@ -53,6 +60,33 @@ export default function SchedulePage() {
     if (!currentTeamId || !showMemberCalendars) return;
     return subscribeMemberCalendarEvents(currentTeamId, setMemberCalendarEvents);
   }, [currentTeamId, showMemberCalendars]);
+
+  // 読み取り専用ポップアップのドラッグ
+  useEffect(() => {
+    function onMove(e: MouseEvent) {
+      if (!popupIsDragging.current) return;
+      setPopupPos({
+        x: popupDragStart.current.posX + e.clientX - popupDragStart.current.mouseX,
+        y: popupDragStart.current.posY + e.clientY - popupDragStart.current.mouseY,
+      });
+    }
+    function onUp() { popupIsDragging.current = false; }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+  }, []);
+
+  // ポップアップが切り替わったらドラッグ位置をリセット
+  useEffect(() => {
+    setPopupPos({ x: 0, y: 0 });
+  }, [selectedSchedule?.id]);
+
+  function handlePopupDragStart(e: React.MouseEvent) {
+    if ((e.target as HTMLElement).closest('button, input, select, a')) return;
+    popupIsDragging.current = true;
+    popupDragStart.current = { mouseX: e.clientX, mouseY: e.clientY, posX: popupPos.x, posY: popupPos.y };
+    e.preventDefault();
+  }
 
   // Googleカレンダーの個人予定を取得
   useEffect(() => {
@@ -275,15 +309,21 @@ export default function SchedulePage() {
       {/* メンバーの予定の詳細（読み取り専用） */}
       {selectedSchedule?.source === 'member' && (
         <div
-          className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
-          onClick={() => setSelectedSchedule(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          onMouseDown={(e) => { popupMouseDownOnOverlay.current = !popupPanelRef.current?.contains(e.target as Node); }}
+          onClick={() => { if (popupMouseDownOnOverlay.current) setSelectedSchedule(null); }}
         >
           <div className="absolute inset-0 bg-black/50" />
           <div
-            className="relative z-10 w-full md:max-w-md bg-card border border-border rounded-t-[20px] md:rounded-[20px] p-6"
+            ref={popupPanelRef}
+            className="relative z-10 w-[calc(100vw-32px)] max-w-md bg-card border border-border rounded-[20px] overflow-hidden"
+            style={{ transform: `translate(${popupPos.x}px, ${popupPos.y}px)` }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-3 mb-4">
+            <div
+              className="flex items-start justify-between gap-3 p-6 pb-4 cursor-move"
+              onMouseDown={handlePopupDragStart}
+            >
               <div className="flex items-center gap-2">
                 <span className="material-icons text-[18px]" style={{ color: '#60a5fa' }}>group</span>
                 <span className="text-[11px] font-semibold" style={{ color: '#60a5fa' }}>メンバーの予定</span>
@@ -292,14 +332,16 @@ export default function SchedulePage() {
                 <span className="material-icons text-[20px]">close</span>
               </button>
             </div>
-            <h3 className="text-[17px] font-bold text-text mb-3">{selectedSchedule.title}</h3>
-            <p className="text-[13px] text-muted">
-              {selectedSchedule.allDay
-                ? format(selectedSchedule.startAt, 'M月d日(E)', { locale: ja }) + ' 終日'
-                : format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja }) +
-                  ' – ' +
-                  format(selectedSchedule.endAt, 'HH:mm')}
-            </p>
+            <div className="px-6 pb-6">
+              <h3 className="text-[17px] font-bold text-text mb-3">{selectedSchedule.title}</h3>
+              <p className="text-[13px] text-muted">
+                {selectedSchedule.allDay
+                  ? format(selectedSchedule.startAt, 'M月d日(E)', { locale: ja }) + ' 終日'
+                  : format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja }) +
+                    ' – ' +
+                    format(selectedSchedule.endAt, 'HH:mm')}
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -319,15 +361,21 @@ export default function SchedulePage() {
       {/* Googleカレンダー予定の詳細（読み取り専用） */}
       {selectedSchedule?.source === 'google' && (
         <div
-          className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
-          onClick={() => setSelectedSchedule(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          onMouseDown={(e) => { popupMouseDownOnOverlay.current = !popupPanelRef.current?.contains(e.target as Node); }}
+          onClick={() => { if (popupMouseDownOnOverlay.current) setSelectedSchedule(null); }}
         >
           <div className="absolute inset-0 bg-black/50" />
           <div
-            className="relative z-10 w-full md:max-w-md bg-card border border-border rounded-t-[20px] md:rounded-[20px] p-6"
+            ref={popupPanelRef}
+            className="relative z-10 w-[calc(100vw-32px)] max-w-md bg-card border border-border rounded-[20px] overflow-hidden"
+            style={{ transform: `translate(${popupPos.x}px, ${popupPos.y}px)` }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-3 mb-4">
+            <div
+              className="flex items-start justify-between gap-3 p-6 pb-4 cursor-move"
+              onMouseDown={handlePopupDragStart}
+            >
               <div className="flex items-center gap-2">
                 <span className="material-icons text-[18px]" style={{ color: 'var(--green)' }}>event</span>
                 <span className="text-[11px] font-semibold" style={{ color: 'var(--green)' }}>Googleカレンダー</span>
@@ -336,15 +384,17 @@ export default function SchedulePage() {
                 <span className="material-icons text-[20px]">close</span>
               </button>
             </div>
-            <h3 className="text-[17px] font-bold text-text mb-3">{selectedSchedule.title}</h3>
-            <p className="text-[13px] text-muted mb-1">
-              {format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja })}
-              {' – '}
-              {format(selectedSchedule.endAt, 'HH:mm')}
-            </p>
-            {selectedSchedule.description && (
-              <p className="text-[12px] text-muted mt-3 whitespace-pre-wrap">{selectedSchedule.description}</p>
-            )}
+            <div className="px-6 pb-6">
+              <h3 className="text-[17px] font-bold text-text mb-3">{selectedSchedule.title}</h3>
+              <p className="text-[13px] text-muted mb-1">
+                {format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja })}
+                {' – '}
+                {format(selectedSchedule.endAt, 'HH:mm')}
+              </p>
+              {selectedSchedule.description && (
+                <p className="text-[12px] text-muted mt-3 whitespace-pre-wrap">{selectedSchedule.description}</p>
+              )}
+            </div>
           </div>
         </div>
       )}
