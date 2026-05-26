@@ -87,6 +87,42 @@ firestore.rules                              # 新規ルール追加: memberCale
 
 ## Sprint 計画
 
+### Sprint 0: 権限スキーマ完全統一（追加）
+
+**背景**: 初期 CF コードが `role: 'owner'`/`'editor'`/`'viewer'` を書き込んでいたため、既存 Firestore データに旧スキーマ値が残存している。コード上は新スキーマ（`'operator'`/`'member'`/`'rom'`）に統一済みだが、Security Rules が未デプロイのまま旧スキーマを参照し続けていた。
+
+**実装内容**:
+
+1. **移行 CF の作成**: `functions/src/admin/migrateRoles.ts`
+   - `onCall` CF として実装（Admin SDK 使用）
+   - 全チームの全メンバードキュメントをスキャン
+   - `role: 'owner'` → `role: 'operator'`
+   - `role: 'editor'` → `role: 'member'`
+   - `role: 'viewer'` → `role: 'rom'`
+   - 移行件数をレスポンスで返す
+
+2. **`updateMemberRole` CF のデプロイ**: 既存コード `functions/src/teams/updateMemberRole.ts` を Firebase にデプロイ
+
+3. **クライアント `updateMemberRole` の CF 経由化**: `src/lib/repositories/teams.ts` を直接 Firestore 書き込みから CF 呼び出しに戻す（Admin SDK でルールをバイパスする方が安全）
+
+4. **Firestore Security Rules の簡素化**（移行後）:
+   - `isTeamOwner`: `role in ['owner', 'operator']` → `role == 'operator'`
+   - `isOwnerOrEditor`: `['owner', 'editor', 'operator', 'member']` → `role in ['operator', 'member']`
+
+5. **`normalizeRole` の廃止**:
+   - `functions/src/lib/validateAuth.ts` の旧→新変換を削除
+   - `src/lib/repositories/teams.ts` の旧→新変換を削除
+
+6. **移行 CF の実行**: デプロイ後に一度だけ呼び出す
+
+**受け入れ基準**:
+- [ ] Firestore の全メンバードキュメントが新スキーマ（`'operator'`/`'member'`/`'rom'` のみ）を持つ
+- [ ] Security Rules に `'owner'`/`'editor'`/`'viewer'` が存在しない
+- [ ] `normalizeRole` が旧→新変換を行わない（引数をそのまま返す）
+- [ ] オペレーターが `updateMemberRole` CF 経由で別メンバーのロールを変更できる
+
+---
+
 ### Sprint 1: バグ修正（オペレーター権限・カテゴリ作成・チーム切り替え）
 
 **対象バグ**: Bug 1, Bug 2, Bug 4

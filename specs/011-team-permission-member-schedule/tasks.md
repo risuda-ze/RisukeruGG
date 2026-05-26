@@ -164,6 +164,38 @@
 
 ---
 
+## Phase 11: Sprint 0 - 権限スキーマ完全統一
+
+**Purpose**: 旧ロール名（`owner`/`editor`/`viewer`）をコードベース・Firestore・Security Rules から完全に除去し、`operator`/`member`/`rom` に統一する
+
+**Independent Test**: オペレーターが別メンバーをオペレーターに昇格させ、元のオペレーターを降格させることなく正常に完了する
+
+### Setup (Phase 11)
+
+- [X] T038 `functions/src/admin/migrateRoles.ts` を新規作成する：Admin SDK を使い全チームの全メンバードキュメントをスキャンして `role: 'owner'→'operator'`/`'editor'→'member'`/`'viewer'→'rom'` へ更新する `onCall` CF
+- [X] T039 `functions/src/index.ts` に `export * from './admin/migrateRoles';` を追加する
+
+### updateMemberRole CF 化
+
+- [X] T040 `src/lib/repositories/teams.ts` の `updateMemberRole` を再度 CF 呼び出しに戻す（直接書き込みより Admin SDK 経由の方がセキュリティ上安全）
+
+### normalizeRole の廃止
+
+- [ ] T041 [P] `functions/src/lib/validateAuth.ts` の `normalizeRole` から `'owner'→'operator'`/`'editor'→'member'`/`'viewer'→'rom'` の旧→新変換を削除する（移行完了後は全ドキュメントが新スキーマのため不要。T044 実行後に対応）
+- [ ] T042 [P] `src/lib/repositories/teams.ts` の `normalizeRole` から同様の旧→新変換を削除する（T044 実行後に対応）
+
+### Firebase デプロイ
+
+- [X] T043 `functions/src/teams/updateMemberRole.ts` と `functions/src/admin/migrateRoles.ts` の 2 CF を Firebase にデプロイする
+- [X] T047 `src/app/(protected)/team/page.tsx` にオペレーター向け「ロールデータ移行」ボタンを追加し、`migrateRoles` CF をアプリ内から呼び出せるようにする
+- [ ] T044 オペレーターとして本番アプリにログインし、チーム設定の「ロール移行」ボタンを押して Firestore 全メンバーを新スキーマへ移行する
+- [ ] T045 `firestore.rules` を更新する：`isTeamOwner` → `role == 'operator'`、`isOwnerOrEditor` → `role in ['operator', 'member']`（旧ロール名を除去）
+- [ ] T046 更新した `firestore.rules` を Firebase にデプロイする
+
+**Checkpoint**: Security Rules に旧ロール名が存在せず、Firestore データが全て新スキーマで normalizeRole が identity 関数になっていること
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
