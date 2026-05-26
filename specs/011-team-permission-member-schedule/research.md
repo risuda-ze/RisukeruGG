@@ -111,6 +111,64 @@ match /kanbanColumns/{columnId} {
 
 ---
 
+## 権限スキーマ完全統一（追加調査）
+
+### 根本原因: 旧ロール名が Firestore に残存している
+
+**Decision**: 一回限りの移行 CF（`migrateRoles`）を作成・デプロイし、全メンバードキュメントを新スキーマへ更新する。その後 Security Rules と normalizeRole を簡素化する。
+
+**調査結果**:
+
+1. **初期 CF コード**（コミット `1f0f62c`）:
+   - `createTeam.ts`: `role: 'owner'` を書き込んでいた
+   - `joinTeam.ts`: `role: 'editor'` を書き込んでいた
+
+2. **ロール統一 CF**（コミット `72e6e20` "feat: ユーザー管理修正（ロール名称統一・削除後データ保持・PlanStatus接続）"）:
+   - 全 CF がコードレベルで新スキーマ（`'operator'`, `'member'`, `'rom'`）を書き込むよう更新された
+   - しかし **既存 Firestore データは移行されていない**（`role: 'owner'` のまま残存）
+   - `validateAuth.ts` と `teams.ts` に `normalizeRole()` が追加され、読み取り時のみ変換している
+
+3. **Firestore Security Rules の履歴**:
+   - 初期: `data.role == 'owner'`（オーナーのみ書き込み可能）
+   - 統一後（コード）: `data.role in ['owner', 'operator']`（後方互換）
+   - しかしこの Rules が Firebase に未デプロイのまま `'operator'` ユーザーが書き込もうとして `permission-denied` が発生していた
+   - 2026-05-26 本日: Rules を Firebase にデプロイ済み（`['owner', 'operator']` を許可）
+
+4. **`updateMemberRole` CF**:
+   - コミット `282eaf5` でコード追加（Admin SDK でルールをバイパス）
+   - しかし Firebase に未デプロイ → `functions/not-found` → クライアントで "internal" と表示
+
+**修正が必要な箇所**:
+
+| ファイル | 現状 | 必要な対応 |
+|---|---|---|
+| `firestore.rules` | `['owner', 'operator']` / `['owner', 'editor', 'operator', 'member']` | 移行完了後: `['operator']` / `['operator', 'member']` |
+| `functions/src/lib/validateAuth.ts` | `normalizeRole`: owner→operator, editor→member, viewer→rom | 移行後: レガシー変換を廃止 |
+| `src/lib/repositories/teams.ts` | `normalizeRole`: 同上 + `updateMemberRole` が直接 Firestore 書き込み | `normalizeRole` 簡素化 + CF 経由に戻す |
+| Firestore データ | 旧チーム: `role: 'owner'`/`'editor'`/`'viewer'` | 一回限り移行: 新スキーマへ更新 |
+| `updateMemberRole` CF | コード存在・未デプロイ | デプロイ必須 |
+
+**移行 CF の設計**:
+- `functions/src/admin/migrateRoles.ts` として新規作成
+- `onCall` で呼び出し（呼び出し元は認証済みユーザー、ただしアプリ内の「管理」操作として呼ぶ）
+- Admin SDK で全チームの全メンバードキュメントをスキャンし旧値を更新
+- 移行ドキュメント数をレスポンスで返す
+
+**Security Rules 更新順序**:
+1. 移行 CF をデプロイ・実行する
+2. 移行完了後、Rules から旧ロール名を除去してデプロイする
+
+**Rationale**:
+- 移行前に Rules から `'owner'` を除去すると、旧スキーマデータのユーザーが突然アクセス不能になる
+- 逆に移行完了後も Rules に `'owner'` を残すと、コードの一貫性が失われ将来の混乱を招く
+- Admin SDK での一括移行は Security Rules をバイパスするため安全に実行できる
+
+**Alternatives considered**:
+- クライアントサイドからの段階的移行（ログイン時に自分のドキュメントを更新）→ 全ユーザーの再ログインが必要なため長期化する。また manager/operator 以外のユーザーが自分のロールを書き換えること自体がセキュリティリスク。却下。
+- 既存 Rules を永続的に維持（常に old + new 両方サポート）→ コードに不要な複雑性を持ち込む。Constitution Principle I (シンプルさ優先) に違反。却下。
+
+---
+
 ## 追加機能: メンバースケジュール
 
 ### Firestoreデータ構造の設計

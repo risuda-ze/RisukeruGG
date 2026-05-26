@@ -13,7 +13,7 @@ import { RemoveMemberDialog } from '@/components/team/RemoveMemberDialog';
 import { LeaveTeamDialog } from '@/components/team/LeaveTeamDialog';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
 import { Card, CardHeader } from '@/components/ui/Card';
-import { createTeam, dissolveTeam } from '@/lib/repositories/teams';
+import { createTeam, dissolveTeam, migrateRoles } from '@/lib/repositories/teams';
 import type { TeamMember, UserRole } from '@/types/entities';
 
 type DialogState =
@@ -72,6 +72,10 @@ export default function TeamPage() {
   const [dissolveError, setDissolveError] = useState<string | null>(null);
   const [dissolveConfirmName, setDissolveConfirmName] = useState('');
 
+  const [migrating, setMigrating] = useState(false);
+  const [migrateResult, setMigrateResult] = useState<string | null>(null);
+  const [migrateError, setMigrateError] = useState<string | null>(null);
+
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const isOperator = myMember?.role === 'operator';
@@ -96,6 +100,25 @@ export default function TeamPage() {
     setDissolveConfirmName('');
     setDissolveError(null);
     setShowDissolve(true);
+  }
+
+  async function handleMigrateRoles() {
+    setMigrating(true);
+    setMigrateResult(null);
+    setMigrateError(null);
+    try {
+      const res = await migrateRoles();
+      const { totalScanned, totalUpdated } = res.data;
+      setMigrateResult(`完了: ${totalScanned} 件スキャン、${totalUpdated} 件を新スキーマへ更新しました`);
+    } catch (err: unknown) {
+      const code =
+        err && typeof err === 'object' && 'code' in err
+          ? String((err as { code: unknown }).code)
+          : 'unknown';
+      setMigrateError(`移行に失敗しました（${code}）`);
+    } finally {
+      setMigrating(false);
+    }
   }
 
   async function handleDissolve() {
@@ -350,6 +373,45 @@ export default function TeamPage() {
               </div>
             </div>
           </Card>
+        )}
+
+        {/* ロールスキーマ移行（オペレーターのみ・一回限り） */}
+        {isOperator && (
+          <div className="bg-card border border-amber/30 rounded-lg overflow-hidden">
+            <CardHeader title="ロール移行（管理者操作）" />
+            <div className="p-[18px]">
+              <p className="text-[12px] text-muted mb-2">
+                旧ロール名（owner / editor / viewer）が残存している場合、新スキーマ（operator / member / rom）へ一括変換します。
+                この操作は何度実行しても安全です。
+              </p>
+              {migrateResult && (
+                <div
+                  className="mb-3 rounded-[8px] px-3 py-2 text-[12px] border"
+                  style={{ background: 'rgba(74,222,128,0.08)', borderColor: 'rgba(74,222,128,0.3)', color: '#4ade80' }}
+                >
+                  ✅ {migrateResult}
+                </div>
+              )}
+              {migrateError && (
+                <div
+                  className="mb-3 rounded-[8px] px-3 py-2 text-[12px] border"
+                  style={{ background: 'rgba(226,53,57,0.08)', borderColor: 'rgba(226,53,57,0.3)', color: 'var(--live)' }}
+                >
+                  ❌ {migrateError}
+                </div>
+              )}
+              <button
+                onClick={handleMigrateRoles}
+                disabled={migrating}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold transition-colors border border-amber/40 text-amber-l hover:bg-amber/10 disabled:opacity-50"
+              >
+                <span className="material-icons text-[18px]">
+                  {migrating ? 'hourglass_empty' : 'upgrade'}
+                </span>
+                {migrating ? '移行中...' : 'ロールデータを移行する'}
+              </button>
+            </div>
+          </div>
         )}
 
         {/* チームを解散する（オーナーのみ） */}
