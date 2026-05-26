@@ -10,10 +10,6 @@ export interface AuthContext {
   role: 'operator' | 'member' | 'rom';
 }
 
-function normalizeRole(raw: string): 'operator' | 'member' | 'rom' {
-  return raw as 'operator' | 'member' | 'rom';
-}
-
 /** 認証済みユーザーのチームメンバー情報を取得する */
 export async function getAuthContext(
   callableRequest: CallableRequest,
@@ -33,7 +29,7 @@ export async function getAuthContext(
   return {
     uid,
     teamId,
-    role: normalizeRole(memberSnap.data()!.role as string),
+    role: memberSnap.data()!.role as 'operator' | 'member' | 'rom',
   };
 }
 
