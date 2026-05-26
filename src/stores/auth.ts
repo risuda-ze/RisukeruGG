@@ -55,9 +55,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       // Googleカレンダー接続直後に同期を実行
       // （onSnapshot は onAuthStateChanged より先に token が設定されないことがあるため、ここでも同期する）
-      const { currentTeamId } = useAuthStore.getState();
+      // teamIds に含まれる全チームへ書き込む
+      const { teamIds: currentTeamIds } = useAuthStore.getState();
       const user = useAuthStore.getState().currentUser;
-      if (currentTeamId && user) {
+      if (currentTeamIds.length > 0 && user) {
         const displayName = user.displayName ?? 'メンバー';
         (async () => {
           try {
@@ -76,7 +77,12 @@ export const useAuthStore = create<AuthState>((set) => ({
               endAt: e.endAt,
               allDay: e.allDay ?? false,
             }));
-            await saveMemberCalendarEvents(currentTeamId, user.uid, displayName, toSave);
+            // 所属する全チームに同期
+            await Promise.all(
+              currentTeamIds.map((tid) =>
+                saveMemberCalendarEvents(tid, user.uid, displayName, toSave)
+              )
+            );
           } catch {
             // GCal同期エラーはサイレントに無視
           }
@@ -162,10 +168,11 @@ export function initAuthListener() {
             );
 
             // Googleカレンダー同期: チームID確定時にアクセストークンがあれば同期
+            // teamIds に含まれる全チームへ書き込む
             const { googleAccessToken } = useAuthStore.getState();
             if (googleAccessToken) {
               const displayName = user.displayName ?? 'メンバー';
-              const capturedTeamId = newTeamId;
+              const capturedTeamIds = newTeamIds;
               (async () => {
                 try {
                   const now = new Date();
@@ -183,7 +190,12 @@ export function initAuthListener() {
                     endAt: e.endAt,
                     allDay: e.allDay ?? false,
                   }));
-                  await saveMemberCalendarEvents(capturedTeamId, user.uid, displayName, toSave);
+                  // 所属する全チームに同期
+                  await Promise.all(
+                    capturedTeamIds.map((tid) =>
+                      saveMemberCalendarEvents(tid, user.uid, displayName, toSave)
+                    )
+                  );
                 } catch {
                   // Googleカレンダー同期エラーはサイレントに無視
                 }
