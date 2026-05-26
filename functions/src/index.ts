@@ -38,5 +38,3 @@ export * from './notifications/scheduleReminders';
 // お問い合わせフォーム
 export * from './contact/sendContactEmail';
 
-// 管理用（一回限りの移行など）
-export * from './admin/migrateRoles';

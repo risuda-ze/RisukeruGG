@@ -16,19 +16,10 @@ function toTeam(id: string, data: Record<string, unknown>): Team {
   };
 }
 
-function normalizeRole(raw: string): UserRole {
-  // 旧スキーマとの後方互換: Firestore に残存する旧ロール名を新スキーマへ変換する
-  // migrateRoles CF 実行後に全ドキュメントが新スキーマになったら削除可
-  if (raw === 'owner') return 'operator';
-  if (raw === 'editor') return 'member';
-  if (raw === 'viewer') return 'rom';
-  return raw as UserRole;
-}
-
 function toTeamMember(id: string, data: Record<string, unknown>): TeamMember {
   return {
     userId: id,
-    role: normalizeRole(data.role as string),
+    role: data.role as UserRole,
     displayName: data.displayName as string,
     avatarUrl: (data.avatarUrl as string | null) ?? null,
     plan: data.plan as 'light' | 'party',
@@ -119,12 +110,4 @@ export const switchActiveTeam = httpsCallable<
   { success: boolean; teamId: string }
 >(functions, 'switchActiveTeam');
 
-/**
- * 一回限りのロールスキーマ移行 CF
- * Firestore 上の旧ロール名（owner/editor/viewer）を新スキーマ（operator/member/rom）へ更新する
- * 移行完了後は normalizeRole の旧→新変換と firestore.rules の旧ロール名サポートも削除できる
- */
-export const migrateRoles = httpsCallable<
-  void,
-  { success: boolean; totalScanned: number; totalUpdated: number; message: string }
->(functions, 'migrateRoles');
+

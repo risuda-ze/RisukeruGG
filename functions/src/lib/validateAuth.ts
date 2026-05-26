@@ -10,15 +10,6 @@ export interface AuthContext {
   role: 'operator' | 'member' | 'rom';
 }
 
-function normalizeRole(raw: string): 'operator' | 'member' | 'rom' {
-  // 旧スキーマとの後方互換: Firestore に残存する旧ロール名を新スキーマへ変換する
-  // migrateRoles CF 実行後に全ドキュメントが新スキーマになったら削除可
-  if (raw === 'owner') return 'operator';
-  if (raw === 'editor') return 'member';
-  if (raw === 'viewer') return 'rom';
-  return raw as 'operator' | 'member' | 'rom';
-}
-
 /** 認証済みユーザーのチームメンバー情報を取得する */
 export async function getAuthContext(
   callableRequest: CallableRequest,
@@ -38,7 +29,7 @@ export async function getAuthContext(
   return {
     uid,
     teamId,
-    role: normalizeRole(memberSnap.data()!.role as string),
+    role: memberSnap.data()!.role as 'operator' | 'member' | 'rom',
   };
 }
 
