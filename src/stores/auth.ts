@@ -49,7 +49,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const accessToken = credential.accessToken;
       const expiresAt = Date.now() + 3500 * 1000;
       try {
-        sessionStorage.setItem('gcal_token', JSON.stringify({ token: accessToken, expiresAt }));
+        localStorage.setItem('gcal_token', JSON.stringify({ token: accessToken, expiresAt }));
       } catch {}
       set({ googleAccessToken: accessToken });
 
@@ -93,7 +93,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signOut: async () => {
     await firebaseSignOut(auth);
-    try { sessionStorage.removeItem('gcal_token'); } catch {}
+    try { localStorage.removeItem('gcal_token'); } catch {}
     set({ currentUser: null, currentTeamId: null, teamIds: [], currentTeam: null, members: [], idToken: null, googleAccessToken: null });
   },
 
@@ -124,15 +124,15 @@ export function initAuthListener() {
     if (user) {
       useAuthStore.setState({ currentUser: user, loading: false });
 
-      // sessionStorageからGoogleアクセストークンを復元
+      // localStorageからGoogleアクセストークンを復元
       try {
-        const stored = sessionStorage.getItem('gcal_token');
+        const stored = localStorage.getItem('gcal_token');
         if (stored) {
           const { token, expiresAt } = JSON.parse(stored) as { token: string; expiresAt: number };
           if (Date.now() < expiresAt) {
             useAuthStore.setState({ googleAccessToken: token });
           } else {
-            sessionStorage.removeItem('gcal_token');
+            localStorage.removeItem('gcal_token');
           }
         }
       } catch {}

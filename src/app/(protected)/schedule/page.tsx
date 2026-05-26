@@ -23,7 +23,7 @@ import { ScheduleForm } from '@/components/calendar/ScheduleForm';
 import type { ScheduleEntry, MemberCalendarEvent } from '@/types/entities';
 
 export default function SchedulePage() {
-  const { currentUser, currentTeamId, members, googleAccessToken, signIn } = useAuthStore();
+  const { currentUser, currentTeamId, members, googleAccessToken, signIn, loading: authLoading } = useAuthStore();
   const { schedules, loading, subscribe } = useScheduleStore();
   const { categories, subscribe: subscribeCategories } = useScheduleCategoryStore();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -197,11 +197,17 @@ export default function SchedulePage() {
         </button>
       </div>
 
-      {/* Googleカレンダー認証期限切れバナー */}
-      {gcalError === 'auth_expired' && (
+      {/* Googleカレンダー接続バナー（未接続・認証期限切れ共通） */}
+      {!authLoading && !googleAccessToken && (
         <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-amber/10 border-b border-amber/30 text-[12px] text-amber-l">
-          <span className="material-icons text-[16px]">warning</span>
-          <span className="flex-1">Googleカレンダーの認証が切れています。</span>
+          <span className="material-icons text-[16px]">
+            {gcalError === 'auth_expired' ? 'warning' : 'link_off'}
+          </span>
+          <span className="flex-1">
+            {gcalError === 'auth_expired'
+              ? 'Googleカレンダーの認証が切れています。'
+              : 'Googleカレンダーに接続すると、個人の予定をここに表示できます。'}
+          </span>
           <button
             onClick={async () => {
               try {
@@ -213,7 +219,7 @@ export default function SchedulePage() {
             }}
             className="shrink-0 px-3 py-1 rounded-[6px] text-[11px] font-bold bg-amber/20 border border-amber/50 hover:bg-amber/30 transition-colors"
           >
-            再接続
+            {gcalError === 'auth_expired' ? '再接続' : '接続する'}
           </button>
         </div>
       )}
