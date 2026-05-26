@@ -110,7 +110,4 @@ export const switchActiveTeam = httpsCallable<
   { success: boolean; teamId: string }
 >(functions, 'switchActiveTeam');
 
-export const migrateRoles = httpsCallable<
-  void,
-  { success: boolean; totalScanned: number; totalUpdated: number; message: string }
->(functions, 'migrateRoles');
+
