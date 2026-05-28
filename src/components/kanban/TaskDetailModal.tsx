@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Avatar } from '@/components/ui/Avatar';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Timestamp } from 'firebase/firestore';
 import { updateTask, deleteTask, addTaskComment } from '@/lib/repositories/tasks';
 import { useAuthStore } from '@/stores/auth';
-import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
+import { MarkdownView } from '@/components/ui/MarkdownEditor';
 import { DateInput } from '@/components/ui/DateInput';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import type { Task, TeamMember, TaskCategory, KanbanColumn, CollabComment } from '@/types/entities';
@@ -75,6 +75,35 @@ export function TaskDetailModal({
   const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
 
   const myName = currentUser?.displayName ?? 'あなた';
+
+  /* オーバーレイ上でマウスダウンされたかを追跡（リサイズ誤閉じ防止） */
+  const mouseDownOnOverlay = useRef<boolean>(false);
+
+  /* ── ドラッグ移動 ─────────────────────────────── */
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const isDragging = useRef(false);
+  const dragStart = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 });
+
+  useEffect(() => {
+    function onMove(e: MouseEvent) {
+      if (!isDragging.current) return;
+      setPosition({
+        x: dragStart.current.posX + e.clientX - dragStart.current.mouseX,
+        y: dragStart.current.posY + e.clientY - dragStart.current.mouseY,
+      });
+    }
+    function onUp() { isDragging.current = false; }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+  }, []);
+
+  function handleDragStart(e: React.MouseEvent) {
+    if ((e.target as HTMLElement).closest('button, input, select, a')) return;
+    isDragging.current = true;
+    dragStart.current = { mouseX: e.clientX, mouseY: e.clientY, posX: position.x, posY: position.y };
+    e.preventDefault();
+  }
 
   /* task.id が変わったときにコメントを最新状態に同期 */
   useEffect(() => {
@@ -243,7 +272,8 @@ export function TaskDetailModal({
     <div
       className="fixed inset-0 z-[290] flex items-center justify-center p-4"
       style={{ background: 'rgba(6,6,16,0.85)', backdropFilter: 'blur(6px)' }}
-      onClick={handleCloseWithDraft}
+      onMouseDown={(e) => { mouseDownOnOverlay.current = e.target === e.currentTarget; }}
+      onClick={() => { if (mouseDownOnOverlay.current) handleCloseWithDraft(); }}
     >
       <div
         className="flex flex-col overflow-hidden rounded-[20px]"
@@ -257,6 +287,7 @@ export function TaskDetailModal({
           background: 'var(--card-2)',
           border: '1px solid var(--border-l)',
           boxShadow: 'var(--shadow-xl)',
+          transform: `translate(${position.x}px, ${position.y}px)`,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -266,10 +297,11 @@ export function TaskDetailModal({
           style={{ background: 'linear-gradient(90deg, var(--purple-d), var(--purple))' }}
         />
 
-        {/* ヘッダー */}
+        {/* ヘッダー（ドラッグハンドル） */}
         <div
-          className="px-8 pt-6 pb-4 shrink-0 border-b"
+          className="px-8 pt-6 pb-4 shrink-0 border-b cursor-move"
           style={{ borderColor: 'var(--border)' }}
+          onMouseDown={handleDragStart}
         >
           <div className="flex items-start gap-3">
             <div className="flex-1 min-w-0">
@@ -482,11 +514,12 @@ export function TaskDetailModal({
               </div>
               {editingDesc ? (
                 <div className="flex flex-col gap-2">
-                  <MarkdownEditor
+                  <textarea
                     value={description}
-                    onChange={setDescription}
+                    onChange={(e) => setDescription(e.target.value)}
                     placeholder="詳細を入力..."
                     rows={5}
+                    className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple resize-y"
                   />
                   <div className="flex gap-2 justify-end">
                     <button
@@ -507,13 +540,12 @@ export function TaskDetailModal({
                 </div>
               ) : (
                 <div
-                  className="cursor-pointer"
+                  className="cursor-pointer min-h-[40px]"
                   onClick={canEdit ? () => setEditingDesc(true) : undefined}
                 >
-                  <MarkdownEditor
+                  <MarkdownView
                     value={description}
                     placeholder={`詳細が入力されていません${canEdit ? '（クリックして編集）' : ''}`}
-                    readOnly
                   />
                 </div>
               )}
