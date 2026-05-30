@@ -1,0 +1,84 @@
+# task model
+
+## モデル方針
+
+Task は制作作業の個票を表し、TaskStatus は表示列と完了判定、TaskCategory は分類情報を表す。
+
+このカテゴリでは、タスク表示・編集・集計に直接関係する項目だけを正本化する。チームロールと所属は team、紐付くスケジュール本体は schedule、通知配送は notification を参照する。
+
+## Task
+
+Firestore コレクション配置: `teams/{teamId}/tasks/{taskId}`
+
+| フィールド         | 型 / 例             | 意味 |
+| ------------------ | ------------------- | ---- |
+| `id`               | string              | Firestore ドキュメント ID |
+| `title`            | string              | タスク名 |
+| `columnId`         | string              | 所属列を表す `TaskStatus.id` |
+| `categoryId`       | string \| null      | タスクカテゴリ ID。未分類なら `null` |
+| `description`      | string \| null      | 詳細説明 |
+| `assigneeId`       | string \| null      | 担当者のメンバー UID |
+| `dueDate`          | Date \| null        | 締切日 |
+| `createdBy`        | string              | 作成者 UID |
+| `linkedScheduleId` | string \| null      | 関連する動画投稿予定スケジュール ID |
+| `createdAt`        | timestamp           | 作成日時 |
+| `updatedAt`        | timestamp           | 更新日時 |
+
+## TaskStatus
+
+Firestore コレクション配置: `teams/{teamId}/taskStatuses/{columnId}`
+
+| フィールド          | 型 / 例       | 意味 |
+| ------------------- | ------------- | ---- |
+| `id`                | string        | Firestore ドキュメント ID |
+| `name`              | string        | 列名 |
+| `order`             | number        | 左からの表示順 |
+| `color`             | string        | 列色 |
+| `icon`              | string        | 表示用アイコン |
+| `isCompleteColumn`  | boolean       | 完了列かどうか |
+| `createdAt`         | timestamp     | 作成日時 |
+
+## TaskCategory
+
+Firestore コレクション配置: `teams/{teamId}/taskCategories/{categoryId}`
+
+| フィールド    | 型 / 例    | 意味 |
+| ------------- | ---------- | ---- |
+| `id`          | string     | Firestore ドキュメント ID |
+| `name`        | string     | カテゴリ名 |
+| `color`       | string     | カテゴリ表示色 |
+| `icon`        | string     | 表示用アイコン |
+| `order`       | number     | 表示順 |
+| `createdAt`   | timestamp  | 作成日時 |
+
+## 制約
+
+- タスク状態の正本は `columnId` であり、独立した status フィールドは持たない
+- `TaskStatus.isCompleteColumn` は 1 チームにつき 0 列以上で `true` を取りうる
+- 列は最低 1 つ、最大 10 個まで管理する
+- カテゴリ削除時は関連する全タスクの `categoryId` を `null` に更新する
+- ボード表示時の並び順は列の `order`、列内タスクは締切優先のソートルールに従う
+- 既存タスクを参照した複製新規作成は保存項目を増やさず、`id`、`createdBy`、`createdAt`、`updatedAt` は新規タスクとして生成する
+
+## 関連する隣接モデル
+
+### team 側で管理するもの
+
+- `assigneeId` が参照するメンバー情報
+- `operator` / `member` / `rom` による操作権限
+
+### schedule 側で管理するもの
+
+- `linkedScheduleId` が参照する動画投稿予定スケジュール
+- スケジュール側の時間管理やカレンダー表示
+
+### notification 側で管理するもの
+
+- 担当者アサイン通知
+- 他者による列移動や更新通知
+
+## 今後詳細化する項目
+
+- 列削除時のタスク再配置ルール
+- タスクコメントや履歴の保持方針
+- CSV エクスポートの列定義詳細
