@@ -1,7 +1,7 @@
 import { doc, getDoc, collection, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '@/lib/firebase/client';
-import type { Team, TeamMember, UserRole } from '@/types/entities';
+import type { Team, TeamMember, UserRole, DiscordTeamConfig } from '@/types/entities';
 
 const functions = getFunctions(undefined, 'asia-northeast1');
 
@@ -112,4 +112,62 @@ export const switchActiveTeam = httpsCallable<
   { success: boolean; teamId: string }
 >(functions, 'switchActiveTeam');
 
+// Discord 通知設定の更新（Cloud Function 経由 — Admin SDK で Security Rules をバイパス）
+export const updateDiscordSettings = httpsCallable<
+  {
+    teamId: string;
+    webhookUrl: string;
+    guildId?: string;
+    channelId?: string;
+    notifyOnCreate: boolean;
+    notifyBefore1h: boolean;
+    notifyBefore15min: boolean;
+  },
+  { success: boolean }
+>(functions, 'updateDiscordSettings');
+
+/** Discord 通知設定を取得する。operator のみアクセス可能（Firestore ルールで制限）。 */
+export async function getDiscordSettings(teamId: string): Promise<DiscordTeamConfig | null> {
+  const snap = await getDoc(doc(db, 'teams', teamId, 'discord', 'config'));
+  if (!snap.exists()) return null;
+  const data = snap.data() as Record<string, unknown>;
+  return {
+    webhookUrl: (data.webhookUrl as string) ?? '',
+    guildId: (data.guildId as string | undefined) ?? undefined,
+    channelId: (data.channelId as string | undefined) ?? undefined,
+    notifyOnCreate: (data.notifyOnCreate as boolean) ?? false,
+    notifyBefore1h: (data.notifyBefore1h as boolean) ?? false,
+    notifyBefore15min: (data.notifyBefore15min as boolean) ?? false,
+  };
+}
+
+/**
+ * guildId からチームIDを検索する。
+ * discord_sessions/{guildId} と連動して使うためクライアントからは呼ばない（Bot APIルート専用）。
+ * クライアントサイドからは呼び出し不可のため、この関数は将来的にAPIルートのみで使用する。
+ */
+export async function getTeamIdByGuildId(guildId: string): Promise<string | null> {
+  // collectionGroup クエリは Firestore インデックスが必要な場合がある
+  // teams/{teamId}/discord/config の guildId フィールドを横断検索
+  const { collectionGroup, query, where, limit, getDocs } = await import('firebase/firestore');
+  const q = query(
+    collectionGroup(db, 'discord'),
+    where('guildId', '==', guildId),
+    limit(1)
+  );
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  // discord サブコレクションの親（teams/{teamId}）の ID を返す
+  const teamRef = snap.docs[0]!.ref.parent.parent;
+  return teamRef?.id ?? null;
+}
+
+/**
+ * 指定した guildId が既に他チームにリンクされているか確認する。
+ * 1サーバー1チーム制約の強制に使用する。
+ */
+export async function isGuildAlreadyLinked(guildId: string): Promise<boolean> {
+  const teamId = await getTeamIdByGuildId(guildId);
+  return teamId !== null;
+}
 

@@ -1,3 +1,17 @@
+// Firestore Security Rules
+//
+// デプロイ手順:
+//   firebase deploy --only firestore:rules
+//
+// ローカル確認:
+//   firebase firestore:rules:validate
+//
+// Discord 関連ルール（2026-05-30 更新）:
+//   - /discord_sessions/{guildId}            — Admin SDK のみ（クライアント不可）
+//   - /discord_bot_invite_requests/{nonce}   — Admin SDK のみ（Bot 招待 CSRF 保護用）
+//   - /discord_bot_invite_pending/{nonce}    — Admin SDK のみ（チャンネル一覧一時保存用）
+//   - /teams/{teamId}/discord/{doc}          — operator のみ読み書き可
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -26,6 +40,22 @@ service cloud.firestore {
     match /teamCodes/{code} {
       allow read: if request.auth != null;
       allow write: if false;
+    }
+
+    // Discord AI ボットのセッション管理 — Admin SDK（Cloud Functions/API Route）のみ
+    // クライアントからの直接アクセスは一切不可
+    match /discord_sessions/{sessionId} {
+      allow read, write: if false;
+    }
+
+    // Discord Bot 招待 CSRF 保護用ノンス — Admin SDK のみ。クライアント不可（使い捨て）
+    match /discord_bot_invite_requests/{nonce} {
+      allow read, write: if false;
+    }
+
+    // Discord Bot 招待フロー用チャンネル一覧一時保存 — Admin SDK のみ
+    match /discord_bot_invite_pending/{nonce} {
+      allow read, write: if false;
     }
 
     match /teams/{teamId} {
@@ -79,6 +109,12 @@ service cloud.firestore {
           allow read: if isTeamMember(teamId);
           allow write: if request.auth != null && request.auth.uid == userId;
         }
+      }
+
+      // Discord 通知設定 — operator のみ読み書き可
+      // Webhook URL をチームメンバーから隠すためサブコレクション方式を採用
+      match /discord/{doc} {
+        allow read, write: if isTeamOwner(teamId);
       }
 
       match /notifications/{notificationId} {

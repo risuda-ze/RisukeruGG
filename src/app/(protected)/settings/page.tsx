@@ -28,11 +28,12 @@ import { Modal } from '@/components/ui/Modal';
 import { Card } from '@/components/ui/Card';
 import { TopBar } from '@/components/layout/TopBar';
 
-type Tab = 'calendar' | 'tasks';
+type Tab = 'calendar' | 'tasks' | 'account';
 
 const TAB_LABELS: Record<Tab, string> = {
   calendar: 'スケジュール',
   tasks: 'タスク管理',
+  account: 'アカウント',
 };
 
 const DEFAULT_COLORS = [
@@ -91,8 +92,20 @@ export default function SettingsPage() {
         <div>
           {activeTab === 'tasks' && <TaskManagementSettings />}
           {activeTab === 'calendar' && <ScheduleCategorySettings />}
+          {activeTab === 'account' && <AccountSettings />}
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ── アカウント設定 ─────────────────────────────────────── */
+function AccountSettings() {
+  return (
+    <div className="space-y-5">
+      <p className="text-[13px] text-muted">
+        Discord 連携はチーム設定から行ってください。
+      </p>
     </div>
   );
 }

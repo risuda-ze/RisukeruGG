@@ -10,6 +10,7 @@ export * from './teams/resetTeamCode';
 export * from './teams/removeTeamMember';
 export * from './teams/updateMemberRole';
 export * from './teams/dissolveTeam';
+export * from './teams/updateDiscordSettings';
 export * from './auth/onUserCreate';
 export * from './auth/deleteAccount';
 export * from './plan/resetMonthlyPlanCounts';

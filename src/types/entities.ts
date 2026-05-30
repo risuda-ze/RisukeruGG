@@ -190,6 +190,30 @@ export interface CollabSession {
   comments?: CollabComment[];
 }
 
+// teams/{teamId}/discord/config サブコレクションの型
+// Team インターフェースには追加しない（サブコレクション方式で operator のみアクセス制限するため）
+export interface DiscordTeamConfig {
+  webhookUrl: string;        // Sprint 1 のみ使用。guildId 設定後は Bot 通知が優先される
+  guildId?: string;          // DiscordサーバーID（Bot 招待完了後に書き込む）
+  channelId?: string;        // Bot 通知先チャンネルID（Bot 招待完了後に書き込む）
+  notifyOnCreate: boolean;   // スケジュール作成時に通知
+  notifyBefore1h: boolean;   // 1時間前リマインダー
+  notifyBefore15min: boolean; // 15分前リマインダー
+}
+
+// discord_sessions/{guildId} の型（Sprint 3 AI ボット用）
+// セッションはサーバー単位で管理する。個人ユーザーの特定は行わない。
+export interface DiscordSession {
+  guildId: string;    // DiscordサーバーID（セッションキー）
+  teamId: string;     // 対応するRisukeruGGチームID
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+  }>;
+  pendingProposal?: Record<string, unknown>;  // 確認待ちの %%PROPOSAL%% データ
+  updatedAt: Date;  // 30分無操作でセッション自動リセット（sessionManager 側で判定）
+}
+
 export interface Notification {
   id: string;
   recipientId: string;
