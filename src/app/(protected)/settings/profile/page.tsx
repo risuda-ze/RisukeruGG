@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
+import { Icon } from '@/components/ui/Icon';
+import { Dropdown } from '@/components/ui/Dropdown';
 import type { NotificationPreferences } from '@/types/entities';
 
 // アプリ情報タブを含む5タブ構成
@@ -300,7 +302,7 @@ export default function ProfileSettingsPage() {
                   </Button>
                   {nameSaved && (
                     <span className="text-[12px] text-green flex items-center gap-1">
-                      <span className="material-icons text-[14px]">check_circle</span>
+                      <Icon name="check" size={14} />
                       保存しました
                     </span>
                   )}
@@ -409,38 +411,38 @@ export default function ProfileSettingsPage() {
                       {plan === 'light' ? (
                         <>
                           <li className="flex items-center gap-1.5">
-                            <span className="material-icons text-[14px] text-green">check</span>
+                            <Icon name="check" size={14} className="text-green" />
                             スケジュール管理
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <span className="material-icons text-[14px] text-green">check</span>
+                            <Icon name="check" size={14} className="text-green" />
                             タスク管理（基本）
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <span className="material-icons text-[14px] text-muted/40">close</span>
+                            <Icon name="close" size={14} className="text-muted/40" />
                             コラボ調整
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <span className="material-icons text-[14px] text-muted/40">close</span>
+                            <Icon name="close" size={14} className="text-muted/40" />
                             チーム機能
                           </li>
                         </>
                       ) : (
                         <>
                           <li className="flex items-center gap-1.5">
-                            <span className="material-icons text-[14px] text-green">check</span>
+                            <Icon name="check" size={14} className="text-green" />
                             スケジュール管理
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <span className="material-icons text-[14px] text-green">check</span>
+                            <Icon name="check" size={14} className="text-green" />
                             タスク管理（全機能）
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <span className="material-icons text-[14px] text-green">check</span>
+                            <Icon name="check" size={14} className="text-green" />
                             コラボ調整
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <span className="material-icons text-[14px] text-green">check</span>
+                            <Icon name="check" size={14} className="text-green" />
                             チーム機能（複数メンバー）
                           </li>
                         </>
@@ -521,7 +523,7 @@ export default function ProfileSettingsPage() {
                       className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3 border-b border-border"
                     >
                       <span>プライバシーポリシー</span>
-                      <span className="material-icons text-base text-muted">open_in_new</span>
+                      <Icon name="open_in_new" size={20} className="text-muted" />
                     </Link>
                     <div className="flex items-center justify-between text-sm py-3 border-b border-border">
                       <span className="text-muted">利用規約</span>
@@ -538,10 +540,10 @@ export default function ProfileSettingsPage() {
                     className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3"
                   >
                     <span className="flex items-center gap-2">
-                      <span className="material-icons text-base text-muted">mail_outline</span>
+                      <Icon name="mail_outline" size={16} className="text-muted" />
                       お問い合わせ
                     </span>
-                    <span className="material-icons text-base text-muted">chevron_right</span>
+                    <Icon name="chevron_right" size={16} className="text-muted" />
                   </Link>
                 </div>
               </div>
@@ -582,33 +584,28 @@ export default function ProfileSettingsPage() {
               <p className="text-[12px] font-semibold text-amber-l">
                 新しいオペレーターを選択してください
               </p>
-              <select
+              <Dropdown
                 value={newOperatorId}
-                onChange={(e) => setNewOperatorId(e.target.value)}
-                className="w-full border border-border rounded-[8px] px-3 py-2 text-sm bg-surface text-text focus:outline-none focus:ring-2 focus:ring-purple"
-              >
-                {members
+                options={members
                   .filter((m) => m.userId !== currentUser?.uid)
-                  .map((m) => (
-                    <option key={m.userId} value={m.userId}>
-                      {m.displayName}
-                    </option>
-                  ))}
-              </select>
+                  .map((m) => ({ value: m.userId, label: m.displayName }))}
+                onChange={setNewOperatorId}
+                scroll
+              />
             </div>
           )}
           <p className="text-text">以下のデータが完全に削除されます：</p>
           <ul className="space-y-1 text-[13px] text-muted list-none">
             <li className="flex items-center gap-2">
-              <span className="material-icons text-[14px] text-live">remove_circle_outline</span>
+              <Icon name="close" size={14} className="text-live" />
               アカウント情報（名前・メールアドレス）
             </li>
             <li className="flex items-center gap-2">
-              <span className="material-icons text-[14px] text-live">remove_circle_outline</span>
+              <Icon name="close" size={14} className="text-live" />
               チームとすべてのスケジュール
             </li>
             <li className="flex items-center gap-2">
-              <span className="material-icons text-[14px] text-live">remove_circle_outline</span>
+              <Icon name="close" size={14} className="text-live" />
               タスク・通知などのアプリデータ
             </li>
           </ul>

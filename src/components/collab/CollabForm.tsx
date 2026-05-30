@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { createCollabSession } from '@/lib/repositories/collabs';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { Dropdown } from '@/components/ui/Dropdown';
 
 interface CollabFormProps {
   teamId: string;
@@ -143,19 +144,12 @@ export default function CollabForm({
       {/* 有効期限 */}
       <div>
         <label className="block text-sm font-medium text-text mb-2">有効期限</label>
-        <select
-          value={expiresInDays}
-          onChange={(e) => setExpiresInDays(Number(e.target.value))}
-          className="w-full border border-border rounded-[6px] px-3 py-2 text-sm bg-surface text-text focus:ring-1 focus:ring-purple outline-none"
+        <Dropdown
+          value={String(expiresInDays)}
+          options={[1, 3, 7, 14, 30].map((d) => ({ value: String(d), label: `${d}日間` }))}
+          onChange={(v) => setExpiresInDays(Number(v))}
           disabled={isLightPlanFull}
-          aria-label="有効期限を選択"
-        >
-          {[1, 3, 7, 14, 30].map((d) => (
-            <option key={d} value={d}>
-              {d}日間
-            </option>
-          ))}
-        </select>
+        />
       </div>
 
       {error && <p className="text-live text-sm">{error}</p>}

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '@/stores/auth';
 import { switchActiveTeam } from '@/lib/repositories/teams';
 import { getTeam } from '@/lib/repositories/teams';
+import { Icon } from '@/components/ui/Icon';
 import type { Team } from '@/types/entities';
 
 interface TeamSwitcherProps {
@@ -65,15 +66,13 @@ export function TeamSwitcher({ collapsed = false }: TeamSwitcherProps) {
         title={collapsed ? `チーム切替（${teamIds.length}チーム）` : undefined}
         disabled={switching}
       >
-        <span className="material-icons text-[20px] shrink-0">swap_horiz</span>
+        <Icon name="groups" size={20} />
         {!collapsed && (
           <>
             <span className="flex-1 text-left text-[13px] truncate min-w-0">
               {currentTeam?.name ?? 'チームを選択'}
             </span>
-            <span className="material-icons text-[14px] shrink-0">
-              {open ? 'expand_less' : 'expand_more'}
-            </span>
+            <Icon name={open ? 'chevron_down' : 'chevron_right'} size={14} />
           </>
         )}
       </button>
@@ -107,7 +106,7 @@ export function TeamSwitcher({ collapsed = false }: TeamSwitcherProps) {
               </span>
               <span className="flex-1 truncate">{team.name}</span>
               {team.id === currentTeamId && (
-                <span className="material-icons text-[14px] text-purple-l">check</span>
+                <Icon name="check" size={14} />
               )}
             </button>
           ))}

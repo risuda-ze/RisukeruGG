@@ -14,6 +14,7 @@ import { TopBar } from '@/components/layout/TopBar';
 import { CollabDetailModal } from '@/components/collab/CollabDetailModal';
 import { Spinner } from '@/components/ui/Spinner';
 import { LIGHT_PLAN_LIMITS, COLLAB_STATUS_LABELS } from '@/types/entities';
+import { Icon } from '@/components/ui/Icon';
 import type { CollabSession, CollabParticipant } from '@/types/entities';
 
 /* コラボアイコン候補 */
@@ -351,9 +352,7 @@ export default function CollabsPage() {
             {/* 予定確定したコラボセクション */}
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2">
-                <span className="material-icons text-[20px]" style={{ color: 'var(--green)' }}>
-                  event_available
-                </span>
+                <Icon name="event_available" size={20} className="text-green" />
                 <div className="text-[15px] font-bold text-muted">予定確定したコラボ</div>
                 {confirmedSessions.length > 0 && (
                   <span
@@ -465,7 +464,7 @@ export default function CollabsPage() {
                             setReopenError(null);
                           }}
                         >
-                          <span className="material-icons text-[14px]">refresh</span>
+                          <Icon name="refresh" size={14} />
                           再調整する
                         </button>
                       )
@@ -487,7 +486,7 @@ export default function CollabsPage() {
                 className="text-[15px] font-bold mb-4 flex items-center gap-2"
                 style={{ color: 'var(--amber-l)' }}
               >
-                <span className="material-icons text-[20px]">handshake</span>
+                <Icon name="handshake" size={20} />
                 新規コラボ調整
               </div>
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -573,7 +572,7 @@ export default function CollabsPage() {
                           onClick={() => removeFormParticipant(p.id)}
                           className="text-muted hover:text-live transition-colors"
                         >
-                          <span className="material-icons text-[14px]">close</span>
+                          <Icon name="close" size={14} />
                         </button>
                       </div>
                     ))}
@@ -584,7 +583,7 @@ export default function CollabsPage() {
                         onClick={() => setShowMemberPicker((v) => !v)}
                         className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-dashed border-border text-muted text-[12px] font-semibold hover:border-purple hover:text-text transition-colors"
                       >
-                        <span className="material-icons text-[16px]">person_add</span>
+                        <Icon name="person_add" size={16} />
                         メンバー
                       </button>
                       {showMemberPicker && availableMembers.length > 0 && (

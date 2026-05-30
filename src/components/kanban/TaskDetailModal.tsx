@@ -9,7 +9,9 @@ import { updateTask, deleteTask, addTaskComment } from '@/lib/repositories/tasks
 import { useAuthStore } from '@/stores/auth';
 import { MarkdownView } from '@/components/ui/MarkdownEditor';
 import { DateInput } from '@/components/ui/DateInput';
+import { Icon } from '@/components/ui/Icon';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
+import { Dropdown } from '@/components/ui/Dropdown';
 import type { Task, TeamMember, TaskCategory, TaskStatus, CollabComment } from '@/types/entities';
 
 interface TaskDetailDraft {
@@ -27,9 +29,6 @@ interface TaskDetailModalProps {
   onClose: () => void;
   onDeleted: () => void;
 }
-
-const selectClass =
-  'w-full bg-bg border border-border text-text px-3 py-2 rounded-[8px] text-[13px] outline-none transition-colors focus:border-purple';
 
 export function TaskDetailModal({
   task,
@@ -366,11 +365,12 @@ export function TaskDetailModal({
                   ステータス
                 </label>
                 {canEdit ? (
-                  <select value={columnId} onChange={(e) => handleColumnChange(e.target.value)} className={selectClass}>
-                    {columns.map((col) => (
-                      <option key={col.id} value={col.id}>{col.name}</option>
-                    ))}
-                  </select>
+                  <Dropdown
+                    value={columnId}
+                    options={columns.map((col) => ({ value: col.id, label: col.name }))}
+                    onChange={handleColumnChange}
+                    scroll
+                  />
                 ) : (
                   <div className="flex items-center gap-2 py-2">
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: currentColumn?.color ?? 'var(--muted)' }} />
@@ -385,12 +385,13 @@ export function TaskDetailModal({
                   カテゴリ
                 </label>
                 {canEdit ? (
-                  <select value={categoryId} onChange={(e) => handleCategoryChange(e.target.value)} className={selectClass}>
-                    <option value="">なし</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
+                  <Dropdown
+                    value={categoryId}
+                    options={categories.map((cat) => ({ value: cat.id, label: cat.name }))}
+                    placeholder="なし"
+                    onChange={handleCategoryChange}
+                    scroll
+                  />
                 ) : (
                   <span className="text-[13px] py-2 block">
                     {currentCategory ? <span style={{ color: currentCategory.color }}>{currentCategory.name}</span> : '—'}
@@ -425,9 +426,7 @@ export function TaskDetailModal({
                       ) : (
                         <span className="flex-1 text-muted">なし</span>
                       )}
-                      <span className="material-icons text-[14px] text-muted">
-                        {showAssigneePicker ? 'expand_less' : 'expand_more'}
-                      </span>
+                      <Icon name="chevron_down" size={14} className={`text-muted${showAssigneePicker ? ' rotate-180' : ''}`} />
                     </button>
                     {/* メンバーピッカー（インライン展開） */}
                     {showAssigneePicker && (
@@ -440,10 +439,10 @@ export function TaskDetailModal({
                           }`}
                         >
                           <div className="w-6 h-6 rounded-full border border-dashed border-border flex items-center justify-center shrink-0">
-                            <span className="material-icons text-[12px]">person_off</span>
+                            <Icon name="person_off" size={12} />
                           </div>
                           <span className="flex-1">なし</span>
-                          {!assigneeId && <span className="material-icons text-[14px]">check</span>}
+                          {!assigneeId && <Icon name="check" size={14} />}
                         </button>
                         {members.map((m) => (
                           <button
@@ -465,7 +464,7 @@ export function TaskDetailModal({
                               {m.displayName}
                             </span>
                             {assigneeId === m.userId && (
-                              <span className="material-icons text-[14px] text-purple-l">check</span>
+                              <Icon name="check" size={14} className="text-purple-l" />
                             )}
                           </button>
                         ))}
@@ -727,5 +726,3 @@ export function TaskDetailModal({
     </div>
   );
 }
-
-

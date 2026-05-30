@@ -11,7 +11,9 @@ import { useTaskCategoryStore } from '@/stores/taskCategories';
 import { useScheduleStore } from '@/stores/schedule';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { Dropdown } from '@/components/ui/Dropdown';
 import { Avatar } from '@/components/ui/Avatar';
+import { Icon } from '@/components/ui/Icon';
 import type { TeamMember } from '@/types/entities';
 
 interface TaskFormProps {
@@ -42,6 +44,7 @@ export default function TaskForm({
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<TaskFormInput, unknown, TaskInput>({
     resolver: zodResolver(taskSchema),
@@ -112,19 +115,13 @@ export default function TaskForm({
 
       <div>
         <label className="block text-sm font-medium text-muted mb-1">カテゴリ</label>
-        <select
-          {...register('categoryId')}
-          className={`w-full border rounded-[8px] px-3 py-2 text-sm bg-card text-text outline-none transition-colors ${
-            errors.categoryId ? 'border-live' : 'border-border'
-          }`}
-        >
-          <option value="">なし</option>
-          {taskCategories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
+        <Dropdown
+          value={watch('categoryId') ?? ''}
+          options={taskCategories.map((cat) => ({ value: cat.id, label: cat.name }))}
+          placeholder="なし"
+          onChange={(v) => setValue('categoryId', v || null)}
+          scroll
+        />
         {errors.categoryId && (
           <p className="text-live text-[12px] mt-1">必須項目です。</p>
         )}
@@ -132,18 +129,12 @@ export default function TaskForm({
 
       <div>
         <label className="block text-sm font-medium text-muted mb-1">カラム *</label>
-        <select
-          {...register('columnId')}
-          className={`w-full border rounded-[8px] px-3 py-2 text-sm bg-card text-text outline-none transition-colors ${
-            errors.columnId ? 'border-live' : 'border-border'
-          }`}
-        >
-          {columns.map((col) => (
-            <option key={col.id} value={col.id}>
-              {col.name}
-            </option>
-          ))}
-        </select>
+        <Dropdown
+          value={watch('columnId') ?? ''}
+          options={columns.map((col) => ({ value: col.id, label: col.name }))}
+          onChange={(v) => setValue('columnId', v)}
+          scroll
+        />
         {errors.columnId && (
           <p className="text-live text-[12px] mt-1">必須項目です。</p>
         )}
@@ -171,9 +162,7 @@ export default function TaskForm({
           ) : (
             <span className="flex-1 text-sm text-muted">なし</span>
           )}
-          <span className="material-icons text-[16px] text-muted">
-            {showAssigneePicker ? 'expand_less' : 'expand_more'}
-          </span>
+          <Icon name={showAssigneePicker ? 'chevron_down' : 'chevron_down'} size={16} className={`text-muted${showAssigneePicker ? ' rotate-180' : ''}`} />
         </button>
         {/* メンバーピッカー（インライン展開） */}
         {showAssigneePicker && (
@@ -186,10 +175,10 @@ export default function TaskForm({
               }`}
             >
               <div className="w-6 h-6 rounded-full border border-dashed border-border flex items-center justify-center shrink-0">
-                <span className="material-icons text-[12px]">person_off</span>
+                <Icon name="person_off" size={12} />
               </div>
               <span className="flex-1">なし</span>
-              {!selectedAssigneeId && <span className="material-icons text-[14px]">check</span>}
+              {!selectedAssigneeId && <Icon name="check" size={14} />}
             </button>
             {members.map((m) => (
               <button
@@ -211,7 +200,7 @@ export default function TaskForm({
                   {m.displayName}
                 </span>
                 {selectedAssigneeId === m.userId && (
-                  <span className="material-icons text-[14px] text-purple-l">check</span>
+                  <Icon name="check" size={14} className="text-purple-l" />
                 )}
               </button>
             ))}
@@ -237,19 +226,13 @@ export default function TaskForm({
 
       <div>
         <label className="block text-sm font-medium text-muted mb-1">紐付けスケジュール</label>
-        <select
-          {...register('linkedScheduleId')}
-          className={`w-full border rounded-[8px] px-3 py-2 text-sm bg-card text-text outline-none transition-colors ${
-            errors.linkedScheduleId ? 'border-live' : 'border-border'
-          }`}
-        >
-          <option value="">なし</option>
-          {schedules.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.title} ({format(s.startAt, 'M/d')})
-            </option>
-          ))}
-        </select>
+        <Dropdown
+          value={watch('linkedScheduleId') ?? ''}
+          options={schedules.map((s) => ({ value: s.id, label: `${s.title} (${format(s.startAt, 'M/d')})` }))}
+          placeholder="なし"
+          onChange={(v) => setValue('linkedScheduleId', v || null)}
+          scroll
+        />
         {errors.linkedScheduleId && (
           <p className="text-live text-[12px] mt-1">必須項目です。</p>
         )}

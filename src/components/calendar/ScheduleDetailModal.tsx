@@ -9,6 +9,8 @@ import { DateTimeInput } from '@/components/ui/DateTimeInput';
 import { Textarea } from '@/components/ui/Textarea';
 import { MarkdownView } from '@/components/ui/MarkdownEditor';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
+import { Icon } from '@/components/ui/Icon';
+import { Dropdown } from '@/components/ui/Dropdown';
 import type { ScheduleEntry, ScheduleCategory } from '@/types/entities';
 
 interface ScheduleDetailDraft {
@@ -303,7 +305,7 @@ export function ScheduleDetailModal({
             onClick={handleCloseWithDraft}
             className="shrink-0 w-9 h-9 rounded-full bg-surface border border-border text-muted hover:text-text flex items-center justify-center transition-colors cursor-pointer"
           >
-            <span className="material-icons text-[20px]">close</span>
+            <Icon name="close" size={20} />
           </button>
         </div>
 
@@ -324,7 +326,7 @@ export function ScheduleDetailModal({
                     className="text-muted hover:text-purple-l transition-colors"
                     title="日時を編集"
                   >
-                    <span className="material-icons text-[16px]">calendar_month</span>
+                    <Icon name="calendar_month" size={16} />
                   </button>
                 )}
               </div>
@@ -405,7 +407,7 @@ export function ScheduleDetailModal({
                     </span>
                   </div>
                   <div className="flex items-center gap-1 text-muted text-[13px]">
-                    <span className="material-icons text-[14px]">arrow_downward</span>
+                    <Icon name="arrow_downward" size={14} />
                   </div>
                   <div>
                     {format(schedule.endAt, 'yyyy年 MM月 dd日（E）', { locale: ja })}
@@ -429,19 +431,14 @@ export function ScheduleDetailModal({
                 カテゴリ
               </div>
               {canEdit ? (
-                <select
+                <Dropdown
                   value={categoryId}
-                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  options={categories.map((cat) => ({ value: cat.id, label: cat.name }))}
+                  placeholder="未選択"
+                  onChange={handleCategoryChange}
                   disabled={savingCategory}
-                  className="bg-bg border border-border text-text px-3 py-2 rounded-[8px] text-[13px] outline-none focus:border-purple disabled:opacity-50 transition-colors"
-                >
-                  <option value="">未選択</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
+                  scroll
+                />
               ) : (
                 <div className="text-[15px] font-medium text-text">
                   {currentCategory?.name ?? '未選択'}
@@ -464,7 +461,7 @@ export function ScheduleDetailModal({
                     className="text-muted hover:text-purple-l transition-colors"
                     title="内容を編集"
                   >
-                    <span className="material-icons text-[16px]">edit</span>
+                    <Icon name="edit" size={16} />
                   </button>
                 )}
               </div>
@@ -509,9 +506,7 @@ export function ScheduleDetailModal({
           {/* コラボ相手 */}
           {schedule.collabPartnerName && (
             <div className="flex gap-4">
-              <span className="material-icons text-muted text-[22px] w-7 text-center pt-0.5 shrink-0">
-                handshake
-              </span>
+              <Icon name="handshake" size={22} className="text-muted w-7 text-center pt-0.5 shrink-0" />
               <div className="flex-1">
                 <div className="text-[13px] text-muted font-semibold tracking-[0.05em] mb-1.5">
                   コラボ相手
@@ -662,7 +657,7 @@ export function ScheduleDetailModal({
                 borderColor: 'rgba(226,53,57,0.3)',
               }}
             >
-              <span className="material-icons text-[16px]">delete</span>
+              <Icon name="delete" size={16} />
               削除
             </button>
           )}
@@ -670,7 +665,7 @@ export function ScheduleDetailModal({
             onClick={handleConfirmClose}
             className="flex items-center gap-1.5 px-5 py-2.5 rounded-[12px] text-[13px] font-semibold bg-purple-d text-purple-l hover:bg-purple transition-colors"
           >
-            <span className="material-icons text-[16px]">check</span>
+            <Icon name="check" size={16} />
             確定
           </button>
         </div>

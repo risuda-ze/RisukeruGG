@@ -8,19 +8,20 @@ import { useSidebarStore } from '@/stores/sidebar';
 import { useNotificationsStore } from '@/stores/notifications';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { TeamSwitcher } from '@/components/layout/TeamSwitcher';
 
 /* ── ナビゲーション定義 ─────────────────────────────────────── */
 interface NavItem {
   href: string;
   label: string;
-  icon: string;
+  icon: IconName;
   disabled?: boolean;
 }
 
 interface NavSection {
   label: string;
-  icon: string;
+  icon: IconName;
   items: NavItem[];
 }
 
@@ -76,12 +77,13 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`shrink-0 bg-surface border-r border-border hidden md:flex flex-col h-screen sticky top-0 transition-[width] duration-300 overflow-hidden ${
+      className={`shrink-0 hidden md:flex flex-col h-screen sticky top-0 transition-[width] duration-300 overflow-hidden ${
         collapsed ? 'w-[72px]' : 'w-[260px]'
       }`}
+      style={{ background: 'var(--surface)', borderRight: '1px solid var(--card-border)' }}
     >
       {/* ── ヘッダー ────────────────────────────────────────── */}
-      <div className={`py-4 border-b border-border flex items-center min-w-0 ${collapsed ? 'px-2 justify-between' : 'px-4 gap-3'}`}>
+      <div className={`py-4 flex items-center min-w-0 ${collapsed ? 'px-2 justify-between' : 'px-4 gap-3'}`} style={{ borderBottom: '1px solid var(--card-border)' }}>
         {/* ロゴアイコン（クリックでダッシュボードへ） */}
         <Link href="/dashboard" className="shrink-0" aria-label="ダッシュボードへ">
           <Image
@@ -96,9 +98,10 @@ export function Sidebar() {
 
         {/* アプリ名（折りたたみ時は非表示） */}
         <span
-          className={`text-sm font-bold text-text tracking-tight whitespace-nowrap transition-[opacity,width] duration-300 ${
+          className={`text-sm font-bold tracking-tight whitespace-nowrap transition-[opacity,width] duration-300 ${
             collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 flex-1'
           }`}
+          style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-head)' }}
         >
           リスケるGG
         </span>
@@ -106,10 +109,13 @@ export function Sidebar() {
         {/* トグルボタン */}
         <button
           onClick={toggleCollapsed}
-          className="shrink-0 p-1 rounded-[6px] text-muted hover:text-text hover:bg-purple/8 transition-colors"
+          className="shrink-0 p-1 rounded-[6px] transition-colors"
+          style={{ color: 'var(--text-muted)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; (e.currentTarget as HTMLElement).style.background = 'var(--card-raised)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.background = ''; }}
           aria-label={collapsed ? 'サイドバーを展開' : 'サイドバーを折りたたむ'}
         >
-          <span className="material-icons text-[20px]">{collapsed ? 'menu' : 'menu_open'}</span>
+          <Icon name={collapsed ? 'menu' : 'menu_open'} size={20} />
         </button>
       </div>
 
@@ -119,30 +125,30 @@ export function Sidebar() {
           const isOpen = openSections.includes(section.label);
           return (
             <div key={section.label}>
-              {/* セクションヘッダー（クリックでアコーディオン開閉） */}
               <button
                 onClick={() => toggleSection(section.label)}
-                className="w-full flex items-center gap-2 px-2 py-2 rounded-[8px] text-muted hover:text-text hover:bg-purple/8 transition-colors"
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-[6px] transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}
               >
-                <span className="material-icons text-[20px] shrink-0">{section.icon}</span>
+                <Icon name={section.icon} size={18} />
                 <span
-                  className={`flex-1 text-left text-[11px] font-bold tracking-widest uppercase whitespace-nowrap transition-[opacity,width] duration-300 ${
+                  className={`flex-1 text-left text-[10px] font-bold tracking-widest uppercase whitespace-nowrap transition-[opacity,width] duration-300 ${
                     collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
                   }`}
                 >
                   {section.label}
                 </span>
-                {/* 展開矢印（折りたたみ時は非表示） */}
                 <span
-                  className={`material-icons text-[16px] shrink-0 transition-all duration-200 ${
+                  className={`shrink-0 transition-all duration-200 ${
                     collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
                   } ${isOpen ? 'rotate-90' : ''}`}
                 >
-                  chevron_right
+                  <Icon name="chevron_right" size={15} />
                 </span>
               </button>
 
-              {/* セクション子アイテム（アコーディオン） */}
               {isOpen && !collapsed && (
                 <ul className="mt-0.5 space-y-0.5">
                   {section.items.map((item) => {
@@ -151,23 +157,25 @@ export function Sidebar() {
                     return (
                       <li key={item.label}>
                         {item.disabled ? (
-                          <span className="flex items-center gap-2.5 px-3 py-2 rounded-[8px] text-sm text-muted/50 pointer-events-none select-none">
-                            <span className="material-icons text-[20px] shrink-0">{item.icon}</span>
+                          <span
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-[6px] text-sm pointer-events-none select-none"
+                            style={{ color: 'var(--text-disabled)' }}
+                          >
+                            <Icon name={item.icon} size={18} />
                             <span className="whitespace-nowrap">{item.label}</span>
                           </span>
                         ) : (
                           <Link
                             href={item.href}
-                            className={`flex items-center gap-2.5 px-3 py-2 rounded-[8px] text-sm transition-colors ${
-                              active
-                                ? 'bg-purple/12 text-purple-l border-l-2 border-purple -ml-[2px] pl-[22px]'
-                                : 'text-muted hover:text-text hover:bg-purple/8'
-                            }`}
+                            className={`navlink${active ? ' navlink--active' : ''}`}
                           >
-                            <span className="material-icons text-[20px] shrink-0">{item.icon}</span>
+                            <Icon name={item.icon} size={18} />
                             <span className="flex-1 whitespace-nowrap">{item.label}</span>
                             {showBadge && (
-                              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-live px-0.5 text-[10px] font-bold text-white">
+                              <span
+                                className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
+                                style={{ background: active ? 'rgba(255,255,255,0.22)' : 'var(--danger)' }}
+                              >
                                 {unreadCount > 9 ? '9+' : unreadCount}
                               </span>
                             )}
@@ -179,7 +187,6 @@ export function Sidebar() {
                 </ul>
               )}
 
-              {/* 折りたたみ時: アイコンのみ表示（アコーディオン状態に関わらず） */}
               {collapsed && (
                 <ul className="mt-0.5 space-y-0.5">
                   {section.items.map((item) => {
@@ -187,20 +194,24 @@ export function Sidebar() {
                     return (
                       <li key={item.label}>
                         {item.disabled ? (
-                          <span className="flex justify-center py-2 rounded-[8px] text-muted/50 pointer-events-none select-none">
-                            <span className="material-icons text-[20px]">{item.icon}</span>
+                          <span
+                            className="flex justify-center py-2 rounded-[6px] pointer-events-none select-none"
+                            style={{ color: 'var(--text-disabled)' }}
+                          >
+                            <Icon name={item.icon} size={18} />
                           </span>
                         ) : (
                           <Link
                             href={item.href}
-                            className={`flex justify-center py-2 rounded-[8px] transition-colors ${
-                              active
-                                ? 'bg-purple/12 text-purple-l'
-                                : 'text-muted hover:text-text hover:bg-purple/8'
-                            }`}
+                            className="flex justify-center py-2 rounded-[6px] transition-colors"
+                            style={{
+                              background: active ? 'var(--primary)' : undefined,
+                              color: active ? '#fff' : 'var(--text-muted)',
+                              boxShadow: active ? 'var(--glow-primary)' : undefined,
+                            }}
                             aria-label={item.label}
                           >
-                            <span className="material-icons text-[20px]">{item.icon}</span>
+                            <Icon name={item.icon} size={18} />
                           </Link>
                         )}
                       </li>
@@ -214,12 +225,12 @@ export function Sidebar() {
       </nav>
 
       {/* ── チームスイッチャー ──────────────────────────── */}
-      <div className="border-t border-border px-2 pt-2">
+      <div className="px-2 pt-2" style={{ borderTop: '1px solid var(--card-border)' }}>
         <TeamSwitcher collapsed={collapsed} />
       </div>
 
       {/* ── フッター（ユーザー情報） ─────────────────────── */}
-      <div className="border-t border-border px-3 py-3 flex items-center gap-2 min-w-0">
+      <div className="px-3 py-3 flex items-center gap-2 min-w-0" style={{ borderTop: '1px solid var(--card-border)' }}>
         <Avatar initials={initials} src={currentUser?.photoURL} bgClass="bg-purple-d/30" textClass="text-purple-l" size="sm" />
         {/* 名前・プランバッジ（折りたたみ時は非表示） */}
         <div
@@ -241,7 +252,7 @@ export function Sidebar() {
             className="shrink-0 p-1.5 rounded-[6px] text-muted hover:text-text hover:bg-surface transition-colors"
             aria-label="サインアウト"
           >
-            <span className="material-icons text-[20px]">logout</span>
+            <Icon name="logout" size={20} />
           </button>
         )}
       </div>

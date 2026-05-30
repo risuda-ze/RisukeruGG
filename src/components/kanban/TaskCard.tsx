@@ -9,6 +9,7 @@ import { useTaskCategoryStore } from '@/stores/taskCategories';
 import { updateTask } from '@/lib/repositories/tasks';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
+import { Dropdown } from '@/components/ui/Dropdown';
 
 interface TaskCardProps {
   task: Task;
@@ -41,8 +42,7 @@ export default function TaskCard({
     ? taskCategories.find((c) => c.id === task.categoryId)
     : null;
 
-  async function handleColumnChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const newColumnId = e.target.value;
+  async function handleColumnChange(newColumnId: string) {
     if (newColumnId === task.columnId) return;
     setMovingColumn(true);
     try {
@@ -146,23 +146,16 @@ export default function TaskCard({
       {/* モバイル向けカラム変更セレクト */}
       {canEdit && (
         <div className="sm:hidden" onClick={(e) => e.stopPropagation()}>
-          <select
+          <Dropdown
             value={task.columnId}
+            options={columns.map((col: TaskStatus) => ({ value: col.id, label: col.name }))}
             onChange={handleColumnChange}
             disabled={movingColumn}
-            className="text-xs border border-border rounded-[6px] px-2 py-1 w-full bg-card text-text"
-            aria-label="カラムを変更"
-          >
-            {columns.map((col: TaskStatus) => (
-              <option key={col.id} value={col.id}>
-                {col.name}
-              </option>
-            ))}
-          </select>
+            size="sm"
+            scroll
+          />
         </div>
       )}
     </div>
   );
 }
-
-

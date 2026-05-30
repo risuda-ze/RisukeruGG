@@ -5,6 +5,7 @@ import { format, differenceInDays } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { respondToCollab } from '@/lib/repositories/collabs';
 import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 import type { CollabSession, CollabParticipant } from '@/types/entities';
 
 type DateChoice = 'ok' | 'ng' | 'pending';
@@ -215,7 +216,7 @@ export default function CollabResponseForm({
           className="flex items-center gap-1 px-4 py-2 rounded-[10px] text-[13px] font-semibold transition-colors"
           style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
         >
-          次へ <span className="material-icons text-[16px]">arrow_forward</span>
+          次へ <Icon name="chevron_right" size={16} />
         </button>
       </div>
     </div>
@@ -358,7 +359,7 @@ export default function CollabResponseForm({
           onClick={() => setCurrentStep(0)}
           className="flex items-center gap-1 px-3 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-muted hover:text-text transition-colors"
         >
-          <span className="material-icons text-[16px]">arrow_back</span>
+          <Icon name="chevron_right" size={16} className="rotate-180" />
           戻る
         </button>
         <button
@@ -367,7 +368,7 @@ export default function CollabResponseForm({
           className="flex items-center gap-1 px-4 py-2 rounded-[10px] text-[13px] font-semibold transition-colors"
           style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
         >
-          次へ <span className="material-icons text-[16px]">arrow_forward</span>
+          次へ <Icon name="chevron_right" size={16} />
         </button>
       </div>
     </div>
@@ -449,7 +450,7 @@ export default function CollabResponseForm({
           onClick={() => setCurrentStep(1)}
           className="flex items-center gap-1 px-3 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-muted hover:text-text transition-colors"
         >
-          <span className="material-icons text-[16px]">arrow_back</span>
+          <Icon name="chevron_right" size={16} className="rotate-180" />
           戻る
         </button>
       </div>

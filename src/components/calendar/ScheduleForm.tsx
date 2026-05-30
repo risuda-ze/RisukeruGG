@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { DateTimeInput } from '@/components/ui/DateTimeInput';
 import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
+import { Dropdown } from '@/components/ui/Dropdown';
 import type { ScheduleEntry, ScheduleCategory } from '@/types/entities';
 
 interface ScheduleFormProps {
@@ -24,9 +25,6 @@ interface ScheduleFormDraft {
   endAt: Date | null;
   description: string;
 }
-
-const selectClass =
-  'w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple';
 
 export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: ScheduleFormProps) {
   /* 新規作成フォームのみドラフト復元対象 */
@@ -122,18 +120,13 @@ export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: Sc
 
       <div className="flex flex-col gap-1.5">
         <label className="text-[12px] font-semibold text-muted">カテゴリ</label>
-        <select
+        <Dropdown
           value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          className={selectClass}
-        >
-          <option value="">未選択</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
+          options={categories.map((c) => ({ value: c.id, label: c.name }))}
+          placeholder="未選択"
+          onChange={setCategoryId}
+          scroll
+        />
       </div>
 
       {/* 開始日時 + 終日ボタン */}
