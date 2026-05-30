@@ -18,8 +18,17 @@ import type { CollabSession, CollabParticipant } from '@/types/entities';
 
 /* コラボアイコン候補 */
 const COLLAB_ICONS = [
-  'sports_esports', 'live_tv', 'mic', 'handshake', 'music_note',
-  'movie', 'star', 'group', 'campaign', 'video_library', 'celebration',
+  'sports_esports',
+  'live_tv',
+  'mic',
+  'handshake',
+  'music_note',
+  'movie',
+  'star',
+  'group',
+  'campaign',
+  'video_library',
+  'celebration',
 ];
 
 /* アバター背景色セット */
@@ -136,9 +145,7 @@ export default function CollabsPage() {
   useEffect(() => {
     if (myMember && formParticipants.length === 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFormParticipants([
-        { id: myMember.userId, name: myMember.displayName, type: 'member' },
-      ]);
+      setFormParticipants([{ id: myMember.userId, name: myMember.displayName, type: 'member' }]);
     }
   }, [myMember]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -250,9 +257,7 @@ export default function CollabsPage() {
   }
 
   /* フォーム参加者に未追加のメンバー一覧 */
-  const availableMembers = members.filter(
-    (m) => !formParticipants.some((p) => p.id === m.userId)
-  );
+  const availableMembers = members.filter((m) => !formParticipants.some((p) => p.id === m.userId));
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden relative">
@@ -310,9 +315,11 @@ export default function CollabsPage() {
                         className="w-12 h-12 rounded-full flex items-center justify-center text-[18px] font-bold shrink-0"
                         style={{ background: avatarColor.bg, color: avatarColor.text }}
                       >
-                        {session.icon
-                          ? <span className="material-icons text-[22px]">{session.icon}</span>
-                          : initials}
+                        {session.icon ? (
+                          <span className="material-icons text-[22px]">{session.icon}</span>
+                        ) : (
+                          initials
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
@@ -380,9 +387,11 @@ export default function CollabsPage() {
                         className="w-10 h-10 rounded-full flex items-center justify-center text-[16px] font-bold shrink-0"
                         style={{ background: avatarColor.bg, color: avatarColor.text }}
                       >
-                        {session.icon
-                          ? <span className="material-icons text-[18px]">{session.icon}</span>
-                          : session.partnerName.slice(0, 2).toUpperCase()}
+                        {session.icon ? (
+                          <span className="material-icons text-[18px]">{session.icon}</span>
+                        ) : (
+                          session.partnerName.slice(0, 2).toUpperCase()
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         {session.confirmedDate && (
@@ -411,7 +420,10 @@ export default function CollabsPage() {
                     {isConfirmingReopen ? (
                       <div
                         className="rounded-[12px] p-3 text-[13px]"
-                        style={{ background: 'rgba(239,159,39,0.10)', border: '1px solid rgba(239,159,39,0.25)' }}
+                        style={{
+                          background: 'rgba(239,159,39,0.10)',
+                          border: '1px solid rgba(239,159,39,0.25)',
+                        }}
                       >
                         <p className="text-muted mb-2">
                           再調整すると確定日時とカレンダー予定が削除されます。よろしいですか？
@@ -425,7 +437,10 @@ export default function CollabsPage() {
                         <div className="flex gap-2">
                           <button
                             className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-muted hover:text-text transition-colors"
-                            onClick={() => { setConfirmReopenId(null); setReopenError(null); }}
+                            onClick={() => {
+                              setConfirmReopenId(null);
+                              setReopenError(null);
+                            }}
                             disabled={isReopening}
                           >
                             キャンセル
@@ -445,7 +460,10 @@ export default function CollabsPage() {
                         <button
                           className="self-start flex items-center gap-1 px-3 py-1.5 rounded-[10px] text-[12px] font-semibold border border-dashed transition-colors hover:border-amber"
                           style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
-                          onClick={() => { setConfirmReopenId(session.id); setReopenError(null); }}
+                          onClick={() => {
+                            setConfirmReopenId(session.id);
+                            setReopenError(null);
+                          }}
                         >
                           <span className="material-icons text-[14px]">refresh</span>
                           再調整する
@@ -492,7 +510,9 @@ export default function CollabsPage() {
 
                 {/* アイコン */}
                 <div>
-                  <label className="block text-[12px] font-semibold text-muted mb-2">アイコン</label>
+                  <label className="block text-[12px] font-semibold text-muted mb-2">
+                    アイコン
+                  </label>
                   <div className="flex flex-wrap gap-1.5">
                     {COLLAB_ICONS.map((icon) => (
                       <button
@@ -598,7 +618,9 @@ export default function CollabsPage() {
                       type="text"
                       value={externalName}
                       onChange={(e) => setExternalName(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addExternalParticipant())}
+                      onKeyDown={(e) =>
+                        e.key === 'Enter' && (e.preventDefault(), addExternalParticipant())
+                      }
                       placeholder="外部参加者の名前"
                       className="flex-1 bg-bg border border-border text-text px-3 py-2 rounded-[10px] text-[13px] outline-none focus:border-purple"
                     />

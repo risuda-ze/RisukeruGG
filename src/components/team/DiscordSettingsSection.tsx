@@ -37,7 +37,9 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
   // チャンネル選択モード用の state
   const [dismissedNonce, setDismissedNonce] = useState<string | null>(null);
   const [pendingGuildId, setPendingGuildId] = useState<string | null>(null);
-  const [availableChannels, setAvailableChannels] = useState<Array<{ id: string; name: string }>>([]);
+  const [availableChannels, setAvailableChannels] = useState<Array<{ id: string; name: string }>>(
+    []
+  );
   const [selectedChannelId, setSelectedChannelId] = useState('');
   const [savingChannel, setSavingChannel] = useState(false);
 
@@ -99,7 +101,9 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
     if (discordParam === 'connected') {
       showToast('success', 'Discord Botを接続しました！');
       // 設定を再読み込み
-      getDiscordSettings(teamId).then(setConfig).catch(() => {});
+      getDiscordSettings(teamId)
+        .then(setConfig)
+        .catch(() => {});
     } else if (discordParam === 'cancelled') {
       showToast('error', 'Bot招待がキャンセルされました');
     } else if (discordParam === 'error') {
@@ -221,7 +225,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
         },
         body: JSON.stringify({ teamId }),
       });
-      setConfig((prev) => prev ? { ...prev, guildId: undefined, channelId: undefined } : null);
+      setConfig((prev) => (prev ? { ...prev, guildId: undefined, channelId: undefined } : null));
       showToast('success', 'Discord Bot の接続を解除しました');
     } catch {
       setError('解除に失敗しました');
@@ -270,7 +274,8 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
       <CardHeader title="Discord 連携" />
       <div className="p-[18px] space-y-5">
         <p className="text-[13px] text-muted">
-          Discord サーバーに RisukeruGG Bot を追加すると、スケジュール通知や AI アシスタントが使えます。
+          Discord サーバーに RisukeruGG Bot を追加すると、スケジュール通知や AI
+          アシスタントが使えます。
         </p>
 
         {error && (
@@ -285,7 +290,8 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
             style={{
               color: toast.type === 'success' ? 'var(--green)' : 'var(--live)',
               background: toast.type === 'success' ? 'rgba(74,222,128,0.1)' : 'rgba(239,68,68,0.1)',
-              borderColor: toast.type === 'success' ? 'rgba(74,222,128,0.3)' : 'rgba(239,68,68,0.3)',
+              borderColor:
+                toast.type === 'success' ? 'rgba(74,222,128,0.3)' : 'rgba(239,68,68,0.3)',
             }}
           >
             {toast.message}
@@ -328,7 +334,9 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
         {!isConnected && isChannelSelectMode && (
           <div className="space-y-4">
             <div className="p-3 rounded-[10px] border border-border bg-surface">
-              <p className="text-[12px] font-semibold text-text mb-1">✅ Bot がサーバーに参加しました</p>
+              <p className="text-[12px] font-semibold text-text mb-1">
+                ✅ Bot がサーバーに参加しました
+              </p>
               <p className="text-[11px] text-muted">通知を送るチャンネルを選択してください</p>
             </div>
             <div>

@@ -25,7 +25,9 @@ export async function GET(req: NextRequest): Promise<Response> {
   }
 
   if (!state || !guildId) {
-    return Response.redirect(new URL('/team?discord=error&reason=invalid-params', req.nextUrl.origin));
+    return Response.redirect(
+      new URL('/team?discord=error&reason=invalid-params', req.nextUrl.origin)
+    );
   }
 
   const db = getAdminFirestore();
@@ -33,26 +35,36 @@ export async function GET(req: NextRequest): Promise<Response> {
   // nonce を検証して teamId を取得
   const nonceSnap = await db.doc(`discord_bot_invite_requests/${state}`).get();
   if (!nonceSnap.exists) {
-    return Response.redirect(new URL('/team?discord=error&reason=invalid-nonce', req.nextUrl.origin));
+    return Response.redirect(
+      new URL('/team?discord=error&reason=invalid-nonce', req.nextUrl.origin)
+    );
   }
 
   const nonceData = nonceSnap.data()!;
   const expiresAt = (nonceData.expiresAt as { toDate: () => Date }).toDate();
   if (new Date() > expiresAt) {
     await db.doc(`discord_bot_invite_requests/${state}`).delete();
-    return Response.redirect(new URL('/team?discord=error&reason=nonce-expired', req.nextUrl.origin));
+    return Response.redirect(
+      new URL('/team?discord=error&reason=nonce-expired', req.nextUrl.origin)
+    );
   }
 
   const teamId = nonceData.teamId as string;
 
   // 1サーバー1チーム制約: 既に他チームがこの guildId を使用していないか確認
   // Admin SDK での collectionGroup クエリ
-  const existingSnap = await db.collectionGroup('discord').where('guildId', '==', guildId).limit(1).get();
+  const existingSnap = await db
+    .collectionGroup('discord')
+    .where('guildId', '==', guildId)
+    .limit(1)
+    .get();
   if (!existingSnap.empty) {
     const existingTeamId = existingSnap.docs[0]!.ref.parent.parent?.id;
     if (existingTeamId && existingTeamId !== teamId) {
       await db.doc(`discord_bot_invite_requests/${state}`).delete();
-      return Response.redirect(new URL('/team?discord=error&reason=already-linked', req.nextUrl.origin));
+      return Response.redirect(
+        new URL('/team?discord=error&reason=already-linked', req.nextUrl.origin)
+      );
     }
   }
 
@@ -62,7 +74,9 @@ export async function GET(req: NextRequest): Promise<Response> {
     channels = await fetchGuildTextChannels(guildId);
   } catch (err) {
     console.error('チャンネル一覧取得失敗:', err);
-    return Response.redirect(new URL('/team?discord=error&reason=channel-fetch-failed', req.nextUrl.origin));
+    return Response.redirect(
+      new URL('/team?discord=error&reason=channel-fetch-failed', req.nextUrl.origin)
+    );
   }
 
   // チャンネル一覧を Firestore に一時保存（nonce をキーとして使い回す）

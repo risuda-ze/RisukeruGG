@@ -2,8 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
-  addMonths, subMonths, addWeeks, subWeeks, format, startOfWeek,
-  startOfMonth, endOfMonth, endOfWeek,
+  addMonths,
+  subMonths,
+  addWeeks,
+  subWeeks,
+  format,
+  startOfWeek,
+  startOfMonth,
+  endOfMonth,
+  endOfWeek,
 } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useAuthStore } from '@/stores/auth';
@@ -23,7 +30,14 @@ import { ScheduleForm } from '@/components/calendar/ScheduleForm';
 import type { ScheduleEntry, MemberCalendarEvent } from '@/types/entities';
 
 export default function SchedulePage() {
-  const { currentUser, currentTeamId, members, googleAccessToken, signIn, loading: authLoading } = useAuthStore();
+  const {
+    currentUser,
+    currentTeamId,
+    members,
+    googleAccessToken,
+    signIn,
+    loading: authLoading,
+  } = useAuthStore();
   const { schedules, loading, subscribe } = useScheduleStore();
   const { categories, subscribe: subscribeCategories } = useScheduleCategoryStore();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -70,10 +84,15 @@ export default function SchedulePage() {
         y: popupDragStart.current.posY + e.clientY - popupDragStart.current.mouseY,
       });
     }
-    function onUp() { popupIsDragging.current = false; }
+    function onUp() {
+      popupIsDragging.current = false;
+    }
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
-    return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+    return () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
   }, []);
 
   function openScheduleDetails(schedule: ScheduleEntry) {
@@ -84,19 +103,22 @@ export default function SchedulePage() {
   function handlePopupDragStart(e: React.MouseEvent) {
     if ((e.target as HTMLElement).closest('button, input, select, a')) return;
     popupIsDragging.current = true;
-    popupDragStart.current = { mouseX: e.clientX, mouseY: e.clientY, posX: popupPos.x, posY: popupPos.y };
+    popupDragStart.current = {
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      posX: popupPos.x,
+      posY: popupPos.y,
+    };
     e.preventDefault();
   }
 
   // Googleカレンダーの個人予定を取得
   useEffect(() => {
     if (!googleAccessToken) return;
-    const timeMin = view === 'month'
-      ? startOfMonth(currentDate)
-      : startOfWeek(currentDate, { weekStartsOn: 0 });
-    const timeMax = view === 'month'
-      ? endOfMonth(currentDate)
-      : endOfWeek(currentDate, { weekStartsOn: 0 });
+    const timeMin =
+      view === 'month' ? startOfMonth(currentDate) : startOfWeek(currentDate, { weekStartsOn: 0 });
+    const timeMax =
+      view === 'month' ? endOfMonth(currentDate) : endOfWeek(currentDate, { weekStartsOn: 0 });
 
     fetchGCalEvents(googleAccessToken, timeMin, timeMax).then(({ events, error }) => {
       setGcalEvents(events);
@@ -104,9 +126,10 @@ export default function SchedulePage() {
     });
   }, [googleAccessToken, currentDate, view]);
 
-  const activeSelectedSchedule = !selectedSchedule || selectedSchedule.source
-    ? selectedSchedule
-    : schedules.find((schedule) => schedule.id === selectedSchedule.id) ?? selectedSchedule;
+  const activeSelectedSchedule =
+    !selectedSchedule || selectedSchedule.source
+      ? selectedSchedule
+      : (schedules.find((schedule) => schedule.id === selectedSchedule.id) ?? selectedSchedule);
 
   // メンバーの予定をScheduleEntry形式に変換 (T027/T029/T030)
   const memberScheduleEntries: ScheduleEntry[] = (showMemberCalendars ? memberCalendarEvents : [])
@@ -134,7 +157,6 @@ export default function SchedulePage() {
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
-
 
   /* 前後ナビゲーション */
   function goBack() {
@@ -283,14 +305,14 @@ export default function SchedulePage() {
       {!loading && (
         <div className="shrink-0 border-t border-border bg-card px-4 md:px-6 py-2 flex items-center justify-between">
           <span className="text-[11px] text-muted">
-            {allSchedules.filter((s) => {
-              if (view === 'month') {
-                return (
-                  s.startAt.getFullYear() === year && s.startAt.getMonth() + 1 === month
-                );
-              }
-              return true;
-            }).length}
+            {
+              allSchedules.filter((s) => {
+                if (view === 'month') {
+                  return s.startAt.getFullYear() === year && s.startAt.getMonth() + 1 === month;
+                }
+                return true;
+              }).length
+            }
             件の予定
           </span>
           <span className="text-[11px] text-muted/50 font-num">
@@ -303,8 +325,12 @@ export default function SchedulePage() {
       {activeSelectedSchedule?.source === 'member' && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
-          onMouseDown={(e) => { popupMouseDownOnOverlay.current = !popupPanelRef.current?.contains(e.target as Node); }}
-          onClick={() => { if (popupMouseDownOnOverlay.current) setSelectedSchedule(null); }}
+          onMouseDown={(e) => {
+            popupMouseDownOnOverlay.current = !popupPanelRef.current?.contains(e.target as Node);
+          }}
+          onClick={() => {
+            if (popupMouseDownOnOverlay.current) setSelectedSchedule(null);
+          }}
         >
           <div className="absolute inset-0 bg-black/50" />
           <div
@@ -318,21 +344,30 @@ export default function SchedulePage() {
               onMouseDown={handlePopupDragStart}
             >
               <div className="flex items-center gap-2">
-                <span className="material-icons text-[18px]" style={{ color: '#60a5fa' }}>group</span>
-                <span className="text-[11px] font-semibold" style={{ color: '#60a5fa' }}>メンバーの予定</span>
+                <span className="material-icons text-[18px]" style={{ color: '#60a5fa' }}>
+                  group
+                </span>
+                <span className="text-[11px] font-semibold" style={{ color: '#60a5fa' }}>
+                  メンバーの予定
+                </span>
               </div>
-              <button onClick={() => setSelectedSchedule(null)} className="text-muted hover:text-text">
+              <button
+                onClick={() => setSelectedSchedule(null)}
+                className="text-muted hover:text-text"
+              >
                 <span className="material-icons text-[20px]">close</span>
               </button>
             </div>
             <div className="px-6 pb-6">
-                <h3 className="text-[17px] font-bold text-text mb-3">{activeSelectedSchedule.title}</h3>
+              <h3 className="text-[17px] font-bold text-text mb-3">
+                {activeSelectedSchedule.title}
+              </h3>
               <p className="text-[13px] text-muted">
-                  {activeSelectedSchedule.allDay
-                    ? format(activeSelectedSchedule.startAt, 'M月d日(E)', { locale: ja }) + ' 終日'
-                    : format(activeSelectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja }) +
+                {activeSelectedSchedule.allDay
+                  ? format(activeSelectedSchedule.startAt, 'M月d日(E)', { locale: ja }) + ' 終日'
+                  : format(activeSelectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja }) +
                     ' – ' +
-                      format(activeSelectedSchedule.endAt, 'HH:mm')}
+                    format(activeSelectedSchedule.endAt, 'HH:mm')}
               </p>
             </div>
           </div>
@@ -340,9 +375,9 @@ export default function SchedulePage() {
       )}
 
       {/* スケジュール詳細オーバーレイ（チーム予定） */}
-        {activeSelectedSchedule && !activeSelectedSchedule.source && currentTeamId && (
+      {activeSelectedSchedule && !activeSelectedSchedule.source && currentTeamId && (
         <ScheduleDetailModal
-            schedule={activeSelectedSchedule}
+          schedule={activeSelectedSchedule}
           teamId={currentTeamId}
           canEdit={canEdit}
           categories={categories}
@@ -355,8 +390,12 @@ export default function SchedulePage() {
       {activeSelectedSchedule?.source === 'google' && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
-          onMouseDown={(e) => { popupMouseDownOnOverlay.current = !popupPanelRef.current?.contains(e.target as Node); }}
-          onClick={() => { if (popupMouseDownOnOverlay.current) setSelectedSchedule(null); }}
+          onMouseDown={(e) => {
+            popupMouseDownOnOverlay.current = !popupPanelRef.current?.contains(e.target as Node);
+          }}
+          onClick={() => {
+            if (popupMouseDownOnOverlay.current) setSelectedSchedule(null);
+          }}
         >
           <div className="absolute inset-0 bg-black/50" />
           <div
@@ -370,22 +409,33 @@ export default function SchedulePage() {
               onMouseDown={handlePopupDragStart}
             >
               <div className="flex items-center gap-2">
-                <span className="material-icons text-[18px]" style={{ color: 'var(--green)' }}>event</span>
-                <span className="text-[11px] font-semibold" style={{ color: 'var(--green)' }}>Googleカレンダー</span>
+                <span className="material-icons text-[18px]" style={{ color: 'var(--green)' }}>
+                  event
+                </span>
+                <span className="text-[11px] font-semibold" style={{ color: 'var(--green)' }}>
+                  Googleカレンダー
+                </span>
               </div>
-              <button onClick={() => setSelectedSchedule(null)} className="text-muted hover:text-text">
+              <button
+                onClick={() => setSelectedSchedule(null)}
+                className="text-muted hover:text-text"
+              >
                 <span className="material-icons text-[20px]">close</span>
               </button>
             </div>
             <div className="px-6 pb-6">
-                <h3 className="text-[17px] font-bold text-text mb-3">{activeSelectedSchedule.title}</h3>
+              <h3 className="text-[17px] font-bold text-text mb-3">
+                {activeSelectedSchedule.title}
+              </h3>
               <p className="text-[13px] text-muted mb-1">
-                  {format(activeSelectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja })}
+                {format(activeSelectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja })}
                 {' – '}
-                  {format(activeSelectedSchedule.endAt, 'HH:mm')}
+                {format(activeSelectedSchedule.endAt, 'HH:mm')}
               </p>
-                {activeSelectedSchedule.description && (
-                  <p className="text-[12px] text-muted mt-3 whitespace-pre-wrap">{activeSelectedSchedule.description}</p>
+              {activeSelectedSchedule.description && (
+                <p className="text-[12px] text-muted mt-3 whitespace-pre-wrap">
+                  {activeSelectedSchedule.description}
+                </p>
               )}
             </div>
           </div>

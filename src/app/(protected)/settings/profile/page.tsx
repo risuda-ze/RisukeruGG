@@ -59,14 +59,16 @@ export default function ProfileSettingsPage() {
   const [nameError, setNameError] = useState<string | null>(null);
   const [nameSaved, setNameSaved] = useState(false);
 
-  const [avatarPreviewDraft, setAvatarPreviewDraft] = useState<string | null | undefined>(undefined);
+  const [avatarPreviewDraft, setAvatarPreviewDraft] = useState<string | null | undefined>(
+    undefined
+  );
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const displayName = displayNameDraft ?? currentUser?.displayName ?? '';
   const avatarPreview =
-    avatarPreviewDraft === undefined ? currentUser?.photoURL ?? null : avatarPreviewDraft;
+    avatarPreviewDraft === undefined ? (currentUser?.photoURL ?? null) : avatarPreviewDraft;
 
   async function handleSaveName(e: React.FormEvent) {
     e.preventDefault();
@@ -78,10 +80,9 @@ export default function ProfileSettingsPage() {
       await updateProfile(auth.currentUser!, { displayName: displayName.trim() });
       await updateDoc(doc(db, 'users', currentUser.uid), { displayName: displayName.trim() });
       if (currentTeam) {
-        await updateDoc(
-          doc(db, 'teams', currentTeam.id, 'members', currentUser.uid),
-          { displayName: displayName.trim() }
-        );
+        await updateDoc(doc(db, 'teams', currentTeam.id, 'members', currentUser.uid), {
+          displayName: displayName.trim(),
+        });
       }
       setNameSaved(true);
     } catch {
@@ -110,10 +111,9 @@ export default function ProfileSettingsPage() {
       await updateProfile(auth.currentUser!, { photoURL: downloadUrl });
       await updateDoc(doc(db, 'users', currentUser.uid), { avatarUrl: downloadUrl });
       if (currentTeam) {
-        await updateDoc(
-          doc(db, 'teams', currentTeam.id, 'members', currentUser.uid),
-          { avatarUrl: downloadUrl }
-        );
+        await updateDoc(doc(db, 'teams', currentTeam.id, 'members', currentUser.uid), {
+          avatarUrl: downloadUrl,
+        });
       }
       setAvatarPreviewDraft(downloadUrl);
     } catch {
@@ -155,10 +155,9 @@ export default function ProfileSettingsPage() {
     try {
       await updateDoc(doc(db, 'users', currentUser.uid), { plan: newPlan });
       if (currentTeam) {
-        await updateDoc(
-          doc(db, 'teams', currentTeam.id, 'members', currentUser.uid),
-          { plan: newPlan }
-        );
+        await updateDoc(doc(db, 'teams', currentTeam.id, 'members', currentUser.uid), {
+          plan: newPlan,
+        });
       }
     } finally {
       setSavingPlan(false);
@@ -268,9 +267,7 @@ export default function ProfileSettingsPage() {
                     画像を選択
                   </Button>
                   <p className="text-[11px] text-muted mt-1.5">PNG・JPEG・GIF・WebP（最大5MB）</p>
-                  {avatarError && (
-                    <p className="text-[11px] text-live mt-1">{avatarError}</p>
-                  )}
+                  {avatarError && <p className="text-[11px] text-live mt-1">{avatarError}</p>}
                 </div>
               </div>
             </Card>
@@ -295,7 +292,9 @@ export default function ProfileSettingsPage() {
                     type="submit"
                     size="sm"
                     loading={savingName}
-                    disabled={!displayName.trim() || displayName === (currentUser?.displayName ?? '')}
+                    disabled={
+                      !displayName.trim() || displayName === (currentUser?.displayName ?? '')
+                    }
                   >
                     保存する
                   </Button>
@@ -449,11 +448,7 @@ export default function ProfileSettingsPage() {
                     </ul>
 
                     {!isCurrent && (
-                      <Button
-                        size="sm"
-                        loading={savingPlan}
-                        onClick={() => handlePlanChange(plan)}
-                      >
+                      <Button size="sm" loading={savingPlan} onClick={() => handlePlanChange(plan)}>
                         {plan === 'party' ? 'アップグレードする' : 'ダウングレードする'}
                       </Button>
                     )}

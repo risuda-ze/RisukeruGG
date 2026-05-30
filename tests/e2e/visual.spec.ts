@@ -20,11 +20,7 @@ const TEST_USER = {
   password: 'password123',
 };
 
-async function switchToTeam(
-  page: Page,
-  targetTeamName: string,
-  expectedTeamCode: string
-) {
+async function switchToTeam(page: Page, targetTeamName: string, expectedTeamCode: string) {
   if (await page.getByText(expectedTeamCode).count()) {
     return;
   }

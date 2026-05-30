@@ -1501,10 +1501,7 @@ export default function LandingPage() {
   return (
     <div className={`${zenKakuGothicNew.variable} ${delaGothicOne.variable}`}>
       <style dangerouslySetInnerHTML={{ __html: LP_CSS }} />
-      <div
-        id="lp-root"
-        dangerouslySetInnerHTML={{ __html: LP_HTML }}
-      />
+      <div id="lp-root" dangerouslySetInnerHTML={{ __html: LP_HTML }} />
     </div>
   );
 }
