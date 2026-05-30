@@ -10,9 +10,9 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
-import type { KanbanColumn } from '@/types/entities';
+import type { TaskStatus } from '@/types/entities';
 
-function toColumn(id: string, data: Record<string, unknown>): KanbanColumn {
+function toColumn(id: string, data: Record<string, unknown>): TaskStatus {
   return {
     id,
     name: data.name as string,
@@ -25,9 +25,9 @@ function toColumn(id: string, data: Record<string, unknown>): KanbanColumn {
 
 export async function createColumn(
   teamId: string,
-  data: Omit<KanbanColumn, 'id' | 'role' | 'createdAt'>
+  data: Omit<TaskStatus, 'id' | 'role' | 'createdAt'>
 ): Promise<string> {
-  const ref = await addDoc(collection(db, 'teams', teamId, 'kanbanColumns'), {
+  const ref = await addDoc(collection(db, 'teams', teamId, 'taskStatuses'), {
     ...data,
     role: null,
     createdAt: serverTimestamp(),
@@ -38,16 +38,16 @@ export async function createColumn(
 export async function updateColumn(
   teamId: string,
   columnId: string,
-  data: Partial<KanbanColumn>
+  data: Partial<TaskStatus>
 ): Promise<void> {
-  await updateDoc(doc(db, 'teams', teamId, 'kanbanColumns', columnId), data);
+  await updateDoc(doc(db, 'teams', teamId, 'taskStatuses', columnId), data);
 }
 
 /** カラムを削除して残タスクを先頭カラムへ移行する（最低1カラム制約） */
 export async function deleteColumn(
   teamId: string,
   columnId: string,
-  columns: KanbanColumn[],
+  columns: TaskStatus[],
   taskIds: string[]
 ): Promise<void> {
   if (columns.length <= 1) {
@@ -64,7 +64,7 @@ export async function deleteColumn(
     batch.update(doc(db, 'teams', teamId, 'tasks', taskId), { columnId: fallbackColumn.id });
   }
 
-  batch.delete(doc(db, 'teams', teamId, 'kanbanColumns', columnId));
+  batch.delete(doc(db, 'teams', teamId, 'taskStatuses', columnId));
   await batch.commit();
 }
 
@@ -74,19 +74,21 @@ export async function reorderColumns(
 ): Promise<void> {
   const batch = writeBatch(db);
   for (const col of columns) {
-    batch.update(doc(db, 'teams', teamId, 'kanbanColumns', col.id), { order: col.order });
+    batch.update(doc(db, 'teams', teamId, 'taskStatuses', col.id), { order: col.order });
   }
   await batch.commit();
 }
 
 export function subscribeColumns(
   teamId: string,
-  callback: (columns: KanbanColumn[]) => void
+  callback: (columns: TaskStatus[]) => void
 ): Unsubscribe {
-  return onSnapshot(collection(db, 'teams', teamId, 'kanbanColumns'), (snap) => {
+  return onSnapshot(collection(db, 'teams', teamId, 'taskStatuses'), (snap) => {
     const cols = snap.docs
       .map((d) => toColumn(d.id, d.data() as Record<string, unknown>))
       .sort((a, b) => a.order - b.order);
     callback(cols);
   });
 }
+
+

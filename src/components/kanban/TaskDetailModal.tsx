@@ -10,7 +10,7 @@ import { useAuthStore } from '@/stores/auth';
 import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
 import { DateInput } from '@/components/ui/DateInput';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
-import type { Task, TeamMember, TaskCategory, KanbanColumn, CollabComment } from '@/types/entities';
+import type { Task, TeamMember, TaskCategory, TaskStatus, CollabComment } from '@/types/entities';
 
 interface TaskDetailDraft {
   description: string;
@@ -21,7 +21,7 @@ interface TaskDetailModalProps {
   task: Task;
   teamId: string;
   canEdit: boolean;
-  columns: KanbanColumn[];
+  columns: TaskStatus[];
   members: TeamMember[];
   categories: TaskCategory[];
   onClose: () => void;
@@ -695,3 +695,5 @@ export function TaskDetailModal({
     </div>
   );
 }
+
+

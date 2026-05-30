@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import type { KanbanColumn, Task } from '@/types/entities';
+import type { TaskStatus, Task } from '@/types/entities';
 
-function buildColumn(id: string, order: number): KanbanColumn {
+function buildColumn(id: string, order: number): TaskStatus {
   return { id, name: `Column ${id}`, order, color: '#000', role: null, createdAt: new Date() };
 }
 
@@ -23,7 +23,7 @@ function buildTask(id: string, columnId: string): Task {
 
 /** Pure logic extracted from deleteColumn for unit testing */
 function simulateDeleteColumn(
-  columns: KanbanColumn[],
+  columns: TaskStatus[],
   columnId: string,
   tasks: Task[]
 ): { fallbackColumnId: string; movedTaskIds: string[] } {
@@ -79,3 +79,5 @@ describe('カラム削除時のタスク移行ロジック', () => {
     expect(result.fallbackColumnId).toBe('col2');
   });
 });
+
+

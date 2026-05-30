@@ -39,7 +39,7 @@ service cloud.firestore {
                         (request.auth != null && request.auth.uid == memberId);
       }
 
-      match /kanbanColumns/{columnId} {
+      match /taskStatuses/{columnId} {
         allow read: if isTeamMember(teamId);
         allow write: if isTeamOwner(teamId);
       }

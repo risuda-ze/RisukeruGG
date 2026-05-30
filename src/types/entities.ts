@@ -63,12 +63,12 @@ export interface TeamMember {
 export interface Team {
   id: string;
   name: string;
-  ownerId: string;
+  operatorUids: string[];
   teamCode: string;
   createdAt: Date;
 }
 
-export interface KanbanColumn {
+export interface TaskStatus {
   id: string;
   name: string;
   order: number;
@@ -189,3 +189,5 @@ export interface Notification {
   isRead: boolean;
   createdAt: Date;
 }
+
+

@@ -10,7 +10,7 @@ export const taskSchema = z.object({
   linkedScheduleId: z.string().nullable().default(null),
 });
 
-export const kanbanColumnSchema = z.object({
+export const taskStatusSchema = z.object({
   name: z.string().min(1).max(30),
   color: z.string(),
   order: z.number().int().min(0),
@@ -18,4 +18,6 @@ export const kanbanColumnSchema = z.object({
 
 export type TaskInput = z.infer<typeof taskSchema>;
 export type TaskFormInput = z.input<typeof taskSchema>;
-export type KanbanColumnInput = z.infer<typeof kanbanColumnSchema>;
+export type TaskStatusInput = z.infer<typeof taskStatusSchema>;
+
+

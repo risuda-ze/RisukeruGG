@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import type { Task, TeamMember, KanbanColumn } from '@/types/entities';
+import type { Task, TeamMember, TaskStatus } from '@/types/entities';
 import { useTasksStore } from '@/stores/tasks';
 import { useTaskCategoryStore } from '@/stores/taskCategories';
 import { updateTask } from '@/lib/repositories/tasks';
@@ -153,7 +153,7 @@ export default function TaskCard({
             className="text-xs border border-border rounded-[6px] px-2 py-1 w-full bg-card text-text"
             aria-label="カラムを変更"
           >
-            {columns.map((col: KanbanColumn) => (
+            {columns.map((col: TaskStatus) => (
               <option key={col.id} value={col.id}>
                 {col.name}
               </option>
@@ -164,3 +164,5 @@ export default function TaskCard({
     </div>
   );
 }
+
+

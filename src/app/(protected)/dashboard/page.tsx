@@ -19,13 +19,8 @@ import { TaskBoardPreview } from '@/components/dashboard/TaskBoardPreview';
 import { BannerAd } from '@/components/plan/BannerAd';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
 import { TopBar } from '@/components/layout/TopBar';
+import { ROLE_BADGE, ROLE_LABELS } from '@/lib/utils/teamRoles';
 import type { CollabSession } from '@/types/entities';
-
-const ROLE_BADGE: Record<string, 'purple' | 'amber' | 'muted'> = {
-  owner: 'purple',
-  editor: 'amber',
-  viewer: 'muted',
-};
 
 export default function DashboardPage() {
   const { currentUser, currentTeam, members, loading } = useAuthStore();
@@ -257,7 +252,7 @@ export default function DashboardPage() {
                         size="sm"
                       />
                       <span className="text-[12px] text-text truncate flex-1">{m.displayName}</span>
-                      <Badge variant={ROLE_BADGE[m.role] ?? 'muted'}>{m.role}</Badge>
+                      <Badge variant={ROLE_BADGE[m.role]}>{ROLE_LABELS[m.role]}</Badge>
                     </li>
                   ))}
                 </ul>

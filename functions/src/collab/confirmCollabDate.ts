@@ -48,7 +48,6 @@ export const confirmCollabDate = onCall(
         startAt: confirmedDateObj,
         endAt: endDate,
         platform: null,
-        status: 'planned',
         description: `コラボ相手: ${session.partnerName}`,
         participantIds: [],
         collabPartnerName: session.partnerName,

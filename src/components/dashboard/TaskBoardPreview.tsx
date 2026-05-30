@@ -7,17 +7,19 @@ import { ja } from 'date-fns/locale';
 import { Modal } from '@/components/ui/Modal';
 import { Avatar } from '@/components/ui/Avatar';
 import { useTaskCategoryStore } from '@/stores/taskCategories';
-import type { Task, KanbanColumn, TeamMember } from '@/types/entities';
+import { sortTasksByDueDate } from '@/lib/utils/taskOrdering';
+import type { Task, TaskStatus, TeamMember } from '@/types/entities';
 
 interface TaskBoardPreviewProps {
   tasks: Task[];
-  columns: KanbanColumn[];
+  columns: TaskStatus[];
   members: TeamMember[];
 }
 
 export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const { taskCategories } = useTaskCategoryStore();
+  const sortedTasks = sortTasksByDueDate(tasks);
 
   if (tasks.length === 0) {
     return <p className="text-[12px] text-muted py-4 text-center">タスクはありません</p>;
@@ -29,7 +31,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
   const getColumnName = (columnId: string) => columns.find((c) => c.id === columnId)?.name ?? '—';
 
   const getCategory = (categoryId: string | null) =>
-    categoryId ? taskCategories.find((c) => c.id === categoryId) ?? null : null;
+    categoryId ? (taskCategories.find((c) => c.id === categoryId) ?? null) : null;
 
   const selectedAssignee = selectedTask ? getAssignee(selectedTask.assigneeId) : null;
   const selectedCategory = selectedTask ? getCategory(selectedTask.categoryId) : null;
@@ -38,7 +40,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
     <>
       {/* タスクカードグリッド */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {tasks.map((task) => {
+        {sortedTasks.map((task) => {
           const assignee = getAssignee(task.assigneeId);
           const category = getCategory(task.categoryId);
           return (

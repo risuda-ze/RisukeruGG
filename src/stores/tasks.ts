@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { subscribeTasksByTeam } from '@/lib/repositories/tasks';
-import { subscribeColumns } from '@/lib/repositories/kanbanColumns';
-import type { Task, KanbanColumn } from '@/types/entities';
+import { subscribeColumns } from '@/lib/repositories/taskStatuses';
+import type { Task, TaskStatus } from '@/types/entities';
 
 interface TasksState {
   tasks: Task[];
-  columns: KanbanColumn[];
+  columns: TaskStatus[];
   loading: boolean;
 
   subscribe: (teamId: string) => () => void;
@@ -30,3 +30,5 @@ export const useTasksStore = create<TasksState>((set) => ({
     };
   },
 }));
+
+

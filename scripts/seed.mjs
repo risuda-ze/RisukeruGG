@@ -328,28 +328,28 @@ async function main() {
   console.log('  ✓ taskCategories (4件)');
 
   // ── カンバンカラム ────────────────────────────────────────
-  await setDoc(`teams/${TEAM_ID}/kanbanColumns/col001`, {
+  await setDoc(`teams/${TEAM_ID}/taskStatuses/col001`, {
     name: '未着手',
     order: 0,
     color: '#7c3aed',
     role: null,
     createdAt: d(2026, 4, 1),
   });
-  await setDoc(`teams/${TEAM_ID}/kanbanColumns/col002`, {
+  await setDoc(`teams/${TEAM_ID}/taskStatuses/col002`, {
     name: '進行中',
     order: 1,
     color: '#f59e0b',
     role: null,
     createdAt: d(2026, 4, 1),
   });
-  await setDoc(`teams/${TEAM_ID}/kanbanColumns/col003`, {
+  await setDoc(`teams/${TEAM_ID}/taskStatuses/col003`, {
     name: '完了',
     order: 2,
     color: '#10b981',
     role: 'done',
     createdAt: d(2026, 4, 1),
   });
-  console.log('  ✓ kanbanColumns (3件)');
+  console.log('  ✓ taskStatuses (3件)');
 
   // ── タスク (10件) ─────────────────────────────────────────
   //   col001 = 未着手 (4件)
@@ -472,75 +472,390 @@ async function main() {
   // categoryId: scat001=配信枠, scat002=動画投稿, scat003=コラボ
   const schedules = [
     // ─── 先月 (4月) 配信 (水曜) ───────────────────────────
-    { id: 'sched_apr_w1', title: '週次配信 #13 〜新シーズン開幕！〜', catId: 'scat001', start: d(2026, 4, 1, 20, 0), end: d(2026, 4, 1, 22, 0), pIds: [UID1, UID2, UID3] },
-    { id: 'sched_apr_w2', title: '週次配信 #14 〜ランクマ挑戦〜', catId: 'scat001', start: d(2026, 4, 8, 20, 0), end: d(2026, 4, 8, 22, 0), pIds: [UID1, UID2] },
-    { id: 'sched_apr_w3', title: '週次配信 #15 〜コラボ直前特番〜', catId: 'scat003', start: d(2026, 4, 15, 20, 0), end: d(2026, 4, 15, 22, 0), pIds: [UID1, UID2, UID4] },
-    { id: 'sched_apr_w4', title: '週次配信 #16 〜4月総まとめ〜', catId: 'scat001', start: d(2026, 4, 22, 20, 0), end: d(2026, 4, 22, 22, 0), pIds: [UID1, UID3] },
+    {
+      id: 'sched_apr_w1',
+      title: '週次配信 #13 〜新シーズン開幕！〜',
+      catId: 'scat001',
+      start: d(2026, 4, 1, 20, 0),
+      end: d(2026, 4, 1, 22, 0),
+      pIds: [UID1, UID2, UID3],
+    },
+    {
+      id: 'sched_apr_w2',
+      title: '週次配信 #14 〜ランクマ挑戦〜',
+      catId: 'scat001',
+      start: d(2026, 4, 8, 20, 0),
+      end: d(2026, 4, 8, 22, 0),
+      pIds: [UID1, UID2],
+    },
+    {
+      id: 'sched_apr_w3',
+      title: '週次配信 #15 〜コラボ直前特番〜',
+      catId: 'scat003',
+      start: d(2026, 4, 15, 20, 0),
+      end: d(2026, 4, 15, 22, 0),
+      pIds: [UID1, UID2, UID4],
+    },
+    {
+      id: 'sched_apr_w4',
+      title: '週次配信 #16 〜4月総まとめ〜',
+      catId: 'scat001',
+      start: d(2026, 4, 22, 20, 0),
+      end: d(2026, 4, 22, 22, 0),
+      pIds: [UID1, UID3],
+    },
     // ─── 先月 (4月) 動画 (土曜) ───────────────────────────
-    { id: 'sched_apr_s1', title: '【動画】新シーズン装備解説', catId: 'scat002', start: d(2026, 4, 4, 15, 0), end: d(2026, 4, 4, 18, 0), pIds: [UID1, UID2] },
-    { id: 'sched_apr_s2', title: '【動画】ランクマ振り返り切り抜き', catId: 'scat002', start: d(2026, 4, 11, 15, 0), end: d(2026, 4, 11, 18, 0), pIds: [UID1, UID2] },
-    { id: 'sched_apr_s3', title: '【動画】コラボ前日準備密着', catId: 'scat002', start: d(2026, 4, 18, 15, 0), end: d(2026, 4, 18, 18, 0), pIds: [UID1, UID2, UID3] },
-    { id: 'sched_apr_s4', title: '【動画】4月ハイライト総集編', catId: 'scat002', start: d(2026, 4, 25, 15, 0), end: d(2026, 4, 25, 18, 0), pIds: [UID1, UID2] },
+    {
+      id: 'sched_apr_s1',
+      title: '【動画】新シーズン装備解説',
+      catId: 'scat002',
+      start: d(2026, 4, 4, 15, 0),
+      end: d(2026, 4, 4, 18, 0),
+      pIds: [UID1, UID2],
+    },
+    {
+      id: 'sched_apr_s2',
+      title: '【動画】ランクマ振り返り切り抜き',
+      catId: 'scat002',
+      start: d(2026, 4, 11, 15, 0),
+      end: d(2026, 4, 11, 18, 0),
+      pIds: [UID1, UID2],
+    },
+    {
+      id: 'sched_apr_s3',
+      title: '【動画】コラボ前日準備密着',
+      catId: 'scat002',
+      start: d(2026, 4, 18, 15, 0),
+      end: d(2026, 4, 18, 18, 0),
+      pIds: [UID1, UID2, UID3],
+    },
+    {
+      id: 'sched_apr_s4',
+      title: '【動画】4月ハイライト総集編',
+      catId: 'scat002',
+      start: d(2026, 4, 25, 15, 0),
+      end: d(2026, 4, 25, 18, 0),
+      pIds: [UID1, UID2],
+    },
     // ─── 当月 (5月) 配信 (水曜) ───────────────────────────
-    { id: 'sched_may_w1', title: '週次配信 #17 〜GW特番！〜', catId: 'scat001', start: d(2026, 5, 7, 20, 0), end: d(2026, 5, 7, 22, 0), pIds: [UID1, UID2, UID3, UID4] },
-    { id: 'sched_may_w2', title: '週次配信 #18 〜視聴者参加回〜', catId: 'scat001', start: d(2026, 5, 14, 20, 0), end: d(2026, 5, 14, 22, 0), pIds: [UID1, UID2, UID4] },
-    { id: 'sched_may_w3', title: '週次配信 #19 〜新MAP攻略〜', catId: 'scat001', start: d(2026, 5, 21, 20, 0), end: d(2026, 5, 21, 22, 0), pIds: [UID1, UID3] },
-    { id: 'sched_may_w4', title: '週次配信 #20 〜5月振り返りライブ〜', catId: 'scat001', start: d(2026, 5, 28, 20, 0), end: d(2026, 5, 28, 22, 0), pIds: [UID1, UID2, UID3] },
+    {
+      id: 'sched_may_w1',
+      title: '週次配信 #17 〜GW特番！〜',
+      catId: 'scat001',
+      start: d(2026, 5, 7, 20, 0),
+      end: d(2026, 5, 7, 22, 0),
+      pIds: [UID1, UID2, UID3, UID4],
+    },
+    {
+      id: 'sched_may_w2',
+      title: '週次配信 #18 〜視聴者参加回〜',
+      catId: 'scat001',
+      start: d(2026, 5, 14, 20, 0),
+      end: d(2026, 5, 14, 22, 0),
+      pIds: [UID1, UID2, UID4],
+    },
+    {
+      id: 'sched_may_w3',
+      title: '週次配信 #19 〜新MAP攻略〜',
+      catId: 'scat001',
+      start: d(2026, 5, 21, 20, 0),
+      end: d(2026, 5, 21, 22, 0),
+      pIds: [UID1, UID3],
+    },
+    {
+      id: 'sched_may_w4',
+      title: '週次配信 #20 〜5月振り返りライブ〜',
+      catId: 'scat001',
+      start: d(2026, 5, 28, 20, 0),
+      end: d(2026, 5, 28, 22, 0),
+      pIds: [UID1, UID2, UID3],
+    },
     // ─── 当月 (5月) 動画 (土曜) ───────────────────────────
-    { id: 'sched_may_s1', title: '【動画】GWゲームマラソン総集編', catId: 'scat002', start: d(2026, 5, 3, 15, 0), end: d(2026, 5, 3, 18, 0), pIds: [UID1, UID2] },
-    { id: 'sched_may_s2', title: '【動画】#18 視聴者参加回ダイジェスト', catId: 'scat002', start: d(2026, 5, 10, 15, 0), end: d(2026, 5, 10, 18, 0), pIds: [UID1, UID2, UID3] },
-    { id: 'sched_may_s3', title: '【動画】新MAP徹底解説', catId: 'scat002', start: d(2026, 5, 23, 15, 0), end: d(2026, 5, 23, 18, 0), pIds: [UID1, UID2] },
-    { id: 'sched_may_s4', title: '【動画】5月ベストシーン集', catId: 'scat002', start: d(2026, 5, 30, 15, 0), end: d(2026, 5, 30, 18, 0), pIds: [UID1, UID2, UID3] },
+    {
+      id: 'sched_may_s1',
+      title: '【動画】GWゲームマラソン総集編',
+      catId: 'scat002',
+      start: d(2026, 5, 3, 15, 0),
+      end: d(2026, 5, 3, 18, 0),
+      pIds: [UID1, UID2],
+    },
+    {
+      id: 'sched_may_s2',
+      title: '【動画】#18 視聴者参加回ダイジェスト',
+      catId: 'scat002',
+      start: d(2026, 5, 10, 15, 0),
+      end: d(2026, 5, 10, 18, 0),
+      pIds: [UID1, UID2, UID3],
+    },
+    {
+      id: 'sched_may_s3',
+      title: '【動画】新MAP徹底解説',
+      catId: 'scat002',
+      start: d(2026, 5, 23, 15, 0),
+      end: d(2026, 5, 23, 18, 0),
+      pIds: [UID1, UID2],
+    },
+    {
+      id: 'sched_may_s4',
+      title: '【動画】5月ベストシーン集',
+      catId: 'scat002',
+      start: d(2026, 5, 30, 15, 0),
+      end: d(2026, 5, 30, 18, 0),
+      pIds: [UID1, UID2, UID3],
+    },
     // ─── 当月 (5月) 追加予定 ────────────────────────────
     // 5月21日: この日は予定が3件入る（sched_may_w3 と合わせて）
-    { id: 'sched_may_21_prep', title: '配信前ミーティング（機材・構成確認）', catId: 'scat001', start: d(2026, 5, 21, 10, 0), end: d(2026, 5, 21, 11, 30), pIds: [UID1, UID2, UID3] },
-    { id: 'sched_may_21_rec', title: '【収録】コメント読み動画 アーカイブ用', catId: 'scat002', start: d(2026, 5, 21, 14, 0), end: d(2026, 5, 21, 16, 0), pIds: [UID1, UID2] },
+    {
+      id: 'sched_may_21_prep',
+      title: '配信前ミーティング（機材・構成確認）',
+      catId: 'scat001',
+      start: d(2026, 5, 21, 10, 0),
+      end: d(2026, 5, 21, 11, 30),
+      pIds: [UID1, UID2, UID3],
+    },
+    {
+      id: 'sched_may_21_rec',
+      title: '【収録】コメント読み動画 アーカイブ用',
+      catId: 'scat002',
+      start: d(2026, 5, 21, 14, 0),
+      end: d(2026, 5, 21, 16, 0),
+      pIds: [UID1, UID2],
+    },
     // 5月17日（土）: 特別週末配信
-    { id: 'sched_may_17_live', title: '特別週末配信 〜リスナー感謝祭〜', catId: 'scat001', start: d(2026, 5, 17, 18, 0), end: d(2026, 5, 17, 21, 0), pIds: [UID1, UID2, UID3, UID4] },
+    {
+      id: 'sched_may_17_live',
+      title: '特別週末配信 〜リスナー感謝祭〜',
+      catId: 'scat001',
+      start: d(2026, 5, 17, 18, 0),
+      end: d(2026, 5, 17, 21, 0),
+      pIds: [UID1, UID2, UID3, UID4],
+    },
     // 5月22日（木）: 6月企画会議
-    { id: 'sched_may_22_mtg', title: '6月コンテンツ企画会議', catId: null, start: d(2026, 5, 22, 13, 0), end: d(2026, 5, 22, 14, 30), pIds: [UID1, UID2, UID3] },
+    {
+      id: 'sched_may_22_mtg',
+      title: '6月コンテンツ企画会議',
+      catId: null,
+      start: d(2026, 5, 22, 13, 0),
+      end: d(2026, 5, 22, 14, 30),
+      pIds: [UID1, UID2, UID3],
+    },
     // 5月25日（月）: コラボ事前打合せ
-    { id: 'sched_may_25_collab', title: 'コラボ事前打合せ w/ ゲーム実況者B', catId: 'scat003', start: d(2026, 5, 25, 20, 0), end: d(2026, 5, 25, 21, 30), pIds: [UID1, UID3] },
+    {
+      id: 'sched_may_25_collab',
+      title: 'コラボ事前打合せ w/ ゲーム実況者B',
+      catId: 'scat003',
+      start: d(2026, 5, 25, 20, 0),
+      end: d(2026, 5, 25, 21, 30),
+      pIds: [UID1, UID3],
+    },
     // 5月27日（水）: 来月分動画収録
-    { id: 'sched_may_27_rec', title: '【前倒し収録】6月第1回動画素材', catId: 'scat002', start: d(2026, 5, 27, 14, 0), end: d(2026, 5, 27, 17, 0), pIds: [UID1, UID2] },
+    {
+      id: 'sched_may_27_rec',
+      title: '【前倒し収録】6月第1回動画素材',
+      catId: 'scat002',
+      start: d(2026, 5, 27, 14, 0),
+      end: d(2026, 5, 27, 17, 0),
+      pIds: [UID1, UID2],
+    },
     // 5月29日（金）: 月末振り返り
-    { id: 'sched_may_29_retro', title: '5月月末振り返りミーティング', catId: null, start: d(2026, 5, 29, 11, 0), end: d(2026, 5, 29, 12, 0), pIds: [UID1, UID2, UID3] },
+    {
+      id: 'sched_may_29_retro',
+      title: '5月月末振り返りミーティング',
+      catId: null,
+      start: d(2026, 5, 29, 11, 0),
+      end: d(2026, 5, 29, 12, 0),
+      pIds: [UID1, UID2, UID3],
+    },
     // ─── 来月 (6月) 配信 (水曜) ───────────────────────────
-    { id: 'sched_jun_w1', title: '週次配信 #21 〜6月開幕！〜', catId: 'scat001', start: d(2026, 6, 3, 20, 0), end: d(2026, 6, 3, 22, 0), pIds: [UID1, UID3] },
-    { id: 'sched_jun_w2', title: '週次配信 #22 〜コラボ配信 w/ ゲーム実況者B〜', catId: 'scat003', start: d(2026, 6, 10, 20, 0), end: d(2026, 6, 10, 22, 0), pIds: [UID1, UID2, UID3, UID4] },
-    { id: 'sched_jun_w3', title: '週次配信 #23 〜夏ゲームプレビュー〜', catId: 'scat001', start: d(2026, 6, 17, 20, 0), end: d(2026, 6, 17, 22, 0), pIds: [UID1, UID2] },
-    { id: 'sched_jun_w4', title: '週次配信 #24 〜6月振り返り〜', catId: 'scat001', start: d(2026, 6, 24, 20, 0), end: d(2026, 6, 24, 22, 0), pIds: [UID1, UID3] },
+    {
+      id: 'sched_jun_w1',
+      title: '週次配信 #21 〜6月開幕！〜',
+      catId: 'scat001',
+      start: d(2026, 6, 3, 20, 0),
+      end: d(2026, 6, 3, 22, 0),
+      pIds: [UID1, UID3],
+    },
+    {
+      id: 'sched_jun_w2',
+      title: '週次配信 #22 〜コラボ配信 w/ ゲーム実況者B〜',
+      catId: 'scat003',
+      start: d(2026, 6, 10, 20, 0),
+      end: d(2026, 6, 10, 22, 0),
+      pIds: [UID1, UID2, UID3, UID4],
+    },
+    {
+      id: 'sched_jun_w3',
+      title: '週次配信 #23 〜夏ゲームプレビュー〜',
+      catId: 'scat001',
+      start: d(2026, 6, 17, 20, 0),
+      end: d(2026, 6, 17, 22, 0),
+      pIds: [UID1, UID2],
+    },
+    {
+      id: 'sched_jun_w4',
+      title: '週次配信 #24 〜6月振り返り〜',
+      catId: 'scat001',
+      start: d(2026, 6, 24, 20, 0),
+      end: d(2026, 6, 24, 22, 0),
+      pIds: [UID1, UID3],
+    },
     // ─── 来月 (6月) 動画 (土曜) ───────────────────────────
-    { id: 'sched_jun_s1', title: '【動画】6月コラボ予告編', catId: 'scat002', start: d(2026, 6, 6, 15, 0), end: d(2026, 6, 6, 18, 0), pIds: [UID1, UID2] },
-    { id: 'sched_jun_s2', title: '【動画】コラボ配信ダイジェスト', catId: 'scat002', start: d(2026, 6, 13, 15, 0), end: d(2026, 6, 13, 18, 0), pIds: [UID1, UID2, UID3] },
-    { id: 'sched_jun_s3', title: '【動画】夏ゲーム期待作レビュー', catId: 'scat002', start: d(2026, 6, 20, 15, 0), end: d(2026, 6, 20, 18, 0), pIds: [UID1, UID2] },
-    { id: 'sched_jun_s4', title: '【動画】6月ベストプレイ集', catId: 'scat002', start: d(2026, 6, 27, 15, 0), end: d(2026, 6, 27, 18, 0), pIds: [UID1, UID2, UID3] },
+    {
+      id: 'sched_jun_s1',
+      title: '【動画】6月コラボ予告編',
+      catId: 'scat002',
+      start: d(2026, 6, 6, 15, 0),
+      end: d(2026, 6, 6, 18, 0),
+      pIds: [UID1, UID2],
+    },
+    {
+      id: 'sched_jun_s2',
+      title: '【動画】コラボ配信ダイジェスト',
+      catId: 'scat002',
+      start: d(2026, 6, 13, 15, 0),
+      end: d(2026, 6, 13, 18, 0),
+      pIds: [UID1, UID2, UID3],
+    },
+    {
+      id: 'sched_jun_s3',
+      title: '【動画】夏ゲーム期待作レビュー',
+      catId: 'scat002',
+      start: d(2026, 6, 20, 15, 0),
+      end: d(2026, 6, 20, 18, 0),
+      pIds: [UID1, UID2],
+    },
+    {
+      id: 'sched_jun_s4',
+      title: '【動画】6月ベストプレイ集',
+      catId: 'scat002',
+      start: d(2026, 6, 27, 15, 0),
+      end: d(2026, 6, 27, 18, 0),
+      pIds: [UID1, UID2, UID3],
+    },
 
     // ─── テスト: 複数日バー重なり確認 (6/22週) ────────────
     // Mon 6/22: 1件 (バーA のみ、オーバーフローなし)
     // Tue 6/23: 2件 (A+B、オーバーフローなし)
     // Wed 6/24: 3件 (A+B+C → +1件 表示)
     // Thu 6/25: 4件 (A+B+C+D → +2件 表示)
-    { id: 'sched_test_md_a', title: '[テスト] 複数日バーA（6/22〜28）', allDay: true, catId: 'scat001',
-      start: d(2026, 6, 22, 0, 0), end: d(2026, 6, 28, 23, 59), pIds: [UID1] },
-    { id: 'sched_test_md_b', title: '[テスト] 複数日バーB（6/23〜28）', allDay: true, catId: 'scat002',
-      start: d(2026, 6, 23, 0, 0), end: d(2026, 6, 28, 23, 59), pIds: [UID1] },
-    { id: 'sched_test_md_c', title: '[テスト] 複数日バーC（6/24〜28）', allDay: true, catId: 'scat003',
-      start: d(2026, 6, 24, 0, 0), end: d(2026, 6, 28, 23, 59), pIds: [UID1] },
-    { id: 'sched_test_md_d', title: '[テスト] 複数日バーD（6/25〜28）', allDay: true, catId: null,
-      start: d(2026, 6, 25, 0, 0), end: d(2026, 6, 28, 23, 59), pIds: [UID1] },
+    {
+      id: 'sched_test_md_a',
+      title: '[テスト] 複数日バーA（6/22〜28）',
+      allDay: true,
+      catId: 'scat001',
+      start: d(2026, 6, 22, 0, 0),
+      end: d(2026, 6, 28, 23, 59),
+      pIds: [UID1],
+    },
+    {
+      id: 'sched_test_md_b',
+      title: '[テスト] 複数日バーB（6/23〜28）',
+      allDay: true,
+      catId: 'scat002',
+      start: d(2026, 6, 23, 0, 0),
+      end: d(2026, 6, 28, 23, 59),
+      pIds: [UID1],
+    },
+    {
+      id: 'sched_test_md_c',
+      title: '[テスト] 複数日バーC（6/24〜28）',
+      allDay: true,
+      catId: 'scat003',
+      start: d(2026, 6, 24, 0, 0),
+      end: d(2026, 6, 28, 23, 59),
+      pIds: [UID1],
+    },
+    {
+      id: 'sched_test_md_d',
+      title: '[テスト] 複数日バーD（6/25〜28）',
+      allDay: true,
+      catId: null,
+      start: d(2026, 6, 25, 0, 0),
+      end: d(2026, 6, 28, 23, 59),
+      pIds: [UID1],
+    },
 
     // ─── テスト: 単日予定10件 (5/20 水) ──────────────────
-    { id: 'sched_test_10_01', title: '[テスト] ①朝のMTG', catId: 'scat001', start: d(2026, 5, 20, 8, 0), end: d(2026, 5, 20, 9, 0), pIds: [UID1] },
-    { id: 'sched_test_10_02', title: '[テスト] ②企画レビュー', catId: 'scat002', start: d(2026, 5, 20, 9, 30), end: d(2026, 5, 20, 10, 30), pIds: [UID1] },
-    { id: 'sched_test_10_03', title: '[テスト] ③サムネイル確認', catId: 'scat001', start: d(2026, 5, 20, 11, 0), end: d(2026, 5, 20, 12, 0), pIds: [UID1] },
-    { id: 'sched_test_10_04', title: '[テスト] ④昼食ミーティング', catId: null, start: d(2026, 5, 20, 13, 0), end: d(2026, 5, 20, 14, 0), pIds: [UID1, UID2] },
-    { id: 'sched_test_10_05', title: '[テスト] ⑤台本作成', catId: 'scat003', start: d(2026, 5, 20, 14, 30), end: d(2026, 5, 20, 15, 30), pIds: [UID1] },
-    { id: 'sched_test_10_06', title: '[テスト] ⑥収録準備', catId: 'scat001', start: d(2026, 5, 20, 16, 0), end: d(2026, 5, 20, 17, 0), pIds: [UID1] },
-    { id: 'sched_test_10_07', title: '[テスト] ⑦収録', catId: 'scat002', start: d(2026, 5, 20, 17, 30), end: d(2026, 5, 20, 18, 30), pIds: [UID1, UID2] },
-    { id: 'sched_test_10_08', title: '[テスト] ⑧編集作業', catId: 'scat002', start: d(2026, 5, 20, 19, 0), end: d(2026, 5, 20, 20, 0), pIds: [UID2] },
-    { id: 'sched_test_10_09', title: '[テスト] ⑨配信前チェック', catId: 'scat001', start: d(2026, 5, 20, 20, 30), end: d(2026, 5, 20, 21, 30), pIds: [UID1, UID3] },
-    { id: 'sched_test_10_10', title: '[テスト] ⑩深夜配信', catId: 'scat001', start: d(2026, 5, 20, 22, 0), end: d(2026, 5, 20, 23, 30), pIds: [UID1] },
+    {
+      id: 'sched_test_10_01',
+      title: '[テスト] ①朝のMTG',
+      catId: 'scat001',
+      start: d(2026, 5, 20, 8, 0),
+      end: d(2026, 5, 20, 9, 0),
+      pIds: [UID1],
+    },
+    {
+      id: 'sched_test_10_02',
+      title: '[テスト] ②企画レビュー',
+      catId: 'scat002',
+      start: d(2026, 5, 20, 9, 30),
+      end: d(2026, 5, 20, 10, 30),
+      pIds: [UID1],
+    },
+    {
+      id: 'sched_test_10_03',
+      title: '[テスト] ③サムネイル確認',
+      catId: 'scat001',
+      start: d(2026, 5, 20, 11, 0),
+      end: d(2026, 5, 20, 12, 0),
+      pIds: [UID1],
+    },
+    {
+      id: 'sched_test_10_04',
+      title: '[テスト] ④昼食ミーティング',
+      catId: null,
+      start: d(2026, 5, 20, 13, 0),
+      end: d(2026, 5, 20, 14, 0),
+      pIds: [UID1, UID2],
+    },
+    {
+      id: 'sched_test_10_05',
+      title: '[テスト] ⑤台本作成',
+      catId: 'scat003',
+      start: d(2026, 5, 20, 14, 30),
+      end: d(2026, 5, 20, 15, 30),
+      pIds: [UID1],
+    },
+    {
+      id: 'sched_test_10_06',
+      title: '[テスト] ⑥収録準備',
+      catId: 'scat001',
+      start: d(2026, 5, 20, 16, 0),
+      end: d(2026, 5, 20, 17, 0),
+      pIds: [UID1],
+    },
+    {
+      id: 'sched_test_10_07',
+      title: '[テスト] ⑦収録',
+      catId: 'scat002',
+      start: d(2026, 5, 20, 17, 30),
+      end: d(2026, 5, 20, 18, 30),
+      pIds: [UID1, UID2],
+    },
+    {
+      id: 'sched_test_10_08',
+      title: '[テスト] ⑧編集作業',
+      catId: 'scat002',
+      start: d(2026, 5, 20, 19, 0),
+      end: d(2026, 5, 20, 20, 0),
+      pIds: [UID2],
+    },
+    {
+      id: 'sched_test_10_09',
+      title: '[テスト] ⑨配信前チェック',
+      catId: 'scat001',
+      start: d(2026, 5, 20, 20, 30),
+      end: d(2026, 5, 20, 21, 30),
+      pIds: [UID1, UID3],
+    },
+    {
+      id: 'sched_test_10_10',
+      title: '[テスト] ⑩深夜配信',
+      catId: 'scat001',
+      start: d(2026, 5, 20, 22, 0),
+      end: d(2026, 5, 20, 23, 30),
+      pIds: [UID1],
+    },
   ];
 
   for (const s of schedules) {
@@ -559,7 +874,9 @@ async function main() {
       createdAt: d(2026, 4, 1),
     });
   }
-  console.log(`  ✓ schedules (${schedules.length}件 — 先月8・当月${schedules.filter(s => s.id.startsWith('sched_may')).length}・来月${schedules.filter(s => s.id.startsWith('sched_jun')).length}・テスト${schedules.filter(s => s.id.startsWith('sched_test')).length})`);
+  console.log(
+    `  ✓ schedules (${schedules.length}件 — 先月8・当月${schedules.filter((s) => s.id.startsWith('sched_may')).length}・来月${schedules.filter((s) => s.id.startsWith('sched_jun')).length}・テスト${schedules.filter((s) => s.id.startsWith('sched_test')).length})`
+  );
 
   // ── コラボセッション ──────────────────────────────────────
   await setDoc(`teams/${TEAM_ID}/collabSessions/collab001`, {

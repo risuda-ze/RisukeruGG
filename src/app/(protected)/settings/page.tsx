@@ -5,13 +5,13 @@ import { useAuthStore } from '@/stores/auth';
 import { useTasksStore } from '@/stores/tasks';
 import { useTaskCategoryStore } from '@/stores/taskCategories';
 import { useScheduleCategoryStore } from '@/stores/scheduleCategories';
-import type { KanbanColumn, ScheduleCategory, TaskCategory } from '@/types/entities';
+import type { TaskStatus, ScheduleCategory, TaskCategory } from '@/types/entities';
 import {
   createColumn,
   updateColumn,
   deleteColumn,
   reorderColumns,
-} from '@/lib/repositories/kanbanColumns';
+} from '@/lib/repositories/taskStatuses';
 import {
   createScheduleCategory,
   updateScheduleCategory,
@@ -104,7 +104,7 @@ function ScheduleCategorySettings() {
   const teamId = currentTeam?.id;
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const isOwner = myMember?.role === 'operator';
+  const isOperator = myMember?.role === 'operator';
 
   useEffect(() => {
     if (!teamId) return;
@@ -210,12 +210,9 @@ function ScheduleCategorySettings() {
 
               <span className="flex-1 text-sm text-text">{cat.name}</span>
 
-              <span
-                className="w-4 h-4 rounded-full shrink-0"
-                style={{ background: cat.color }}
-              />
+              <span className="w-4 h-4 rounded-full shrink-0" style={{ background: cat.color }} />
 
-              {isOwner && (
+              {isOperator && (
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => {
@@ -244,7 +241,7 @@ function ScheduleCategorySettings() {
       </Card>
 
       {/* カテゴリ追加 */}
-      {isOwner && (
+      {isOperator && (
         <Card>
           <h4 className="text-sm font-medium text-text mb-3">カテゴリを追加</h4>
           <form onSubmit={handleAdd} className="space-y-3">
@@ -428,7 +425,8 @@ function ScheduleCategorySettings() {
           }
         >
           <p className="text-sm text-text">
-            「{deleteConfirm.name}」を削除します。このカテゴリを使用しているスケジュールは「未選択」になります。
+            「{deleteConfirm.name}
+            」を削除します。このカテゴリを使用しているスケジュールは「未選択」になります。
           </p>
         </Modal>
       )}
@@ -453,7 +451,7 @@ function KanbanSettings() {
   const teamId = currentTeam?.id;
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const isOwner = myMember?.role === 'operator';
+  const isOperator = myMember?.role === 'operator';
 
   useEffect(() => {
     if (!teamId) return;
@@ -465,13 +463,13 @@ function KanbanSettings() {
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
-  const [editingColumn, setEditingColumn] = useState<KanbanColumn | null>(null);
+  const [editingColumn, setEditingColumn] = useState<TaskStatus | null>(null);
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState('');
   const [editIsDone, setEditIsDone] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
 
-  const [deleteConfirmColumn, setDeleteConfirmColumn] = useState<KanbanColumn | null>(null);
+  const [deleteConfirmColumn, setDeleteConfirmColumn] = useState<TaskStatus | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   if (!teamId) {
@@ -566,7 +564,9 @@ function KanbanSettings() {
     <div className="space-y-5">
       <div>
         <h3 className="text-sm font-semibold text-text">カラムの管理</h3>
-        <p className="text-[12px] text-muted mt-0.5">「完了」とみなす列をひとつ選択してください。ダッシュボードの達成率計算に使用されます。</p>
+        <p className="text-[12px] text-muted mt-0.5">
+          「完了」とみなす列をひとつ選択してください。ダッシュボードの達成率計算に使用されます。
+        </p>
       </div>
 
       {/* カラム一覧 */}
@@ -593,7 +593,7 @@ function KanbanSettings() {
               <span className="text-[11px] text-muted font-num shrink-0">
                 {tasks.filter((t) => t.columnId === col.id).length}件
               </span>
-              {isOwner && (
+              {isOperator && (
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleMoveUp(index)}
@@ -639,7 +639,7 @@ function KanbanSettings() {
       </Card>
 
       {/* カラム追加 */}
-      {isOwner && (
+      {isOperator && (
         <Card>
           <h4 className="text-sm font-medium text-text mb-3">カラムを追加</h4>
           <form onSubmit={handleAddColumn} className="space-y-3">
@@ -718,7 +718,9 @@ function KanbanSettings() {
             >
               <div>
                 <p className="text-sm font-medium text-text">完了列に設定</p>
-                <p className="text-[11px] text-muted mt-0.5">この列を「完了」とみなし、達成率計算に使用します</p>
+                <p className="text-[11px] text-muted mt-0.5">
+                  この列を「完了」とみなし、達成率計算に使用します
+                </p>
               </div>
               <div
                 className={`w-10 h-6 rounded-full relative transition-all shrink-0 ${
@@ -930,7 +932,11 @@ function TaskCategorySettings() {
               <div className="flex items-center gap-2 py-1">
                 <span
                   className="text-[12px] font-semibold px-2.5 py-1 rounded-full"
-                  style={{ background: `${newColor}22`, color: newColor, border: `1px solid ${newColor}44` }}
+                  style={{
+                    background: `${newColor}22`,
+                    color: newColor,
+                    border: `1px solid ${newColor}44`,
+                  }}
                 >
                   {newName}
                 </span>
@@ -1006,11 +1012,11 @@ function TaskCategorySettings() {
           }
         >
           <p className="text-sm text-text">
-            「{deleteConfirm.name}」を削除します。このカテゴリを使用しているタスクのカテゴリは未設定になります。
+            「{deleteConfirm.name}
+            」を削除します。このカテゴリを使用しているタスクのカテゴリは未設定になります。
           </p>
         </Modal>
       )}
     </div>
   );
 }
-
