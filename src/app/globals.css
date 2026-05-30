@@ -417,7 +417,8 @@ input[type='time']::-webkit-calendar-picker-indicator {
 
 /* ── Bottom nav ─────────────────────────────────────────────── */
 .bottom-nav {
-  display: flex; align-items: stretch; justify-content: space-around;
+  /* display は Tailwind (flex md:hidden) 側で制御するため設定しない */
+  align-items: stretch; justify-content: space-around;
   background: var(--surface); border-top: 1px solid var(--border); height: 64px;
 }
 .bottom-nav-item {
