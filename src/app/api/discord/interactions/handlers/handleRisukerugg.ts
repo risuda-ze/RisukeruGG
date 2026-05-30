@@ -11,56 +11,60 @@ import {
   isSessionExpired,
 } from '../sessionManager';
 
-/** Discord の Deferred Response 後に呼び出すバックグラウンド処理 */
+/**
+ * Discord の Deferred Response 後に呼び出すバックグラウンド処理。
+ * チームの特定は guildId → teams/{teamId}/discord/config の照合で行う。
+ * 個人ユーザーの特定は行わない（セッションはサーバー単位で共有）。
+ */
 export async function handleAiConversation(
-  discordUserId: string,
+  guildId: string,
   userMessage: string,
   appId: string,
   token: string
 ): Promise<void> {
   const db = getAdminFirestore();
+  const domain = process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'https://risukeru.gg';
 
   // ─── リセットコマンド ─────────────────────────────────────
   if (userMessage === 'リセット' || userMessage.toLowerCase() === 'reset') {
-    await deleteSession(discordUserId);
+    await deleteSession(guildId);
     await sendFollowUp(appId, token, '会話をリセットしたよ！また気軽に話しかけてね。');
     return;
   }
 
-  // ─── Discord ユーザー → RisukeruGG ユーザー解決 ──────────
-  const usersSnap = await db
-    .collection('users')
-    .where('discord.userId', '==', discordUserId)
+  // ─── guild_id → teamId の解決 ────────────────────────────
+  // teams/{teamId}/discord/config の guildId フィールドと照合する
+  const discordConfigSnap = await db
+    .collectionGroup('discord')
+    .where('guildId', '==', guildId)
     .limit(1)
     .get();
 
-  if (usersSnap.empty) {
-    const domain = process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'https://リスケるGG';
+  if (discordConfigSnap.empty) {
+    // このDiscordサーバーはRisukeruGGと未連携
     await sendFollowUp(
       appId,
       token,
-      `Discord アカウントが RisukeruGG と連携されていないよ！\n` +
-        `まず設定画面でアカウントを連携してね → ${domain}/settings#discord`
+      `このDiscordサーバーはRisukeruGGと連携されていないよ！\n` +
+        `チーム設定からBotを招待してね → ${domain}/team`
     );
     return;
   }
 
-  const userDoc = usersSnap.docs[0]!;
-  const risukeruUserId = userDoc.id;
-  const userData = userDoc.data();
-  const teamId = userData.currentTeamId as string | null;
-
+  const configDoc = discordConfigSnap.docs[0]!;
+  // サブコレクション（discord）の親（teams/{teamId}）のIDを取得
+  const teamId = configDoc.ref.parent.parent?.id;
   if (!teamId) {
-    await sendFollowUp(appId, token, 'チームに参加していないよ！まず RisukeruGG でチームに参加してね。');
+    await sendFollowUp(appId, token, 'チームの特定に失敗しました。サポートにお問い合わせください。');
     return;
   }
 
   // ─── セッション取得 / タイムアウト確認 ─────────────────────
-  let session = await getSession(discordUserId);
+  let session = await getSession(guildId);
 
-  // 30分タイムアウト or 別チームになっていたらセッションリセット
+  // 30分タイムアウト or チームが変わっていたらセッションリセット
   if (session && (isSessionExpired(session) || session.teamId !== teamId)) {
-    await deleteSession(discordUserId);
+    await deleteSession(guildId);
     session = null;
   }
 
@@ -158,9 +162,8 @@ export async function handleAiConversation(
 
   if (proposals.length > 0) {
     // %%PROPOSAL%% あり: pendingProposal にマージして保存
-    await upsertSession(discordUserId, {
-      discordUserId,
-      risukeruUserId,
+    await upsertSession(guildId, {
+      guildId,
       teamId,
       messages: trimmedMessages,
       pendingProposal: proposals[0] as unknown as Record<string, unknown>,
@@ -169,12 +172,11 @@ export async function handleAiConversation(
     if (replyText) {
       await sendFollowUp(appId, token, replyText);
     }
-    await sendProposalMessage(appId, token, proposals, discordUserId);
+    await sendProposalMessage(appId, token, proposals, guildId);
   } else {
     // 通常の会話: セッション更新してテキスト返信
-    await upsertSession(discordUserId, {
-      discordUserId,
-      risukeruUserId,
+    await upsertSession(guildId, {
+      guildId,
       teamId,
       messages: trimmedMessages,
     });

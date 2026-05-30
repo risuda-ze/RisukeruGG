@@ -27,7 +27,6 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Card } from '@/components/ui/Card';
 import { TopBar } from '@/components/layout/TopBar';
-import { DiscordConnectSection } from '@/components/settings/DiscordConnectSection';
 
 type Tab = 'calendar' | 'tasks' | 'account';
 
@@ -100,11 +99,13 @@ export default function SettingsPage() {
   );
 }
 
-/* ── アカウント設定（Discord 連携など） ─────────────────── */
+/* ── アカウント設定 ─────────────────────────────────────── */
 function AccountSettings() {
   return (
     <div className="space-y-5">
-      <DiscordConnectSection />
+      <p className="text-[13px] text-muted">
+        Discord 連携はチーム設定から行ってください。
+      </p>
     </div>
   );
 }

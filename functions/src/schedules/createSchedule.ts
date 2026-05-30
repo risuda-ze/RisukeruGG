@@ -2,6 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { FieldValue } from 'firebase-admin/firestore';
 import { db, getAuthContext, requireOperatorOrMember } from '../lib/validateAuth';
 import { sendDiscordWebhook } from '../discord/sendWebhook';
+import { sendBotChannelMessage } from '../discord/sendBotMessage';
 
 interface CreateScheduleData {
   teamId: string;
@@ -64,11 +65,12 @@ export const createSchedule = onCall(
       createdAt: now,
     });
 
-    // Discord Webhook 通知（失敗してもスケジュール作成本体を失敗させない）
+    // Discord 通知（失敗してもスケジュール作成本体を失敗させない）
+    // channelId が設定済みなら Bot API で送信、未設定なら Webhook にフォールバック
     const discordConfigSnap = await db.doc(`teams/${teamId}/discord/config`).get();
     if (discordConfigSnap.exists) {
       const discordConfig = discordConfigSnap.data()!;
-      if (discordConfig.webhookUrl && discordConfig.notifyOnCreate) {
+      if (discordConfig.notifyOnCreate) {
         const startDate2 = new Date(startAt);
         const endDate2 = new Date(endAt);
         const dateStr = `${startDate2.toLocaleDateString('ja-JP', {
@@ -78,7 +80,7 @@ export const createSchedule = onCall(
           weekday: 'short',
         })} ${startDate2.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}〜${endDate2.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}`;
 
-        await sendDiscordWebhook(discordConfig.webhookUrl as string, {
+        const embed = {
           title: '📅 スケジュールが追加されました',
           color: 0x5865f2,
           fields: [
@@ -88,7 +90,15 @@ export const createSchedule = onCall(
               ? [{ name: '参加者', value: `${participantIds.length}名`, inline: true }]
               : []),
           ],
-        });
+        };
+
+        if (discordConfig.channelId) {
+          // Bot API 経由でチャンネルに直接投稿（Sprint 2 以降）
+          await sendBotChannelMessage(discordConfig.channelId as string, embed);
+        } else if (discordConfig.webhookUrl) {
+          // Webhook にフォールバック（Sprint 1 互換）
+          await sendDiscordWebhook(discordConfig.webhookUrl as string, embed);
+        }
       }
     }
 

@@ -5,10 +5,10 @@ import type { CollabProposal } from '@/lib/ai/parseProposal';
 /**
  * Discord Bot 経由のコラボ調整登録。
  * Admin SDK で Firestore に直接書き込む（Security Rules をバイパス）。
+ * 個人ユーザーは特定しないため createdBy は 'discord-bot' とする。
  */
 export async function registerCollab(
   teamId: string,
-  risukeruUserId: string,
   proposal: CollabProposal
 ): Promise<string> {
   const db = getAdminFirestore();
@@ -22,7 +22,7 @@ export async function registerCollab(
   await collabRef.set({
     title: proposal.title,
     partnerName: proposal.partnerName,
-    createdBy: risukeruUserId,
+    createdBy: 'discord-bot',  // 個人ユーザーを追跡しないため固定値
     teamId,
     proposedDates: proposal.proposedDates.map((d) => new Date(d)),
     responses: null,

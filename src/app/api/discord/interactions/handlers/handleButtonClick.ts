@@ -8,7 +8,7 @@ import type { ScheduleProposal, TaskProposal, CollabProposal } from '@/lib/ai/pa
 
 interface ButtonClickParams {
   action: 'confirm' | 'revise' | 'cancel';
-  discordUserId: string;
+  guildId: string;
   appId: string;
   token: string;
 }
@@ -16,14 +16,15 @@ interface ButtonClickParams {
 /**
  * Discord ボタンクリック処理。
  * confirm / revise / cancel の 3 種類のアクションを処理する。
+ * セッションキーは guildId（サーバー単位）。ボタンはサーバー内の誰でも押せる。
  */
 export async function handleButtonClick({
   action,
-  discordUserId,
+  guildId,
   appId,
   token,
 }: ButtonClickParams): Promise<void> {
-  const session = await getSession(discordUserId);
+  const session = await getSession(guildId);
 
   if (!session) {
     await sendFollowUp(appId, token, 'セッションが見つかりません。`/risukerugg message:リセット` で再開してください。');
@@ -31,17 +32,16 @@ export async function handleButtonClick({
   }
 
   if (action === 'cancel') {
-    await deleteSession(discordUserId);
+    await deleteSession(guildId);
     await sendFollowUp(appId, token, 'キャンセルしたよ！また何かあれば声をかけてね。');
     return;
   }
 
   if (action === 'revise') {
     // pendingProposal のみ削除して会話履歴は保持
-    // ユーザーが次の /risukerugg で修正指示を送れる状態にする
-    await upsertSession(discordUserId, {
-      discordUserId: session.discordUserId,
-      risukeruUserId: session.risukeruUserId,
+    // 次の /risukerugg で修正指示を送れる状態にする
+    await upsertSession(guildId, {
+      guildId: session.guildId,
       teamId: session.teamId,
       messages: session.messages,
       pendingProposal: undefined,
@@ -75,7 +75,7 @@ export async function handleButtonClick({
     let completionMessage = '';
 
     if (proposal.type === 'schedule') {
-      const id = await registerSchedule(session.teamId, session.risukeruUserId, proposal, members);
+      const id = await registerSchedule(session.teamId, proposal, members);
       completionMessage = `✅ スケジュール「${proposal.title}」を登録したよ！（ID: ${id}）`;
     } else if (proposal.type === 'task') {
       const columnsSnap = await db.collection(`teams/${session.teamId}/kanbanColumns`).get();
@@ -83,17 +83,17 @@ export async function handleButtonClick({
         id: d.id,
         name: d.data().name as string,
       }));
-      const id = await registerTask(session.teamId, session.risukeruUserId, proposal, members, columns);
+      const id = await registerTask(session.teamId, proposal, members, columns);
       completionMessage = `✅ タスク「${proposal.title}」を登録したよ！（ID: ${id}）`;
     } else if (proposal.type === 'collab') {
-      const id = await registerCollab(session.teamId, session.risukeruUserId, proposal);
+      const id = await registerCollab(session.teamId, proposal);
       completionMessage = `✅ コラボ調整「${proposal.title}」を登録したよ！（ID: ${id}）`;
     } else {
       completionMessage = '不明な登録タイプです。';
     }
 
     // 登録完了後にセッションを削除（新しい会話として再スタート）
-    await deleteSession(discordUserId);
+    await deleteSession(guildId);
     await sendFollowUp(appId, token, completionMessage);
   } catch (err) {
     console.error('Discord Bot 登録エラー:', err);

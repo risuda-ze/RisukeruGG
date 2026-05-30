@@ -5,17 +5,18 @@ const DISCORD_API = 'https://discord.com/api/v10';
 /**
  * Discord Follow-up メッセージを送信する（テキストのみ）。
  * Deferred Response 後のバックグラウンド処理から呼び出す。
+ * flags なし = 通常投稿（チャンネルの全員に見える）。
  */
 export async function sendFollowUp(
   appId: string,
   token: string,
-  content: string,
-  flags: number = 64  // デフォルト ephemeral（本人のみ表示）
+  content: string
 ): Promise<void> {
   const res = await fetch(`${DISCORD_API}/webhooks/${appId}/${token}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content, flags }),
+    // flags を省略することで通常投稿（全員に見える）になる
+    body: JSON.stringify({ content }),
   });
 
   if (!res.ok) {
@@ -25,14 +26,16 @@ export async function sendFollowUp(
 }
 
 /**
- * %%PROPOSAL%% 検出時の確認メッセージを送信する。
+ * %%PROPOSAL%% 検出時の確認メッセージを送信する（通常投稿）。
  * Embed でプロポーザル内容を表示し、3つのボタン（登録/修正/キャンセル）を添付する。
+ * ボタンの custom_id は "{action}:{guildId}" 形式。
+ * サーバー内の誰でもボタンを押せる（コマンド実行者への制限なし）。
  */
 export async function sendProposalMessage(
   appId: string,
   token: string,
   proposals: ProposalData[],
-  discordUserId: string
+  guildId: string
 ): Promise<void> {
   // プロポーザル内容を Embed フィールドに変換
   const fields = proposals.map((p, i) => {
@@ -75,14 +78,14 @@ export async function sendProposalMessage(
   const res = await fetch(`${DISCORD_API}/webhooks/${appId}/${token}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    // flags を省略 = 通常投稿（全員に見える）
     body: JSON.stringify({
-      flags: 64, // ephemeral
       embeds: [
         {
           title: 'こんな感じでどう？',
           color: 0x5865f2,
           fields,
-          footer: { text: '確認して登録してね' },
+          footer: { text: '確認して登録してね（誰でも操作できます）' },
         },
       ],
       components: [
@@ -93,19 +96,19 @@ export async function sendProposalMessage(
               type: 2, // BUTTON
               style: 3, // SUCCESS（緑）
               label: '✅ 登録する',
-              custom_id: `confirm:${discordUserId}`,
+              custom_id: `confirm:${guildId}`,
             },
             {
               type: 2,
               style: 2, // SECONDARY（グレー）
               label: '✏️ 修正する',
-              custom_id: `revise:${discordUserId}`,
+              custom_id: `revise:${guildId}`,
             },
             {
               type: 2,
               style: 4, // DANGER（赤）
               label: '❌ キャンセル',
-              custom_id: `cancel:${discordUserId}`,
+              custom_id: `cancel:${guildId}`,
             },
           ],
         },

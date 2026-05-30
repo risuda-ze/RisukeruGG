@@ -1,361 +1,252 @@
-# Tasks: Discord連携
+# Tasks: Discord連携 再設計実装
 
-**Input**: `specs/012-discord-integration/`
-**Prerequisites**: spec.md ✅ research.md ✅ data-model.md ✅ *(plan.md は未作成)*
-**最終更新**: 2026-05-30 — C1/C2/H1/H2/H3/H4/M4 対応済み
+**Input**: `specs/012-discord-integration/plan.md`, `spec.md`, `data-model.md`, `research.md`
+**更新**: 2026-05-30 — 再設計（guild_id起点・Bot招待フロー・Webhook→Bot通知移行）
 
 ## Format: `[ID] [P?] [Story] Description`
 
-- **[P]**: 並列実行可能（異なるファイル、依存なし）
-- **[Story]**: 所属ユーザーストーリー（US1=Webhook通知, US2=OAuth2連携, US3=AIボット）
-- 各タスクに正確なファイルパスを記載
+- **[P]**: 並行実行可能（別ファイル、依存なし）
+- **[Story]**: 対応するユーザーストーリー（US1/US2/US3）
+- 全タスクに正確なファイルパスを記載
 
 ---
 
-## Phase 1: Setup（共有インフラ）
+## Phase 1: セットアップ（型定義・旧コード削除）
 
-**目的**: Discord連携全体で必要なセットアップ
+**目的**: 再設計の基盤となる型変更と、旧Sprint 2（OAuth個人連携）の完全削除
 
-- [X] T001 必要なパッケージを追加（`pnpm add discord-interactions @vercel/functions`）。`discord-interactions`: Interactions Endpoint の署名検証・型。`@vercel/functions`: Deferred Response のバックグラウンド処理（`waitUntil`）（✅ H3）
-- [X] T002 [P] Sprint 3 で必要な環境変数を `.env.local.example` に追記（`DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `NEXT_PUBLIC_DISCORD_CLIENT_ID`, `DISCORD_APPLICATION_ID`, `DISCORD_PUBLIC_KEY`, `DISCORD_BOT_TOKEN`）
-- [X] T003 [P] `scripts/register-discord-commands.mjs` を新規作成 — `/risukerugg` コマンドをDiscord APIに登録するスクリプト（`DISCORD_APPLICATION_ID`, `DISCORD_BOT_TOKEN` 必要）
+- [X] T001 `src/types/entities.ts` の `DiscordTeamConfig` に `guildId?: string` と `channelId?: string` を追加
+- [X] T002 `src/types/entities.ts` の `DiscordSession` を改修: `discordUserId` と `risukeruUserId` を削除し `guildId: string` を追加（セッションキーをguildIdに変更）
+- [X] T003 `src/types/entities.ts` の `User` インターフェースから `discord?: { userId, username, connectedAt }` フィールドを削除
+- [X] T004 [P] `src/components/settings/DiscordConnectSection.tsx` を削除（OAuth個人連携UI不要）
+- [X] T005 [P] `src/app/api/discord/link-start/route.ts` を削除（OAuth個人連携API不要）
+- [X] T006 [P] `src/app/api/discord/callback/route.ts` を削除（OAuth個人連携コールバック不要）
+- [X] T007 `src/stores/auth.ts` から `discordInfo` 関連フィールド・ロジックをすべて削除
+- [X] T008 ユーザー設定画面（`src/app/(protected)/settings/page.tsx` または該当コンポーネント）から `DiscordConnectSection` のimportと使用箇所を削除
+- [X] T009 [P] `scripts/register-discord-commands.mjs`（グローバルコマンド登録スクリプト）を削除（ギルドコマンド方式に移行したため不要）
+
+**Checkpoint**: `pnpm typecheck` が通ること。旧OAuth個人連携コードが完全除去されていること。
 
 ---
 
-## Phase 2: Foundational（全Sprintのブロッカー）
+## Phase 2: 基盤整備（全ストーリー共通の前提条件）
 
-**目的**: 型定義・セキュリティルール・共有ユーティリティ — US1〜US3 全てに必要
+**目的**: guild_id起点のアーキテクチャに必要な共通インフラを整備
 
 ⚠️ **CRITICAL**: このフェーズ完了前はいずれのUSも着手不可
 
-- [X] T004 `src/types/entities.ts` に `DiscordTeamConfig` インターフェースを新規追加（✅ C1: サブコレクション方式のため `Team` インターフェース自体は変更しない）
+- [X] T010 `src/app/api/discord/interactions/route.ts` の `InteractionSchema` に `guild_id: z.string().optional()` を追加
+- [X] T011 `src/app/api/discord/interactions/route.ts` の DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE レスポンスから `flags: 64` を削除（通常投稿化）
+- [X] T012 `src/app/api/discord/interactions/route.ts` で `guild_id` が取得できない場合（DM等）に「サーバー内でコマンドを実行してください」を返す早期リターンを追加
+- [X] T013 `src/lib/repositories/teams.ts` に `getTeamIdByGuildId(guildId: string): Promise<string | null>` を追加（`collectionGroup('discord').where('guildId', '==', guildId).limit(1)` クエリ）
+- [X] T014 `src/lib/repositories/teams.ts` に `isGuildAlreadyLinked(guildId: string): Promise<boolean>` を追加（1サーバー1チーム制約のバリデーション用）
 
-  ```typescript
-  // teams/{teamId}/discord/config サブコレクションの型
-  export interface DiscordTeamConfig {
-    webhookUrl: string;
-    notifyOnCreate: boolean;    // スケジュール作成時に通知
-    notifyBefore1h: boolean;    // 1時間前リマインダー
-    notifyBefore15min: boolean; // 15分前リマインダー
-  }
-  ```
-
-- [X] T005 [P] `src/types/entities.ts` の `User` インターフェースに `discord` フィールドを追加
-
-  ```typescript
-  discord?: {
-    userId: string;
-    username: string;
-    connectedAt: Date;
-  } | null;
-  ```
-
-- [X] T006 `firestore.rules` に Discord関連ルールを追記（✅ C1/H5/H2対応）
-
-  ```
-  // teams/{teamId}/discord/config — operatorのみ読み書き（Webhook URLをメンバーから隠す）
-  match /teams/{teamId}/discord/{doc} {
-    allow read, write: if isTeamOwner(teamId);
-  }
-  // discord_sessions — Admin SDK（Cloud Functions/API Route）のみ。クライアント不可
-  match /discord_sessions/{sessionId} {
-    allow read, write: if false;
-  }
-  // discord_link_requests — OAuth2 CSRF用ノンス。Admin SDK のみ。クライアント不可
-  match /discord_link_requests/{nonce} {
-    allow read, write: if false;
-  }
-  ```
-
-- [X] T007 [P] `functions/src/discord/sendWebhook.ts` を新規作成 — Webhook送信ユーティリティ
-
-  ```typescript
-  export async function sendDiscordWebhook(webhookUrl: string, embed: DiscordEmbed): Promise<void>
-  // try/catch でラップ、失敗はlogger.warn()のみ（呼び出し元を失敗させない）
-  ```
-
-- [X] T008 [P] `src/lib/firebase/admin.ts` を新規作成 — Next.js API Route 用 Firebase Admin SDK 初期化（✅ C2: US2・US3 両方が依存するため Foundational に配置）
-
-  ```typescript
-  import { initializeApp, cert, getApps } from 'firebase-admin/app';
-  import { getFirestore } from 'firebase-admin/firestore';
-  // FIREBASE_SERVICE_ACCOUNT_KEY 環境変数（JSON文字列）で認証
-  // getApps().length チェックで重複初期化を防ぐ
-  ```
-
-**チェックポイント**: T004〜T008 完了後、各USの実装を開始できる
+**Checkpoint**: `pnpm typecheck` が通ること
 
 ---
 
-## Phase 3: US1 — Discord Webhook通知（Sprint 1）🎯 MVP
+## Phase 3: US1 — Sprint 1完成（Webhook通知 + スキーマ更新）
 
-**目標**: チームのDiscordチャンネルに、スケジュール作成・リマインダー通知を自動送信する
+**Goal**: チームのDiscordチャンネルにスケジュール通知を送信。既存実装にguildId/channelIdフィールドを追加し、Sprint 2後の移行準備を整える。
 
-**独立テスト方法**:
-1. チーム設定でWebhook URLを登録する
-2. スケジュールを新規作成 → Discordチャンネルにメッセージが届く
-3. Cloud Functionsログで `scheduleReminders` の送信ログを確認
+**Independent Test**:
+1. チーム設定でWebhook URLを保存できる
+2. スケジュール作成後にWebhookへPOSTが届く
+3. Webhook URL未設定時はスキップして通常処理が成功する
 
 ### US1 実装
 
-- [X] T009 [US1] `functions/src/teams/updateDiscordSettings.ts` を新規作成 — Discord設定を `teams/{teamId}/discord/config` サブコレクションに保存するCallable Function（operatorのみ実行可）（✅ C1: サブコレクション方式）
+- [X] T015 [P] [US1] `src/lib/repositories/teams.ts` の `updateDiscordSettings` 関数を拡張: `guildId` と `channelId` フィールドの保存に対応
+- [X] T016 [P] [US1] Firestoreルール（`firestore.rules` または相当ファイル）を更新: `discord_link_requests` コレクションのルール（旧OAuth用）を削除し、`discord_sessions/{guildId}` のルール（`allow read, write: if false`）に差し替え
+- [X] T017 [US1] Webhook通知ロジックの確認と修正: Cloud Functions（`functions/src/discord/sendWebhook.ts` または相当ファイル）で `webhookUrl` が空文字または未設定の場合に早期リターンする処理が存在することを確認、なければ追加
+- [X] T018 [US1] スケジュール作成時Webhook送信（`functions/src/schedules/createSchedule.ts` または相当箇所）で `channelId` が設定されている場合はBot API通知（T024）を優先し、`webhookUrl` のみの場合はWebhookで送信する条件分岐を追加（後方互換）
 
-- [X] T010 [P] [US1] `functions/src/index.ts` に `updateDiscordSettings` を export 追加
-
-- [X] T011 [P] [US1] `src/lib/repositories/teams.ts` に `updateDiscordSettings(teamId, settings)` 関数を追加 — `httpsCallable` で T009 の Cloud Function を呼び出す
-
-- [X] T012 [US1] `src/components/team/DiscordSettingsSection.tsx` を新規作成 — チーム設定画面のDiscordセクションUIコンポーネント
-  - Webhook URL テキスト入力
-  - 通知タイミング3つのトグル（作成時・1時間前・15分前）
-  - 「保存する」ボタン（operatorのみ有効、memberは表示のみ）
-  - 保存成功/失敗トースト
-
-- [X] T013 [US1] `src/app/(protected)/team/page.tsx` にDiscordセクションを追加 — `<DiscordSettingsSection>` コンポーネントを既存のチーム設定UIに組み込む（operatorタブ内）
-
-- [X] T014 [US1] `functions/src/schedules/createSchedule.ts` を更新 — スケジュール作成後に Admin SDK で `teams/{teamId}/discord/config` を読み取り、`notifyOnCreate === true` の場合 `sendDiscordWebhook()` を呼び出す（✅ C1）。Embed形式:
-  ```
-  title: "📅 スケジュールが追加されました"
-  color: 0x5865F2
-  fields: [タイトル, 日時（開始〜終了）, 参加者]
-  ```
-
-- [X] T015 [US1] `functions/src/notifications/scheduleReminders.ts` を更新 — 通知書き込み後、Admin SDK で `teams/{teamId}/discord/config` を読み取り、`notifyBefore1h` / `notifyBefore15min` に応じて `sendDiscordWebhook()` を呼び出す（✅ C1）。Embed形式:
-  ```
-  title: "⏰ 1時間後 / 15分後にスケジュールが始まります"
-  fields: [タイトル, 開始時刻, 参加者]
-  ```
-
-**チェックポイント**: Sprint 1 が独立して動作する。Webhook URL未設定時は何も起きないことも確認。
+**Checkpoint**: spec.md Sprint 1 受け入れ基準 #1〜#6 を手動確認
 
 ---
 
-## Phase 4: US2 — Discord OAuth2 アカウント連携（Sprint 2）
+## Phase 4: US2 — Bot招待フロー（新規実装）
 
-**目標**: ユーザー設定画面でDiscordアカウントをRisukeruGGに紐付ける。Sprint 3（AIボット）の前提。
+**Goal**: チームoperatorが「Botをサーバーに追加」ボタンを押すだけで、BotがDiscordサーバーに参加し、通知先チャンネルを選択して保存できる。Webhook手動設定が不要になる。
 
-**独立テスト方法**:
-1. 設定画面 → 「Discordと連携」ボタンが表示される
-2. クリックするとDiscord OAuth2画面に遷移する
-3. 認証完了後に設定画面に戻り、Discordユーザー名が表示される
-4. Firestoreの `users/{uid}.discord.userId` に値が入っている
+**Independent Test**:
+1. チーム設定のDiscordセクションに「Botをサーバーに追加」ボタンが表示される（operatorのみ）
+2. ボタンクリック → Discord OAuth2画面でサーバーを選択・許可
+3. コールバック後にチャンネル選択UIが表示される
+4. チャンネル選択・保存後に `teams/{teamId}/discord/config` の `guildId` と `channelId` が保存される
+5. 招待済み状態がUIに反映される（「接続済み」表示）
+6. 対象サーバーに `/risukerugg` ギルドコマンドが登録される（他サーバーには表示されない）
 
 ### US2 実装
 
-- [X] T016 [US2] `src/app/api/discord/link-start/route.ts` を新規作成（✅ H2/H4: CSRF保護・ユーザーID特定）
-  - POSTリクエスト: Firebase Auth セッションクッキーからログイン済みユーザーの uid を取得
-  - `crypto.randomUUID()` で nonce を生成
-  - Firestore Admin SDK で `discord_link_requests/{nonce}` に `{ uid, expiresAt: +10分 }` を保存
-  - Discord OAuth2 URL（state=nonce）を組み立てて返却: `{ authUrl: string }`
+- [X] T019 [US2] `src/app/api/discord/bot-invite-start/route.ts` を新規作成:
+  - operatorのFirebase ID tokenで認証
+  - Discord OAuth2 URL生成（scope: `bot applications.commands`、permissions: Send Messages + Embed Links + Use Slash Commands）
+  - CSRF保護用のnonceを `discord_bot_invite_requests/{nonce}` に保存（teamIdと有効期限を含む）
+  - `{ authUrl: string }` を返す
+- [X] T020 [US2] `src/app/api/discord/bot-invite-callback/route.ts` を新規作成:
+  - クエリパラメータ `code`, `guild_id`, `state`（nonce）を受け取る
+  - `discord_bot_invite_requests/{state}` からteamIdを取得・検証
+  - `isGuildAlreadyLinked(guildId)` で重複チェック（既に他チームが使用中なら `/team?discord=error&reason=already-linked` にリダイレクト）
+  - Bot tokenで Discord API `GET /guilds/{guildId}/channels` を呼び出しテキストチャンネル一覧を取得
+  - チャンネル情報をsessionまたはクエリパラメータで渡して `/team?discord=channel-select&guildId={guildId}` にリダイレクト
+- [X] T021 [US2] `src/app/api/discord/save-guild-config/route.ts` を新規作成:
+  - operatorが選択した `guildId` + `channelId` を `teams/{teamId}/discord/config` に保存（Admin SDK）
+  - ギルドコマンド登録APIを内部呼び出し
+  - 成功後 `/team?discord=connected` にリダイレクト
+- [X] T022 [US2] `src/app/api/discord/register-guild-commands/route.ts` を新規作成:
+  - Discord REST API `PUT /applications/{appId}/guilds/{guildId}/commands` で `/risukerugg`（messageオプション付き）をギルドコマンドとして登録
+  - Bot tokenを使用
+  - 内部からのみ呼び出し可（認証チェック必須）
+- [X] T023 [US2] Bot通知ユーティリティ `src/lib/discord/sendBotMessage.ts` を新規作成:
+  - Discord API `POST /channels/{channelId}/messages` でEmbed形式メッセージを送信
+  - `try/catch` でラップ、失敗はログのみ（呼び出し元を失敗させない）
+- [X] T024 [US2] スケジュール通知処理（Cloud Functions相当箇所）を更新: `channelId` が設定されていればBotメッセージ（`sendBotMessage`）で送信し、`webhookUrl` のみの場合はWebhookで送信（後方互換維持）
+- [X] T025 [US2] `src/components/team/DiscordSettingsSection.tsx` を更新:
+  - 未招待: 「Botをサーバーに追加」ボタン → `/api/discord/bot-invite-start` (POST) を呼び出し `authUrl` にリダイレクト
+  - channel-selectモード（クエリパラメータ `?discord=channel-select` 検出時）: チャンネル選択ドロップダウン + 「保存する」ボタン
+  - 招待済み（`guildId` 設定済み）: 「接続済み」表示 + チャンネル名 + 「解除」ボタン。Sprint 1のWebhook URL入力欄を非表示に切り替え
+  - 解除ボタン: `guildId` と `channelId` をFirestoreからクリア
 
-- [X] T017 [US2] `src/app/api/discord/callback/route.ts` を新規作成（✅ H2/H4対応）
-  - GETリクエスト: クエリパラメータ `code`, `state`（nonce）を受け取る
-  - `discord_link_requests/{state}` から uid を取得（なし・期限切れは 400 を返す）
-  - Discord OAuth2トークン交換 → `/users/@me` でユーザー情報取得
-  - Admin SDK で `users/{uid}.discord` を更新（`userId`, `username`, `connectedAt`）
-  - `discord_link_requests/{state}` を削除（nonce は使い捨て）
-  - 処理後 `/settings?discord=connected` にリダイレクト
-  - **注意**: Firebase Admin SDKは `src/lib/firebase/admin.ts`（T008で作成済み）を使用
-
-- [X] T018 [P] [US2] `src/components/settings/DiscordConnectSection.tsx` を新規作成 — ユーザー設定画面のDiscord連携UIコンポーネント
-  - 未連携: 「Discordと連携」ボタン → `/api/discord/link-start`（POST）を呼び出し、返却された `authUrl` にリダイレクト
-  - 連携済み: Discord ユーザー名表示 + 「連携を解除」ボタン
-  - 解除処理: `users/{uid}.discord` を `null` に更新
-
-- [X] T019 [US2] `src/app/(protected)/settings/page.tsx` にDiscordセクションを追加 — `<DiscordConnectSection>` を設定ページに組み込む
-
-- [X] T020 [P] [US2] `src/stores/auth.ts` の User 型読み取りで `discord` フィールドを追加（`toUser` 変換関数に `discord` フィールドのマッピングを追加）
-
-**チェックポイント**: Sprint 2 が独立して動作する。US3はこのUS2で保存された `discord.userId` に依存する。
+**Checkpoint**: spec.md（再設計版）Sprint 2 受け入れ基準 S2-1〜S2-5 を手動確認
 
 ---
 
-## Phase 5: US3 — `/risukerugg` AI会話ボット（Sprint 3）
+## Phase 5: US3 — AIボット再設計（guild_id起点）
 
-**目標**: Discordから自然言語でスケジュール・タスク・コラボを登録できる。WebアプリのAIチャットと同等の体験をDiscord上で提供する。
+**Goal**: `/risukerugg` コマンドをDiscordサーバーで打つと、そのサーバーに対応するチームのAIアシスタントが全員に見える通常投稿で返答する。セッションはサーバー全体で共有。個人認証不要。
 
-**独立テスト方法**:
-1. Discord で `/risukerugg message:来週月曜に配信入れたい` を実行
-2. BotがAIの返答（ephemeral）を返す
-3. AIが %%PROPOSAL%% を返すと [✅ 登録する] ボタンが表示される
-4. ✅ クリック後、Firestoreにドキュメントが作成される
+**Independent Test**:
+1. 連携済みサーバーで `/risukerugg message:来週月曜に配信入れたい` を実行
+2. チャンネルに全員が見える通常投稿で返答が届く
+3. 別のメンバーが `/risukerugg message:タイトルはマイクラにして` を実行すると文脈が継続している
+4. AIが提案すると全員が見えるボタン付きメッセージが表示される
+5. 誰でもボタンをクリックして登録・キャンセルできる
+6. 未連携サーバーから実行すると連携案内メッセージが届く
 
 ### US3 実装
 
-**AI共通ロジックのリファクタリング**
+- [X] T026 [US3] `src/app/api/discord/interactions/sessionManager.ts` を改修:
+  - `getSession(guildId)`, `upsertSession(guildId, ...)`, `deleteSession(guildId)` にシグネチャ変更
+  - `DiscordSession` の型を更新（`guildId: string`, `teamId: string`, `messages`, `pendingProposal`, `updatedAt` のみ。`discordUserId`/`risukeruUserId` 削除）
+- [X] T027 [US3] `src/app/api/discord/interactions/handlers/handleRisukerugg.ts` を全面改修:
+  - 引数を `(guildId: string, userMessage: string, appId: string, token: string)` に変更
+  - `discordUserId` → Firestoreでの個人ユーザー解決ロジックを削除
+  - `getTeamIdByGuildId(guildId)` でチームを特定（未連携なら「チーム設定からBotを招待してください」メッセージ）
+  - `currentTeamId` への依存を完全削除
+  - セッションキーを `guildId` で操作するよう変更（T026のsessionManager利用）
+- [X] T028 [US3] `src/app/api/discord/interactions/handlers/handleButtonClick.ts` を改修:
+  - `discordUserId` の参照をすべて `guildId` に変更
+  - ボタン `custom_id` のキー形式を `{action}:{guildId}` に変更（`{action}:{discordUserId}` から変更）
+  - ボタン押下者の同一性チェックを削除（誰でも押せる）
+  - セッション取得を `getSession(guildId)` に変更
+- [X] T029 [US3] `src/app/api/discord/interactions/route.ts` を改修:
+  - `discordUserId`（`interaction.member?.user?.id`）の取得・使用を削除
+  - `guild_id` を取得し各ハンドラーに渡す
+  - `handleAiConversation` の呼び出しを `(discordUserId, ...)` から `(guildId, ...)` に変更
+  - ボタン照合ロジックを `targetUserId === discordUserId` から `targetGuildId === guildId` に変更
+- [X] T030 [US3] `src/app/api/discord/interactions/discordFollowUp.ts` を確認・修正:
+  - `flags: 64` が含まれていれば削除（通常投稿化）
+  - `sendProposalMessage` のボタン `custom_id` を `{action}:{guildId}` 形式に更新
 
-- [X] T021 [US3] `src/lib/ai/systemPrompt.ts` を新規作成 — `src/app/api/ai/chat/route.ts` からシステムプロンプト生成ロジックを抽出
-
-  ```typescript
-  export function generateSystemPrompt(context: AiChatContext, today: string, todayISO: string): string
-  export function formatColumns(columns): string
-  export function formatTasks(tasks): string
-  export function formatSchedules(schedules): string
-  export function formatCollabs(collabs): string
-  export function formatMembers(members): string
-  export function formatMemberCalendars(events): string
-  ```
-
-- [X] T022 [US3] `src/lib/ai/parseProposal.ts` を新規作成 — `%%PROPOSAL%%` ブロックをパースするユーティリティ
-
-  ```typescript
-  export function extractProposals(text: string): ProposalData[]
-  export function hasProposal(text: string): boolean
-  export function stripProposalBlocks(text: string): string  // テキスト部分のみ取得
-  ```
-
-- [X] T023 [US3] `src/app/api/ai/chat/route.ts` をリファクタリング — T021/T022 の共通ユーティリティを import して使用するよう変換（動作は変えない）
-
-**Interactions Endpoint**
-
-- [X] T024 [US3] `src/app/api/discord/interactions/route.ts` を新規作成 — Discord Interactions Endpoint（POST）
-
-  ルーティング構造:
-  - PING (type 1) → `{ type: 1 }` を返す
-  - APPLICATION_COMMAND: `/risukerugg` → T025 の `handleRisukerugg()` を呼ぶ
-  - MESSAGE_COMPONENT: ボタンの `custom_id` に応じて T027 の処理を呼ぶ
-
-  **必須**: `discord-interactions` の `verifyKey()` で署名検証（`request.text()` でbody取得 — `request.json()` だと署名が壊れる）。不正リクエストは HTTP 401。  
-  **必須**: Zod で Interaction ペイロードをバリデーション（Constitution II 対応）
-
-- [X] T025 [US3] `src/app/api/discord/interactions/handlers/handleRisukerugg.ts` を新規作成 — `/risukerugg` コマンドの処理（✅ H3: `waitUntil` 使用）
-
-  処理フロー:
-  1. 即座に `{ type: 5, data: { flags: 64 } }` を返す（Deferred Ephemeral Response）
-  2. `waitUntil(handleAiConversation(...))` でバックグラウンド処理（`@vercel/functions`）:
-     a. `discord.userId` → RisukeruGGユーザー検索（未連携なら案内メッセージ）
-     b. Firestore `discord_sessions/{discordUserId}` から会話履歴取得（T031 の sessionManager を使用）
-     c. Admin SDK でチームデータ取得（schedules, tasks, collabs, members, columns）
-     d. `generateSystemPrompt()` でシステムプロンプト生成
-     e. `generateText()` (AI SDK, non-streaming) で Claude haiku 呼び出し
-     f. `hasProposal()` で %%PROPOSAL%% チェック
-     g. Firestore セッション更新（会話履歴に追加）
-     h. Discord Follow-up API でメッセージ送信（T026）
-
-- [X] T026 [P] [US3] `src/app/api/discord/interactions/discordFollowUp.ts` を新規作成 — Discord Follow-up メッセージ送信ユーティリティ
-
-  ```typescript
-  // テキストのみ（AIの質問など）
-  sendFollowUp(appId, token, content: string, flags?: number): Promise<void>
-  // %%PROPOSAL%% 検出時: Embed + ボタン（✅ H1: 修正ボタンも追加）
-  sendProposalMessage(appId, token, proposals: ProposalData[], discordUserId: string): Promise<void>
-  ```
-
-  ボタン（3種）:
-  - `[✅ 登録する]` — `custom_id: confirm:{discordUserId}`
-  - `[✏️ 修正する]` — `custom_id: revise:{discordUserId}`
-  - `[❌ キャンセル]` — `custom_id: cancel:{discordUserId}`
-
-- [X] T027 [US3] `src/app/api/discord/interactions/handlers/handleButtonClick.ts` を新規作成 — ボタンクリック処理（✅ H1: revise ハンドラーを含む）
-
-  - `confirm:{discordUserId}`: `pendingProposal` を取得 → 種別に応じて登録（T028〜T030）→ 完了メッセージ → セッション削除
-  - `revise:{discordUserId}`: **`pendingProposal` のみ削除**（会話履歴は保持）→「どこを修正する？」ephemeralメッセージ（✅ H1）
-  - `cancel:{discordUserId}`: セッション全削除 → 「キャンセルしたよ」ephemeralメッセージ
-
-- [X] T028 [P] [US3] `src/app/api/discord/interactions/register/registerSchedule.ts` を新規作成 — Discord Bot経由のスケジュール登録（Admin SDK → Firestore直接書き込み）
-
-- [X] T029 [P] [US3] `src/app/api/discord/interactions/register/registerTask.ts` を新規作成 — Discord Bot経由のタスク登録（Admin SDK → Firestore直接書き込み）
-
-- [X] T030 [P] [US3] `src/app/api/discord/interactions/register/registerCollab.ts` を新規作成 — Discord Bot経由のコラボ登録（Admin SDK → Firestore直接書き込み）
-
-**セッション管理**
-
-- [X] T031 [US3] `src/app/api/discord/interactions/sessionManager.ts` を新規作成 — Firestoreセッション管理ユーティリティ
-
-  ```typescript
-  getSession(discordUserId: string): Promise<DiscordSession | null>
-  upsertSession(discordUserId: string, update: Partial<DiscordSession>): Promise<void>
-  deleteSession(discordUserId: string): Promise<void>
-  isSessionExpired(session: DiscordSession): boolean  // updatedAt から30分経過で true
-  ```
-
-- [X] T032 [US3] セッションリセット処理を `handleRisukerugg.ts` に追加 — メッセージが `リセット` または `reset` の場合はセッション削除 → 「会話をリセットしたよ！」返信
-
-**チェックポイント**: `/risukerugg message:テスト` が動作し、会話→提案→修正→登録の全フローが完成している
+**Checkpoint**: spec.md（再設計版）Sprint 3 受け入れ基準 S3-1〜S3-11 を手動確認
 
 ---
 
-## Phase 6: Polish & Cross-Cutting
+## Phase 6: Polish & 横断的対応
 
-**目的**: 品質向上・エラーハンドリング・統合確認
+**目的**: セキュリティ・環境変数・ビルド確認・ドキュメント
 
-- [X] T033 [P] 未連携ユーザーへのエラーメッセージを統一 — 連携ページへのURL（`https://[DOMAIN]/settings#discord`）を含める
-- [X] T034 [P] Webhook URL不正（4xx/5xx）時のエラーログを `sendWebhook.ts` に追加 — URLフォーマット検証（`https://discord.com/api/webhooks/` プレフィックスチェック）
-- [X] T035 `firestore.rules` のデプロイ確認 — `firebase deploy --only firestore:rules` の手順をコメントに追記
+- [X] T031 [P] Firestoreルール最終確認: `discord_bot_invite_requests/{nonce}` コレクションに `allow read, write: if false` を追加
+- [X] T032 [P] `.env.local.example`（または環境変数ドキュメント）を更新:
+  - 削除: `NEXT_PUBLIC_DISCORD_CLIENT_ID`（クライアント側OAuth不要になったため）
+  - 追加コメント: `DISCORD_CLIENT_SECRET` は「Bot招待OAuth2シークレット」、`DISCORD_BOT_TOKEN` は「ギルドコマンド登録・チャンネル投稿」に用途明記
+- [X] T033 `pnpm typecheck` を実行してエラーがないことを確認、あれば修正
+- [X] T034 `pnpm build` を実行してビルドが成功することを確認、あれば修正
+- [X] T035 `docs/progress.md` に実装内容・起動方法・テストシナリオを記録
 
 ---
 
-## 依存関係と実行順序
+## 依存関係・実行順序
 
-### フェーズ間依存
-
-- **Phase 1 (Setup)**: 依存なし — 即着手可能
-- **Phase 2 (Foundational)**: Phase 1 完了後 — 全USをブロック
-- **Phase 3 (US1)**: Phase 2 完了後に着手可能 — US2/US3と並行可
-- **Phase 4 (US2)**: Phase 2 完了後に着手可能 — US1/US3と並行可
-- **Phase 5 (US3)**: Phase 2 + **US2 完了後**（`discord.userId` が必要）
-- **Phase 6 (Polish)**: 全US完了後
-
-### US内依存
+### フェーズ依存関係
 
 ```
-US1: T007(Foundation) → T009 → T011 → T012 → T013
-                              ↘ T014, T015（並列）
-
-US2: T008(Admin SDK, Foundation済み) → T016 → T017
-     T018, T019, T020（並列）
-
-US3: T021, T022 → T023（リファクタリング）
-     T024（Interactions Endpoint）
-       → T025（handleRisukerugg, waitUntil）→ T026（Follow-up）
-       → T027（ボタン: confirm/revise/cancel）→ T028, T029, T030（並列）
-     T031（セッション管理）→ T032（リセット）
+Phase 1（型定義・削除）
+    ↓
+Phase 2（基盤整備）← Phase 1完了が必要
+    ↓
+Phase 3 (US1), Phase 4 (US2), Phase 5 (US3) ← Phase 2完了後に並行着手可
+    ↓
+Phase 6（Polish）← 全ストーリー完了後
 ```
 
-### 並列実行例（US3 Phase）
+### ユーザーストーリー依存関係
 
-```bash
-# T021, T022 は並列
-src/lib/ai/systemPrompt.ts 作成
-src/lib/ai/parseProposal.ts 作成
+- **US1 (Sprint 1)**: Phase 2完了後に着手可能。US2/US3への依存なし
+- **US2 (Sprint 2)**: Phase 2完了後に着手可能（`getTeamIdByGuildId` T013が前提）
+- **US3 (Sprint 3)**: Phase 2完了後に着手可能。US2の `guildId` 保存が先に動いていると理想的だが、未連携ケースを実装すれば単体テスト可能
 
-# T028, T029, T030 は並列（異なるファイル）
-register/registerSchedule.ts 作成
-register/registerTask.ts 作成
-register/registerCollab.ts 作成
+### US2 内の依存関係
+
+```
+T019 (bot-invite-start) → T020 (bot-invite-callback) → T021 (save-guild-config) → T022 (register-guild-commands)
+T023 (sendBotMessage) → T024 (Cloud Functions通知更新)
+T021 + T023 → T025 (DiscordSettingsSection UI更新)
+```
+
+### US3 内の依存関係
+
+```
+T026 (sessionManager改修) → T027 (handleRisukerugg改修)
+T027 → T029 (route.ts改修)
+T028 (handleButtonClick改修) → T029
+T030 (discordFollowUp確認) → T029
+```
+
+---
+
+## 並行実行の例
+
+### Phase 1 並行実行
+
+```
+グループA（削除タスク）: T004, T005, T006, T009
+グループB（型・コンポーネント更新）: T001, T002, T003, T007, T008
+```
+
+### Phase 3 + 4 + 5 並行実行（Phase 2完了後）
+
+```
+開発者A: Phase 3 (US1) T015〜T018
+開発者B: Phase 4 (US2) T019〜T025
+開発者C: Phase 5 (US3) T026〜T030
 ```
 
 ---
 
 ## 実装戦略
 
-### MVP（US1のみで価値提供）
+### MVP（最小実施）
 
-1. Phase 1: Setup 完了
-2. Phase 2: Foundational 完了（T004〜T007）
-3. Phase 3: US1 完了（T008〜T014）
-4. **リリース**: チームWebhook通知が動作する ← Discord Developer Portal不要で即使える
+1. Phase 1: 不要コード削除（T001〜T009）
+2. Phase 2: 基盤整備（T010〜T014）
+3. Phase 5: AIボット再設計（T026〜T030）← 最もインパクト大
 
-### インクリメンタルデリバリー
+### 段階的デリバリー
 
-1. US1（Webhook通知）→ Bot不要・最も簡単 → MVPリリース
-2. US2（OAuth2連携）→ Discord Appの設定が必要
-3. US3（AIボット）→ US2完了後・Discord Application IDが必要
-
-### Discord側の事前準備（実装前に手動）
-
-Sprint 2/3 を実装する前に以下が必要:
-- Discord Developer Portal でアプリ作成
-- Application ID / Public Key / Client Secret / Bot Token を取得
-- OAuth2 リダイレクト URI に `https://[DOMAIN]/api/discord/callback` を追加
-- Bot: `applications.commands` スコープを有効化（Botスコープは不要）
+1. Phase 1 + 2 → ビルド確認（旧コード除去完了）
+2. Phase 5 (US3) → AIボットのguild_id起点化・通常投稿化
+3. Phase 4 (US2) → Bot招待フロー（理想UXの実現）
+4. Phase 3 (US1) → Sprint 1動作確認・スキーマ更新
+5. Phase 6 → Polish
 
 ---
 
-## Notes
+## 注意事項
 
-- `[P]` タスク = 異なるファイル、依存なし、並列実行可能
-- US3 は US2 完了（`users.discord.userId` の存在）に依存する唯一の依存関係
-- Webhook送信失敗はログのみ（スケジュール作成・通知本体を失敗させない）
-- Discord Interactions Endpoint の署名検証は必須（T023の最初に実装）
-- `request.text()` vs `request.json()` の落とし穴: 署名検証には必ず `text()` を使う
-- セッションは30分タイムアウト（Firestoreの `updatedAt` で判定）
+- `[P]` タスク = 異なるファイル・依存なし・並行実行可能
+- `discord_sessions` コレクション名は維持、キーのみ `discordUserId` → `guildId` に変更
+- グローバルコマンドが既に登録されている場合は Discord Developer Portal から手動で削除する（APIでの自動削除は不要）
+- Bot通知（T023〜T024）はCloud FunctionsとNext.jsの両方から参照するため、`src/lib/discord/sendBotMessage.ts` を共有ライブラリとして配置するか、Functions内に別途作成する
+- Bot招待OAuth2はユーザー個人のトークンではなくアプリ（Bot）をサーバーに追加するフロー。`guild_id` はOAuth2コールバックのクエリパラメータとして自動的に渡される

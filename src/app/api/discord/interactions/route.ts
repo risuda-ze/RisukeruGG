@@ -15,6 +15,7 @@ const InteractionType = {
 /** Zod スキーマ: Discord Interaction ペイロードのランタイムバリデーション */
 const InteractionSchema = z.object({
   type: z.number(),
+  guild_id: z.string().optional(),  // サーバー内コマンドの場合に含まれる（DM では undefined）
   id: z.string().optional(),
   token: z.string().optional(),
   application_id: z.string().optional(),
@@ -46,6 +47,7 @@ const InteractionSchema = z.object({
  *
  * 署名検証: DISCORD_PUBLIC_KEY で Ed25519 署名を検証。不正リクエストは HTTP 401。
  * Deferred Response: 3秒制限を回避するため AI 処理は waitUntil() でバックグラウンド実行。
+ * チーム特定: guild_id で teams/{teamId}/discord/config を検索する（discordUserId は使用しない）。
  */
 export async function POST(req: NextRequest): Promise<Response> {
   const publicKey = process.env.DISCORD_PUBLIC_KEY;
@@ -86,48 +88,62 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   const token = interaction.token ?? '';
-  // Discord ユーザー ID: DM か サーバーかで取得元が異なる
-  const discordUserId =
-    interaction.member?.user?.id ?? interaction.user?.id ?? '';
 
   // ─── スラッシュコマンド ──────────────────────────────────
   if (interaction.type === InteractionType.APPLICATION_COMMAND) {
     const commandName = interaction.data?.name;
 
     if (commandName === 'risukerugg') {
+      // DM からのコマンドは guild_id が存在しない → サーバー内で実行するよう案内
+      const guildId = interaction.guild_id;
+      if (!guildId) {
+        return Response.json({
+          type: 4,
+          data: {
+            content:
+              '❌ このコマンドはDiscordサーバー内でのみ使用できます。\nチームのDiscordサーバーで実行してください。',
+          },
+        });
+      }
+
       const messageOption = interaction.data?.options?.find((o) => o.name === 'message');
       const userMessage = typeof messageOption?.value === 'string' ? messageOption.value : '';
 
-      // 即座に Deferred Ephemeral Response を返す（Discord の 3 秒制限を回避）
+      // 即座に Deferred Response を返す（Discord の 3 秒制限を回避）
+      // flagsなし = 通常投稿（チャンネルの全員に見える）
       // waitUntil() でレスポンス送信後もバックグラウンド処理を継続
-      waitUntil(handleAiConversation(discordUserId, userMessage, appId, token));
+      waitUntil(handleAiConversation(guildId, userMessage, appId, token));
 
       return Response.json({
-        type: 5,           // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
-        data: { flags: 64 }, // ephemeral（本人のみ表示）
+        type: 5, // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
+        data: {},  // flags なし = 通常投稿
       });
     }
 
     return Response.json({
       type: 4,
-      data: { content: '未知のコマンドです。', flags: 64 },
+      data: { content: '未知のコマンドです。' },
     });
   }
 
   // ─── ボタンクリック ──────────────────────────────────────
   if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
     const customId = interaction.data?.custom_id ?? '';
-    const [action, targetUserId] = customId.split(':') as [string, string];
+    // custom_id は "{action}:{guildId}" 形式
+    const colonIdx = customId.indexOf(':');
+    const action = customId.slice(0, colonIdx);
+    const targetGuildId = customId.slice(colonIdx + 1);
+    const guildId = interaction.guild_id ?? targetGuildId;
 
     if (
       (action === 'confirm' || action === 'revise' || action === 'cancel') &&
-      targetUserId === discordUserId
+      targetGuildId === guildId
     ) {
       // ボタンクリックも Deferred Response で応答し、処理をバックグラウンドで実行
       waitUntil(
         handleButtonClick({
           action,
-          discordUserId,
+          guildId,
           appId,
           token,
         })

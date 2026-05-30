@@ -1,0 +1,82 @@
+import { NextRequest } from 'next/server';
+import { getAdminFirestore, getAdminAuth } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
+
+/**
+ * Discord Bot 招待 OAuth2 開始エンドポイント。
+ * operator が「Botをサーバーに追加」ボタンを押した際に呼び出す。
+ *
+ * CSRF 保護: nonce を discord_bot_invite_requests/{nonce} に保存し、
+ * コールバック時に state パラメータと照合する。
+ */
+export async function POST(req: NextRequest): Promise<Response> {
+  // Firebase ID トークンで operator 認証
+  const authorization = req.headers.get('Authorization');
+  if (!authorization?.startsWith('Bearer ')) {
+    return Response.json({ error: '認証が必要です' }, { status: 401 });
+  }
+  const idToken = authorization.slice(7);
+
+  let uid: string;
+  try {
+    const adminAuth = getAdminAuth();
+    const decoded = await adminAuth.verifyIdToken(idToken);
+    uid = decoded.uid;
+  } catch {
+    return Response.json({ error: 'トークンが無効です' }, { status: 401 });
+  }
+
+  // リクエストボディから teamId を取得
+  let teamId: string;
+  try {
+    const body = (await req.json()) as { teamId?: string };
+    if (!body.teamId) {
+      return Response.json({ error: 'teamId が必要です' }, { status: 400 });
+    }
+    teamId = body.teamId;
+  } catch {
+    return Response.json({ error: '無効なリクエストボディです' }, { status: 400 });
+  }
+
+  // operator 権限の確認
+  const db = getAdminFirestore();
+  const memberSnap = await db.doc(`teams/${teamId}/members/${uid}`).get();
+  if (!memberSnap.exists || memberSnap.data()?.role !== 'operator') {
+    return Response.json({ error: 'operator 権限が必要です' }, { status: 403 });
+  }
+
+  const clientId = process.env.DISCORD_CLIENT_ID;
+  if (!clientId) {
+    return Response.json({ error: 'DISCORD_CLIENT_ID が設定されていません' }, { status: 503 });
+  }
+
+  const callbackUrl = process.env.NEXTAUTH_URL
+    ? `${process.env.NEXTAUTH_URL}/api/discord/bot-invite-callback`
+    : `${req.nextUrl.origin}/api/discord/bot-invite-callback`;
+
+  // CSRF 用 nonce を生成して Firestore に保存（10 分で期限切れ）
+  const nonce = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  await db.doc(`discord_bot_invite_requests/${nonce}`).set({
+    teamId,
+    uid,
+    expiresAt,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  // Bot 招待用 Discord OAuth2 URL を組み立て
+  // scope: bot（サーバーへの Bot 参加）+ applications.commands（ギルドコマンド登録）
+  // permissions: 2048 = Send Messages のみ（最小限の権限）
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: callbackUrl,
+    response_type: 'code',
+    scope: 'bot applications.commands',
+    permissions: '2048',
+    state: nonce,
+  });
+  const authUrl = `https://discord.com/oauth2/authorize?${params.toString()}`;
+
+  return Response.json({ authUrl });
+}

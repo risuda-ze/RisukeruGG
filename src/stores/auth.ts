@@ -11,13 +11,6 @@ import { auth } from '@/lib/firebase/client';
 import { subscribeTeam, subscribeMembers } from '@/lib/repositories/teams';
 import type { Team, TeamMember } from '@/types/entities';
 
-/** Firestore users/{uid}.discord フィールドの型 */
-interface DiscordInfo {
-  userId: string;
-  username: string;
-  connectedAt: Date;
-}
-
 interface AuthState {
   currentUser: FirebaseUser | null;
   currentTeamId: string | null;
@@ -28,8 +21,6 @@ interface AuthState {
   loading: boolean;
   idToken: string | null;
   googleAccessToken: string | null;
-  /** 連携済み Discord アカウント情報（未連携は null） */
-  discordInfo: DiscordInfo | null;
 
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -48,7 +39,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   loading: true,
   idToken: null,
   googleAccessToken: null,
-  discordInfo: null,
 
   signIn: async () => {
     const provider = new GoogleAuthProvider();
@@ -161,20 +151,7 @@ export function initAuthListener() {
         const newTeamIds = (data.teamIds as string[] | undefined) ?? (newTeamId ? [newTeamId] : []);
         const prev = useAuthStore.getState().currentTeamId;
 
-        // Discord 連携情報を更新
-        const discordRaw = data.discord as
-          | { userId: string; username: string; connectedAt: { toDate: () => Date } }
-          | null
-          | undefined;
-        const discordInfo = discordRaw
-          ? {
-              userId: discordRaw.userId,
-              username: discordRaw.username,
-              connectedAt: discordRaw.connectedAt.toDate(),
-            }
-          : null;
-
-        useAuthStore.setState({ currentTeamId: newTeamId, teamIds: newTeamIds, discordInfo });
+        useAuthStore.setState({ currentTeamId: newTeamId, teamIds: newTeamIds });
 
         if (newTeamId !== prev) {
           unsubTeam?.();
@@ -243,7 +220,6 @@ export function initAuthListener() {
         currentTeam: null,
         members: [],
         loading: false,
-        discordInfo: null,
       });
     }
   });

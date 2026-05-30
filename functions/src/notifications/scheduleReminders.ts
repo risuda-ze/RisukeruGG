@@ -3,6 +3,7 @@ import { logger } from 'firebase-functions/v2';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { db } from '../lib/admin';
 import { sendDiscordWebhook } from '../discord/sendWebhook';
+import { sendBotChannelMessage } from '../discord/sendBotMessage';
 
 export const scheduleReminders = onSchedule(
   { schedule: '* * * * *', region: 'asia-northeast1' },
@@ -69,7 +70,8 @@ export const scheduleReminders = onSchedule(
       if (!discordConfigSnap.exists) continue;
 
       const discordConfig = discordConfigSnap.data()!;
-      if (!discordConfig.webhookUrl) continue;
+      // channelId（Bot 通知）または webhookUrl（Sprint 1 フォールバック）が必要
+      if (!discordConfig.channelId && !discordConfig.webhookUrl) continue;
 
       for (const [window, label, configKey] of [
         [oneHourLater, '1時間後', 'notifyBefore1h'],
@@ -94,14 +96,21 @@ export const scheduleReminders = onSchedule(
             minute: '2-digit',
           });
 
-          await sendDiscordWebhook(discordConfig.webhookUrl as string, {
+          const embed = {
             title: `⏰ ${label}にスケジュールが始まります`,
             color: 0xef9f27,
             fields: [
               { name: 'タイトル', value: schedule.title as string, inline: true },
               { name: '開始時刻', value: timeStr, inline: true },
             ],
-          });
+          };
+
+          // channelId が設定済みなら Bot API、未設定なら Webhook にフォールバック
+          if (discordConfig.channelId) {
+            await sendBotChannelMessage(discordConfig.channelId as string, embed);
+          } else if (discordConfig.webhookUrl) {
+            await sendDiscordWebhook(discordConfig.webhookUrl as string, embed);
+          }
         }
       }
     }
