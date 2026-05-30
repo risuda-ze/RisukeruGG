@@ -12,6 +12,7 @@
  *   pnpm test:e2e --project=emulator tests/e2e/visual.spec.ts
  */
 import { test, expect } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { signInWithEmulator } from '../helpers/auth';
 
 const TEST_USER = {
@@ -19,11 +20,7 @@ const TEST_USER = {
   password: 'password123',
 };
 
-async function switchToTeam(
-  page: Parameters<typeof test.beforeEach>[0]['page'],
-  targetTeamName: string,
-  expectedTeamCode: string
-) {
+async function switchToTeam(page: Page, targetTeamName: string, expectedTeamCode: string) {
   if (await page.getByText(expectedTeamCode).count()) {
     return;
   }

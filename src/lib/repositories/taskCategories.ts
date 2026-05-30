@@ -3,7 +3,6 @@ import {
   doc,
   addDoc,
   updateDoc,
-  deleteDoc,
   onSnapshot,
   writeBatch,
   query,
@@ -46,10 +45,7 @@ export async function updateTaskCategory(
 }
 
 /** カテゴリ削除時は関連タスクの categoryId を null に一括更新 */
-export async function deleteTaskCategory(
-  teamId: string,
-  categoryId: string
-): Promise<void> {
+export async function deleteTaskCategory(teamId: string, categoryId: string): Promise<void> {
   const batch = writeBatch(db);
 
   // 削除対象カテゴリを参照しているタスクを検索して categoryId を null に更新

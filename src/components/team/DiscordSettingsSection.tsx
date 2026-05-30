@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { Card, CardHeader } from '@/components/ui/Card';
@@ -26,16 +26,20 @@ interface DiscordSettingsSectionProps {
 export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSectionProps) {
   const { idToken } = useAuthStore();
   const searchParams = useSearchParams();
+  const discordParam = searchParams.get('discord');
+  const nonce = searchParams.get('nonce');
 
   const [config, setConfig] = useState<DiscordTeamConfig | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadedTeamId, setLoadedTeamId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // チャンネル選択モード用の state
-  const [pendingNonce, setPendingNonce] = useState<string | null>(null);
+  const [dismissedNonce, setDismissedNonce] = useState<string | null>(null);
   const [pendingGuildId, setPendingGuildId] = useState<string | null>(null);
-  const [availableChannels, setAvailableChannels] = useState<Array<{ id: string; name: string }>>([]);
+  const [availableChannels, setAvailableChannels] = useState<Array<{ id: string; name: string }>>(
+    []
+  );
   const [selectedChannelId, setSelectedChannelId] = useState('');
   const [savingChannel, setSavingChannel] = useState(false);
 
@@ -46,38 +50,60 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
   const [notifyBefore15min, setNotifyBefore15min] = useState(false);
   const [savingWebhook, setSavingWebhook] = useState(false);
 
+  const loading = isOperator && loadedTeamId !== teamId;
+  const pendingNonce =
+    discordParam === 'channel-select' && nonce && nonce !== dismissedNonce ? nonce : null;
+
   // 設定を読み込む
   useEffect(() => {
     if (!isOperator) return;
-    setLoading(true);
+    let cancelled = false;
+
     getDiscordSettings(teamId)
       .then((cfg) => {
+        if (cancelled) return;
         setConfig(cfg);
         if (cfg) {
           setWebhookUrl(cfg.webhookUrl ?? '');
           setNotifyOnCreate(cfg.notifyOnCreate);
           setNotifyBefore1h(cfg.notifyBefore1h);
           setNotifyBefore15min(cfg.notifyBefore15min);
+        } else {
+          setWebhookUrl('');
+          setNotifyOnCreate(false);
+          setNotifyBefore1h(false);
+          setNotifyBefore15min(false);
         }
       })
-      .catch(() => setError('設定の読み込みに失敗しました'))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!cancelled) {
+          setError('設定の読み込みに失敗しました');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadedTeamId(teamId);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [teamId, isOperator]);
 
   // URL クエリパラメータから Bot 招待フローの状態を読み取る
   useEffect(() => {
-    const discordParam = searchParams.get('discord');
-    const nonce = searchParams.get('nonce');
+    if (pendingNonce) {
+      void fetchPendingChannels(pendingNonce);
+      return;
+    }
 
-    if (discordParam === 'channel-select' && nonce) {
-      // Bot 招待完了 → チャンネル選択モードへ
-      setPendingNonce(nonce);
-      // Firestore の pending データからチャンネル一覧を取得
-      fetchPendingChannels(nonce);
-    } else if (discordParam === 'connected') {
+    if (discordParam === 'connected') {
       showToast('success', 'Discord Botを接続しました！');
       // 設定を再読み込み
-      getDiscordSettings(teamId).then(setConfig).catch(() => {});
+      getDiscordSettings(teamId)
+        .then(setConfig)
+        .catch(() => {});
     } else if (discordParam === 'cancelled') {
       showToast('error', 'Bot招待がキャンセルされました');
     } else if (discordParam === 'error') {
@@ -91,8 +117,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
       };
       showToast('error', messages[reason ?? ''] ?? 'エラーが発生しました');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [discordParam, pendingNonce, searchParams, teamId]);
 
   async function fetchPendingChannels(nonce: string) {
     // API Route 経由でチャンネル一覧とguildIdを取得（Admin SDK はサーバー専用）
@@ -165,7 +190,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
         const data = (await res.json()) as { error?: string };
         throw new Error(data.error ?? '設定の保存に失敗しました');
       }
-      setPendingNonce(null);
+      setDismissedNonce(pendingNonce);
       setPendingGuildId(null);
       setAvailableChannels([]);
       showToast('success', 'Discord Botを接続しました！');
@@ -200,7 +225,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
         },
         body: JSON.stringify({ teamId }),
       });
-      setConfig((prev) => prev ? { ...prev, guildId: undefined, channelId: undefined } : null);
+      setConfig((prev) => (prev ? { ...prev, guildId: undefined, channelId: undefined } : null));
       showToast('success', 'Discord Bot の接続を解除しました');
     } catch {
       setError('解除に失敗しました');
@@ -249,7 +274,8 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
       <CardHeader title="Discord 連携" />
       <div className="p-[18px] space-y-5">
         <p className="text-[13px] text-muted">
-          Discord サーバーに RisukeruGG Bot を追加すると、スケジュール通知や AI アシスタントが使えます。
+          Discord サーバーに RisukeruGG Bot を追加すると、スケジュール通知や AI
+          アシスタントが使えます。
         </p>
 
         {error && (
@@ -264,7 +290,8 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
             style={{
               color: toast.type === 'success' ? 'var(--green)' : 'var(--live)',
               background: toast.type === 'success' ? 'rgba(74,222,128,0.1)' : 'rgba(239,68,68,0.1)',
-              borderColor: toast.type === 'success' ? 'rgba(74,222,128,0.3)' : 'rgba(239,68,68,0.3)',
+              borderColor:
+                toast.type === 'success' ? 'rgba(74,222,128,0.3)' : 'rgba(239,68,68,0.3)',
             }}
           >
             {toast.message}
@@ -307,7 +334,9 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
         {!isConnected && isChannelSelectMode && (
           <div className="space-y-4">
             <div className="p-3 rounded-[10px] border border-border bg-surface">
-              <p className="text-[12px] font-semibold text-text mb-1">✅ Bot がサーバーに参加しました</p>
+              <p className="text-[12px] font-semibold text-text mb-1">
+                ✅ Bot がサーバーに参加しました
+              </p>
               <p className="text-[11px] text-muted">通知を送るチャンネルを選択してください</p>
             </div>
             <div>
