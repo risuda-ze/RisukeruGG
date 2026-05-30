@@ -1,7 +1,7 @@
 import { doc, getDoc, collection, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '@/lib/firebase/client';
-import type { Team, TeamMember, UserRole } from '@/types/entities';
+import type { Team, TeamMember, UserRole, DiscordTeamConfig } from '@/types/entities';
 
 const functions = getFunctions(undefined, 'asia-northeast1');
 
@@ -112,4 +112,28 @@ export const switchActiveTeam = httpsCallable<
   { success: boolean; teamId: string }
 >(functions, 'switchActiveTeam');
 
+// Discord 通知設定の更新（Cloud Function 経由 — Admin SDK で Security Rules をバイパス）
+export const updateDiscordSettings = httpsCallable<
+  {
+    teamId: string;
+    webhookUrl: string;
+    notifyOnCreate: boolean;
+    notifyBefore1h: boolean;
+    notifyBefore15min: boolean;
+  },
+  { success: boolean }
+>(functions, 'updateDiscordSettings');
+
+/** Discord 通知設定を取得する。operator のみアクセス可能（Firestore ルールで制限）。 */
+export async function getDiscordSettings(teamId: string): Promise<DiscordTeamConfig | null> {
+  const snap = await getDoc(doc(db, 'teams', teamId, 'discord', 'config'));
+  if (!snap.exists()) return null;
+  const data = snap.data() as Record<string, unknown>;
+  return {
+    webhookUrl: (data.webhookUrl as string) ?? '',
+    notifyOnCreate: (data.notifyOnCreate as boolean) ?? false,
+    notifyBefore1h: (data.notifyBefore1h as boolean) ?? false,
+    notifyBefore15min: (data.notifyBefore15min as boolean) ?? false,
+  };
+}
 

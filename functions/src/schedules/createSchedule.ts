@@ -1,6 +1,7 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db, getAuthContext, requireOperatorOrMember } from '../lib/validateAuth';
+import { sendDiscordWebhook } from '../discord/sendWebhook';
 
 interface CreateScheduleData {
   teamId: string;
@@ -62,6 +63,34 @@ export const createSchedule = onCall(
       updatedAt: now,
       createdAt: now,
     });
+
+    // Discord Webhook 通知（失敗してもスケジュール作成本体を失敗させない）
+    const discordConfigSnap = await db.doc(`teams/${teamId}/discord/config`).get();
+    if (discordConfigSnap.exists) {
+      const discordConfig = discordConfigSnap.data()!;
+      if (discordConfig.webhookUrl && discordConfig.notifyOnCreate) {
+        const startDate2 = new Date(startAt);
+        const endDate2 = new Date(endAt);
+        const dateStr = `${startDate2.toLocaleDateString('ja-JP', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          weekday: 'short',
+        })} ${startDate2.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}〜${endDate2.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}`;
+
+        await sendDiscordWebhook(discordConfig.webhookUrl as string, {
+          title: '📅 スケジュールが追加されました',
+          color: 0x5865f2,
+          fields: [
+            { name: 'タイトル', value: title, inline: true },
+            { name: '日時', value: dateStr, inline: true },
+            ...(participantIds.length > 0
+              ? [{ name: '参加者', value: `${participantIds.length}名`, inline: true }]
+              : []),
+          ],
+        });
+      }
+    }
 
     return { scheduleId: scheduleRef.id };
   }

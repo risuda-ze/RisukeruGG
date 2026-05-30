@@ -27,12 +27,14 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Card } from '@/components/ui/Card';
 import { TopBar } from '@/components/layout/TopBar';
+import { DiscordConnectSection } from '@/components/settings/DiscordConnectSection';
 
-type Tab = 'calendar' | 'tasks';
+type Tab = 'calendar' | 'tasks' | 'account';
 
 const TAB_LABELS: Record<Tab, string> = {
   calendar: 'スケジュール',
   tasks: 'タスク管理',
+  account: 'アカウント',
 };
 
 const DEFAULT_COLORS = [
@@ -91,8 +93,18 @@ export default function SettingsPage() {
         <div>
           {activeTab === 'tasks' && <TaskManagementSettings />}
           {activeTab === 'calendar' && <ScheduleCategorySettings />}
+          {activeTab === 'account' && <AccountSettings />}
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ── アカウント設定（Discord 連携など） ─────────────────── */
+function AccountSettings() {
+  return (
+    <div className="space-y-5">
+      <DiscordConnectSection />
     </div>
   );
 }

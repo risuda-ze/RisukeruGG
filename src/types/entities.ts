@@ -42,6 +42,11 @@ export interface User {
   createdAt: Date;
   notificationPreferences: NotificationPreferences;
   fcmTokens: string[];
+  discord?: {
+    userId: string;       // Discord Snowflake ID
+    username: string;     // Discord ユーザー名（表示用）
+    connectedAt: Date;
+  } | null;
   googleCalendar: {
     connected: boolean;
     syncError: string | null;
@@ -188,6 +193,28 @@ export interface CollabSession {
   participants?: CollabParticipant[];
   participantResponses?: Record<string, Record<string, 'ok' | 'ng' | 'pending'>>;
   comments?: CollabComment[];
+}
+
+// teams/{teamId}/discord/config サブコレクションの型
+// Team インターフェースには追加しない（サブコレクション方式で operator のみアクセス制限するため）
+export interface DiscordTeamConfig {
+  webhookUrl: string;
+  notifyOnCreate: boolean;    // スケジュール作成時に通知
+  notifyBefore1h: boolean;    // 1時間前リマインダー
+  notifyBefore15min: boolean; // 15分前リマインダー
+}
+
+// discord_sessions/{discordUserId} の型（Sprint 3 AI ボット用）
+export interface DiscordSession {
+  discordUserId: string;
+  risukeruUserId: string;  // 紐付けられた RisukeruGG UID
+  teamId: string;
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+  }>;
+  pendingProposal?: Record<string, unknown>;  // 確認待ちの %%PROPOSAL%% データ
+  updatedAt: Date;  // 30分無操作でセッション自動リセット（sessionManager 側で判定）
 }
 
 export interface Notification {

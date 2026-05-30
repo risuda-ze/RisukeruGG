@@ -12,6 +12,7 @@ import { RoleChangeDialog } from '@/components/team/RoleChangeDialog';
 import { RemoveMemberDialog } from '@/components/team/RemoveMemberDialog';
 import { LeaveTeamDialog } from '@/components/team/LeaveTeamDialog';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
+import { DiscordSettingsSection } from '@/components/team/DiscordSettingsSection';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { createTeam, dissolveTeam } from '@/lib/repositories/teams';
 import { ROLE_LABELS } from '@/lib/utils/teamRoles';
@@ -354,6 +355,11 @@ export default function TeamPage() {
               </div>
             </div>
           </Card>
+        )}
+
+        {/* Discord 通知設定（operatorのみ表示） */}
+        {teamId && (
+          <DiscordSettingsSection teamId={teamId} isOperator={isOperator} />
         )}
 
         {/* チームを解散する（オペレーターのみ） */}
