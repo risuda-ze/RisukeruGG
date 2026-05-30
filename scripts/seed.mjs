@@ -12,9 +12,10 @@
  *   - Functions http://localhost:5001
  *
  * 投入データ概要:
- *   - チームメンバー: 4人（オーナー・編集者×2・閲覧者）
+ *   - テストユーザー: 6人（operator×2・member×2・rom×2）
+ *   - 複数チーム所属: 2チーム（teamAlpha / teamBeta）
  *   - スケジュール: 先月・当月・来月（週1回配信＋毎週土曜動画）
- *   - タスク: 10件（未着手・進行中・完了に分散）
+ *   - タスク: ステータス・担当・期限・連携有無の組み合わせを網羅
  *   - 通知: 10件（すべて未読）
  *   - コラボセッション: 2件
  */
@@ -146,12 +147,14 @@ async function main() {
   await clearFirestore();
   console.log('  ✓ クリア完了\n');
 
-  // ── Step 2: Auth ユーザーを作成 (4人) ────────────────────
+  // ── Step 2: Auth ユーザーを作成 (6人) ────────────────────
   console.log('Step 2: Auth ユーザーを作成中...');
   const UID1 = await createAuthUser('taro@example.com', '配信太郎', 'password123');
-  const UID2 = await createAuthUser('hanako@example.com', '編集花子', 'password123');
+  const UID2 = await createAuthUser('hanako@example.com', '運営花子', 'password123');
   const UID3 = await createAuthUser('kenta@example.com', 'マネージャー健太', 'password123');
-  const UID4 = await createAuthUser('saburo@example.com', '視聴者三郎', 'password123');
+  const UID4 = await createAuthUser('saburo@example.com', 'ROM三郎', 'password123');
+  const UID5 = await createAuthUser('rina@example.com', 'サポート里奈', 'password123');
+  const UID6 = await createAuthUser('mika@example.com', 'ROM美香', 'password123');
   console.log('\n  onUserCreate トリガー待機中 (10秒)...');
   await sleep(10000);
   console.log('  ✓ トリガー待機完了\n');
@@ -161,6 +164,8 @@ async function main() {
 
   const TEAM_ID = 'teamAlpha';
   const TEAM_CODE = 'ALPHA001';
+  const TEAM_BETA_ID = 'teamBeta';
+  const TEAM_BETA_CODE = 'BETA002';
 
   const defaultNotifPrefs = {
     collab: { inApp: true, push: false },
@@ -169,112 +174,182 @@ async function main() {
     system: { inApp: true, push: false },
   };
 
-  // ── ユーザードキュメント (4人) ───────────────────────────
-  await setDoc(`users/${UID1}`, {
-    displayName: '配信太郎',
-    email: 'taro@example.com',
-    avatarUrl: null,
-    currentTeamId: TEAM_ID,
-    plan: 'party',
-    planUpdatedAt: NOW,
-    monthlyTaskCount: 4,
-    monthlyCollabCount: 2,
-    countResetAt: d(2026, 5, 1),
-    createdAt: d(2026, 4, 1),
-    notificationPreferences: defaultNotifPrefs,
-    fcmTokens: [],
-    googleCalendar: null,
-  });
-  await setDoc(`users/${UID2}`, {
-    displayName: '編集花子',
-    email: 'hanako@example.com',
-    avatarUrl: null,
-    currentTeamId: TEAM_ID,
-    plan: 'party',
-    planUpdatedAt: NOW,
-    monthlyTaskCount: 3,
-    monthlyCollabCount: 1,
-    countResetAt: d(2026, 5, 1),
-    createdAt: d(2026, 4, 3),
-    notificationPreferences: defaultNotifPrefs,
-    fcmTokens: [],
-    googleCalendar: null,
-  });
-  await setDoc(`users/${UID3}`, {
-    displayName: 'マネージャー健太',
-    email: 'kenta@example.com',
-    avatarUrl: null,
-    currentTeamId: TEAM_ID,
-    plan: 'party',
-    planUpdatedAt: NOW,
-    monthlyTaskCount: 2,
-    monthlyCollabCount: 1,
-    countResetAt: d(2026, 5, 1),
-    createdAt: d(2026, 4, 5),
-    notificationPreferences: defaultNotifPrefs,
-    fcmTokens: [],
-    googleCalendar: null,
-  });
-  await setDoc(`users/${UID4}`, {
-    displayName: '視聴者三郎',
-    email: 'saburo@example.com',
-    avatarUrl: null,
-    currentTeamId: TEAM_ID,
-    plan: 'light',
-    planUpdatedAt: NOW,
-    monthlyTaskCount: 0,
-    monthlyCollabCount: 0,
-    countResetAt: d(2026, 5, 1),
-    createdAt: d(2026, 4, 10),
-    notificationPreferences: defaultNotifPrefs,
-    fcmTokens: [],
-    googleCalendar: null,
-  });
-  console.log('  ✓ users (4件)');
+  // ── ユーザードキュメント (6人) ───────────────────────────
+  const users = [
+    {
+      uid: UID1,
+      displayName: '配信太郎',
+      email: 'taro@example.com',
+      currentTeamId: TEAM_ID,
+      teamIds: [TEAM_ID, TEAM_BETA_ID],
+      plan: 'party',
+      monthlyTaskCount: 4,
+      monthlyCollabCount: 2,
+      createdAt: d(2026, 4, 1),
+    },
+    {
+      uid: UID2,
+      displayName: '運営花子',
+      email: 'hanako@example.com',
+      currentTeamId: TEAM_ID,
+      teamIds: [TEAM_ID, TEAM_BETA_ID],
+      plan: 'party',
+      monthlyTaskCount: 3,
+      monthlyCollabCount: 1,
+      createdAt: d(2026, 4, 3),
+    },
+    {
+      uid: UID3,
+      displayName: 'マネージャー健太',
+      email: 'kenta@example.com',
+      currentTeamId: TEAM_ID,
+      teamIds: [TEAM_ID],
+      plan: 'party',
+      monthlyTaskCount: 2,
+      monthlyCollabCount: 1,
+      createdAt: d(2026, 4, 5),
+    },
+    {
+      uid: UID4,
+      displayName: 'ROM三郎',
+      email: 'saburo@example.com',
+      currentTeamId: TEAM_ID,
+      teamIds: [TEAM_ID],
+      plan: 'light',
+      monthlyTaskCount: 0,
+      monthlyCollabCount: 0,
+      createdAt: d(2026, 4, 10),
+    },
+    {
+      uid: UID5,
+      displayName: 'サポート里奈',
+      email: 'rina@example.com',
+      currentTeamId: TEAM_BETA_ID,
+      teamIds: [TEAM_ID, TEAM_BETA_ID],
+      plan: 'party',
+      monthlyTaskCount: 1,
+      monthlyCollabCount: 1,
+      createdAt: d(2026, 4, 12),
+    },
+    {
+      uid: UID6,
+      displayName: 'ROM美香',
+      email: 'mika@example.com',
+      currentTeamId: TEAM_ID,
+      teamIds: [TEAM_ID],
+      plan: 'light',
+      monthlyTaskCount: 0,
+      monthlyCollabCount: 0,
+      createdAt: d(2026, 4, 15),
+    },
+  ];
+
+  for (const user of users) {
+    await setDoc(`users/${user.uid}`, {
+      displayName: user.displayName,
+      email: user.email,
+      avatarUrl: null,
+      currentTeamId: user.currentTeamId,
+      teamIds: user.teamIds,
+      plan: user.plan,
+      planUpdatedAt: NOW,
+      monthlyTaskCount: user.monthlyTaskCount,
+      monthlyCollabCount: user.monthlyCollabCount,
+      countResetAt: d(2026, 5, 1),
+      createdAt: user.createdAt,
+      notificationPreferences: defaultNotifPrefs,
+      fcmTokens: [],
+      googleCalendar: null,
+    });
+  }
+  console.log(`  ✓ users (${users.length}件)`);
 
   // ── チーム ────────────────────────────────────────────────
   await setDoc(`teams/${TEAM_ID}`, {
     name: '配信チームα',
-    ownerId: UID1,
+    operatorUids: [UID1, UID2],
     teamCode: TEAM_CODE,
     createdAt: d(2026, 4, 1),
   });
-  console.log('  ✓ teams (1件)');
+  await setDoc(`teams/${TEAM_BETA_ID}`, {
+    name: '編集チームβ',
+    operatorUids: [UID2, UID5],
+    teamCode: TEAM_BETA_CODE,
+    createdAt: d(2026, 4, 20),
+  });
+  console.log('  ✓ teams (2件)');
 
   // ── チームコード ──────────────────────────────────────────
   await setDoc(`teamCodes/${TEAM_CODE}`, { teamId: TEAM_ID, createdAt: d(2026, 4, 1) });
-  console.log('  ✓ teamCodes (1件)');
+  await setDoc(`teamCodes/${TEAM_BETA_CODE}`, { teamId: TEAM_BETA_ID, createdAt: d(2026, 4, 20) });
+  console.log('  ✓ teamCodes (2件)');
 
-  // ── チームメンバー (4人) ─────────────────────────────────
+  // ── チームメンバー (teamAlpha: 6人 / teamBeta: 3人) ─────
   await setDoc(`teams/${TEAM_ID}/members/${UID1}`, {
-    role: 'owner',
+    role: 'operator',
     displayName: '配信太郎',
     avatarUrl: null,
     plan: 'party',
     joinedAt: d(2026, 4, 1),
   });
   await setDoc(`teams/${TEAM_ID}/members/${UID2}`, {
-    role: 'editor',
-    displayName: '編集花子',
+    role: 'operator',
+    displayName: '運営花子',
     avatarUrl: null,
     plan: 'party',
     joinedAt: d(2026, 4, 3),
   });
   await setDoc(`teams/${TEAM_ID}/members/${UID3}`, {
-    role: 'editor',
+    role: 'member',
     displayName: 'マネージャー健太',
     avatarUrl: null,
     plan: 'party',
     joinedAt: d(2026, 4, 5),
   });
   await setDoc(`teams/${TEAM_ID}/members/${UID4}`, {
-    role: 'viewer',
-    displayName: '視聴者三郎',
+    role: 'rom',
+    displayName: 'ROM三郎',
     avatarUrl: null,
     plan: 'light',
     joinedAt: d(2026, 4, 10),
   });
-  console.log('  ✓ team/members (4件)');
+  await setDoc(`teams/${TEAM_ID}/members/${UID5}`, {
+    role: 'member',
+    displayName: 'サポート里奈',
+    avatarUrl: null,
+    plan: 'party',
+    joinedAt: d(2026, 4, 12),
+  });
+  await setDoc(`teams/${TEAM_ID}/members/${UID6}`, {
+    role: 'rom',
+    displayName: 'ROM美香',
+    avatarUrl: null,
+    plan: 'light',
+    joinedAt: d(2026, 4, 15),
+  });
+
+  await setDoc(`teams/${TEAM_BETA_ID}/members/${UID2}`, {
+    role: 'operator',
+    displayName: '運営花子',
+    avatarUrl: null,
+    plan: 'party',
+    joinedAt: d(2026, 4, 20),
+  });
+  await setDoc(`teams/${TEAM_BETA_ID}/members/${UID5}`, {
+    role: 'operator',
+    displayName: 'サポート里奈',
+    avatarUrl: null,
+    plan: 'party',
+    joinedAt: d(2026, 4, 20),
+  });
+  await setDoc(`teams/${TEAM_BETA_ID}/members/${UID1}`, {
+    role: 'member',
+    displayName: '配信太郎',
+    avatarUrl: null,
+    plan: 'party',
+    joinedAt: d(2026, 4, 21),
+  });
+  console.log('  ✓ team/members (teamAlpha: 6件, teamBeta: 3件)');
 
   // ── スケジュールカテゴリ ──────────────────────────────────
   await setDoc(`teams/${TEAM_ID}/scheduleCategories/scat001`, {
@@ -351,10 +426,11 @@ async function main() {
   });
   console.log('  ✓ taskStatuses (3件)');
 
-  // ── タスク (10件) ─────────────────────────────────────────
-  //   col001 = 未着手 (4件)
-  //   col002 = 進行中 (3件)
-  //   col003 = 完了   (3件)
+  // ── タスク (14件) ─────────────────────────────────────────
+  //   col001 = 未着手 (6件)
+  //   col002 = 進行中 (4件)
+  //   col003 = 完了   (4件)
+  //   追加網羅: assignee=null, linkedScheduleIdあり, descriptionあり, dueDate=null
   const tasks = [
     // 未着手
     {
@@ -439,16 +515,57 @@ async function main() {
       uid: UID1,
       due: d(2026, 5, 10),
     },
+    // 追加パターン
+    {
+      id: 'task011',
+      title: '【未アサイン】アーカイブ整理',
+      col: 'col001',
+      catId: null,
+      uid: null,
+      due: null,
+      desc: '担当未定のバックログタスク',
+      linkedScheduleId: null,
+    },
+    {
+      id: 'task012',
+      title: '配信#19 サムネ最終調整',
+      col: 'col002',
+      catId: 'tcat001',
+      uid: UID5,
+      due: d(2026, 5, 21),
+      desc: '配信前に文字可読性を確認して書き出す',
+      linkedScheduleId: 'sched_may_w3',
+    },
+    {
+      id: 'task013',
+      title: '6月第1回動画 公開設定',
+      col: 'col001',
+      catId: 'tcat004',
+      uid: UID3,
+      due: d(2026, 6, 3),
+      desc: null,
+      linkedScheduleId: 'sched_jun_s1',
+    },
+    {
+      id: 'task014',
+      title: 'コラボ候補日程の棚卸し',
+      col: 'col003',
+      catId: 'tcat003',
+      uid: UID2,
+      due: null,
+      desc: '確定済み/期限切れセッションの整理',
+      linkedScheduleId: null,
+    },
   ];
   for (const t of tasks) {
     await setDoc(`teams/${TEAM_ID}/tasks/${t.id}`, {
       title: t.title,
       columnId: t.col,
       categoryId: t.catId,
-      description: null,
+      description: t.desc ?? null,
       assigneeId: t.uid,
       dueDate: t.due,
-      linkedScheduleId: null,
+      linkedScheduleId: t.linkedScheduleId ?? null,
       updatedAt: NOW,
       createdBy: UID1,
       createdAt: d(2026, 5, 1),
@@ -856,6 +973,34 @@ async function main() {
       end: d(2026, 5, 20, 23, 30),
       pIds: [UID1],
     },
+    // ─── 追加パターン: allDay単日 / participantなし / task連携 / collab表示 ───
+    {
+      id: 'sched_test_allday_single',
+      title: '[テスト] 終日予定（単日）',
+      allDay: true,
+      catId: null,
+      start: d(2026, 5, 26, 0, 0),
+      end: d(2026, 5, 26, 0, 0),
+      pIds: [UID1, UID2],
+    },
+    {
+      id: 'sched_test_no_participant',
+      title: '[テスト] 参加者なし予定',
+      catId: 'scat002',
+      start: d(2026, 5, 26, 13, 0),
+      end: d(2026, 5, 26, 14, 0),
+      pIds: [],
+    },
+    {
+      id: 'sched_test_linked_task',
+      title: '[テスト] タスク連携・コラボ相手あり',
+      catId: 'scat003',
+      start: d(2026, 5, 26, 20, 0),
+      end: d(2026, 5, 26, 21, 0),
+      pIds: [UID1, UID5],
+      linkedTaskIds: ['task012', 'task013'],
+      collabPartnerName: '外部ストリーマーZ',
+    },
   ];
 
   for (const s of schedules) {
@@ -867,8 +1012,8 @@ async function main() {
       allDay: s.allDay ?? false,
       participantIds: s.pIds,
       description: '',
-      collabPartnerName: null,
-      linkedTaskIds: [],
+      collabPartnerName: s.collabPartnerName ?? null,
+      linkedTaskIds: s.linkedTaskIds ?? [],
       updatedAt: NOW,
       createdBy: UID1,
       createdAt: d(2026, 4, 1),
@@ -905,12 +1050,80 @@ async function main() {
     linkedScheduleId: null,
     createdAt: d(2026, 5, 13),
   });
-  console.log('  ✓ collabSessions (2件)');
+  await setDoc(`teams/${TEAM_ID}/collabSessions/collab003`, {
+    title: '確定済みコラボ配信',
+    partnerName: 'ゲーム実況者D',
+    createdBy: UID2,
+    teamId: TEAM_ID,
+    proposedDates: [d(2026, 5, 26, 20, 0), d(2026, 5, 27, 20, 0)],
+    responses: {
+      dates: { 0: 'ok', 1: 'ng' },
+      alternativeDates: [],
+      respondedAt: d(2026, 5, 20, 12, 0),
+      note: '5/26希望です',
+    },
+    expiresAt: d(2026, 5, 30),
+    status: 'confirmed',
+    confirmedDate: d(2026, 5, 26, 20, 0),
+    linkedScheduleId: 'sched_test_linked_task',
+    createdAt: d(2026, 5, 18),
+  });
+  await setDoc(`teams/${TEAM_ID}/collabSessions/collab004`, {
+    title: '期限切れコラボ打診',
+    partnerName: '外部チャンネルE',
+    createdBy: UID3,
+    teamId: TEAM_ID,
+    proposedDates: [d(2026, 5, 1, 21, 0), d(2026, 5, 2, 21, 0)],
+    responses: null,
+    expiresAt: d(2026, 5, 3),
+    status: 'expired',
+    confirmedDate: null,
+    linkedScheduleId: null,
+    createdAt: d(2026, 4, 28),
+  });
+  await setDoc(`teams/${TEAM_ID}/collabSessions/collab005`, {
+    title: 'キャンセル済みコラボ',
+    partnerName: '外部チャンネルF',
+    createdBy: UID5,
+    teamId: TEAM_ID,
+    proposedDates: [d(2026, 5, 9, 20, 0)],
+    responses: null,
+    expiresAt: d(2026, 5, 12),
+    status: 'cancelled',
+    confirmedDate: null,
+    linkedScheduleId: null,
+    createdAt: d(2026, 5, 6),
+  });
+  console.log('  ✓ collabSessions (5件)');
+
+  // ── memberCalendars (同期予定) ────────────────────────────
+  await setDoc(`teams/${TEAM_ID}/memberCalendars/${UID3}/events/gcal_evt_001`, {
+    title: 'マネージャー健太 の予定',
+    startAt: d(2026, 5, 21, 11, 0),
+    endAt: d(2026, 5, 21, 12, 0),
+    allDay: false,
+    sourceEventId: 'gcal_evt_001',
+    syncedAt: NOW,
+    userId: UID3,
+    teamId: TEAM_ID,
+  });
+  await setDoc(`teams/${TEAM_ID}/memberCalendars/${UID4}/events/gcal_evt_002`, {
+    title: 'ROM三郎 の予定',
+    startAt: d(2026, 5, 22, 0, 0),
+    endAt: d(2026, 5, 22, 0, 0),
+    allDay: true,
+    sourceEventId: 'gcal_evt_002',
+    syncedAt: NOW,
+    userId: UID4,
+    teamId: TEAM_ID,
+  });
+  console.log('  ✓ memberCalendars/events (2件)');
 
   // ── 通知 (10件・すべて未読・UID1=配信太郎 宛) ───────────
   const notifications = [
     {
       id: 'notif001',
+      recipientId: UID1,
       category: 'collab',
       type: 'collab_request',
       title: 'コラボ打診が届きました',
@@ -921,6 +1134,7 @@ async function main() {
     },
     {
       id: 'notif002',
+      recipientId: UID2,
       category: 'tasks',
       type: 'task_updated',
       title: 'タスクが更新されました',
@@ -931,6 +1145,7 @@ async function main() {
     },
     {
       id: 'notif003',
+      recipientId: UID1,
       category: 'reminders',
       type: 'live_reminder',
       title: 'まもなくLIVE開始',
@@ -941,6 +1156,7 @@ async function main() {
     },
     {
       id: 'notif004',
+      recipientId: UID1,
       category: 'collab',
       type: 'collab_request',
       title: '新しいコラボ打診',
@@ -951,6 +1167,7 @@ async function main() {
     },
     {
       id: 'notif005',
+      recipientId: UID1,
       category: 'tasks',
       type: 'task_assigned',
       title: 'タスクが割り当てられました',
@@ -961,6 +1178,7 @@ async function main() {
     },
     {
       id: 'notif006',
+      recipientId: UID2,
       category: 'system',
       type: 'member_joined',
       title: 'メンバーが参加しました',
@@ -971,6 +1189,7 @@ async function main() {
     },
     {
       id: 'notif007',
+      recipientId: UID3,
       category: 'tasks',
       type: 'task_due_soon',
       title: 'タスクの期限が近づいています',
@@ -981,6 +1200,7 @@ async function main() {
     },
     {
       id: 'notif008',
+      recipientId: UID4,
       category: 'reminders',
       type: 'schedule_reminder',
       title: 'スケジュールのリマインダー',
@@ -991,6 +1211,7 @@ async function main() {
     },
     {
       id: 'notif009',
+      recipientId: UID5,
       category: 'collab',
       type: 'collab_date_confirmed',
       title: 'コラボ日程が確定しました',
@@ -1001,6 +1222,7 @@ async function main() {
     },
     {
       id: 'notif010',
+      recipientId: UID6,
       category: 'tasks',
       type: 'task_updated',
       title: 'タスクが完了しました',
@@ -1013,7 +1235,7 @@ async function main() {
 
   for (const n of notifications) {
     await setDoc(`teams/${TEAM_ID}/notifications/${n.id}`, {
-      recipientId: UID1,
+      recipientId: n.recipientId,
       category: n.category,
       type: n.type,
       title: n.title,
@@ -1029,10 +1251,16 @@ async function main() {
   // ── 完了サマリー ─────────────────────────────────────────
   console.log('\n=== シード完了 ===\n');
   console.log('テストアカウント (パスワード共通: password123):');
-  console.log(`  配信太郎          (owner)  : taro@example.com    uid=${UID1}`);
-  console.log(`  編集花子          (editor) : hanako@example.com  uid=${UID2}`);
-  console.log(`  マネージャー健太  (editor) : kenta@example.com   uid=${UID3}`);
-  console.log(`  視聴者三郎        (viewer) : saburo@example.com  uid=${UID4}`);
+  console.log(`  配信太郎          (operator): taro@example.com    uid=${UID1}`);
+  console.log(`  運営花子          (operator): hanako@example.com  uid=${UID2}`);
+  console.log(`  マネージャー健太  (member)  : kenta@example.com   uid=${UID3}`);
+  console.log(`  ROM三郎           (rom)     : saburo@example.com  uid=${UID4}`);
+  console.log(`  サポート里奈      (member)  : rina@example.com    uid=${UID5}`);
+  console.log(`  ROM美香           (rom)     : mika@example.com    uid=${UID6}`);
+  console.log('');
+  console.log('チーム構成:');
+  console.log(`  teamAlpha (${TEAM_CODE}) operator=2, member=2, rom=2`);
+  console.log(`  teamBeta  (${TEAM_BETA_CODE}) operator=2, member=1`);
   console.log('\n投入データ件数:');
   console.log(`  スケジュール : ${schedules.length}件`);
   console.log('    先月(4月): 8件');
@@ -1046,9 +1274,10 @@ async function main() {
   console.log('    6/23 (火) — 複数日バー 2件（オーバーフローなし）');
   console.log('    6/24 (水) — 複数日バー 3件（+1件 表示）');
   console.log('    6/25 (木) — 複数日バー 4件（+2件 表示）');
-  console.log(`  タスク       : ${tasks.length}件 (未着手4・進行中3・完了3)`);
+  console.log(`  タスク       : ${tasks.length}件 (未着手6・進行中4・完了4)`);
   console.log(`  通知         : ${notifications.length}件 (すべて未読)`);
-  console.log(`  コラボ       : 2件`);
+  console.log('  memberCalendars/events: 2件');
+  console.log('  コラボ       : 5件 (open/confirmed/expired/cancelled を含む)');
   console.log('\nFirebase Emulator UI: http://localhost:4000\n');
 }
 
