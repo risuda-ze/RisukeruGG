@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { Card, CardHeader } from '@/components/ui/Card';
@@ -26,14 +26,16 @@ interface DiscordSettingsSectionProps {
 export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSectionProps) {
   const { idToken } = useAuthStore();
   const searchParams = useSearchParams();
+  const discordParam = searchParams.get('discord');
+  const nonce = searchParams.get('nonce');
 
   const [config, setConfig] = useState<DiscordTeamConfig | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadedTeamId, setLoadedTeamId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // チャンネル選択モード用の state
-  const [pendingNonce, setPendingNonce] = useState<string | null>(null);
+  const [dismissedNonce, setDismissedNonce] = useState<string | null>(null);
   const [pendingGuildId, setPendingGuildId] = useState<string | null>(null);
   const [availableChannels, setAvailableChannels] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedChannelId, setSelectedChannelId] = useState('');
@@ -46,35 +48,55 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
   const [notifyBefore15min, setNotifyBefore15min] = useState(false);
   const [savingWebhook, setSavingWebhook] = useState(false);
 
+  const loading = isOperator && loadedTeamId !== teamId;
+  const pendingNonce =
+    discordParam === 'channel-select' && nonce && nonce !== dismissedNonce ? nonce : null;
+
   // 設定を読み込む
   useEffect(() => {
     if (!isOperator) return;
-    setLoading(true);
+    let cancelled = false;
+
     getDiscordSettings(teamId)
       .then((cfg) => {
+        if (cancelled) return;
         setConfig(cfg);
         if (cfg) {
           setWebhookUrl(cfg.webhookUrl ?? '');
           setNotifyOnCreate(cfg.notifyOnCreate);
           setNotifyBefore1h(cfg.notifyBefore1h);
           setNotifyBefore15min(cfg.notifyBefore15min);
+        } else {
+          setWebhookUrl('');
+          setNotifyOnCreate(false);
+          setNotifyBefore1h(false);
+          setNotifyBefore15min(false);
         }
       })
-      .catch(() => setError('設定の読み込みに失敗しました'))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!cancelled) {
+          setError('設定の読み込みに失敗しました');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadedTeamId(teamId);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [teamId, isOperator]);
 
   // URL クエリパラメータから Bot 招待フローの状態を読み取る
   useEffect(() => {
-    const discordParam = searchParams.get('discord');
-    const nonce = searchParams.get('nonce');
+    if (pendingNonce) {
+      void fetchPendingChannels(pendingNonce);
+      return;
+    }
 
-    if (discordParam === 'channel-select' && nonce) {
-      // Bot 招待完了 → チャンネル選択モードへ
-      setPendingNonce(nonce);
-      // Firestore の pending データからチャンネル一覧を取得
-      fetchPendingChannels(nonce);
-    } else if (discordParam === 'connected') {
+    if (discordParam === 'connected') {
       showToast('success', 'Discord Botを接続しました！');
       // 設定を再読み込み
       getDiscordSettings(teamId).then(setConfig).catch(() => {});
@@ -91,8 +113,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
       };
       showToast('error', messages[reason ?? ''] ?? 'エラーが発生しました');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [discordParam, pendingNonce, searchParams, teamId]);
 
   async function fetchPendingChannels(nonce: string) {
     // API Route 経由でチャンネル一覧とguildIdを取得（Admin SDK はサーバー専用）
@@ -165,7 +186,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
         const data = (await res.json()) as { error?: string };
         throw new Error(data.error ?? '設定の保存に失敗しました');
       }
-      setPendingNonce(null);
+      setDismissedNonce(pendingNonce);
       setPendingGuildId(null);
       setAvailableChannels([]);
       showToast('success', 'Discord Botを接続しました！');

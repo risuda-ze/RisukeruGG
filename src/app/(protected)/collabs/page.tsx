@@ -83,7 +83,6 @@ export default function CollabsPage() {
   const [sessions, setSessions] = useState<CollabSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSession, setSelectedSession] = useState<CollabSession | null>(null);
-  const [duplicateSource, setDuplicateSource] = useState<CollabSession | null>(null);
 
   /* 再調整確認・実行中・エラー state */
   const [confirmReopenId, setConfirmReopenId] = useState<string | null>(null);
@@ -143,15 +142,6 @@ export default function CollabsPage() {
     }
   }, [myMember]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* 複製元が変化したらフォームをプリフィル */
-  useEffect(() => {
-    if (!duplicateSource) return;
-    setFormTitle(duplicateSource.title);
-    setContent(duplicateSource.content ?? '');
-    setFormParticipants(duplicateSource.participants ?? []);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [duplicateSource]); // eslint-disable-line react-hooks/exhaustive-deps
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!teamId || !formTitle.trim()) {
@@ -193,7 +183,6 @@ export default function CollabsPage() {
       setFormParticipants(
         myMember ? [{ id: myMember.userId, name: myMember.displayName, type: 'member' }] : []
       );
-      setDuplicateSource(null);
     } catch {
       setFormError('作成に失敗しました。Firebaseエミュレータが起動しているか確認してください。');
     } finally {
@@ -224,6 +213,13 @@ export default function CollabsPage() {
   function addMemberParticipant(memberId: string, name: string) {
     if (formParticipants.some((p) => p.id === memberId)) return;
     setFormParticipants((prev) => [...prev, { id: memberId, name, type: 'member' }]);
+  }
+
+  function handleDuplicate(source: CollabSession) {
+    setFormTitle(source.title);
+    setContent(source.content ?? '');
+    setFormParticipants(source.participants ?? []);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   /* 確定コラボを再調整状態に戻す */
@@ -669,7 +665,7 @@ export default function CollabsPage() {
           onClose={() => setSelectedSession(null)}
           onDeleted={() => setSelectedSession(null)}
           onReopen={() => setSelectedSession(null)}
-          onDuplicate={(s) => setDuplicateSource(s)}
+          onDuplicate={handleDuplicate}
         />
       )}
     </div>

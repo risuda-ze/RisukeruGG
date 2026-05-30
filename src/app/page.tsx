@@ -1,9 +1,22 @@
 import type { Metadata } from 'next';
+import { Dela_Gothic_One, Zen_Kaku_Gothic_New } from 'next/font/google';
 
 export const metadata: Metadata = {
   title: 'リスケるGG — 撮影も、コラボも、編集もGGなスケジュールを',
   description: '配信者向けチームスケジュール管理アプリ',
 };
+
+const zenKakuGothicNew = Zen_Kaku_Gothic_New({
+  weight: ['400', '500', '700', '900'],
+  variable: '--font-zen-kaku-gothic-new',
+  preload: false,
+});
+
+const delaGothicOne = Dela_Gothic_One({
+  weight: '400',
+  variable: '--font-dela-gothic-one',
+  preload: false,
+});
 
 const LP_CSS = `
   :root {
@@ -27,7 +40,7 @@ const LP_CSS = `
     padding: 0;
   }
   #lp-root {
-    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-family: var(--font-zen-kaku-gothic-new), sans-serif;
     background: var(--bg);
     color: var(--text);
     overflow-x: hidden;
@@ -177,7 +190,7 @@ const LP_CSS = `
     50% { opacity: 0.3; }
   }
   #lp-root .hero-title {
-    font-family: 'Dela Gothic One', sans-serif;
+    font-family: var(--font-dela-gothic-one), sans-serif;
     font-size: clamp(36px, 7vw, 80px);
     line-height: 1.05;
     letter-spacing: -0.02em;
@@ -465,7 +478,7 @@ const LP_CSS = `
     margin-bottom: 14px;
   }
   #lp-root .section-title {
-    font-family: 'Dela Gothic One', sans-serif;
+    font-family: var(--font-dela-gothic-one), sans-serif;
     font-size: clamp(28px, 5vw, 52px);
     line-height: 1.1;
     letter-spacing: -0.02em;
@@ -582,7 +595,7 @@ const LP_CSS = `
     margin-bottom: 16px;
   }
   #lp-root .feat-title {
-    font-family: 'Dela Gothic One', sans-serif;
+    font-family: var(--font-dela-gothic-one), sans-serif;
     font-size: clamp(22px, 3.5vw, 36px);
     line-height: 1.15;
     margin-bottom: 16px;
@@ -860,7 +873,7 @@ const LP_CSS = `
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Dela Gothic One', sans-serif;
+    font-family: var(--font-dela-gothic-one), sans-serif;
     font-size: 22px;
     color: var(--purple-l);
     margin-bottom: 20px;
@@ -912,12 +925,12 @@ const LP_CSS = `
     background: linear-gradient(90deg, var(--purple), var(--amber));
   }
   #lp-root .plan-name {
-    font-family: 'Dela Gothic One', sans-serif;
+    font-family: var(--font-dela-gothic-one), sans-serif;
     font-size: 28px;
     margin-bottom: 8px;
   }
   #lp-root .plan-price {
-    font-family: 'Dela Gothic One', sans-serif;
+    font-family: var(--font-dela-gothic-one), sans-serif;
     font-size: 52px;
     color: var(--amber);
     margin-bottom: 6px;
@@ -1044,7 +1057,7 @@ const LP_CSS = `
     pointer-events: none;
   }
   #lp-root .final-cta-title {
-    font-family: 'Dela Gothic One', sans-serif;
+    font-family: var(--font-dela-gothic-one), sans-serif;
     font-size: clamp(28px, 5vw, 56px);
     line-height: 1.1;
     margin-bottom: 20px;
@@ -1486,18 +1499,12 @@ const LP_HTML = `
 
 export default function LandingPage() {
   return (
-    <>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Dela+Gothic+One&display=swap"
-        rel="stylesheet"
-      />
-      {/* eslint-disable-next-line react/no-danger */}
+    <div className={`${zenKakuGothicNew.variable} ${delaGothicOne.variable}`}>
       <style dangerouslySetInnerHTML={{ __html: LP_CSS }} />
       <div
         id="lp-root"
-        // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: LP_HTML }}
       />
-    </>
+    </div>
   );
 }

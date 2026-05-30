@@ -76,10 +76,10 @@ export default function SchedulePage() {
     return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
   }, []);
 
-  // ポップアップが切り替わったらドラッグ位置をリセット
-  useEffect(() => {
+  function openScheduleDetails(schedule: ScheduleEntry) {
     setPopupPos({ x: 0, y: 0 });
-  }, [selectedSchedule?.id]);
+    setSelectedSchedule(schedule);
+  }
 
   function handlePopupDragStart(e: React.MouseEvent) {
     if ((e.target as HTMLElement).closest('button, input, select, a')) return;
@@ -90,10 +90,7 @@ export default function SchedulePage() {
 
   // Googleカレンダーの個人予定を取得
   useEffect(() => {
-    if (!googleAccessToken) {
-      setGcalEvents([]);
-      return;
-    }
+    if (!googleAccessToken) return;
     const timeMin = view === 'month'
       ? startOfMonth(currentDate)
       : startOfWeek(currentDate, { weekStartsOn: 0 });
@@ -107,14 +104,9 @@ export default function SchedulePage() {
     });
   }, [googleAccessToken, currentDate, view]);
 
-  /* Firestore購読が更新したらselectedScheduleを同期 */
-  useEffect(() => {
-    if (!selectedSchedule) return;
-    const updated = schedules.find((s) => s.id === selectedSchedule.id);
-    if (updated && updated.updatedAt.getTime() !== selectedSchedule.updatedAt.getTime()) {
-      setSelectedSchedule(updated);
-    }
-  }, [schedules, selectedSchedule?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const activeSelectedSchedule = !selectedSchedule || selectedSchedule.source
+    ? selectedSchedule
+    : schedules.find((schedule) => schedule.id === selectedSchedule.id) ?? selectedSchedule;
 
   // メンバーの予定をScheduleEntry形式に変換 (T027/T029/T030)
   const memberScheduleEntries: ScheduleEntry[] = (showMemberCalendars ? memberCalendarEvents : [])
@@ -137,7 +129,8 @@ export default function SchedulePage() {
       allDay: e.allDay,
     }));
 
-  const allSchedules = [...schedules, ...gcalEvents, ...memberScheduleEntries];
+  const visibleGcalEvents = googleAccessToken ? gcalEvents : [];
+  const allSchedules = [...schedules, ...visibleGcalEvents, ...memberScheduleEntries];
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
@@ -269,7 +262,7 @@ export default function SchedulePage() {
           month={month}
           schedules={allSchedules}
           categories={categories}
-          onEventClick={setSelectedSchedule}
+          onEventClick={openScheduleDetails}
           onDateClick={canEdit ? () => setShowCreate(true) : undefined}
           onDateLabelClick={(date) => {
             setCurrentDate(date);
@@ -281,7 +274,7 @@ export default function SchedulePage() {
           currentDate={currentDate}
           schedules={allSchedules}
           categories={categories}
-          onEventClick={setSelectedSchedule}
+          onEventClick={openScheduleDetails}
           onDateClick={canEdit ? () => setShowCreate(true) : undefined}
         />
       )}
@@ -307,7 +300,7 @@ export default function SchedulePage() {
       )}
 
       {/* メンバーの予定の詳細（読み取り専用） */}
-      {selectedSchedule?.source === 'member' && (
+      {activeSelectedSchedule?.source === 'member' && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
           onMouseDown={(e) => { popupMouseDownOnOverlay.current = !popupPanelRef.current?.contains(e.target as Node); }}
@@ -333,13 +326,13 @@ export default function SchedulePage() {
               </button>
             </div>
             <div className="px-6 pb-6">
-              <h3 className="text-[17px] font-bold text-text mb-3">{selectedSchedule.title}</h3>
+                <h3 className="text-[17px] font-bold text-text mb-3">{activeSelectedSchedule.title}</h3>
               <p className="text-[13px] text-muted">
-                {selectedSchedule.allDay
-                  ? format(selectedSchedule.startAt, 'M月d日(E)', { locale: ja }) + ' 終日'
-                  : format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja }) +
+                  {activeSelectedSchedule.allDay
+                    ? format(activeSelectedSchedule.startAt, 'M月d日(E)', { locale: ja }) + ' 終日'
+                    : format(activeSelectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja }) +
                     ' – ' +
-                    format(selectedSchedule.endAt, 'HH:mm')}
+                      format(activeSelectedSchedule.endAt, 'HH:mm')}
               </p>
             </div>
           </div>
@@ -347,9 +340,9 @@ export default function SchedulePage() {
       )}
 
       {/* スケジュール詳細オーバーレイ（チーム予定） */}
-      {selectedSchedule && !selectedSchedule.source && currentTeamId && (
+        {activeSelectedSchedule && !activeSelectedSchedule.source && currentTeamId && (
         <ScheduleDetailModal
-          schedule={selectedSchedule}
+            schedule={activeSelectedSchedule}
           teamId={currentTeamId}
           canEdit={canEdit}
           categories={categories}
@@ -359,7 +352,7 @@ export default function SchedulePage() {
       )}
 
       {/* Googleカレンダー予定の詳細（読み取り専用） */}
-      {selectedSchedule?.source === 'google' && (
+      {activeSelectedSchedule?.source === 'google' && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
           onMouseDown={(e) => { popupMouseDownOnOverlay.current = !popupPanelRef.current?.contains(e.target as Node); }}
@@ -385,14 +378,14 @@ export default function SchedulePage() {
               </button>
             </div>
             <div className="px-6 pb-6">
-              <h3 className="text-[17px] font-bold text-text mb-3">{selectedSchedule.title}</h3>
+                <h3 className="text-[17px] font-bold text-text mb-3">{activeSelectedSchedule.title}</h3>
               <p className="text-[13px] text-muted mb-1">
-                {format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja })}
+                  {format(activeSelectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja })}
                 {' – '}
-                {format(selectedSchedule.endAt, 'HH:mm')}
+                  {format(activeSelectedSchedule.endAt, 'HH:mm')}
               </p>
-              {selectedSchedule.description && (
-                <p className="text-[12px] text-muted mt-3 whitespace-pre-wrap">{selectedSchedule.description}</p>
+                {activeSelectedSchedule.description && (
+                  <p className="text-[12px] text-muted mt-3 whitespace-pre-wrap">{activeSelectedSchedule.description}</p>
               )}
             </div>
           </div>

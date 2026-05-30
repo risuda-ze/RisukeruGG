@@ -46,7 +46,6 @@ export async function GET(req: NextRequest): Promise<Response> {
   const teamId = nonceData.teamId as string;
 
   // 1サーバー1チーム制約: 既に他チームがこの guildId を使用していないか確認
-  const { collectionGroup, query, where, limit, getDocs } = await import('firebase/firestore');
   // Admin SDK での collectionGroup クエリ
   const existingSnap = await db.collectionGroup('discord').where('guildId', '==', guildId).limit(1).get();
   if (!existingSnap.empty) {

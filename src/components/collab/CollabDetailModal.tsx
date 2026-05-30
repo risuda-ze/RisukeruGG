@@ -129,6 +129,7 @@ export function CollabDetailModal({
   const { currentUser, currentTeam, members } = useAuthStore();
   const teamId = currentTeam?.id ?? '';
   const isOpen = session.status === 'open';
+  const localReplyCounter = useRef(0);
 
   /* メンバーIDからアバターURLを取得するヘルパー */
   function memberAvatarUrl(userId: string) {
@@ -235,7 +236,7 @@ export function CollabDetailModal({
       })));
     });
     return unsub;
-  }, [teamId, session.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [teamId, session.id]);
 
   /* タイトル編集終了（即時保存しない） */
   function saveTitle() {
@@ -361,8 +362,10 @@ export function CollabDetailModal({
   function addReply(commentId: string) {
     if (!replyText.trim()) return;
     const myMember = members.find((m) => m.userId === currentUser?.uid);
+    const replyId = `r-${commentId}-${localReplyCounter.current}`;
+    localReplyCounter.current += 1;
     const reply: LocalReply = {
-      id: `r-${Date.now()}`,
+      id: replyId,
       authorId: currentUser?.uid ?? '',
       authorName: myMember?.displayName ?? 'あなた',
       text: replyText.trim(),
@@ -464,7 +467,6 @@ export function CollabDetailModal({
   }
 
   const availableMembers = members.filter((m) => !participants.some((p) => p.id === m.userId));
-  const myMember = members.find((m) => m.userId === currentUser?.uid);
 
   /* リサイズドラッグ時の誤クローズを防ぐため mousedown 発生元を追跡する */
   const mouseDownOnOverlay = useRef<boolean>(false);

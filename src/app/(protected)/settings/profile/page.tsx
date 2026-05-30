@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -54,20 +54,19 @@ export default function ProfileSettingsPage() {
   const isParty = myMember?.plan === 'party';
 
   /* ── プロフィール ──────────────────────────────────────────── */
-  const [displayName, setDisplayName] = useState('');
+  const [displayNameDraft, setDisplayNameDraft] = useState<string | null>(null);
   const [savingName, setSavingName] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [nameSaved, setNameSaved] = useState(false);
 
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarPreviewDraft, setAvatarPreviewDraft] = useState<string | null | undefined>(undefined);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    setDisplayName(currentUser?.displayName ?? '');
-    setAvatarPreview(currentUser?.photoURL ?? null);
-  }, [currentUser?.displayName, currentUser?.photoURL]);
+  const displayName = displayNameDraft ?? currentUser?.displayName ?? '';
+  const avatarPreview =
+    avatarPreviewDraft === undefined ? currentUser?.photoURL ?? null : avatarPreviewDraft;
 
   async function handleSaveName(e: React.FormEvent) {
     e.preventDefault();
@@ -101,7 +100,7 @@ export default function ProfileSettingsPage() {
     }
 
     const localUrl = URL.createObjectURL(file);
-    setAvatarPreview(localUrl);
+    setAvatarPreviewDraft(localUrl);
     setUploadingAvatar(true);
     setAvatarError(null);
     try {
@@ -116,10 +115,10 @@ export default function ProfileSettingsPage() {
           { avatarUrl: downloadUrl }
         );
       }
-      setAvatarPreview(downloadUrl);
+      setAvatarPreviewDraft(downloadUrl);
     } catch {
       setAvatarError('アイコンのアップロードに失敗しました');
-      setAvatarPreview(currentUser.photoURL ?? null);
+      setAvatarPreviewDraft(currentUser.photoURL ?? null);
     } finally {
       setUploadingAvatar(false);
       URL.revokeObjectURL(localUrl);
@@ -284,7 +283,7 @@ export default function ProfileSettingsPage() {
                   label=""
                   value={displayName}
                   onChange={(e) => {
-                    setDisplayName(e.target.value);
+                    setDisplayNameDraft(e.target.value);
                     setNameSaved(false);
                   }}
                   placeholder="表示名を入力"
@@ -296,7 +295,7 @@ export default function ProfileSettingsPage() {
                     type="submit"
                     size="sm"
                     loading={savingName}
-                    disabled={!displayName.trim() || displayName === currentUser?.displayName}
+                    disabled={!displayName.trim() || displayName === (currentUser?.displayName ?? '')}
                   >
                     保存する
                   </Button>
