@@ -78,7 +78,7 @@ export async function handleButtonClick({
       const id = await registerSchedule(session.teamId, proposal, members);
       completionMessage = `✅ スケジュール「${proposal.title}」を登録したよ！（ID: ${id}）`;
     } else if (proposal.type === 'task') {
-      const columnsSnap = await db.collection(`teams/${session.teamId}/kanbanColumns`).get();
+      const columnsSnap = await db.collection(`teams/${session.teamId}/taskStatuses`).get();
       const columns = columnsSnap.docs.map((d) => ({
         id: d.id,
         name: d.data().name as string,

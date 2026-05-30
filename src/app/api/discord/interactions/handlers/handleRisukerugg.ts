@@ -4,12 +4,7 @@ import { getAdminFirestore } from '@/lib/firebase/admin';
 import { generateSystemPrompt } from '@/lib/ai/systemPrompt';
 import { hasProposal, extractProposals, stripProposalBlocks } from '@/lib/ai/parseProposal';
 import { sendFollowUp, sendProposalMessage } from '../discordFollowUp';
-import {
-  getSession,
-  upsertSession,
-  deleteSession,
-  isSessionExpired,
-} from '../sessionManager';
+import { getSession, upsertSession, deleteSession, isSessionExpired } from '../sessionManager';
 
 /**
  * Discord の Deferred Response 後に呼び出すバックグラウンド処理。
@@ -23,7 +18,8 @@ export async function handleAiConversation(
   token: string
 ): Promise<void> {
   const db = getAdminFirestore();
-  const domain = process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'https://risukeru.gg';
+  const domain =
+    process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'https://risukeru.gg';
 
   // ─── リセットコマンド ─────────────────────────────────────
   if (userMessage === 'リセット' || userMessage.toLowerCase() === 'reset') {
@@ -55,7 +51,11 @@ export async function handleAiConversation(
   // サブコレクション（discord）の親（teams/{teamId}）のIDを取得
   const teamId = configDoc.ref.parent.parent?.id;
   if (!teamId) {
-    await sendFollowUp(appId, token, 'チームの特定に失敗しました。サポートにお問い合わせください。');
+    await sendFollowUp(
+      appId,
+      token,
+      'チームの特定に失敗しました。サポートにお問い合わせください。'
+    );
     return;
   }
 
@@ -79,7 +79,7 @@ export async function handleAiConversation(
     db.collection(`teams/${teamId}/schedules`).orderBy('startAt').limit(50).get(),
     db.collection(`teams/${teamId}/tasks`).limit(50).get(),
     db.collection(`teams/${teamId}/collabSessions`).limit(20).get(),
-    db.collection(`teams/${teamId}/kanbanColumns`).orderBy('order').get(),
+    db.collection(`teams/${teamId}/taskStatuses`).orderBy('order').get(),
   ]);
 
   const members = membersSnap.docs.map((d) => ({
