@@ -7,7 +7,6 @@ export const scheduleEntrySchema = z
     startAt: z.date(),
     endAt: z.date(),
     platform: z.enum(['youtube', 'twitch', 'both']).nullable(),
-    status: z.enum(['planned', 'live', 'ended', 'cancelled']),
     description: z.string().max(1000).default(''),
     participantIds: z.array(z.string()).default([]),
     collabPartnerName: z.string().max(100).nullable().default(null),

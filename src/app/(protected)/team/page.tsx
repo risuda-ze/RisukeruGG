@@ -14,6 +14,7 @@ import { LeaveTeamDialog } from '@/components/team/LeaveTeamDialog';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { createTeam, dissolveTeam } from '@/lib/repositories/teams';
+import { ROLE_LABELS } from '@/lib/utils/teamRoles';
 import type { TeamMember, UserRole } from '@/types/entities';
 
 type DialogState =
@@ -21,12 +22,6 @@ type DialogState =
   | { type: 'remove'; member: TeamMember }
   | { type: 'leave' }
   | null;
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  operator: 'オペレーター',
-  member: 'メンバー',
-  rom: 'ROM専',
-};
 
 /* ロール別バッジ色 */
 const ROLE_BADGE: Record<UserRole, { bg: string; text: string; border: string }> = {
@@ -252,7 +247,11 @@ export default function TeamPage() {
                     >
                       {member.avatarUrl ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={member.avatarUrl} alt={member.displayName} className="absolute inset-0 w-full h-full object-cover" />
+                        <img
+                          src={member.avatarUrl}
+                          alt={member.displayName}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
                       ) : (
                         initials
                       )}
@@ -269,7 +268,9 @@ export default function TeamPage() {
                       <div className="text-[14px] font-bold text-text mb-1 truncate">
                         {member.displayName}
                         {isMe && (
-                          <span className="text-muted text-[11px] font-normal ml-1.5">（あなた）</span>
+                          <span className="text-muted text-[11px] font-normal ml-1.5">
+                            （あなた）
+                          </span>
                         )}
                       </div>
                       <div
@@ -329,7 +330,10 @@ export default function TeamPage() {
               action={
                 isOperator ? (
                   <button
-                    onClick={() => { setEditNameValue(currentTeam.name); setShowEditName(true); }}
+                    onClick={() => {
+                      setEditNameValue(currentTeam.name);
+                      setShowEditName(true);
+                    }}
                     className="text-[11px] text-muted hover:text-text transition-colors px-2 py-1 rounded-[6px] hover:bg-surface border border-border"
                   >
                     チーム名を編集
@@ -352,7 +356,7 @@ export default function TeamPage() {
           </Card>
         )}
 
-        {/* チームを解散する（オーナーのみ） */}
+        {/* チームを解散する（オペレーターのみ） */}
         {isOperator && (
           <div className="bg-card border border-live/30 rounded-lg overflow-hidden">
             <CardHeader title="危険ゾーン" />
@@ -439,13 +443,19 @@ export default function TeamPage() {
         <div className="space-y-4">
           <div
             className="rounded-[10px] p-3 border text-[12px]"
-            style={{ background: 'rgba(226,53,57,0.08)', borderColor: 'rgba(226,53,57,0.3)', color: 'var(--live)' }}
+            style={{
+              background: 'rgba(226,53,57,0.08)',
+              borderColor: 'rgba(226,53,57,0.3)',
+              color: 'var(--live)',
+            }}
           >
-            <strong>注意：</strong>この操作は元に戻せません。チーム内のすべてのデータが削除され、全メンバーがソロ状態に戻ります。
+            <strong>注意：</strong>
+            この操作は元に戻せません。チーム内のすべてのデータが削除され、全メンバーがソロ状態に戻ります。
           </div>
           <div>
             <p className="text-[12px] text-muted mb-1.5">
-              確認のため、チーム名「<strong className="text-text">{currentTeam?.name}</strong>」を入力してください。
+              確認のため、チーム名「<strong className="text-text">{currentTeam?.name}</strong>
+              」を入力してください。
             </p>
             <Input
               label=""

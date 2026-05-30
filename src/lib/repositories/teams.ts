@@ -7,10 +7,16 @@ const functions = getFunctions(undefined, 'asia-northeast1');
 
 // Firestoreドキュメントを型付きエンティティに変換
 function toTeam(id: string, data: Record<string, unknown>): Team {
+  // operatorUids がない旧ドキュメントは ownerId から変換
+  const operatorUids = Array.isArray(data.operatorUids)
+    ? (data.operatorUids as string[])
+    : data.ownerId
+      ? [data.ownerId as string]
+      : [];
   return {
     id,
     name: data.name as string,
-    ownerId: data.ownerId as string,
+    operatorUids,
     teamCode: data.teamCode as string,
     createdAt: (data.createdAt as { toDate: () => Date }).toDate(),
   };
@@ -79,7 +85,6 @@ export const joinTeam = httpsCallable<{ teamCode: string }, { success: boolean; 
   'joinTeam'
 );
 
-
 export const resetTeamCode = httpsCallable<{ teamId: string }, { newTeamCode: string }>(
   functions,
   'resetTeamCode'
@@ -95,10 +100,7 @@ export const deleteAccount = httpsCallable<
   { success: boolean }
 >(functions, 'deleteAccount');
 
-export const dissolveTeam = httpsCallable<void, { success: boolean }>(
-  functions,
-  'dissolveTeam'
-);
+export const dissolveTeam = httpsCallable<void, { success: boolean }>(functions, 'dissolveTeam');
 
 export const leaveSpecificTeam = httpsCallable<
   { teamId: string },

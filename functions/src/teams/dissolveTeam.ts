@@ -53,7 +53,7 @@ export const dissolveTeam = onCall(
       const soloRef = db.collection('teams').doc();
       batch.set(soloRef, {
         name: `${memberData.displayName}のチーム`,
-        ownerId: memberId,
+        operatorUids: [memberId],
         teamCode: soloCode,
         createdAt: now,
       });
@@ -79,7 +79,7 @@ export const dissolveTeam = onCall(
     const ownerSoloRef = db.collection('teams').doc();
     batch.set(ownerSoloRef, {
       name: `${userData.displayName}のチーム`,
-      ownerId: uid,
+      operatorUids: [uid],
       teamCode: ownerSoloCode,
       createdAt: now,
     });

@@ -2,15 +2,10 @@
 
 import { useState } from 'react';
 import { updateMemberRole } from '@/lib/repositories/teams';
+import { ROLE_LABELS } from '@/lib/utils/teamRoles';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import type { TeamMember, UserRole } from '@/types/entities';
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  operator: 'オペレーター',
-  member: 'メンバー',
-  rom: 'ROM専',
-};
+import type { TeamMember } from '@/types/entities';
 
 interface RoleChangeDialogProps {
   teamId: string;

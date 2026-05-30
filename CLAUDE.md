@@ -39,7 +39,9 @@ pnpm vitest run tests/unit/tasks/columnTransition.test.ts
 
 ## プロジェクトルール
 
-このプロジェクトは3つのサブエージェント（Planner → Generator → Evaluator）による自動開発パイプラインで構築される。
+このプロジェクトは常に3つのサブエージェント（Planner → Generator → Evaluator）によるパイプラインで構築され、質の高い成果物を提供することを目的とする。
+
+- 最新仕様は `docs/仕様・計画/*` を正本とし、仕様の変更履歴や詳細設計、実装計画の補足や差分は `specs/*` に記述する。
 
 ### エージェント構成
 

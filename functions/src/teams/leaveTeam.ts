@@ -14,18 +14,37 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
 
   const ctx = await getAuthContext(request, teamId);
 
-  let isSoloOperator = false;
+  let isSoloTeam = false;
   let existingTeamCode: string | undefined;
+  let remainingOperatorUids: string[] = [];
 
   if (ctx.role === 'operator') {
-    const membersSnap = await db.collection(`teams/${teamId}/members`).get();
-    if (membersSnap.size > 1) {
-      throw new HttpsError('failed-precondition', '先に別のメンバーをオペレーターに指名してください');
-    }
-    /* ソロチーム: トランザクション内で旧チームを削除して新ソロチーム生成フローに合流 */
-    isSoloOperator = true;
-    const teamDocSnap = await db.doc(`teams/${teamId}`).get();
+    const [membersSnap, teamDocSnap] = await Promise.all([
+      db.collection(`teams/${teamId}/members`).get(),
+      db.doc(`teams/${teamId}`).get(),
+    ]);
     existingTeamCode = teamDocSnap.data()?.teamCode as string | undefined;
+
+    if (membersSnap.size <= 1) {
+      isSoloTeam = true;
+    } else {
+      /* 複数メンバー: 自分以外にオペレーターがいるか確認 */
+      const otherOperatorCount = membersSnap.docs.filter(
+        (d) => d.id !== uid && (d.data().role === 'operator' || d.data().role === 'owner')
+      ).length;
+      if (otherOperatorCount === 0) {
+        throw new HttpsError(
+          'failed-precondition',
+          '先に別のメンバーをオペレーターに指名してください'
+        );
+      }
+      const currentOperatorUids = Array.isArray(teamDocSnap.data()?.operatorUids)
+        ? (teamDocSnap.data()!.operatorUids as string[])
+        : teamDocSnap.data()?.ownerId
+          ? [teamDocSnap.data()!.ownerId as string]
+          : [];
+      remainingOperatorUids = currentOperatorUids.filter((id) => id !== uid);
+    }
   }
 
   return await db.runTransaction(async (tx) => {
@@ -33,10 +52,12 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
 
     tx.delete(db.doc(`teams/${teamId}/members/${uid}`));
 
-    /* ソロオペレーター脱退: 旧チームドキュメントと teamCode を削除 */
-    if (isSoloOperator) {
+    if (isSoloTeam) {
       tx.delete(db.doc(`teams/${teamId}`));
       if (existingTeamCode) tx.delete(db.doc(`teamCodes/${existingTeamCode}`));
+    } else if (ctx.role === 'operator') {
+      /* 他にオペレーターが存在: operatorUids から自分を除いて更新 */
+      tx.update(db.doc(`teams/${teamId}`), { operatorUids: remainingOperatorUids });
     }
 
     const tasksSnap = await tx.get(
@@ -46,21 +67,32 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
       tx.update(taskDoc.ref, { assigneeId: null });
     }
 
-    if (!isSoloOperator) {
-      const teamSnap = await tx.get(db.doc(`teams/${teamId}`));
-      const ownerId = teamSnap.data()!.ownerId as string;
-      const notifRef = db.collection(`teams/${teamId}/notifications`).doc();
-      tx.set(notifRef, {
-        recipientId: ownerId,
-        category: 'system',
-        type: 'member_left',
-        title: 'メンバーが脱退しました',
-        body: `${userData.displayName} がチームを脱退しました`,
-        refType: 'team',
-        refId: teamId,
-        isRead: false,
-        createdAt: now,
-      });
+    if (!isSoloTeam) {
+      let notifyUids: string[];
+      if (ctx.role === 'operator') {
+        notifyUids = remainingOperatorUids;
+      } else {
+        const teamSnap = await tx.get(db.doc(`teams/${teamId}`));
+        notifyUids = Array.isArray(teamSnap.data()?.operatorUids)
+          ? (teamSnap.data()!.operatorUids as string[])
+          : teamSnap.data()?.ownerId
+            ? [teamSnap.data()!.ownerId as string]
+            : [];
+      }
+      for (const recipientId of notifyUids) {
+        const notifRef = db.collection(`teams/${teamId}/notifications`).doc();
+        tx.set(notifRef, {
+          recipientId,
+          category: 'system',
+          type: 'member_left',
+          title: 'メンバーが脱退しました',
+          body: `${userData.displayName} がチームを脱退しました`,
+          refType: 'team',
+          refId: teamId,
+          isRead: false,
+          createdAt: now,
+        });
+      }
     }
 
     const soloTeamCode = randomBytes(6)
@@ -73,7 +105,7 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
 
     tx.set(soloTeamRef, {
       name: `${userData.displayName}のチーム`,
-      ownerId: uid,
+      operatorUids: [uid],
       teamCode: soloTeamCode,
       createdAt: now,
     });

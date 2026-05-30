@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import type { Task, KanbanColumn, TeamMember, TaskCategory } from '@/types/entities';
+import type { Task, TaskStatus, TeamMember, TaskCategory } from '@/types/entities';
 
 function escapeCsv(value: string): string {
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
@@ -11,7 +11,7 @@ function escapeCsv(value: string): string {
 
 export function exportTasksCsv(
   tasks: Task[],
-  columns: KanbanColumn[],
+  columns: TaskStatus[],
   members: TeamMember[],
   categories: TaskCategory[]
 ): void {
@@ -43,3 +43,5 @@ export function exportTasksCsv(
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+

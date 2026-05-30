@@ -3,7 +3,8 @@
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useTasksStore } from '@/stores/tasks';
 import { updateTask } from '@/lib/repositories/tasks';
-import type { KanbanColumn, Task, TeamMember } from '@/types/entities';
+import { sortTasksByDueDate } from '@/lib/utils/taskOrdering';
+import type { TaskStatus, Task, TeamMember } from '@/types/entities';
 import { Badge } from '@/components/ui/Badge';
 import TaskCard from './TaskCard';
 
@@ -41,10 +42,10 @@ export default function KanbanBoard({
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="flex gap-4 overflow-x-auto pb-4 min-h-[60vh] scrollbar-none">
         {columns.map((column) => (
-          <KanbanColumnPanel
+          <TaskStatusPanel
             key={column.id}
             column={column}
-            tasks={tasks.filter((t) => t.columnId === column.id)}
+            tasks={sortTasksByDueDate(tasks.filter((t) => t.columnId === column.id))}
             teamId={teamId}
             members={members}
             canEdit={canEdit}
@@ -57,8 +58,8 @@ export default function KanbanBoard({
   );
 }
 
-interface KanbanColumnPanelProps {
-  column: KanbanColumn;
+interface TaskStatusPanelProps {
+  column: TaskStatus;
   tasks: Task[];
   teamId: string;
   members: TeamMember[];
@@ -67,7 +68,7 @@ interface KanbanColumnPanelProps {
   onDeleteTask: (taskId: string) => void;
 }
 
-function KanbanColumnPanel({
+function TaskStatusPanel({
   column,
   tasks,
   teamId,
@@ -75,7 +76,7 @@ function KanbanColumnPanel({
   canEdit,
   onEditTask,
   onDeleteTask,
-}: KanbanColumnPanelProps) {
+}: TaskStatusPanelProps) {
   return (
     <div className="flex-1 min-w-[240px]">
       {/* カラムヘッダー */}

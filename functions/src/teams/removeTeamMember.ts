@@ -78,7 +78,7 @@ export const removeTeamMember = onCall(
 
       tx.set(soloTeamRef, {
         name: `${targetUserData.displayName}のチーム`,
-        ownerId: targetUserId,
+        operatorUids: [targetUserId],
         teamCode: soloTeamCode,
         createdAt: now,
       });

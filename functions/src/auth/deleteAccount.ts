@@ -9,9 +9,10 @@ interface DeleteAccountData {
 
 /**
  * アカウントと関連データを削除する。
- * - 自分が唯一のオーナーで他メンバーがいるチームがある場合、operatorAssignments で新オペレーターの指定が必要
- * - ソロチームのオーナー: チームごと削除
- * - editor/viewer: チームから脱退してアカウント削除
+ * - 自分が唯一のオペレーターで他メンバーがいるチームがある場合、operatorAssignments で新オペレーターの指定が必要
+ * - ソロチームのオペレーター: チームごと削除
+ * - 複数オペレーターの1人: operatorUids から自分を除去して脱退
+ * - member/rom: チームから脱退してアカウント削除
  */
 export const deleteAccount = onCall(
   { region: 'asia-northeast1' },
@@ -22,9 +23,7 @@ export const deleteAccount = onCall(
 
     const rawTeamIds = (userData.teamIds as string[] | undefined) ?? [];
     const currentTeamId = userData.currentTeamId as string | null;
-    const teamIds = Array.from(
-      new Set([...rawTeamIds, ...(currentTeamId ? [currentTeamId] : [])])
-    );
+    const teamIds = Array.from(new Set([...rawTeamIds, ...(currentTeamId ? [currentTeamId] : [])]));
 
     type TeamData = {
       teamId: string;
@@ -32,6 +31,8 @@ export const deleteAccount = onCall(
       memberCount: number;
       teamCode?: string;
       isSolo: boolean;
+      isLastOperator: boolean;
+      operatorUids: string[];
     };
 
     // 各チームの状態を取得
@@ -47,18 +48,31 @@ export const deleteAccount = onCall(
       const role = memberSnap.data()!.role as string;
       const memberCount = membersSnap.size;
       const teamCode = teamSnap.data()?.teamCode as string | undefined;
+      const operatorUids = Array.isArray(teamSnap.data()?.operatorUids)
+        ? (teamSnap.data()!.operatorUids as string[])
+        : teamSnap.data()?.ownerId
+          ? [teamSnap.data()!.ownerId as string]
+          : [];
+      const isSolo = role === 'operator' && memberCount <= 1;
+      const isLastOperator =
+        (role === 'operator' || role === 'owner') &&
+        operatorUids.length === 1 &&
+        operatorUids[0] === uid;
+
       teamDataList.push({
         teamId,
         role,
         memberCount,
         teamCode,
-        isSolo: role === 'operator' && memberCount <= 1,
+        isSolo,
+        isLastOperator,
+        operatorUids,
       });
     }
 
-    // オペレーター指名が必要なチームを確認
+    // 最後のオペレーターかつ他メンバーがいるチームは新オペレーター指名が必要
     const teamsNeedingOperator = teamDataList.filter(
-      (t) => t.role === 'operator' && !t.isSolo && !assignments.some((a) => a.teamId === t.teamId)
+      (t) => t.isLastOperator && !t.isSolo && !assignments.some((a) => a.teamId === t.teamId)
     );
     if (teamsNeedingOperator.length > 0) {
       throw new HttpsError(
@@ -92,21 +106,35 @@ export const deleteAccount = onCall(
       );
 
       // 書き込みフェーズ
-      for (const { teamId, isSolo, teamCode } of teamDataList) {
+      for (const teamData of teamDataList) {
+        const { teamId, isSolo, teamCode, isLastOperator, operatorUids } = teamData;
+
         if (isSolo) {
           // ソロチーム: チームごと削除
           tx.delete(db.doc(`teams/${teamId}/members/${uid}`));
           tx.delete(db.doc(`teams/${teamId}`));
           if (teamCode) tx.delete(db.doc(`teamCodes/${teamCode}`));
         } else {
-          // 複数メンバーチーム: 新オペレーター指名 + 自分を削除
           const assignment = assignments.find((a) => a.teamId === teamId);
-          if (assignment) {
+
+          if (isLastOperator && assignment) {
+            // 最後のオペレーター: 新オペレーターを昇格し operatorUids を更新
             tx.update(db.doc(`teams/${teamId}/members/${assignment.newOperatorId}`), {
               role: 'operator',
               updatedAt: FieldValue.serverTimestamp(),
             });
-            tx.update(db.doc(`teams/${teamId}`), { ownerId: assignment.newOperatorId });
+            const newOperatorUids = [
+              ...operatorUids.filter((id) => id !== uid),
+              ...(operatorUids.includes(assignment.newOperatorId)
+                ? []
+                : [assignment.newOperatorId]),
+            ];
+            tx.update(db.doc(`teams/${teamId}`), { operatorUids: newOperatorUids });
+          } else if (teamData.role === 'operator' || teamData.role === 'owner') {
+            // 複数オペレーターの1人: operatorUids から自分を除去するだけ
+            tx.update(db.doc(`teams/${teamId}`), {
+              operatorUids: operatorUids.filter((id) => id !== uid),
+            });
           }
 
           const taskIdx = nonSoloTeamIds.indexOf(teamId);

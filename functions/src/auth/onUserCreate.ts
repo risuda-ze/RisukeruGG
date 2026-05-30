@@ -45,7 +45,7 @@ export const onUserCreate = v1.auth.user().onCreate(async (user) => {
 
   batch.set(soloTeamRef, {
     name: `${displayName}のチーム`,
-    ownerId: uid,
+    operatorUids: [uid],
     teamCode,
     createdAt: now,
   });
