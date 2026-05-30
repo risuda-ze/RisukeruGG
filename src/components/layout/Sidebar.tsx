@@ -8,19 +8,20 @@ import { useSidebarStore } from '@/stores/sidebar';
 import { useNotificationsStore } from '@/stores/notifications';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { TeamSwitcher } from '@/components/layout/TeamSwitcher';
 
 /* ── ナビゲーション定義 ─────────────────────────────────────── */
 interface NavItem {
   href: string;
   label: string;
-  icon: string;
+  icon: IconName;
   disabled?: boolean;
 }
 
 interface NavSection {
   label: string;
-  icon: string;
+  icon: IconName;
   items: NavItem[];
 }
 
@@ -114,7 +115,7 @@ export function Sidebar() {
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.background = ''; }}
           aria-label={collapsed ? 'サイドバーを展開' : 'サイドバーを折りたたむ'}
         >
-          <span className="material-icons text-[20px]">{collapsed ? 'menu' : 'menu_open'}</span>
+          <Icon name={collapsed ? 'menu' : 'menu_open'} size={20} />
         </button>
       </div>
 
@@ -131,7 +132,7 @@ export function Sidebar() {
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}
               >
-                <span className="material-icons text-[18px] shrink-0">{section.icon}</span>
+                <Icon name={section.icon} size={18} />
                 <span
                   className={`flex-1 text-left text-[10px] font-bold tracking-widest uppercase whitespace-nowrap transition-[opacity,width] duration-300 ${
                     collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
@@ -140,11 +141,11 @@ export function Sidebar() {
                   {section.label}
                 </span>
                 <span
-                  className={`material-icons text-[15px] shrink-0 transition-all duration-200 ${
+                  className={`shrink-0 transition-all duration-200 ${
                     collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
                   } ${isOpen ? 'rotate-90' : ''}`}
                 >
-                  chevron_right
+                  <Icon name="chevron_right" size={15} />
                 </span>
               </button>
 
@@ -160,7 +161,7 @@ export function Sidebar() {
                             className="flex items-center gap-2.5 px-3 py-2 rounded-[6px] text-sm pointer-events-none select-none"
                             style={{ color: 'var(--text-disabled)' }}
                           >
-                            <span className="material-icons text-[18px] shrink-0">{item.icon}</span>
+                            <Icon name={item.icon} size={18} />
                             <span className="whitespace-nowrap">{item.label}</span>
                           </span>
                         ) : (
@@ -168,7 +169,7 @@ export function Sidebar() {
                             href={item.href}
                             className={`navlink${active ? ' navlink--active' : ''}`}
                           >
-                            <span className="material-icons text-[18px] shrink-0">{item.icon}</span>
+                            <Icon name={item.icon} size={18} />
                             <span className="flex-1 whitespace-nowrap">{item.label}</span>
                             {showBadge && (
                               <span
@@ -197,7 +198,7 @@ export function Sidebar() {
                             className="flex justify-center py-2 rounded-[6px] pointer-events-none select-none"
                             style={{ color: 'var(--text-disabled)' }}
                           >
-                            <span className="material-icons text-[18px]">{item.icon}</span>
+                            <Icon name={item.icon} size={18} />
                           </span>
                         ) : (
                           <Link
@@ -210,7 +211,7 @@ export function Sidebar() {
                             }}
                             aria-label={item.label}
                           >
-                            <span className="material-icons text-[18px]">{item.icon}</span>
+                            <Icon name={item.icon} size={18} />
                           </Link>
                         )}
                       </li>
@@ -251,7 +252,7 @@ export function Sidebar() {
             className="shrink-0 p-1.5 rounded-[6px] text-muted hover:text-text hover:bg-surface transition-colors"
             aria-label="サインアウト"
           >
-            <span className="material-icons text-[20px]">logout</span>
+            <Icon name="logout" size={20} />
           </button>
         )}
       </div>

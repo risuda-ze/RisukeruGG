@@ -15,6 +15,7 @@ import { createSchedule } from '@/lib/repositories/schedules';
 import { createTask } from '@/lib/repositories/tasks';
 import { createCollabSession } from '@/lib/repositories/collabs';
 import type { MemberCalendarEvent } from '@/types/entities';
+import { Icon } from '@/components/ui/Icon';
 
 // ── 定数 ───────────────────────────────────────────────────────
 
@@ -136,7 +137,7 @@ function ProposalCard({ proposals, status, onConfirm, onReject }: ProposalCardPr
       {status === 'done' ? (
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-1.5 text-[13px] text-green-500">
-            <span className="material-icons text-[16px]">check_circle</span>
+            <Icon name="check" size={16} />
             登録しました！
           </div>
           <Link
@@ -159,7 +160,7 @@ function ProposalCard({ proposals, status, onConfirm, onReject }: ProposalCardPr
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <>
-                <span className="material-icons text-[15px]">check</span>
+                <Icon name="check" size={15} />
                 {confirmLabel}
               </>
             )}
@@ -498,13 +499,13 @@ export function AIChatPage() {
           className="md:hidden w-9 h-9 flex items-center justify-center rounded-full text-muted hover:text-text hover:bg-bg transition-colors"
           aria-label="戻る"
         >
-          <span className="material-icons text-[22px]">arrow_back</span>
+          <Icon name="chevron_right" size={22} className="rotate-180" />
         </button>
 
         {/* アイコン + タイトル */}
         <div className="flex items-center gap-2 flex-1">
           <div className="w-7 h-7 rounded-full bg-purple/10 flex items-center justify-center shrink-0">
-            <span className="material-icons text-[16px] text-purple">auto_awesome</span>
+            <Icon name="auto_awesome" size={16} className="text-purple" />
           </div>
           <span className="text-[16px] font-bold text-text">AIに相談</span>
         </div>
@@ -516,7 +517,7 @@ export function AIChatPage() {
             aria-label="会話をリセット"
             className="w-9 h-9 flex items-center justify-center rounded-full text-muted hover:text-text hover:bg-bg transition-colors"
           >
-            <span className="material-icons text-[20px]">delete_outline</span>
+            <Icon name="delete_outline" size={20} />
           </button>
         )}
       </header>
@@ -534,7 +535,7 @@ export function AIChatPage() {
                 {/* AIアバター（左側） */}
                 {m.role === 'assistant' && (
                   <div className="w-7 h-7 rounded-full bg-purple/10 flex items-center justify-center shrink-0 mr-2 mt-1">
-                    <span className="material-icons text-[14px] text-purple">auto_awesome</span>
+                    <Icon name="auto_awesome" size={14} className="text-purple" />
                   </div>
                 )}
 
@@ -589,7 +590,7 @@ export function AIChatPage() {
                 disabled={!input.trim() || isLoading || proposalStatus === 'loading'}
                 className="w-10 h-10 shrink-0 rounded-full bg-purple text-white flex items-center justify-center transition-all disabled:opacity-40 hover:bg-purple-l"
               >
-                <span className="material-icons text-[20px]">send</span>
+                <Icon name="send" size={20} />
               </button>
             </form>
             <p className="text-[11px] text-muted/50 text-center mt-1.5">
@@ -603,7 +604,7 @@ export function AIChatPage() {
           {/* ウェルカムメッセージ */}
           <div className="text-center">
             <div className="w-14 h-14 rounded-full bg-purple/10 flex items-center justify-center mx-auto mb-3">
-              <span className="material-icons text-[28px] text-purple">auto_awesome</span>
+              <Icon name="auto_awesome" size={28} className="text-purple" />
             </div>
             <h2 className="text-[18px] font-bold text-text">AIアシスタント</h2>
             <p className="text-[13px] text-muted mt-1">
@@ -629,7 +630,7 @@ export function AIChatPage() {
                 disabled={!input.trim() || isLoading}
                 className="w-11 h-11 shrink-0 rounded-full bg-purple text-white flex items-center justify-center transition-all disabled:opacity-40 hover:bg-purple-l shadow-sm"
               >
-                <span className="material-icons text-[20px]">send</span>
+                <Icon name="send" size={20} />
               </button>
             </form>
 

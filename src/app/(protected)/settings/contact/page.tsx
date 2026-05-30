@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/lib/firebase/client';
 import { TopBar } from '@/components/layout/TopBar';
+import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
@@ -96,12 +97,9 @@ export default function ContactPage() {
         {formState === 'success' ? (
           <Card>
             <div className="text-center py-8">
-              <span
-                className="material-icons text-[48px] mb-4"
-                style={{ color: 'var(--green)' }}
-              >
-                check_circle
-              </span>
+              <div className="mb-4 flex justify-center" style={{ color: 'var(--green)' }}>
+                <Icon name="check" size={48} />
+              </div>
               <h2 className="text-lg font-semibold text-text mb-2">送信しました</h2>
               <p className="text-sm text-muted mb-6">
                 お問い合わせを受け付けました。

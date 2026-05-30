@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Icon } from '@/components/ui/Icon';
 
 const HomeIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5">
@@ -33,7 +34,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="bottom-nav flex md:hidden fixed bottom-0 left-0 right-0 z-40"
+      className="bottom-nav fixed bottom-0 left-0 right-0 z-40"
       aria-label="メインナビゲーション"
     >
       <div className="flex w-full items-center justify-around px-2">
@@ -50,7 +51,7 @@ export function BottomNav() {
             className="flex items-center justify-center w-10 h-10 rounded-[10px] text-white"
             style={{ background: 'var(--primary)', boxShadow: 'var(--glow-primary)' }}
           >
-            <span className="material-icons text-[20px]">auto_awesome</span>
+            <Icon name="auto_awesome" size={20} />
           </span>
           <span>AI</span>
         </Link>

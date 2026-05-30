@@ -27,6 +27,7 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Card } from '@/components/ui/Card';
 import { TopBar } from '@/components/layout/TopBar';
+import { Icon } from '@/components/ui/Icon';
 
 type Tab = 'calendar' | 'tasks' | 'account';
 
@@ -237,14 +238,14 @@ function ScheduleCategorySettings() {
                     className="p-1 rounded-[6px] text-text hover:text-purple-l transition-colors"
                     aria-label="編集"
                   >
-                    <span className="material-icons text-[16px]">edit</span>
+                    <Icon name="edit" size={16} />
                   </button>
                   <button
                     onClick={() => setDeleteConfirm(cat)}
                     className="p-1 rounded-[6px] text-text hover:text-live transition-colors"
                     aria-label="削除"
                   >
-                    <span className="material-icons text-[16px]">delete</span>
+                    <Icon name="delete" size={16} />
                   </button>
                 </div>
               )}
@@ -614,7 +615,7 @@ function KanbanSettings() {
                     className="p-1 rounded-[6px] text-text hover:text-text disabled:opacity-30 transition-colors"
                     aria-label="上へ移動"
                   >
-                    <span className="material-icons text-[16px]">keyboard_arrow_up</span>
+                    <Icon name="keyboard_arrow_up" size={16} />
                   </button>
                   <button
                     onClick={() => handleMoveDown(index)}
@@ -622,7 +623,7 @@ function KanbanSettings() {
                     className="p-1 rounded-[6px] text-text hover:text-text disabled:opacity-30 transition-colors"
                     aria-label="下へ移動"
                   >
-                    <span className="material-icons text-[16px]">keyboard_arrow_down</span>
+                    <Icon name="keyboard_arrow_down" size={16} />
                   </button>
                   <button
                     onClick={() => {
@@ -634,7 +635,7 @@ function KanbanSettings() {
                     className="p-1 rounded-[6px] text-text hover:text-purple-l transition-colors"
                     aria-label="編集"
                   >
-                    <span className="material-icons text-[16px]">edit</span>
+                    <Icon name="edit" size={16} />
                   </button>
                   <button
                     onClick={() => setDeleteConfirmColumn(col)}
@@ -642,7 +643,7 @@ function KanbanSettings() {
                     className="p-1 rounded-[6px] text-text hover:text-live disabled:opacity-30 transition-colors"
                     aria-label="削除"
                   >
-                    <span className="material-icons text-[16px]">delete</span>
+                    <Icon name="delete" size={16} />
                   </button>
                 </div>
               )}
@@ -895,14 +896,14 @@ function TaskCategorySettings() {
                     className="p-1 rounded-[6px] text-text hover:text-purple-l transition-colors"
                     aria-label="編集"
                   >
-                    <span className="material-icons text-[16px]">edit</span>
+                    <Icon name="edit" size={16} />
                   </button>
                   <button
                     onClick={() => setDeleteConfirm(cat)}
                     className="p-1 rounded-[6px] text-text hover:text-live transition-colors"
                     aria-label="削除"
                   >
-                    <span className="material-icons text-[16px]">delete</span>
+                    <Icon name="delete" size={16} />
                   </button>
                 </div>
               )}

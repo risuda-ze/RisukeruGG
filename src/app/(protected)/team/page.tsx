@@ -15,7 +15,8 @@ import { TeamJoinForm } from '@/components/team/TeamJoinForm';
 import { DiscordSettingsSection } from '@/components/team/DiscordSettingsSection';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { createTeam, dissolveTeam } from '@/lib/repositories/teams';
-import { ROLE_LABELS } from '@/lib/utils/teamRoles';
+import { Icon } from '@/components/ui/Icon';
+import { Dropdown } from '@/components/ui/Dropdown';
 import type { TeamMember, UserRole } from '@/types/entities';
 
 type DialogState =
@@ -23,6 +24,12 @@ type DialogState =
   | { type: 'remove'; member: TeamMember }
   | { type: 'leave' }
   | null;
+
+const ROLE_LABELS: Record<UserRole, string> = {
+  operator: 'オペレーター',
+  member: 'メンバー',
+  rom: 'ROM専',
+};
 
 /* ロール別バッジ色 */
 const ROLE_BADGE: Record<UserRole, { bg: string; text: string; border: string }> = {
@@ -289,15 +296,16 @@ export default function TeamPage() {
                     {/* オペレーター向けアクション */}
                     {isOperator && !isMe && (
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <select
+                        <Dropdown
                           value={member.role}
-                          onChange={(e) => handleRoleChange(member, e.target.value)}
-                          className="text-[11px] border border-border rounded-[6px] px-2 py-1 bg-card text-text outline-none"
-                        >
-                          <option value="operator">オペレーター</option>
-                          <option value="member">メンバー</option>
-                          <option value="rom">ROM専</option>
-                        </select>
+                          options={[
+                            { value: 'operator', label: 'オペレーター' },
+                            { value: 'member', label: 'メンバー' },
+                            { value: 'rom', label: 'ROM専' },
+                          ]}
+                          onChange={(v) => handleRoleChange(member, v)}
+                          size="sm"
+                        />
                         <button
                           onClick={() => setDialog({ type: 'remove', member })}
                           className="text-[11px] text-muted hover:text-live transition-colors px-1.5 py-1 rounded-[4px] hover:bg-live/10"
@@ -374,7 +382,7 @@ export default function TeamPage() {
                 onClick={openDissolveModal}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold transition-colors border border-live/40 text-live hover:bg-live/10"
               >
-                <span className="material-icons text-[18px]">group_remove</span>
+                <Icon name="group_remove" size={18} />
                 チームを解散する
               </button>
             </div>

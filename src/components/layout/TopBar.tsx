@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useNotificationsStore } from '@/stores/notifications';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
+import { Icon } from '@/components/ui/Icon';
 
 interface TopBarProps {
   title: string;
@@ -58,7 +59,7 @@ export function TopBar({ title, subtitle, children }: TopBarProps) {
             }}
             aria-label={`通知${unreadCount > 0 ? `（未読${unreadCount}件）` : ''}`}
           >
-            <span className="material-icons text-[20px]">notifications</span>
+            <Icon name="notifications" size={20} />
             {unreadCount > 0 && (
               <span
                 className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full border-2"

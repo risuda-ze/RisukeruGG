@@ -417,9 +417,12 @@ input[type='time']::-webkit-calendar-picker-indicator {
 
 /* ── Bottom nav ─────────────────────────────────────────────── */
 .bottom-nav {
-  /* display は Tailwind (flex md:hidden) 側で制御するため設定しない */
+  display: none; /* デフォルト非表示 (PC) */
   align-items: stretch; justify-content: space-around;
   background: var(--surface); border-top: 1px solid var(--border); height: 64px;
+}
+@media (max-width: 767px) {
+  .bottom-nav { display: flex; }
 }
 .bottom-nav-item {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
@@ -451,10 +454,150 @@ input[type='time']::-webkit-calendar-picker-indicator {
 }
 .ds-field input::placeholder { color: var(--text-muted); }
 
+/* ── MiniCalendar ───────────────────────────────────────────── */
+.minical { font-family: var(--font-head); width: 100%; }
+.minical__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.minical__title { font-weight: 600; font-size: 0.95rem; color: var(--text-primary); }
+.minical__nav {
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--card-border);
+  background: var(--surface); color: var(--text-secondary);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+.minical__nav:hover { border-color: var(--primary); color: var(--text-primary); }
+.minical__grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.minical__wd { text-align: center; font-size: 0.66rem; font-weight: 600; color: var(--text-muted); padding-bottom: 5px; }
+.minical__wd.is-sun { color: var(--danger); }
+.minical__wd.is-sat { color: var(--info); }
+.minical__day {
+  position: relative; aspect-ratio: 1; border: none; background: transparent;
+  color: var(--text-secondary); font-family: var(--font-head); font-size: 0.82rem; font-weight: 500;
+  border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+.minical__day:hover:not(:disabled) { background: var(--card-raised); color: var(--text-primary); }
+.minical__day.is-today { color: var(--primary-300); box-shadow: inset 0 0 0 1px var(--primary-700, var(--primary)); }
+.minical__day.is-sel { background: var(--primary); color: #fff; box-shadow: var(--glow-primary); }
+.minical__day.is-disabled { opacity: 0.3; cursor: not-allowed; }
+.minical__time {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--card-border);
+}
+.minical__time-label {
+  display: flex; align-items: center; gap: 7px;
+  font-weight: 600; font-size: 0.82rem; color: var(--text-secondary); white-space: nowrap;
+}
+.minical__time-label .ic { color: var(--primary-300); }
+.minical__time-fields { display: flex; align-items: center; gap: 6px; flex: 1; max-width: 200px; }
+.minical__colon { font-weight: 700; color: var(--text-muted); }
+.minical__readout {
+  display: flex; align-items: center; gap: 8px; margin-top: 12px;
+  padding: 10px 13px; border-radius: var(--radius-md);
+  background: var(--primary-950); border: 1px solid var(--primary-800, var(--primary));
+  cursor: default;
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+.minical__readout:focus-within { border-color: var(--primary); box-shadow: var(--glow-primary); }
+
+/* ── Custom Dropdown ────────────────────────────────────────── */
+.dropdown { position: relative; }
+.dropdown__trigger {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  height: 44px; padding: 0 12px 0 14px;
+  background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius-md);
+  color: var(--text-primary); font-family: var(--font-head); font-weight: 500; font-size: 0.9rem;
+  cursor: pointer; white-space: nowrap; text-align: left;
+  transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+.dropdown__trigger:hover:not(:disabled) { background: var(--card-raised); }
+.dropdown__trigger:disabled { opacity: 0.45; cursor: not-allowed; }
+.dropdown__trigger.is-open { background: var(--primary-950); border-color: var(--card-border); box-shadow: none; }
+.dropdown__trigger .ic { color: var(--text-muted); flex-shrink: 0; transition: transform var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
+.dropdown__trigger.is-open .ic { transform: rotate(180deg); color: var(--primary-300); }
+.dropdown__trigger--sm { height: 36px; font-size: 0.82rem; padding: 0 8px 0 12px; border-radius: var(--radius-sm); }
+.dropdown__menu {
+  position: absolute; top: calc(100% + 6px); left: 0; min-width: 100%; z-index: 50;
+  background: var(--card-raised); border: 1px solid var(--border-light, var(--border));
+  border-radius: var(--radius-md); box-shadow: 0 8px 32px rgba(0,0,0,0.45); padding: 6px;
+  display: flex; flex-direction: column; gap: 2px;
+  animation: slide-up var(--duration-fast) var(--ease-out) both;
+}
+.dropdown__menu--right { left: auto; right: 0; }
+.dropdown__menu--up { top: auto; bottom: calc(100% + 6px); animation: none; }
+.dropdown__menu--scroll { max-height: 188px; overflow-y: auto; }
+.dropdown__menu--scroll::-webkit-scrollbar { width: 6px; }
+.dropdown__menu--scroll::-webkit-scrollbar-thumb { background: var(--border, rgba(255,255,255,0.12)); border-radius: 3px; }
+.dropdown__item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 11px;
+  border: none; background: transparent; color: var(--text-secondary);
+  font-family: var(--font-body); font-size: 0.88rem; text-align: left;
+  border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap; width: 100%;
+  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+.dropdown__item:hover { background: rgba(91,200,250,0.12); color: var(--info); }
+.dropdown__item.is-active { color: var(--primary-300); }
+.dropdown__check { margin-left: auto; }
+
 /* ── Skeleton ───────────────────────────────────────────────── */
 .skeleton {
   border-radius: var(--radius-sm);
   background: linear-gradient(100deg, var(--surface) 30%, var(--card-raised) 50%, var(--surface) 70%);
   background-size: 200% 100%;
   animation: scan var(--duration-crawl) var(--ease-linear) infinite;
+}
+
+/* ── Native form controls ────────────────────────────────────── */
+/* select */
+select {
+  appearance: none;
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%237070a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  padding: 8px 36px 8px 12px;
+  outline: none;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-instant) var(--ease-snap),
+    box-shadow var(--duration-instant) var(--ease-snap);
+}
+select:focus {
+  border-color: var(--primary);
+  box-shadow: var(--glow-primary);
+}
+select option {
+  background: var(--card);
+  color: var(--text-primary);
+}
+
+/* date / time / datetime-local inputs */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  color-scheme: dark;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  padding: 8px 12px;
+  outline: none;
+  transition:
+    border-color var(--duration-instant) var(--ease-snap),
+    box-shadow var(--duration-instant) var(--ease-snap);
+}
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="datetime-local"]:focus {
+  border-color: var(--primary);
+  box-shadow: var(--glow-primary);
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.6) sepia(1) hue-rotate(220deg) saturate(1.5);
+  cursor: pointer;
 }

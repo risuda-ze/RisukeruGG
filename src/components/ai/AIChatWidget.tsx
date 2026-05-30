@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Icon } from '@/components/ui/Icon';
 
 /**
  * フローティングAIボタン
@@ -19,7 +20,7 @@ export function AIChatWidget() {
       aria-label="AIに相談"
       className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 w-14 h-14 rounded-full bg-purple text-white shadow-lg flex items-center justify-center hover:bg-purple-l transition-colors"
     >
-      <span className="material-icons text-[24px]">auto_awesome</span>
+      <Icon name="auto_awesome" size={24} />
     </Link>
   );
 }

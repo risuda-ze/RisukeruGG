@@ -4,6 +4,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import packageJson from '../../../package.json';
+import { Icon } from '@/components/ui/Icon';
 
 export const metadata: Metadata = {
   title: 'プライバシーポリシー | リスケるGG',
@@ -43,7 +44,7 @@ export default function PrivacyPolicyPage() {
             href="/login"
             className="text-sm text-muted hover:text-purple-l transition-colors flex items-center gap-1"
           >
-            <span className="material-icons text-base">arrow_back</span>
+            <Icon name="chevron_right" size={16} className="rotate-180" />
             ログインに戻る
           </Link>
         </div>
