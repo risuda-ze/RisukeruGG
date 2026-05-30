@@ -1,7 +1,18 @@
 #!/bin/bash
 set -e
 
+LOCK_HASH_FILE="/workspace/functions/node_modules/.risukeru-lock-hash"
+CURRENT_HASH="$(sha256sum /workspace/functions/package.json /workspace/pnpm-lock.yaml /workspace/pnpm-workspace.yaml | sha256sum | cut -d' ' -f1)"
+
 echo "=== Firebase Emulator 起動スクリプト ==="
+
+if [ ! -d /workspace/functions/node_modules ] || [ ! -f "$LOCK_HASH_FILE" ] || [ "$(cat "$LOCK_HASH_FILE")" != "$CURRENT_HASH" ]; then
+  echo ">>> functions 依存関係を同期します..."
+  pnpm install --frozen-lockfile --filter "risukeru-gg-functions"
+  printf '%s' "$CURRENT_HASH" > "$LOCK_HASH_FILE"
+else
+  echo ">>> functions 依存関係は最新です。"
+fi
 
 # Cloud Functions を TypeScript コンパイル
 echo ">>> functions ビルド中..."

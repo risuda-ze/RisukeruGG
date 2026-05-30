@@ -84,6 +84,9 @@ cp .env.local.example .env.local
 # 4. Docker コンテナの起動（Firebase Emulator + Next.js）
 docker compose up -d
 
+# functions/package.json / pnpm-lock.yaml を更新した場合も、emulator 起動時に
+# Functions 依存関係が自動同期されます。
+
 # 5. テストデータの投入（コンテナ起動後）
 scripts\seed.bat
 ```
@@ -123,21 +126,23 @@ scripts\seed.bat
 
 | 種別         | 内容                                           |
 | ------------ | ---------------------------------------------- |
-| チーム       | 「配信チームα」1チーム                         |
-| メンバー     | 4人（オーナー・編集者×2・閲覧者）              |
+| チーム       | 2チーム（配信チームα / 編集チームβ）           |
+| メンバー     | 6人（operator×2・member×2・rom×2）             |
 | スケジュール | 先月・当月・来月分（週1回配信 + 毎週土曜動画） |
-| タスク       | 10件（未着手・進行中・完了に分散）             |
+| タスク       | 14件（未着手・進行中・完了 + 連携有無を網羅）  |
 | 通知         | 10件（すべて未読）                             |
-| コラボ       | 2件（打診中・調整中）                          |
+| コラボ       | 5件（open / confirmed / expired / cancelled）  |
 
 **テストアカウント（パスワード共通: `password123`）:**
 
 | 表示名           | メールアドレス     | ロール   |
 | ---------------- | ------------------ | -------- |
-| 配信太郎         | taro@example.com   | オーナー |
-| 編集花子         | hanako@example.com | 編集者   |
-| マネージャー健太 | kenta@example.com  | 編集者   |
-| 視聴者三郎       | saburo@example.com | 閲覧者   |
+| 配信太郎         | taro@example.com   | operator |
+| 運営花子         | hanako@example.com | operator |
+| マネージャー健太 | kenta@example.com  | member   |
+| ROM三郎          | saburo@example.com | rom      |
+| サポート里奈     | rina@example.com   | member   |
+| ROM美香          | mika@example.com   | rom      |
 
 ---
 
