@@ -1,27 +1,31 @@
-/* バッジコンポーネント — カラーバリアント定義 */
-
-type BadgeVariant = 'purple' | 'amber' | 'live' | 'green' | 'muted' | 'default';
+type BadgeVariant = 'purple' | 'amber' | 'live' | 'green' | 'muted' | 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
 export interface BadgeProps {
   variant?: BadgeVariant;
+  dot?: boolean;
   children: React.ReactNode;
   className?: string;
 }
 
-const variantClasses: Record<BadgeVariant, string> = {
-  purple: 'bg-purple/15 text-purple-l',
-  amber: 'bg-amber/15 text-amber-l',
-  live: 'bg-live/15 text-live',
-  green: 'bg-green/15 text-green',
-  muted: 'bg-surface text-muted',
-  default: 'bg-surface border border-border text-text',
+const variantMap: Record<BadgeVariant, string> = {
+  primary: 'ds-badge--primary',
+  purple:  'ds-badge--primary',
+  success: 'ds-badge--success',
+  green:   'ds-badge--success',
+  warning: 'ds-badge--warning',
+  amber:   'ds-badge--amber',
+  danger:  'ds-badge--danger',
+  live:    'ds-badge--danger',
+  info:    'ds-badge--info',
+  muted:   'ds-badge--neutral',
+  neutral: 'ds-badge--neutral',
+  default: 'ds-badge--neutral',
 };
 
-export function Badge({ children, variant = 'default', className = '' }: BadgeProps) {
+export function Badge({ children, variant = 'default', dot = false, className = '' }: BadgeProps) {
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide ${variantClasses[variant]} ${className}`}
-    >
+    <span className={`ds-badge ${variantMap[variant]} ${className}`}>
+      {dot && <span className="dot" />}
       {children}
     </span>
   );
