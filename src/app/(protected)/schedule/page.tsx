@@ -20,6 +20,8 @@ import { ScheduleDetailModal } from '@/components/calendar/ScheduleDetailModal';
 import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { ScheduleForm } from '@/components/calendar/ScheduleForm';
+import { HintBar } from '@/components/ui/HintBar';
+import { useHintDismiss } from '@/hooks/useHintDismiss';
 import { Icon } from '@/components/ui/Icon';
 import type { ScheduleEntry, MemberCalendarEvent } from '@/types/entities';
 
@@ -35,6 +37,8 @@ export default function SchedulePage() {
   const [gcalError, setGcalError] = useState<GCalFetchError>(null);
   const [showMemberCalendars, setShowMemberCalendars] = useState(false);
   const [memberCalendarEvents, setMemberCalendarEvents] = useState<MemberCalendarEvent[]>([]);
+  /* ヒントバーの表示/非表示（localStorage 永続化） */
+  const { visible: hintVisible, dismiss: dismissHint, show: showHint } = useHintDismiss('riskeru_hint_schedule');
 
   /* 読み取り専用ポップアップのドラッグ移動 */
   const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
@@ -163,74 +167,133 @@ export default function SchedulePage() {
   return (
     <div className="flex flex-col flex-1 overflow-hidden relative">
       {/* トップバー */}
-      <TopBar title="スケジュール" />
+      <TopBar title="スケジュール" subtitle="予定の確認・追加・編集ができます" />
 
-      {/* カレンダーナビゲーションバー */}
-      <div className="flex items-center justify-between px-3 md:px-6 py-0.5 md:py-1 bg-card shrink-0">
-        {/* 週/月トグル + ラベル */}
-        <div className="flex items-center gap-2 md:gap-4">
-          <div className="flex bg-surface border border-border rounded-[6px] overflow-hidden">
-            <button
-              onClick={() => setView('week')}
-              className={`px-2.5 md:px-3.5 py-1 text-[12px] font-semibold transition-colors ${
-                view === 'week' ? 'bg-purple-d text-purple-l' : 'text-muted hover:text-text'
-              }`}
-            >
-              週
-            </button>
-            <button
-              onClick={() => setView('month')}
-              className={`px-2.5 md:px-3.5 py-1 text-[12px] font-semibold transition-colors ${
-                view === 'month' ? 'bg-purple-d text-purple-l' : 'text-muted hover:text-text'
-              }`}
-            >
-              月
-            </button>
+      {/* カレンダーヘッダー */}
+      <div
+        className="flex flex-wrap items-center gap-2 px-4 md:px-6 py-2 shrink-0"
+        style={{ background: 'var(--surface)', borderBottom: '1px solid var(--card-border)' }}
+      >
+        {/* 左: 週/月トグル + YYYY年MM月 */}
+        <div className="flex items-center gap-3">
+          {/* 週/月切替セグメント */}
+          <div
+            className="flex border rounded-[8px] p-[3px] gap-[2px]"
+            style={{ background: 'var(--surface)', borderColor: 'var(--card-border)' }}
+          >
+            {(['週', '月'] as const).map((label) => {
+              const v = label === '週' ? 'week' : 'month';
+              return (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className="px-4 py-1.5 rounded-[6px] text-[13px] font-semibold transition-colors"
+                  style={{
+                    background: view === v ? 'var(--primary)' : 'none',
+                    color: view === v ? '#fff' : 'var(--text-secondary)',
+                    boxShadow: view === v ? 'var(--glow-primary)' : 'none',
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
-          <div className="text-[14px] md:text-[16px] font-bold font-num text-text">
-            {year}年 {month}月
-          </div>
+
+          {/* YYYY年MM月 */}
+          <span
+            className="text-[15px] md:text-[17px] font-bold whitespace-nowrap"
+            style={{ fontFamily: 'var(--font-head)', color: 'var(--text-primary)' }}
+          >
+            {year}年{month}月
+          </span>
         </div>
 
-        {/* 前/今日/次ナビ */}
-        <div className="flex gap-1.5 md:gap-2">
+        {/* 右: 予定追加 / メンバー切替 / ナビ / ヘルプトグル */}
+        <div className="ml-auto flex items-center gap-2 flex-wrap">
+          {/* 予定追加ボタン */}
+          {canEdit && (
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[12px] font-semibold transition-colors text-white"
+              style={{ background: 'var(--primary)', boxShadow: 'var(--glow-primary)' }}
+            >
+              <Icon name="add" size={15} />
+              <span className="hidden sm:inline">予定を追加</span>
+            </button>
+          )}
+
+          {/* メンバーの予定表示切替 */}
           <button
-            onClick={goBack}
-            className="p-1 rounded-[6px] border border-border text-text hover:bg-surface transition-colors"
-            aria-label={view === 'month' ? '前月' : '前の週'}
+            onClick={() => setShowMemberCalendars((v) => !v)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[8px] text-[12px] font-semibold transition-colors border"
+            style={{
+              background: showMemberCalendars ? 'rgba(91,200,250,0.15)' : 'none',
+              borderColor: showMemberCalendars ? 'rgba(91,200,250,0.5)' : 'var(--border)',
+              color: showMemberCalendars ? 'var(--info)' : 'var(--text-muted)',
+            }}
           >
-            <Icon name="chevron_left" size={16} />
+            <Icon name="groups" size={14} />
+            <span className="hidden sm:inline">メンバーの予定</span>
           </button>
-          <button
-            onClick={() => setCurrentDate(new Date())}
-            className="px-2.5 md:px-3 py-1 rounded-[6px] border border-border text-[11px] font-semibold text-text hover:bg-surface transition-colors"
+
+          {/* 日付ナビ: 前/今日/次 */}
+          <div
+            className="flex items-center rounded-[8px] border p-[3px] gap-[2px]"
+            style={{ background: 'var(--surface)', borderColor: 'var(--card-border)' }}
           >
-            今日
-          </button>
+            <button
+              onClick={goBack}
+              className="w-8 h-8 flex items-center justify-center rounded-[6px] transition-colors"
+              style={{ color: 'var(--text-secondary)' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--card-raised)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
+              aria-label={view === 'month' ? '前月' : '前の週'}
+            >
+              <Icon name="chevron_left" size={16} />
+            </button>
+            <button
+              onClick={() => setCurrentDate(new Date())}
+              className="px-3 h-8 rounded-[6px] text-[12px] font-semibold transition-colors"
+              style={{ color: 'var(--text-primary)' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--card-raised)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-accent)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
+            >
+              今日
+            </button>
+            <button
+              onClick={goForward}
+              className="w-8 h-8 flex items-center justify-center rounded-[6px] transition-colors"
+              style={{ color: 'var(--text-secondary)' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--card-raised)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
+              aria-label={view === 'month' ? '翌月' : '次の週'}
+            >
+              <Icon name="chevron_right" size={16} />
+            </button>
+          </div>
+
+          {/* ヘルプトグル: ヒントバーを再表示する「?」ボタン */}
           <button
-            onClick={goForward}
-            className="p-1 rounded-[6px] border border-border text-text hover:bg-surface transition-colors"
-            aria-label={view === 'month' ? '翌月' : '次の週'}
+            onClick={() => hintVisible ? dismissHint() : showHint()}
+            className="w-9 h-9 flex items-center justify-center rounded-[8px] border transition-colors"
+            style={{
+              borderColor: hintVisible ? 'var(--primary-700)' : 'var(--card-border)',
+              background: hintVisible ? 'var(--primary-950)' : 'var(--surface)',
+              color: hintVisible ? 'var(--text-accent)' : 'var(--text-secondary)',
+            }}
+            aria-label={hintVisible ? 'ヒントを閉じる' : 'ヒントを表示'}
           >
-            <Icon name="chevron_right" size={16} />
+            <Icon name="help_outline" size={16} />
           </button>
         </div>
       </div>
 
-      {/* 表示オプション */}
-      <div className="flex items-center gap-2 px-3 md:px-6 py-1 bg-card border-b border-border shrink-0">
-        <button
-          onClick={() => setShowMemberCalendars((v) => !v)}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] text-[11px] font-semibold transition-colors border ${
-            showMemberCalendars
-              ? 'bg-[#60a5fa]/20 border-[#60a5fa]/50 text-[#60a5fa]'
-              : 'border-border text-muted hover:text-text hover:bg-surface'
-          }`}
-        >
-          <Icon name="groups" size={14} />
-          メンバーの予定
-        </button>
-      </div>
+      {/* ヒントバー（初回表示・?ボタンで再表示） */}
+      <HintBar storageKey="riskeru_hint_schedule">
+        カレンダーの日付をクリックすると週表示に切り替わります。「予定を追加」ボタンまたはセルをクリックして予定を追加できます。
+      </HintBar>
+
 
       {/* Googleカレンダー接続バナー（未接続・認証期限切れ共通） */}
       {!authLoading && !googleAccessToken && (

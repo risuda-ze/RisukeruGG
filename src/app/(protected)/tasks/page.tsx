@@ -78,7 +78,7 @@ export default function TasksPage() {
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* ── トップバー ─────────────────────────────────────── */}
-      <TopBar title="タスク管理">
+      <TopBar title="タスク管理" subtitle="タスクの管理・進捗確認ができます">
         <Button
           variant="secondary"
           size="sm"

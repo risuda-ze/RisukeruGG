@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { DateTimeInput } from '@/components/ui/DateTimeInput';
+import { DateField } from '@/components/ui/DateField';
 import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import { Dropdown } from '@/components/ui/Dropdown';
@@ -129,33 +129,39 @@ export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: Sc
         />
       </div>
 
-      {/* 開始日時 + 終日ボタン */}
-      <div className="flex items-end gap-2">
-        <DateTimeInput
-          label="開始日時"
+      {/* 開始日時ラベル（右端に終日トグル） */}
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
+            開始日時
+          </label>
+          {/* 終日トグル（開始日時ラベルの横・右揃え） */}
+          <button
+            type="button"
+            onClick={handleAllDay}
+            disabled={!startAt}
+            className={`px-2.5 py-1 rounded-[8px] text-[11px] font-semibold border transition-colors disabled:opacity-40 ${
+              isAllDay ? 'border-purple text-purple' : 'border-border text-muted hover:text-purple-l hover:border-purple-l'
+            }`}
+          >
+            終日
+          </button>
+        </div>
+        <DateField
           value={startAt}
-          onChange={handleStartAtChange}
-          allDay={isAllDay}
-          required
-          className="flex-1"
+          onChange={(d) => handleStartAtChange(d)}
+          hideTime={isAllDay}
+          placeholder="開始日時を選択"
         />
-        <button
-          type="button"
-          onClick={handleAllDay}
-          disabled={!startAt}
-          className={`mb-0.5 px-3 py-2.5 rounded-[12px] text-[12px] font-semibold border transition-colors disabled:opacity-40 whitespace-nowrap ${isAllDay ? 'border-purple text-purple' : 'border-border text-muted hover:text-purple-l hover:border-purple-l'}`}
-        >
-          終日
-        </button>
       </div>
 
-      <DateTimeInput
+      <DateField
         label="終了日時"
         value={endAt}
-        onChange={setEndAt}
+        onChange={(d) => setEndAt(d)}
         min={startAt ?? undefined}
-        allDay={isAllDay}
-        required
+        hideTime={isAllDay}
+        placeholder="終了日時を選択"
       />
 
       <MarkdownEditor
@@ -169,10 +175,12 @@ export function ScheduleForm({ initialData, categories, onSubmit, onCancel }: Sc
 
       {error && <p className="text-[12px] text-live">{error}</p>}
 
-      <div className="flex justify-end gap-3 pt-1">
+      {/* フッター: キャンセル → （削除: 編集時のみ） → 保存 */}
+      <div className="flex items-center gap-3 pt-1">
         <Button variant="ghost" type="button" onClick={onCancel}>
           キャンセル
         </Button>
+        <div className="flex-1" />
         <Button type="submit" loading={loading}>
           保存する
         </Button>

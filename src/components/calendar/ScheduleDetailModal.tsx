@@ -234,11 +234,11 @@ export function ScheduleDetailModal({
       onMouseDown={(e) => { mouseDownOnOverlay.current = e.target === e.currentTarget; }}
       onClick={() => { if (mouseDownOnOverlay.current) handleCloseWithDraft(); }}
     >
-      {/* モーダル本体 */}
+      {/* モーダル本体（870px 幅、pop-modal アニメーション） */}
       <div
-        className="flex flex-col overflow-hidden rounded-[24px]"
+        className="flex flex-col overflow-hidden rounded-[24px] animate-pop-modal"
         style={{
-          width: 'min(720px, calc(100vw - 32px))',
+          width: 'min(870px, calc(100vw - 32px))',
           minWidth: '320px',
           height: 'min(650px, 92vh)',
           minHeight: '400px',
