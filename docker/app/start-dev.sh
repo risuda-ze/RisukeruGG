@@ -1,4 +1,4 @@
-﻿#!/bin/sh
+#!/bin/sh
 set -eu
 
 LOCK_HASH_FILE="/workspace/node_modules/.risukeru-lock-hash"

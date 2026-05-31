@@ -207,7 +207,7 @@ export default function ProfileSettingsPage() {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      <TopBar title="個人設定" />
+      <TopBar title="個人設定" subtitle="プロフィールや個人設定を変更できます" />
 
       <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 max-w-3xl">
         {/* ── タブナビゲーション ─────────────────────────────── */}

@@ -249,7 +249,7 @@ export default function CollabsPage() {
   if (!teamId) {
     return (
       <div className="flex flex-col flex-1 overflow-hidden">
-        <TopBar title="コラボ調整" />
+        <TopBar title="コラボ調整" subtitle="コラボ相手との日程調整ができます" />
         <div className="flex-1 flex items-center justify-center text-muted text-sm">
           チームに参加してからコラボ機能を利用できます
         </div>
@@ -262,7 +262,7 @@ export default function CollabsPage() {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden relative">
-      <TopBar title="コラボ調整" />
+      <TopBar title="コラボ調整" subtitle="コラボ相手との日程調整ができます" />
 
       <div className="flex-1 overflow-y-auto">
         <div className="flex gap-6 p-6 items-start min-h-full">
