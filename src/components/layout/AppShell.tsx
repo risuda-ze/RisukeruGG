@@ -1,9 +1,9 @@
-/* アプリシェル — Sidebar/BottomNav を md: ブレークポイントで切り替え */
+/* アプリシェル — Sidebar/MobileToolbar を md ブレークポイントで切り替え */
 /* TopBar は各ページが自前でレンダリングする */
 
 import { Sidebar } from './Sidebar';
-import { BottomNav } from './BottomNav';
-import { AIChatWidget } from '@/components/ai/AIChatWidget';
+import { MobileToolbar } from './MobileToolbar';
+import { AIFab } from './AIFab';
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -21,11 +21,11 @@ export function AppShell({ children }: AppShellProps) {
         {children}
       </main>
 
-      {/* ── モバイル: 下部ナビゲーション ───────────────── */}
-      <BottomNav />
+      {/* ── モバイル: 下部ツールバー ────────────────────── */}
+      <MobileToolbar />
 
-      {/* ── AIフローティングボタン ──────────────────────── */}
-      <AIChatWidget />
+      {/* ── 全画面右下: AIフローティングボタン ──────────── */}
+      <AIFab />
     </div>
   );
 }

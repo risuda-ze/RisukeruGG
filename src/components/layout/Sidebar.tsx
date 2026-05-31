@@ -1,13 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useAuthStore } from '@/stores/auth';
 import { useSidebarStore } from '@/stores/sidebar';
 import { useNotificationsStore } from '@/stores/notifications';
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { TeamSwitcher } from '@/components/layout/TeamSwitcher';
 
@@ -30,31 +27,28 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'メイン',
     icon: 'dashboard',
     items: [
-      { href: '/chat', label: 'AIに相談', icon: 'auto_awesome' },
-      { href: '/schedule', label: 'スケジュール', icon: 'calendar_month' },
-      { href: '/tasks', label: 'タスク管理', icon: 'task_alt' },
-      { href: '/collabs', label: 'コラボ調整', icon: 'handshake' },
+      { href: '/chat',         label: 'AIに相談',  icon: 'auto_awesome' },
+      { href: '/schedule',     label: 'スケジュール', icon: 'calendar_month' },
+      { href: '/tasks',        label: 'タスク管理', icon: 'task_alt' },
+      { href: '/collabs',      label: 'コラボ調整', icon: 'handshake' },
     ],
   },
   {
     label: '設定',
     icon: 'settings',
     items: [
-      { href: '/team', label: 'チーム管理', icon: 'groups' },
-      { href: '/notifications', label: '通知', icon: 'notifications' },
-      { href: '/settings', label: 'チャンネル設定', icon: 'settings' },
-      { href: '/settings/profile', label: '個人設定', icon: 'manage_accounts' },
-      { href: '/settings/contact', label: 'お問い合わせ', icon: 'mail_outline' },
+      { href: '/team',              label: 'チーム管理', icon: 'groups' },
+      { href: '/notifications',     label: '通知管理',   icon: 'notifications' },
+      { href: '/settings/profile',  label: '個人設定',   icon: 'manage_accounts' },
     ],
   },
   {
     label: '各種連携',
     icon: 'integration_instructions',
     items: [
-      { href: '#', label: 'Googleカレンダー', icon: 'event', disabled: true },
-      { href: '#', label: 'Discord', icon: 'forum', disabled: true },
-      { href: '#', label: 'YouTube', icon: 'smart_display', disabled: true },
-      { href: '#', label: 'X (Twitter)', icon: 'tag', disabled: true },
+      { href: '#', label: 'Discord連携',  icon: 'forum',         disabled: true },
+      { href: '#', label: 'Youtube連携',  icon: 'smart_display', disabled: true },
+      { href: '#', label: 'X（旧Twitter）', icon: 'tag',          disabled: true },
     ],
   },
 ];
@@ -66,14 +60,8 @@ export function Sidebar() {
   const activeHref = NAV_SECTIONS.flatMap((s) => s.items)
     .filter((i) => !i.disabled && (pathname === i.href || pathname.startsWith(i.href + '/')))
     .reduce((longest, i) => (i.href.length > longest.length ? i.href : longest), '');
-  const { currentUser, signOut } = useAuthStore();
   const { collapsed, openSections, toggleCollapsed, toggleSection } = useSidebarStore();
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
-
-  /* ユーザーのイニシャルを生成 */
-  const initials = currentUser?.displayName
-    ? currentUser.displayName.slice(0, 2).toUpperCase()
-    : '?';
 
   return (
     <aside
@@ -83,9 +71,11 @@ export function Sidebar() {
       style={{ background: 'var(--surface)', borderRight: '1px solid var(--card-border)' }}
     >
       {/* ── ヘッダー ────────────────────────────────────────── */}
-      <div className={`py-4 flex items-center min-w-0 ${collapsed ? 'px-2 justify-between' : 'px-4 gap-3'}`} style={{ borderBottom: '1px solid var(--card-border)' }}>
-        {/* ロゴアイコン（クリックでダッシュボードへ） */}
-        <Link href="/dashboard" className="shrink-0" aria-label="ダッシュボードへ">
+      <div
+        className={`py-4 flex items-center min-w-0 ${collapsed ? 'px-2 justify-between' : 'px-4 gap-3'}`}
+        style={{ borderBottom: '1px solid var(--card-border)' }}
+      >
+        <Link href="/schedule" className="shrink-0" aria-label="スケジュールへ">
           <Image
             src="/icon-192x192.png"
             alt="リスケるGG"
@@ -96,7 +86,6 @@ export function Sidebar() {
           />
         </Link>
 
-        {/* アプリ名（折りたたみ時は非表示） */}
         <span
           className={`text-sm font-bold tracking-tight whitespace-nowrap transition-[opacity,width] duration-300 ${
             collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 flex-1'
@@ -106,13 +95,18 @@ export function Sidebar() {
           リスケるGG
         </span>
 
-        {/* トグルボタン */}
         <button
           onClick={toggleCollapsed}
           className="shrink-0 p-1 rounded-[6px] transition-colors"
           style={{ color: 'var(--text-muted)' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; (e.currentTarget as HTMLElement).style.background = 'var(--card-raised)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.background = ''; }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
+            (e.currentTarget as HTMLElement).style.background = 'var(--card-raised)';
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)';
+            (e.currentTarget as HTMLElement).style.background = '';
+          }}
           aria-label={collapsed ? 'サイドバーを展開' : 'サイドバーを折りたたむ'}
         >
           <Icon name={collapsed ? 'menu' : 'menu_open'} size={20} />
@@ -121,16 +115,20 @@ export function Sidebar() {
 
       {/* ── ナビゲーション ───────────────────────────────── */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
-        {NAV_SECTIONS.map((section) => {
+        {NAV_SECTIONS.map((section, idx) => {
           const isOpen = openSections.includes(section.label);
           return (
-            <div key={section.label}>
+            /* 最初のセクション以外の上端に区切りボーダーを表示 */
+            <div
+              key={section.label}
+              style={idx > 0 ? { borderTop: '1px solid var(--border)', paddingTop: '4px', marginTop: '4px' } : undefined}
+            >
               <button
                 onClick={() => toggleSection(section.label)}
                 className="w-full flex items-center gap-2 px-2 py-1.5 rounded-[6px] transition-colors"
                 style={{ color: 'var(--text-muted)' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}
               >
                 <Icon name={section.icon} size={18} />
                 <span
@@ -165,10 +163,7 @@ export function Sidebar() {
                             <span className="whitespace-nowrap">{item.label}</span>
                           </span>
                         ) : (
-                          <Link
-                            href={item.href}
-                            className={`navlink${active ? ' navlink--active' : ''}`}
-                          >
+                          <Link href={item.href} className={`navlink${active ? ' navlink--active' : ''}`}>
                             <Icon name={item.icon} size={18} />
                             <span className="flex-1 whitespace-nowrap">{item.label}</span>
                             {showBadge && (
@@ -219,42 +214,46 @@ export function Sidebar() {
                   })}
                 </ul>
               )}
+
+              {/* 設定グループの直後にお問い合わせを大項目として配置 */}
+              {section.label === '設定' && !collapsed && (
+                <Link
+                  href="/settings/contact"
+                  className="flex items-center gap-2 w-full px-2 py-[13px] mt-2 text-[10px] font-bold tracking-widest uppercase transition-colors"
+                  style={{
+                    borderTop: '1px solid var(--border)',
+                    color: pathname === '/settings/contact' ? 'var(--text-accent)' : 'var(--text-muted)',
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.color =
+                      pathname === '/settings/contact' ? 'var(--text-accent)' : 'var(--text-muted)';
+                  }}
+                >
+                  <Icon name="mail_outline" size={14} style={{ opacity: 0.7, flexShrink: 0 } as React.CSSProperties} />
+                  <span className="flex-1">お問い合わせ</span>
+                  <Icon name="chevron_right" size={14} style={{ color: 'var(--text-disabled)' } as React.CSSProperties} />
+                </Link>
+              )}
+              {/* 折りたたみ時のお問い合わせアイコン */}
+              {section.label === '設定' && collapsed && (
+                <Link
+                  href="/settings/contact"
+                  className="flex justify-center py-2 rounded-[6px] transition-colors"
+                  style={{ color: pathname === '/settings/contact' ? 'var(--text-accent)' : 'var(--text-muted)' }}
+                  aria-label="お問い合わせ"
+                >
+                  <Icon name="mail_outline" size={18} />
+                </Link>
+              )}
             </div>
           );
         })}
       </nav>
 
       {/* ── チームスイッチャー ──────────────────────────── */}
-      <div className="px-2 pt-2" style={{ borderTop: '1px solid var(--card-border)' }}>
+      <div className="px-2 py-2" style={{ borderTop: '1px solid var(--card-border)' }}>
         <TeamSwitcher collapsed={collapsed} />
-      </div>
-
-      {/* ── フッター（ユーザー情報） ─────────────────────── */}
-      <div className="px-3 py-3 flex items-center gap-2 min-w-0" style={{ borderTop: '1px solid var(--card-border)' }}>
-        <Avatar initials={initials} src={currentUser?.photoURL} bgClass="bg-purple-d/30" textClass="text-purple-l" size="sm" />
-        {/* 名前・プランバッジ（折りたたみ時は非表示） */}
-        <div
-          className={`flex-1 min-w-0 transition-[opacity,width] duration-300 ${
-            collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
-          }`}
-        >
-          <p className="text-[11px] text-text truncate leading-tight">
-            {currentUser?.displayName ?? 'ユーザー'}
-          </p>
-          <Badge variant="purple" className="mt-0.5">
-            PARTY
-          </Badge>
-        </div>
-        {/* サインアウトボタン（折りたたみ時は非表示） */}
-        {!collapsed && (
-          <button
-            onClick={() => signOut()}
-            className="shrink-0 p-1.5 rounded-[6px] text-muted hover:text-text hover:bg-surface transition-colors"
-            aria-label="サインアウト"
-          >
-            <Icon name="logout" size={20} />
-          </button>
-        )}
       </div>
     </aside>
   );

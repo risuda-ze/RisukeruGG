@@ -161,6 +161,19 @@ function WeekRow({
             .filter((s) => s.startAt <= endOfDay(day) && s.endAt >= startOfDay(day))
             .sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
 
+          {/* この日付セルに表示中の複数日バー本数（MAX_TRACKS 以下のもの） */}
+          const visibleBarCount = eventCols.filter(
+            ({ id, colStart, colEnd }) =>
+              tracks[id] < MAX_TRACKS && colStart <= colIndex && colIndex <= colEnd
+          ).length;
+          /* 単日イベントは 3件合計 から複数日バー数を引いた残りを表示上限とする */
+          const MAX_TOTAL = 3;
+          const singleLimit = Math.max(0, MAX_TOTAL - visibleBarCount);
+          const visibleSingles = daySingles.slice(0, singleLimit);
+          const hiddenSingleCount = daySingles.length - visibleSingles.length;
+          /* 複数日バーのオーバーフロー（MAX_TRACKSを超えたバー）も合計に含める */
+          const totalOverflow = (overflowByCol[colIndex] ?? 0) + hiddenSingleCount;
+
           return (
             <div
               key={day.toISOString()}
@@ -209,15 +222,15 @@ function WeekRow({
                 </span>
               </div>
 
-              {/* 単日イベント + オーバーフロー表示 */}
+              {/* 単日イベント（最大 singleLimit 件）+ オーバーフロー表示 */}
               <div className="flex flex-col gap-[2px] px-1 pb-1 overflow-y-auto h-full">
-                {daySingles.map((s) => {
+                {visibleSingles.map((s) => {
                   const color = getEventColor(s.categoryId, categories, s.source);
                   const cat = categories.find((c) => c.id === s.categoryId);
                   return (
                     <button
                       key={s.id}
-                      className="w-full text-left px-1.5 rounded-[4px] text-[13px] font-medium text-white whitespace-nowrap overflow-hidden shrink-0 border-l-[3px] transition-[filter,transform] hover:brightness-[1.18] hover:translate-x-[1px] flex items-center gap-1 animate-puni"
+                      className="w-full text-left px-1.5 rounded-[4px] text-[13px] font-medium text-white whitespace-nowrap overflow-hidden shrink-0 border-l-[3px] transition-[filter,transform] hover:brightness-[1.18] hover:translate-x-[1px] flex items-center gap-1 animate-pop-scale"
                       style={{ height: `${EVENT_H}px`, background: `${color}55`, borderLeftColor: color }}
                       onClick={(e) => { e.stopPropagation(); onEventClick(s); }}
                       title={s.title}
@@ -230,11 +243,14 @@ function WeekRow({
                     </button>
                   );
                 })}
-                {/* +n件オーバーフロー表示（クリック不可） */}
-                {(overflowByCol[colIndex] ?? 0) > 0 && (
-                  <div className="text-[10px] text-muted px-1 py-0.5 font-semibold shrink-0">
-                    +{overflowByCol[colIndex]}件
-                  </div>
+                {/* +N件：クリックで週表示に切り替え */}
+                {totalOverflow > 0 && (
+                  <button
+                    className="text-[10px] text-muted px-1 py-0.5 font-semibold shrink-0 hover:text-purple-l transition-colors text-left"
+                    onClick={(e) => { e.stopPropagation(); onDateLabelClick?.(day); }}
+                  >
+                    +{totalOverflow}件
+                  </button>
                 )}
               </div>
             </div>
@@ -264,7 +280,7 @@ function WeekRow({
           <button
             key={`${s.id}-w${weekStart.getTime()}`}
             className={[
-              'absolute overflow-hidden border-l-[3px] animate-puni',
+              'absolute overflow-hidden border-l-[3px] animate-pop-scale',
               'transition-[filter,transform] hover:brightness-[1.18] hover:translate-x-[1px] text-white',
               'flex items-center',
               !startsBefore ? 'rounded-l-[4px]' : 'border-l-transparent',
