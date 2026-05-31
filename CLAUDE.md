@@ -10,6 +10,28 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT END -->
 
+## Gitブランチ運用
+
+### ブランチ構成
+
+| ブランチ | 役割 |
+| --- | --- |
+| `main` | 本番ブランチ。本番環境にデプロイされる。 |
+| `develop` | 開発ブランチ。機能開発のマージ先。PRのデフォルトターゲット。 |
+| `feature/{名前}` | 機能開発・修正用ブランチ。`develop`から切る。 |
+
+### ルール
+
+1. **機能開発は必ず`develop`から`feature/`ブランチを切って作業する**
+2. **開発PRのマージ先は常に`develop`** — `main`への直接マージは禁止
+3. **`main`へのマージは`develop`から不定期に行う**（リリース時のみ）
+4. PRを作成する際は`base`ブランチを`develop`に設定すること
+
+### 絶対禁止
+
+- `main`への直接コミット・直接マージ
+- `feature/`ブランチから`main`へのPR作成
+
 ## コミュニケーションルール
 
 **日本語**で応答する
