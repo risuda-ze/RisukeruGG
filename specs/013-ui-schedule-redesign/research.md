@@ -6,7 +6,7 @@
 - **Rationale**: デザインファイル（schedule-pc.jsx）は `ScheduleModal` と `DetailForm` の単一構造。追加・編集で同一フォームを使う。Constitution I（シンプルさ優先）に合致。
 - **From**: `ScheduleForm`（Modal内、新規用）+ `ScheduleDetailModal`（編集用の複雑なコンポーネント）
 - **To**: `ScheduleModal`（新規・編集統合）+ `DetailForm`（フォーム本体、ScheduleModal内）
-- **旧 ScheduleDetailModal の機能**: コメント機能・ドラッグ移動・マークダウン説明編集は設計仕様になかったため削除対象
+- **旧 ScheduleDetailModal の機能**: コメント機能・ドラッグ移動・マークダウン説明編集は **v2 仕様（spec.md FR-024 / 2026-05-31 更新）により新 ScheduleModal への移植対象に変更された**。v1 計画では削除対象だったが、ユーザー要求により引き継ぎが必要と判断（T043 で実装）。
 - **Alternatives**: 2コンポーネント維持 → 重複コード・UX不統一のため却下
 
 ---

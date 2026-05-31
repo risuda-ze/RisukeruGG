@@ -9,17 +9,14 @@ import { ja } from 'date-fns/locale';
 import { useAuthStore } from '@/stores/auth';
 import { useScheduleStore } from '@/stores/schedule';
 import { useScheduleCategoryStore } from '@/stores/scheduleCategories';
-import { createSchedule } from '@/lib/repositories/schedules';
 import { subscribeMemberCalendarEvents } from '@/lib/repositories/memberCalendars';
 import { fetchGCalEvents } from '@/lib/googleCalendar';
 import type { GCalFetchError } from '@/lib/googleCalendar';
 import { TopBar } from '@/components/layout/TopBar';
 import { MonthCalendar } from '@/components/calendar/MonthCalendar';
 import { WeekCalendar } from '@/components/calendar/WeekCalendar';
-import { ScheduleDetailModal } from '@/components/calendar/ScheduleDetailModal';
-import { Modal } from '@/components/ui/Modal';
+import { ScheduleModal } from '@/components/calendar/ScheduleModal';
 import { Spinner } from '@/components/ui/Spinner';
-import { ScheduleForm } from '@/components/calendar/ScheduleForm';
 import { HintBar } from '@/components/ui/HintBar';
 import { useHintDismiss } from '@/hooks/useHintDismiss';
 import { Icon } from '@/components/ui/Icon';
@@ -33,6 +30,8 @@ export default function SchedulePage() {
   const [view, setView] = useState<'month' | 'week'>('month');
   const [showCreate, setShowCreate] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleEntry | null>(null);
+  /* セルクリック時の初期日付（ScheduleModal に渡す） */
+  const [clickedDate, setClickedDate] = useState<Date | null>(null);
   const [gcalEvents, setGcalEvents] = useState<ScheduleEntry[]>([]);
   const [gcalError, setGcalError] = useState<GCalFetchError>(null);
   const [showMemberCalendars, setShowMemberCalendars] = useState(false);
@@ -83,7 +82,7 @@ export default function SchedulePage() {
 
   // ポップアップが切り替わったらドラッグ位置をリセット
   useEffect(() => {
-    setPopupPos({ x: 0, y: 0 });
+    setPopupPos({ x: 0, y: 0 }); // eslint-disable-line react-hooks/set-state-in-effect
   }, [selectedSchedule?.id]);
 
   function handlePopupDragStart(e: React.MouseEvent) {
@@ -96,7 +95,7 @@ export default function SchedulePage() {
   // Googleカレンダーの個人予定を取得
   useEffect(() => {
     if (!googleAccessToken) {
-      setGcalEvents([]);
+      setGcalEvents([]); // eslint-disable-line react-hooks/set-state-in-effect
       return;
     }
     const timeMin = view === 'month'
@@ -117,7 +116,7 @@ export default function SchedulePage() {
     if (!selectedSchedule) return;
     const updated = schedules.find((s) => s.id === selectedSchedule.id);
     if (updated && updated.updatedAt.getTime() !== selectedSchedule.updatedAt.getTime()) {
-      setSelectedSchedule(updated);
+      setSelectedSchedule(updated); // eslint-disable-line react-hooks/set-state-in-effect
     }
   }, [schedules, selectedSchedule?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -156,13 +155,6 @@ export default function SchedulePage() {
     setCurrentDate(view === 'month' ? addMonths(currentDate, 1) : addWeeks(currentDate, 1));
   }
 
-  const handleCreateSchedule = async (
-    data: Omit<ScheduleEntry, 'id' | 'updatedAt' | 'createdAt' | 'createdBy'>
-  ) => {
-    if (!currentTeamId || !currentUser) return;
-    await createSchedule(currentTeamId, { ...data, createdBy: currentUser.uid });
-    setShowCreate(false);
-  };
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden relative">
@@ -214,7 +206,7 @@ export default function SchedulePage() {
           {/* 予定追加ボタン */}
           {canEdit && (
             <button
-              onClick={() => setShowCreate(true)}
+              onClick={() => { setClickedDate(null); setShowCreate(true); }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[12px] font-semibold transition-colors text-white"
               style={{ background: 'var(--primary)', boxShadow: 'var(--glow-primary)' }}
             >
@@ -334,7 +326,7 @@ export default function SchedulePage() {
           schedules={allSchedules}
           categories={categories}
           onEventClick={setSelectedSchedule}
-          onDateClick={canEdit ? () => setShowCreate(true) : undefined}
+          onDateClick={canEdit ? (d) => { setClickedDate(d ?? null); setShowCreate(true); } : undefined}
           onDateLabelClick={(date) => {
             setCurrentDate(date);
             setView('week');
@@ -346,7 +338,7 @@ export default function SchedulePage() {
           schedules={allSchedules}
           categories={categories}
           onEventClick={setSelectedSchedule}
-          onDateClick={canEdit ? () => setShowCreate(true) : undefined}
+          onDateClick={canEdit ? (d) => { setClickedDate(d ?? null); setShowCreate(true); } : undefined}
         />
       )}
 
@@ -412,7 +404,7 @@ export default function SchedulePage() {
 
       {/* スケジュール詳細オーバーレイ（チーム予定） */}
       {selectedSchedule && !selectedSchedule.source && currentTeamId && (
-        <ScheduleDetailModal
+        <ScheduleModal
           schedule={selectedSchedule}
           teamId={currentTeamId}
           canEdit={canEdit}
@@ -463,14 +455,18 @@ export default function SchedulePage() {
         </div>
       )}
 
-      {/* スケジュール作成モーダル */}
-      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="スケジュールを追加">
-        <ScheduleForm
+      {/* スケジュール追加モーダル（チーム予定・新規作成） */}
+      {showCreate && currentTeamId && (
+        <ScheduleModal
+          schedule={null}
+          initialDate={clickedDate ?? undefined}
+          teamId={currentTeamId}
+          canEdit={canEdit}
           categories={categories}
-          onSubmit={handleCreateSchedule}
-          onCancel={() => setShowCreate(false)}
+          onClose={() => { setShowCreate(false); setClickedDate(null); }}
+          onDeleted={() => {}}
         />
-      </Modal>
+      )}
     </div>
   );
 }

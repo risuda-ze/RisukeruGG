@@ -115,10 +115,14 @@ export function Sidebar() {
 
       {/* ── ナビゲーション ───────────────────────────────── */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
-        {NAV_SECTIONS.map((section) => {
+        {NAV_SECTIONS.map((section, idx) => {
           const isOpen = openSections.includes(section.label);
           return (
-            <div key={section.label}>
+            /* 最初のセクション以外の上端に区切りボーダーを表示 */
+            <div
+              key={section.label}
+              style={idx > 0 ? { borderTop: '1px solid var(--border)', paddingTop: '4px', marginTop: '4px' } : undefined}
+            >
               <button
                 onClick={() => toggleSection(section.label)}
                 className="w-full flex items-center gap-2 px-2 py-1.5 rounded-[6px] transition-colors"

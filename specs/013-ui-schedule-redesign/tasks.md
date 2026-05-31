@@ -110,6 +110,10 @@
 
 ## Phase 7: User Story 5 — 予定追加・編集モーダル (Priority: P2)
 
+> **⚠️ このフェーズは v2 計画（Phase 10）に置き換えられた。**
+> T022-T026 の成果物（変更済み ScheduleDetailModal.tsx）は T033・T034 で ScheduleModal.tsx に置き換えられ、T035 で削除される。
+> T022-T026 は v1 実装の記録として残す。新規作業は Phase 10 から着手すること。
+
 **Goal**: スケジュール詳細フォームを 870px 幅モーダルに変更し、DateField・終日トグル・フッターボタン順を新仕様にする。`schedule/[id]/page.tsx` はモーダル化に伴い不要になるため削除する
 
 **Independent Test**: 「予定追加」ボタンをクリックして 870px のモーダルが開き、DateField のカレンダーアイコンをクリックしてミニカレンダーが出現し、保存ボタンで予定が登録できることを確認
@@ -243,6 +247,87 @@ Task: T021 — ヘッダー再構成 [P]（MonthCalendar と別ファイル）
 
 ---
 
+## Phase 10: Sprint 1 — ScheduleModal 統合 (US5 Updated) 🆕
+
+**Goal**: `ScheduleForm` と `ScheduleDetailModal` を単一の `ScheduleModal` コンポーネントに統合する。旧2コンポーネントを削除し、`schedule/page.tsx` の呼び出し箇所を新コンポーネントに差し替える。
+
+**Independent Test**: 「予定追加」ボタンでモーダルが開きタイトルを入力して保存できること。既存予定カードクリックで編集モーダルが開き保存・削除が機能すること。
+
+### Implementation
+
+- [x] T033 [US5] `ScheduleModal.tsx` のモーダル構造・フォーム・保存/削除ロジックを実装する — **事前確認**: `src/app/globals.css` に `.smodal__*`・`.sform__*`・`.allday` クラスが定義済みであることを確認してから実装すること。`ScheduleModalProps`（`schedule: ScheduleEntry | null`・`initialDate?: Date`・`teamId`・`canEdit`・`categories`・`onClose`・`onDeleted`）を定義。870px幅・`animate-pop-modal`モーダルカード、スクリムオーバーレイ。ヘッダーに「予定を追加/編集」タイトル・サブテキスト・×ボタン。`DetailForm` 内部コンポーネントにタイトル入力・カテゴリDropdown・2カラムグリッド（開始日時ラベル＋右揃え終日トグル＋DateField、終了日時ラベル＋DateField）・説明textarea・フッター（キャンセル/削除(isNew=false時のみ)/保存）を実装。`toggleAllDay()` 双方向ロジック（OFF→ON時 00:00、ON→OFF時 21:00/23:30 復元）。保存ハンドラ: 新規 `createSchedule()`、編集 `updateSchedule()`。削除ハンドラ: `confirm()` → `deleteSchedule()` → `onDeleted()` + `onClose()`。localStorage 自動保存（`saveDraft`/`loadDraft` 既存ロジックを継承）（src/components/calendar/ScheduleModal.tsx）
+- [x] T043 [US5] 旧 `ScheduleDetailModal` の3機能を `ScheduleModal.tsx` に移植する — T033 完了後に着手すること。(1) コメントスレッド: 既存 `ScheduleDetailModal` のコメント入力・送信・スレッド表示ロジックを `ScheduleModal` の `<DetailForm>` 内コメントセクションに移植する。(2) ドラッグ移動: `onMouseDown` ハンドラによるモーダルヘッダードラッグ追従ロジックを `ScheduleModal` の `smodal__hd` に移植する。(3) マークダウン説明編集: 説明 textarea を編集/プレビュー切替可能な Markdown エディタに置き換え、プレビューボタンでレンダリング表示を切り替えられるようにする（src/components/calendar/ScheduleModal.tsx）
+- [x] T034 [US5] `schedule/page.tsx` を更新する — `ScheduleDetailModal`・`ScheduleForm` の import を削除し `ScheduleModal` に差し替え。`clickedDate` state（`Date | null`）を追加。「予定追加」ボタンの onClick を `() => { setClickedDate(null); setShowCreate(true); }` に更新。セルクリックハンドラに `onDateClick={(d) => { setClickedDate(d); setShowCreate(true); }}` を設定。`<Modal>/<ScheduleForm>` ブロックと `<ScheduleDetailModal>` ブロックを `<ScheduleModal schedule={showCreate ? null : selectedSchedule?.source ? null : selectedSchedule} initialDate={clickedDate ?? undefined} ...>` に統合。`handleCreateSchedule` 関数を削除（ScheduleModal 内部に移動済み）（src/app/(protected)/schedule/page.tsx）
+- [x] T035 [P] [US5] `ScheduleDetailModal.tsx` を削除する（src/components/calendar/ScheduleDetailModal.tsx）
+- [x] T036 [P] [US5] `ScheduleForm.tsx` を削除する（src/components/calendar/ScheduleForm.tsx）
+
+**Checkpoint**: 統合モーダルが 870px で開き、追加・編集・削除・終日トグル双方向・ドラッグ・コメント・マークダウンが動作する。旧2ファイルが削除されている。
+
+---
+
+## Phase 11: Sprint 2 — ホバー挙動・カラー修正 (US6・US7) 🆕
+
+**Goal**: Avatar に `ds-avatar` クラスを追加して `hop` アニメーションを有効化し、ボタンのホバー色（ピンクシフト）を確認・補完し、`docs/DESIGN.md` に欠落カラー定義を追記する。
+
+**Independent Test**: Avatar ホバーで上バウンスアニメーション発火。Primary ボタンホバーで背景がピンク（#ec4f95）に変化。DESIGN.md にピンク・カード境界線定義が存在する。
+
+### Implementation
+
+- [x] T037 [P] [US6] `Avatar.tsx` の root div に `ds-avatar` クラスを追加する — `className` の先頭に `ds-avatar ` を追加することで `globals.css` の `.ds-avatar:hover { animation: hop 0.55s var(--ease-out); cursor: pointer; }` が発火するようにする（src/components/ui/Avatar.tsx）
+- [x] T038 [P] [US7] `globals.css` のボタンホバー定義を確認・補完する — `.btn--primary:hover`・`.btn--ghost:hover`・`.btn--subtle:hover` にピンク系（`var(--pink)`）定義が存在するか確認し、不足していれば追加する。`.btn--icon:hover` のホバー色も確認し不足なら追加する（src/app/globals.css）
+- [x] T039 [P] [US7] `docs/DESIGN.md` に欠落カラー定義を追記する — (1) CSS Variables セクション: `--info-dim`・`--card-border`（`color-mix(in oklab, #534ab7 52%, #2a2a55)`）・`--card-border-raised`・ピンクパレット全6変数（`--pink: #ec4f95`・`--pink-300`・`--pink-700`・`--pink-900`・`--pink-dim`・`--glow-pink`）・`--glow-mult`・`--font-head/body`・`--space-3xl`・`--radius-2xl`・Primary 全段（50〜500）。(2) Interaction States のボタン hover 定義をピンクシフト（`var(--pink)` 背景）に更新。(3) Motion テーブルに badge/tag/avatar hover → `hop` アニメーション行を追加。(4) Keyframes セクションに `drop-down`・`ring-spin`・`bar-grow`・`hop` を追加（docs/DESIGN.md）
+- [x] T044 [P] [US1] サイドバーの大項目間に区切りボーダーを追加する — `NAV_SECTIONS.map()` に index を追加し（`NAV_SECTIONS.map((section, idx) => {`）、最初のセクション以外（`idx > 0`）の `<div key={section.label}>` に `style={{ borderTop: '1px solid var(--border)', paddingTop: '4px', marginTop: '4px' }}` を追加する。これにより「メイン→設定」「設定→各種連携」の大項目境界に区切り線が表示される。既存の「設定→お問い合わせ」ボーダーは維持する（src/components/layout/Sidebar.tsx）
+
+**Checkpoint**: Avatar ホバーで hop アニメーション発火。Primary ボタンホバーでピンク（#ec4f95）に変化。DESIGN.md に全欠落定義が追記されている。サイドバーの大項目間（メイン/設定/各種連携）に区切りボーダーが表示される。
+
+---
+
+## Phase 12: v2 ポリッシュ 🆕
+
+**Purpose**: v2 実装後の型チェック・Lint・目視確認
+
+- [x] T040 [P] `pnpm typecheck` を実行し TypeScript エラーを全て修正する
+- [x] T041 [P] `pnpm lint` を実行し ESLint エラーを全て修正する
+- [ ] T042 PC幅（1440px）とモバイル幅（375px）で ScheduleModal・Avatar/Badge ホバー・Primary ボタンホバー色変化を目視確認し、レイアウト崩れ・スタイル欠落がないことを確認する
+
+---
+
+## v2 Dependencies & Execution Order
+
+### Phase Dependencies
+
+```
+Phase 10 (Sprint 1: ScheduleModal統合)
+  └─→ T033 → T043 → T034 → T035[P] / T036[P]
+
+Phase 11 (Sprint 2: ホバー・カラー・サイドバー) ← Phase 10 と並列実行可（別ファイル）
+  ├─→ T037 [P]  (Avatar.tsx のみ)
+  ├─→ T038 [P]  (globals.css のみ)
+  ├─→ T039 [P]  (DESIGN.md のみ)
+  └─→ T044 [P]  (Sidebar.tsx のみ)
+
+Phase 12 (Polish) ← Phase 10・11 完了後
+```
+
+### Parallel Opportunities
+
+```bash
+# Phase 10: T033 完了後
+Task: T043 — コメント/ドラッグ/マークダウン移植（T033依存）
+# T043 完了後
+Task: T034 — schedule/page.tsx 更新
+Task: T035 [P] — ScheduleDetailModal.tsx 削除
+Task: T036 [P] — ScheduleForm.tsx 削除
+
+# Phase 11: 全タスク並列実行可
+Task: T037 — Avatar.tsx ds-avatar クラス追加
+Task: T038 — globals.css ボタンホバー補完
+Task: T039 — DESIGN.md カラー定義追記
+Task: T044 — Sidebar.tsx 大項目ボーダー追加
+```
+
+---
+
 ## Notes
 
 - `[P]` タスクは異なるファイルへの変更で依存なし、並列実行可
@@ -254,3 +339,5 @@ Task: T021 — ヘッダー再構成 [P]（MonthCalendar と別ファイル）
 - `pop-scale` アニメーションは `opacity` を変化させない（`transform: scale` のみ）— バックグラウンドタブでのフリーズ防止
 - `AccountMenu` の「チーム変更」は実装前に TeamSwitcher が `collapsed` prop なしで独立動作するか確認し、必要なら props を調整してから Modal でラップする
 - 広告バナー（AdBanner）は今回スコープ外（specs/013-ui-schedule-redesign/deprecated.md に将来対応として記録）
+- **T035・T036 削除タイミング**: T033・T043（ScheduleModal.tsx 完成）と T034（page.tsx 更新）が完了し、アプリが正常起動することを確認してから削除すること
+- **T043 依存**: T043 は T033 の骨格実装が完了してから着手すること（ScheduleModal 内の DetailForm が存在しないとコメント/ドラッグのアンカーが作れない）

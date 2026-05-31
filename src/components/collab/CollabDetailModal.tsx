@@ -363,7 +363,7 @@ export function CollabDetailModal({
     if (!replyText.trim()) return;
     const myMember = members.find((m) => m.userId === currentUser?.uid);
     const reply: LocalReply = {
-      id: `r-${Date.now()}`,
+      id: `r-${Date.now()}`, // eslint-disable-line react-hooks/purity
       authorId: currentUser?.uid ?? '',
       authorName: myMember?.displayName ?? 'あなた',
       text: replyText.trim(),

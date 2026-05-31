@@ -219,9 +219,31 @@ html {
   --danger: #f0506e;
   --danger-dim: rgba(240, 80, 110, 0.15);
   --info: #5bc8fa;
+  --info-dim: rgba(91, 200, 250, 0.15);
+
+  /* Card border (primary色と border の混合) */
+  --card-border: color-mix(in oklab, #534ab7 52%, #2a2a55);
+  --card-border-raised: color-mix(in oklab, #7f77dd 48%, #3a3a6a);
+
+  /* Pink hover accent (ボタン hover 時のカラーシフト) */
+  --pink: #ec4f95;
+  --pink-300: #ff9ec6;
+  --pink-700: #c93576;
+  --pink-900: #5a1c3a;
+  --pink-dim: rgba(236, 79, 149, 0.15);
+  --glow-pink: 0 0 18px rgba(236, 79, 149, 0.5);
+
+  /* Primary — 全段 */
+  --primary-50: #f0effc;
+  --primary-100: #dddcf8;
+  --primary-200: #c0bdf3;
+  --primary-400: #8f88e8;
+  --primary-500: #7f77dd;
+  --primary-900: #271f6a;
 
   /* Glow */
-  --glow-primary: 0 0 16px rgba(127, 119, 221, 0.5);
+  --glow-mult: 1; /* グロー強度乗数（reduced-motion 時に 0 にする） */
+  --glow-primary: 0 0 calc(16px * var(--glow-mult)) rgba(127, 119, 221, calc(0.5 * var(--glow-mult)));
   --glow-success: 0 0 12px rgba(61, 214, 140, 0.4);
   --glow-warning: 0 0 12px rgba(239, 159, 39, 0.4);
   --glow-danger: 0 0 12px rgba(240, 80, 110, 0.4);
@@ -240,6 +262,10 @@ html {
   --shadow-lg: 0 10px 28px -3px rgba(0, 0, 0, 0.6), 0 4px 10px -4px rgba(0, 0, 0, 0.4);
   --shadow-xl: 0 20px 40px -5px rgba(0, 0, 0, 0.7), 0 8px 16px -6px rgba(0, 0, 0, 0.5);
 
+  /* Font families */
+  --font-head: 'Space Grotesk', 'Noto Sans JP', sans-serif;
+  --font-body: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
+
   /* Spacing */
   --space-2xs: 4px;
   --space-xs: 8px;
@@ -248,6 +274,7 @@ html {
   --space-lg: 24px;
   --space-xl: 32px;
   --space-2xl: 48px;
+  --space-3xl: 64px;
 
   /* Radius */
   --radius-xs: 4px;
@@ -255,6 +282,7 @@ html {
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-xl: 24px;
+  --radius-2xl: 32px;
   --radius-full: 9999px;
 
   /* Motion — Duration */
@@ -286,11 +314,19 @@ html {
 
 ## Interaction States
 
-- `hover`: lightness +8%
+- `hover`: ピンクシフト（`var(--pink)` 背景・`var(--glow-pink)` グロー）— Primary / Ghost / Subtle ボタン共通
 - `active`: primary-700
 - `focus`: `2px solid var(--primary)` + 2px offset + `var(--glow-primary)`
 - `disabled`: opacity 35%
 - **glow**: hover・active・通知バッジのみ。常時グローは使わない
+
+### Button hover カラーマップ
+
+| Variant | bg | color | box-shadow |
+|---|---|---|---|
+| `primary` | `var(--pink)` | `#fff` | `var(--glow-pink)` |
+| `ghost` | `var(--pink-dim)` | `var(--pink-300)` | `var(--glow-pink)` |
+| `subtle` | `var(--pink-dim)` | `var(--pink-300)` | — |
 
 ---
 
@@ -417,6 +453,34 @@ inactive: color var(--text-muted);
     opacity: 1;
   }
 }
+@keyframes drop-down {
+  from {
+    transform: translateY(-12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes hop {
+  /* バッジ・タグ・アバターのホバーバウンス */
+  0%   { transform: translateY(0); }
+  35%  { transform: translateY(-7px); }
+  60%  { transform: translateY(-1px); }
+  80%  { transform: translateY(-3px); }
+  100% { transform: translateY(0); }
+}
+@keyframes bar-grow {
+  /* プログレスバーの左→右伸長 */
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes ring-spin {
+  /* ローディングスピナー */
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
 @keyframes glow-pulse {
   0%,
   100% {
@@ -438,18 +502,22 @@ inactive: color var(--text-muted);
 
 | コンポーネント | トリガー | アニメーション                | Duration  | Easing   |
 | -------------- | -------- | ----------------------------- | --------- | -------- |
-| Button         | hover    | bg変化 + glow                 | `instant` | `snap`   |
+| Button         | hover    | ピンクシフト + glow           | `instant` | `snap`   |
 | Button         | active   | scale(0.96)                   | `fast`    | `snap`   |
 | Card           | hover    | translateY(-2px) + border変化 | `fast`    | `out`    |
 | Badge          | 出現     | `pop`                         | `fast`    | `spring` |
+| Badge          | hover    | `hop`（上方向バウンス）       | `550ms`   | `out`    |
+| Tag            | hover    | `hop`（上方向バウンス）       | `550ms`   | `out`    |
+| Avatar         | hover    | `hop`（上方向バウンス）       | `550ms`   | `out`    |
 | Modal          | 開く     | `slide-up` + `fade-in`        | `slow`    | `out`    |
 | Modal          | 閉じる   | `fade-in` reverse             | `base`    | `in`     |
 | Toast          | 出現     | `slide-in-left`               | `base`    | `spring` |
 | BottomNav      | 選択     | `pop` + color変化             | `fast`    | `spring` |
 | Input          | focus    | glow出現                      | `instant` | `snap`   |
-| Dropdown       | 開く     | `slide-up` + `fade-in`        | `base`    | `out`    |
+| Dropdown       | 開く     | `drop-down` + `fade-in`       | `base`    | `out`    |
 | Skeleton       | loop     | `scan`                        | `crawl`   | `linear` |
 | 通知バッジ     | active   | `glow-pulse` loop(2s)         | —         | `linear` |
+| Progress bar   | load     | `bar-grow`（左→右伸長）       | `crawl`   | `out`    |
 
 ---
 

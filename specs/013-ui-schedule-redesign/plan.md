@@ -349,7 +349,7 @@ card-border-raised: 'color-mix(in oklab, #7f77dd 48%, #3a3a6a)'
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|--------------------------------------|
-| なし | — | — |
+| コメントスレッド・ドラッグ移動を ScheduleModal に移植（T043） | spec.md FR-024（v2 2026-05-31 更新）でユーザー要求として明確に指定された。既存 ScheduleDetailModal に実装済みの機能を引き継ぐことで UX 継続性を確保する | 新規実装として省略 → ユーザーが編集時に依存している既存機能の消失になるため却下 |
 
 ---
 

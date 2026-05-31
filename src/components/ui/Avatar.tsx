@@ -34,7 +34,7 @@ export function Avatar({
   const { wrap, text } = sizeClasses[size];
   return (
     <div
-      className={`relative inline-flex items-center justify-center rounded-full shrink-0 overflow-hidden ${wrap} ${bgClass}`}
+      className={`ds-avatar relative inline-flex items-center justify-center rounded-full shrink-0 overflow-hidden ${wrap} ${bgClass}`}
     >
       {src ? (
         /* eslint-disable-next-line @next/next/no-img-element */
