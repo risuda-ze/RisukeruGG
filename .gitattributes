@@ -1,0 +1,21 @@
+# デフォルト: 自動改行変換
+* text=auto
+
+# シェルスクリプトは常に LF（Linux コンテナで実行するため）
+*.sh text eol=lf
+
+# その他のテキストファイル
+*.ts   text eol=lf
+*.tsx  text eol=lf
+*.css  text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.yaml text eol=lf
+*.yml  text eol=lf
+
+# バイナリ
+*.png  binary
+*.jpg  binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
