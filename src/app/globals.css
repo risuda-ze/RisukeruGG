@@ -15,10 +15,10 @@
   --color-border: #2a2a55;
   --color-border-l: #3a3a6a;
 
-  /* プライマリ（パープル） */
-  --color-purple: #7f77dd;
-  --color-purple-l: #a0a0ff;
-  --color-purple-d: #534ab7;
+  /* プライマリ（アクセント #3fb6e0） */
+  --color-purple: #3fb6e0;
+  --color-purple-l: #8fe0ff;
+  --color-purple-d: #2479a0;
 
   /* セカンダリ（アンバー） */
   --color-amber: #ef9f27;
@@ -62,30 +62,30 @@
   --border:       #2a2a55;
   --border-l:     #3a3a6a;
   --border-light: #3a3a6a;
-  --card-border:        color-mix(in oklab, #534ab7 52%, #2a2a55);
-  --card-border-raised: color-mix(in oklab, #7f77dd 48%, #3a3a6a);
+  --card-border:        color-mix(in oklab, var(--primary-700) 52%, var(--border));
+  --card-border-raised: color-mix(in oklab, var(--primary-500) 48%, var(--border-light));
 
   /* Primary ramp */
-  --primary:     #7f77dd;
-  --primary-50:  #f0effc;
-  --primary-100: #dddcf8;
-  --primary-200: #c0bdf3;
-  --primary-300: #a0a0ff;
-  --primary-400: #8f88e8;
-  --primary-500: #7f77dd;
-  --primary-600: #6b63cc;
-  --primary-700: #534ab7;
-  --primary-800: #3b3490;
-  --primary-900: #271f6a;
-  --primary-950: #130f3a;
+  --primary:     #3fb6e0;
+  --primary-50:  #ecf9ff;
+  --primary-100: #d0f0fc;
+  --primary-200: #a8e4f8;
+  --primary-300: #8fe0ff;
+  --primary-400: #5ec5ea;
+  --primary-500: #3fb6e0;
+  --primary-600: #2f9bc4;
+  --primary-700: #2479a0;
+  --primary-800: #1a5673;
+  --primary-900: #0d3a52;
+  --primary-950: #06222e;
 
   /* Aliases */
-  --purple:    #7f77dd;
-  --purple-l:  #a0a0ff;
-  --purple-d:  #534ab7;
-  --purple-xs: rgba(127, 119, 221, 0.08);
-  --purple-sm: rgba(127, 119, 221, 0.15);
-  --purple-md: rgba(127, 119, 221, 0.25);
+  --purple:    #3fb6e0;
+  --purple-l:  #8fe0ff;
+  --purple-d:  #2479a0;
+  --purple-xs: rgba(63, 182, 224, 0.08);
+  --purple-sm: rgba(63, 182, 224, 0.15);
+  --purple-md: rgba(63, 182, 224, 0.25);
 
   /* Semantic */
   --success:     #3dd68c;  --success-dim: rgba(61, 214, 140, 0.15);
@@ -111,7 +111,7 @@
 
   /* Glow */
   --glow-mult:    1;
-  --glow-primary: 0 0 calc(16px * var(--glow-mult)) rgba(127, 119, 221, calc(0.5 * var(--glow-mult)));
+  --glow-primary: 0 0 calc(16px * var(--glow-mult)) rgba(63, 182, 224, calc(0.5 * var(--glow-mult)));
   --glow-success: 0 0 calc(12px * var(--glow-mult)) rgba(61, 214, 140,  calc(0.45 * var(--glow-mult)));
   --glow-warning: 0 0 calc(12px * var(--glow-mult)) rgba(239, 159, 39,  calc(0.45 * var(--glow-mult)));
   --glow-danger:  0 0 calc(12px * var(--glow-mult)) rgba(240, 80, 110,  calc(0.45 * var(--glow-mult)));
@@ -123,7 +123,7 @@
   --text-secondary: #a8a8c0;
   --text-muted:     #7070a0;
   --text-disabled:  #4a4a70;
-  --text-accent:    #a0a0ff;
+  --text-accent:    #8fe0ff;
   --text-on-primary:#ffffff;
   --muted:          #7070a0;
   --muted-l:        #8888bb;
@@ -191,7 +191,7 @@ body {
 @keyframes drop-down     { from{transform:translateY(-12px);opacity:0} to{transform:translateY(0);opacity:1} }
 @keyframes slide-in-left { from{transform:translateX(-16px);opacity:0} to{transform:translateX(0);opacity:1} }
 @keyframes pop           { 0%{transform:scale(0.85);opacity:0} 70%{transform:scale(1.08);opacity:1} 100%{transform:scale(1);opacity:1} }
-@keyframes glow-pulse    { 0%,100%{box-shadow:0 0 8px rgba(127,119,221,0.3)} 50%{box-shadow:0 0 20px rgba(127,119,221,0.7)} }
+@keyframes glow-pulse    { 0%,100%{box-shadow:0 0 8px rgba(63,182,224,0.3)} 50%{box-shadow:0 0 20px rgba(63,182,224,0.7)} }
 @keyframes scan          { from{background-position:-200% center} to{background-position:200% center} }
 @keyframes bar-grow      { from{ width:0 } }
 @keyframes hop {
@@ -276,10 +276,10 @@ input[type='time']::-webkit-calendar-picker-indicator {
 /* ── Button ─────────────────────────────────────────────────── */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  font-family: var(--font-head); font-weight: 600; font-size: 0.875rem; line-height: 1;
-  padding: 10px 20px; border-radius: var(--radius-md);
+  font-family: var(--font-head); font-weight: 600; font-size: 0.95rem; line-height: 1;
+  padding: 11px 24px; border-radius: var(--radius-md);
   border: 1px solid transparent; cursor: pointer; white-space: nowrap;
-  min-height: 40px;
+  min-height: 44px;
   transition:
     background var(--duration-instant) var(--ease-snap),
     box-shadow var(--duration-instant) var(--ease-snap),
@@ -290,7 +290,7 @@ input[type='time']::-webkit-calendar-picker-indicator {
   text-decoration: none;
 }
 .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; box-shadow: var(--glow-primary); }
-.btn:hover { transform: translateY(-1px); }
+.btn:hover { transform: translateY(-2px); }
 .btn:active { transform: scale(0.96) translateY(0); }
 .btn:disabled, .btn[disabled], .btn.is-disabled { opacity: 0.35; pointer-events: none; }
 
@@ -318,10 +318,10 @@ input[type='time']::-webkit-calendar-picker-indicator {
 .btn--amber { background: var(--amber); color: #fff; }
 .btn--amber:hover { filter: brightness(1.1); box-shadow: var(--glow-warning); }
 
-.btn--sm { padding: 6px 14px; font-size: 0.8rem; min-height: 32px; border-radius: var(--radius-sm); }
-.btn--lg { padding: 14px 28px; font-size: 1rem; min-height: 48px; }
-.btn--icon { padding: 0; width: 40px; height: 40px; min-height: 0; }
-.btn--icon.btn--sm { width: 32px; height: 32px; }
+.btn--sm { padding: 7px 16px; font-size: 0.82rem; min-height: 36px; border-radius: var(--radius-sm); }
+.btn--lg { padding: 15px 34px; font-size: 1.1rem; min-height: 52px; }
+.btn--icon { padding: 0; width: 44px; height: 44px; min-height: 0; }
+.btn--icon.btn--sm { width: 36px; height: 36px; }
 
 /* ── Card ───────────────────────────────────────────────────── */
 .ds-card {
@@ -397,10 +397,10 @@ input[type='time']::-webkit-calendar-picker-indicator {
 
 /* ── Sidebar navlink ────────────────────────────────────────── */
 .navlink {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer;
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; border-radius: var(--radius-md); cursor: pointer;
   color: var(--text-secondary);
-  font-family: var(--font-head); font-weight: 500; font-size: 0.9rem;
+  font-family: var(--font-head); font-weight: 500; font-size: 0.98rem;
   border: 1px solid transparent;
   text-decoration: none;
   transition:
@@ -408,12 +408,14 @@ input[type='time']::-webkit-calendar-picker-indicator {
     color var(--duration-fast) var(--ease-out),
     border-color var(--duration-fast) var(--ease-out);
 }
+.navlink .ic { color: currentColor; opacity: 0.85; }
 .navlink:hover { background: var(--card-raised); color: var(--text-primary); border-color: var(--card-border); }
 .navlink--active,
 .navlink--active:hover {
   background: var(--primary); color: var(--text-on-primary);
   font-weight: 600; box-shadow: var(--glow-primary); border-color: transparent;
 }
+.navlink--active .ic { opacity: 1; }
 
 /* ── Bottom nav ─────────────────────────────────────────────── */
 .bottom-nav {
