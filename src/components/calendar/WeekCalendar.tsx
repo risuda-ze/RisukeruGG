@@ -38,7 +38,7 @@ function getEventStyle(
 /** 曜日インデックスから色クラスを返す（0=日, 6=土） */
 function getDowColorClass(i: number): string {
   if (i === 0) return 'text-live';
-  if (i === 6) return 'text-purple-l';
+  if (i === 6) return 'text-info';
   return 'text-muted';
 }
 
@@ -106,13 +106,13 @@ export function WeekCalendar({
                 {DOW_LABELS[i]}&thinsp;{format(day, 'M/')}
               </span>
               <span
-                className={`text-[16px] font-medium font-num leading-none ${
-                  isCurrentDay ? 'text-purple-l' : getDowColorClass(i)
+                className={`text-[16px] font-bold font-num leading-none w-[34px] h-[34px] rounded-[9px] inline-flex items-center justify-center ${
+                  isCurrentDay ? 'bg-purple text-white' : getDowColorClass(i)
                 }`}
+                style={isCurrentDay ? { boxShadow: 'var(--glow-primary)' } : undefined}
               >
                 {format(day, 'd')}
               </span>
-              {isCurrentDay && <span className="w-1 h-1 rounded-full bg-purple-l shrink-0" />}
             </div>
           );
         })}
@@ -137,7 +137,7 @@ export function WeekCalendar({
                 key={event.id}
                 className={[
                   'flex items-center gap-1.5 text-[13px] font-medium text-white px-2 py-1',
-                  'transition-opacity hover:opacity-80 overflow-hidden border-l-[3px]',
+                  'transition-[filter,transform] hover:brightness-[1.16] hover:-translate-y-[1px] overflow-hidden border-l-[3px]',
                   'animate-puni',
                   !startsBefore ? 'ml-1 rounded-l-[6px]' : 'ml-0 border-l-transparent',
                   !endsAfter ? 'mr-1 rounded-r-[6px]' : 'mr-0',
@@ -178,7 +178,7 @@ export function WeekCalendar({
             <div key={day.toISOString()}>
               <div
                 className={`flex items-center gap-2 px-4 py-2 ${
-                  isCurrentDay ? 'bg-[rgba(127,119,221,0.08)]' : 'bg-card/40'
+                  isCurrentDay ? 'bg-[rgba(63,182,224,0.08)]' : 'bg-card/40'
                 }`}
               >
                 <span className={`text-[10px] font-medium tracking-widest ${getDowColorClass(i)}/60`}>
@@ -258,7 +258,7 @@ export function WeekCalendar({
               key={day.toISOString()}
               className={[
                 'border-r border-border last:border-r-0 p-2 flex flex-col gap-2',
-                isCurrentDay ? 'bg-[rgba(127,119,221,0.05)]' : '',
+                isCurrentDay ? 'bg-[rgba(63,182,224,0.05)]' : '',
                 onDateClick ? 'cursor-pointer' : '',
               ]
                 .filter(Boolean)
@@ -278,7 +278,7 @@ export function WeekCalendar({
                   return (
                     <button
                       key={s.id}
-                      className="w-full text-left px-2 py-1.5 rounded-[6px] text-white border-l-[3px] transition-opacity hover:opacity-80 shrink-0 min-h-[44px] flex flex-col justify-center animate-puni"
+                      className="w-full text-left px-2 py-1.5 rounded-[6px] text-white border-l-[3px] transition-[filter,transform] hover:brightness-[1.16] hover:-translate-y-[1px] shrink-0 min-h-[44px] flex flex-col justify-center animate-puni"
                       style={style}
                       onClick={(e) => {
                         e.stopPropagation();

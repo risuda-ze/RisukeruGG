@@ -179,7 +179,7 @@ export default function SchedulePage() {
                 <button
                   key={v}
                   onClick={() => setView(v)}
-                  className="px-4 py-1.5 rounded-[6px] text-[13px] font-semibold transition-colors"
+                  className="px-4 py-1.5 rounded-[6px] text-[13px] font-semibold transition-[background,box-shadow,color] active:scale-95"
                   style={{
                     background: view === v ? 'var(--primary)' : 'none',
                     color: view === v ? '#fff' : 'var(--text-secondary)',
@@ -207,7 +207,7 @@ export default function SchedulePage() {
           {canEdit && (
             <button
               onClick={() => { setClickedDate(null); setShowCreate(true); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[12px] font-semibold transition-colors text-white"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[12px] font-semibold transition-[background,box-shadow,transform] active:scale-95 text-white"
               style={{ background: 'var(--primary)', boxShadow: 'var(--glow-primary)' }}
             >
               <Icon name="add" size={15} />
@@ -218,7 +218,7 @@ export default function SchedulePage() {
           {/* メンバーの予定表示切替 */}
           <button
             onClick={() => setShowMemberCalendars((v) => !v)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[8px] text-[12px] font-semibold transition-colors border"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[8px] text-[12px] font-semibold transition-colors border active:scale-95"
             style={{
               background: showMemberCalendars ? 'rgba(91,200,250,0.15)' : 'none',
               borderColor: showMemberCalendars ? 'rgba(91,200,250,0.5)' : 'var(--border)',
@@ -236,7 +236,7 @@ export default function SchedulePage() {
           >
             <button
               onClick={goBack}
-              className="w-8 h-8 flex items-center justify-center rounded-[6px] transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-[6px] transition-colors active:scale-95"
               style={{ color: 'var(--text-secondary)' }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--card-raised)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
@@ -246,7 +246,7 @@ export default function SchedulePage() {
             </button>
             <button
               onClick={() => setCurrentDate(new Date())}
-              className="px-3 h-8 rounded-[6px] text-[12px] font-semibold transition-colors"
+              className="px-3 h-8 rounded-[6px] text-[12px] font-semibold transition-colors active:scale-95"
               style={{ color: 'var(--text-primary)' }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--card-raised)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-accent)'; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
@@ -255,7 +255,7 @@ export default function SchedulePage() {
             </button>
             <button
               onClick={goForward}
-              className="w-8 h-8 flex items-center justify-center rounded-[6px] transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-[6px] transition-colors active:scale-95"
               style={{ color: 'var(--text-secondary)' }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--card-raised)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
@@ -268,7 +268,7 @@ export default function SchedulePage() {
           {/* ヘルプトグル: ヒントバーを再表示する「?」ボタン */}
           <button
             onClick={() => hintVisible ? dismissHint() : showHint()}
-            className="w-9 h-9 flex items-center justify-center rounded-[8px] border transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-[8px] border transition-colors active:scale-95"
             style={{
               borderColor: hintVisible ? 'var(--primary-700)' : 'var(--card-border)',
               background: hintVisible ? 'var(--primary-950)' : 'var(--surface)',

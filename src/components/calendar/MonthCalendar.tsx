@@ -180,7 +180,7 @@ function WeekRow({
               className={[
                 'border-r border-border last:border-r-0 relative overflow-hidden transition-colors',
                 !isCurrentMonth ? 'opacity-40 bg-bg' : '',
-                isCurrentDay ? 'bg-[rgba(127,119,221,0.05)]' : '',
+                isCurrentDay ? 'bg-[rgba(63,182,224,0.05)]' : '',
                 onDateClick ? 'cursor-pointer' : '',
               ]
                 .filter(Boolean)
@@ -198,8 +198,15 @@ function WeekRow({
                     'inline-flex items-center justify-center w-[22px] h-[22px] rounded-full text-[11px] font-medium',
                     onDateLabelClick ? 'cursor-pointer hover:bg-purple-d/60' : 'cursor-default hover:bg-purple-d/40',
                     'transition-colors',
-                    isCurrentDay ? 'bg-purple-d text-purple-l' : 'text-muted hover:text-purple-l',
+                    isCurrentDay
+                      ? 'bg-purple text-white'
+                      : colIndex === 0
+                        ? 'text-live hover:text-live'
+                        : colIndex === 6
+                          ? 'text-info hover:text-info'
+                          : 'text-muted hover:text-purple-l',
                   ].join(' ')}
+                  style={isCurrentDay ? { boxShadow: 'var(--glow-primary)' } : undefined}
                   onMouseEnter={(e) => {
                     e.stopPropagation();
                     const rect = e.currentTarget.getBoundingClientRect();
@@ -223,7 +230,7 @@ function WeekRow({
                   return (
                     <button
                       key={s.id}
-                      className="w-full text-left px-1.5 rounded-[4px] text-[13px] font-medium text-white whitespace-nowrap overflow-hidden shrink-0 border-l-[3px] transition-opacity hover:opacity-80 flex items-center gap-1 animate-pop-scale"
+                      className="w-full text-left px-1.5 rounded-[4px] text-[13px] font-medium text-white whitespace-nowrap overflow-hidden shrink-0 border-l-[3px] transition-[filter,transform] hover:brightness-[1.18] hover:translate-x-[1px] flex items-center gap-1 animate-pop-scale"
                       style={{ height: `${EVENT_H}px`, background: `${color}55`, borderLeftColor: color }}
                       onClick={(e) => { e.stopPropagation(); onEventClick(s); }}
                       title={s.title}
@@ -274,7 +281,7 @@ function WeekRow({
             key={`${s.id}-w${weekStart.getTime()}`}
             className={[
               'absolute overflow-hidden border-l-[3px] animate-pop-scale',
-              'transition-opacity hover:opacity-80 text-white',
+              'transition-[filter,transform] hover:brightness-[1.18] hover:translate-x-[1px] text-white',
               'flex items-center',
               !startsBefore ? 'rounded-l-[4px]' : 'border-l-transparent',
               !endsAfter ? 'rounded-r-[4px]' : '',
@@ -434,7 +441,7 @@ export function MonthCalendar({
           <div
             key={d}
             className={`text-center py-1 text-[11px] font-medium tracking-widest ${
-              i === 0 ? 'text-live' : i === 6 ? 'text-purple-l' : 'text-muted'
+              i === 0 ? 'text-live' : i === 6 ? 'text-info' : 'text-muted'
             }`}
           >
             {d}
