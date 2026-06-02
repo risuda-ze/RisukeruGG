@@ -14,18 +14,13 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import type { ScheduleEntry, ScheduleCategory } from '@/types/entities';
 
-/* ── 型定義 ─────────────────────────────────────────────────────── */
-
 export interface ScheduleModalProps {
-  /** null のとき新規追加モード、ScheduleEntry のとき編集モード */
   schedule: ScheduleEntry | null;
-  /** 初期日付（セルクリック時にセットする日付） */
   initialDate?: Date;
   teamId: string;
   canEdit: boolean;
   categories: ScheduleCategory[];
   onClose: () => void;
-  /** 削除完了時のコールバック */
   onDeleted: () => void;
 }
 
@@ -38,7 +33,6 @@ interface ScheduleModalDraft {
   allDay: boolean;
 }
 
-/* ローカルコメントの型（コメントスレッド用） */
 interface LocalComment {
   id: string;
   authorName: string;
@@ -54,8 +48,6 @@ interface LocalComment {
   }>;
 }
 
-/* ── ScheduleModal コンポーネント ────────────────────────────────── */
-
 export function ScheduleModal({
   schedule,
   initialDate,
@@ -68,46 +60,57 @@ export function ScheduleModal({
   const { currentUser } = useAuthStore();
   const isNew = schedule === null;
 
-  /* ── ドラフトキー ─────────────────────────────── */
   const draftKey = isNew ? DRAFT_KEYS.SCHEDULE_NEW : DRAFT_KEYS.scheduleEdit(schedule!.id);
   const savedDraft = loadDraft<ScheduleModalDraft>(draftKey);
 
-  /* ── フォーム初期値 ───────────────────────────── */
-  const defaultStart = isNew
-    ? (savedDraft?.startAt ?? initialDate ?? null)
-    : schedule!.startAt;
-  /* 開始日時が設定されている場合は2時間後を終了日時として初期設定 */
+  const defaultStart = isNew ? (savedDraft?.startAt ?? initialDate ?? null) : schedule!.startAt;
   const defaultEnd = isNew
     ? (savedDraft?.endAt ?? (initialDate ? new Date(initialDate.getTime() + 2 * 60 * 60 * 1000) : null))
     : schedule!.endAt;
 
-  /* ── フォーム状態 ─────────────────────────────── */
   const [title, setTitle] = useState(savedDraft?.title ?? (isNew ? '' : schedule!.title));
-  const [categoryId, setCategoryId] = useState(
-    savedDraft?.categoryId ?? (isNew ? '' : (schedule!.categoryId ?? ''))
-  );
+  const [categoryId, setCategoryId] = useState(savedDraft?.categoryId ?? (isNew ? '' : (schedule!.categoryId ?? '')));
   const [startAt, setStartAt] = useState<Date | null>(defaultStart);
   const [endAt, setEndAt] = useState<Date | null>(defaultEnd);
-  const [description, setDescription] = useState(
-    savedDraft?.description ?? (isNew ? '' : schedule!.description)
-  );
-  const [isAllDay, setIsAllDay] = useState(
-    savedDraft?.allDay ?? (isNew ? false : (schedule!.allDay ?? false))
-  );
-
-  /* ── UI 状態 ──────────────────────────────────── */
+  const [description, setDescription] = useState(savedDraft?.description ?? (isNew ? '' : schedule!.description));
+  const [isAllDay, setIsAllDay] = useState(savedDraft?.allDay ?? (isNew ? false : (schedule!.allDay ?? false)));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /* ── ドラッグ移動 ─────────────────────────────── */
+  /* ── ドラッグ（pointer capture 方式） */
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const isDragging = useRef(false);
   const dragStart = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 });
-
-  /* オーバーレイのマウスダウン追跡（ドラッグ誤閉じ防止） */
   const mouseDownOnOverlay = useRef(false);
 
-  /* ── コメント状態 ─────────────────────────────── */
+  /* ── リサイズ（pointer capture 方式） */
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [modalSize, setModalSize] = useState<{ width: number; height: number } | null>(null);
+  const isResizing = useRef(false);
+  const resizeStart = useRef({ mouseX: 0, mouseY: 0, width: 0, height: 0 });
+
+  function handleResizePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    e.stopPropagation();
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    isResizing.current = true;
+    const rect = cardRef.current!.getBoundingClientRect();
+    resizeStart.current = { mouseX: e.clientX, mouseY: e.clientY, width: rect.width, height: rect.height };
+  }
+  function handleResizePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isResizing.current) return;
+    const dx = e.clientX - resizeStart.current.mouseX;
+    const dy = e.clientY - resizeStart.current.mouseY;
+    setModalSize({
+      width: Math.max(560, resizeStart.current.width + dx),
+      height: Math.max(400, resizeStart.current.height + dy),
+    });
+  }
+  function handleResizePointerUp() {
+    isResizing.current = false;
+  }
+
+  /* ── コメント状態 */
   const [comments, setComments] = useState<LocalComment[]>([]);
   const [commentText, setCommentText] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -116,587 +119,285 @@ export function ScheduleModal({
   const myInitials = (currentUser?.displayName ?? 'ME').slice(0, 2).toUpperCase();
   const myName = currentUser?.displayName ?? 'あなた';
 
-  /* ── ドラッグイベント登録 ─────────────────────── */
   useEffect(() => {
-    function onMove(e: MouseEvent) {
-      if (!isDragging.current) return;
-      setPosition({
-        x: dragStart.current.posX + e.clientX - dragStart.current.mouseX,
-        y: dragStart.current.posY + e.clientY - dragStart.current.mouseY,
-      });
-    }
-    function onUp() { isDragging.current = false; }
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-    return () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-    };
-  }, []);
-
-  /* ── フォーム変更のたびにドラフトを保存 ────────── */
-  useEffect(() => {
-    saveDraft<ScheduleModalDraft>(draftKey, {
-      title,
-      categoryId,
-      startAt,
-      endAt,
-      description,
-      allDay: isAllDay,
-    });
+    saveDraft<ScheduleModalDraft>(draftKey, { title, categoryId, startAt, endAt, description, allDay: isAllDay });
   }, [title, categoryId, startAt, endAt, description, isAllDay]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── ドラッグ開始ハンドラ ─────────────────────── */
-  function handleDragStart(e: React.MouseEvent) {
-    /* インタラクティブ要素では発火しない */
+  /* ── pointer capture ドラッグハンドラ */
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if ((e.target as HTMLElement).closest('button, input, select, a, textarea')) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.currentTarget.style.cursor = 'grabbing';
     isDragging.current = true;
-    dragStart.current = {
-      mouseX: e.clientX,
-      mouseY: e.clientY,
-      posX: position.x,
-      posY: position.y,
-    };
+    dragStart.current = { mouseX: e.clientX, mouseY: e.clientY, posX: position.x, posY: position.y };
     e.preventDefault();
   }
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDragging.current) return;
+    setPosition({
+      x: dragStart.current.posX + e.clientX - dragStart.current.mouseX,
+      y: dragStart.current.posY + e.clientY - dragStart.current.mouseY,
+    });
+  }
+  function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    e.currentTarget.style.cursor = 'grab';
+  }
 
-  /* ── 終日トグル（双方向） ─────────────────────── */
   function toggleAllDay() {
     if (!isAllDay) {
-      /* OFF → ON: 時刻を 00:00 にリセット */
-      const s = new Date(startAt ?? new Date());
-      s.setHours(0, 0, 0, 0);
-      const e = new Date(endAt ?? new Date());
-      e.setHours(0, 0, 0, 0);
-      setStartAt(s);
-      setEndAt(e);
-      setIsAllDay(true);
+      const s = new Date(startAt ?? new Date()); s.setHours(0, 0, 0, 0);
+      const e = new Date(endAt ?? new Date()); e.setHours(0, 0, 0, 0);
+      setStartAt(s); setEndAt(e); setIsAllDay(true);
     } else {
-      /* ON → OFF: デフォルト時刻を復元（21:00 / 23:30） */
-      const s = new Date(startAt ?? new Date());
-      s.setHours(21, 0, 0, 0);
-      const e = new Date(endAt ?? new Date());
-      e.setHours(23, 30, 0, 0);
-      setStartAt(s);
-      setEndAt(e);
-      setIsAllDay(false);
+      const s = new Date(startAt ?? new Date()); s.setHours(21, 0, 0, 0);
+      const e = new Date(endAt ?? new Date()); e.setHours(23, 30, 0, 0);
+      setStartAt(s); setEndAt(e); setIsAllDay(false);
     }
   }
 
-  /* ── 開始日時変更（終了日時が未設定なら2時間後を自動補完） ─── */
   function handleStartAtChange(date: Date | null) {
     setStartAt(date);
-    if (date && !endAt) {
-      setEndAt(new Date(date.getTime() + 2 * 60 * 60 * 1000));
-    }
+    if (date && !endAt) setEndAt(new Date(date.getTime() + 2 * 60 * 60 * 1000));
   }
 
-  /* ── 保存ハンドラ ─────────────────────────────── */
   async function handleSave() {
-    if (!title.trim()) {
-      setError('タイトルを入力してください');
-      return;
-    }
-    if (!startAt || !endAt) {
-      setError('開始日時と終了日時を入力してください');
-      return;
-    }
-    if (!isAllDay && endAt <= startAt) {
-      setError('終了日時は開始日時より後にしてください');
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
+    if (!title.trim()) { setError('タイトルを入力してください'); return; }
+    if (!startAt || !endAt) { setError('開始日時と終了日時を入力してください'); return; }
+    if (!isAllDay && endAt <= startAt) { setError('終了日時は開始日時より後にしてください'); return; }
+    setSaving(true); setError(null);
     try {
       if (isNew) {
         if (!currentUser) return;
-        await createSchedule(teamId, {
-          title: title.trim(),
-          categoryId: categoryId || null,
-          startAt,
-          endAt,
-          description,
-          participantIds: [],
-          collabPartnerName: null,
-          linkedTaskIds: [],
-          allDay: isAllDay,
-          createdBy: currentUser.uid,
-        });
+        await createSchedule(teamId, { title: title.trim(), categoryId: categoryId || null, startAt, endAt, description, participantIds: [], collabPartnerName: null, linkedTaskIds: [], allDay: isAllDay, createdBy: currentUser.uid });
       } else {
-        await updateSchedule(
-          teamId,
-          schedule!.id,
-          {
-            title: title.trim(),
-            categoryId: categoryId || null,
-            startAt,
-            endAt,
-            description,
-            allDay: isAllDay,
-          },
-          schedule!.updatedAt
-        );
+        await updateSchedule(teamId, schedule!.id, { title: title.trim(), categoryId: categoryId || null, startAt, endAt, description, allDay: isAllDay }, schedule!.updatedAt);
       }
-      clearDraft(draftKey);
-      onClose();
-    } catch {
-      setError('保存に失敗しました。もう一度お試しください');
-    } finally {
-      setSaving(false);
-    }
+      clearDraft(draftKey); onClose();
+    } catch { setError('保存に失敗しました。もう一度お試しください'); }
+    finally { setSaving(false); }
   }
 
-  /* ── 削除ハンドラ（編集モード時のみ） ────────── */
   async function handleDelete() {
     if (!confirm('この予定を削除しますか？')) return;
     await deleteSchedule(teamId, schedule!.id);
-    clearDraft(draftKey);
-    onDeleted();
-    onClose();
+    clearDraft(draftKey); onDeleted(); onClose();
   }
 
-  /* ── コメント追加 ─────────────────────────────── */
   function addComment() {
     if (!commentText.trim()) return;
-    const newComment: LocalComment = {
-      id: `c-${Date.now()}`, // eslint-disable-line react-hooks/purity
-      authorName: myName,
-      authorInitials: myInitials,
-      text: commentText.trim(),
-      time: format(new Date(), 'HH:mm', { locale: ja }),
-      replies: [],
-    };
-    setComments((prev) => [...prev, newComment]);
+    setComments((prev) => [...prev, { id: `c-${Date.now()}`, authorName: myName, authorInitials: myInitials, text: commentText.trim(), time: format(new Date(), 'HH:mm', { locale: ja }), replies: [] }]);
     setCommentText('');
   }
 
-  /* ── 返信追加 ─────────────────────────────────── */
   function addReply(commentId: string) {
     if (!replyText.trim()) return;
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === commentId
-          ? {
-              ...c,
-              replies: [
-                ...c.replies,
-                {
-                  id: `r-${Date.now()}`,
-                  authorName: myName,
-                  authorInitials: myInitials,
-                  text: replyText.trim(),
-                  time: format(new Date(), 'HH:mm', { locale: ja }),
-                },
-              ],
-            }
-          : c
-      )
-    );
-    setReplyText('');
-    setReplyingTo(null);
+    setComments((prev) => prev.map((c) => c.id === commentId ? { ...c, replies: [...c.replies, { id: `r-${Date.now()}`, authorName: myName, authorInitials: myInitials, text: replyText.trim(), time: format(new Date(), 'HH:mm', { locale: ja }) }] } : c));
+    setReplyText(''); setReplyingTo(null);
   }
 
-  /* ── レンダリング ─────────────────────────────── */
+  /* ── スタイル定数 */
+  const avatarSm: React.CSSProperties = { background: 'var(--primary-800)', color: 'var(--primary-200)' };
+  const bubbleBase: React.CSSProperties = { background: 'var(--bg)', border: '1px solid var(--border)' };
+
+  /* ─────────────────── レンダリング ─────────────────── */
   return (
-    /* オーバーレイ */
     <div
-      className="fixed inset-0 z-[280] flex items-center justify-center p-4"
-      style={{ background: 'rgba(6,6,16,0.85)', backdropFilter: 'blur(6px)' }}
+      className="fixed inset-0 z-[280] flex items-center justify-center p-8"
+      style={{ background: 'rgba(6,6,16,0.85)', backdropFilter: 'blur(6px)', animation: 'fade-in 200ms ease-out both' }}
       onMouseDown={(e) => { mouseDownOnOverlay.current = e.target === e.currentTarget; }}
       onClick={() => { if (mouseDownOnOverlay.current) onClose(); }}
     >
-      {/* モーダル本体（870px 幅、pop-modal アニメーション） */}
+      {/* ── ドラッグ移動ラッパー（position=0 のときは transform を省略して不要な stacking context を避ける） */}
       <div
-        className="flex flex-col overflow-hidden rounded-[24px] animate-pop-modal"
         style={{
-          width: 'min(870px, calc(100vw - 32px))',
-          minWidth: '320px',
-          maxHeight: 'calc(100vh - 32px)',
-          background: 'var(--card-2)',
-          border: '1px solid var(--border-l)',
-          boxShadow: 'var(--shadow-xl)',
-          transform: `translate(${position.x}px, ${position.y}px)`,
+          position: 'relative',
+          ...(position.x !== 0 || position.y !== 0
+            ? { transform: `translate(${position.x}px, ${position.y}px)` }
+            : {}),
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ヘッダー（ドラッグハンドル） */}
+        {/* ── モーダル本体 */}
         <div
-          className="px-8 pt-6 pb-5 flex items-start justify-between gap-4 shrink-0 cursor-move"
-          style={{ borderBottom: '1px solid var(--border)' }}
-          onMouseDown={handleDragStart}
+          ref={cardRef}
+          className="smodal__card"
+          style={{
+            width: modalSize?.width ?? 'min(1180px, calc(100vw - 64px))',
+            height: modalSize?.height ?? 'min(720px, calc(100vh - 64px))',
+            minWidth: '560px',
+          }}
         >
-          <div>
-            <h2
-              className="text-[18px] font-bold flex items-center gap-2"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              <Icon name={isNew ? 'add' : 'edit'} size={20} />
-              {isNew ? '予定を追加' : '予定を編集'}
-            </h2>
-            <p className="text-[12px] mt-1" style={{ color: 'var(--text-muted)' }}>
-              {isNew
-                ? '新しい予定の内容を入力して保存してください。'
-                : '予定の内容を編集して保存してください。'}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors"
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-muted)',
-            }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}
+
+          {/* ── ヘッダー（ドラッグハンドル / タイトル inline） */}
+          <div
+            className="smodal__hd"
+            style={{ padding: '11px 18px 11px 22px', cursor: 'grab', userSelect: 'none', alignItems: 'center' }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
           >
-            <Icon name="close" size={18} />
-          </button>
-        </div>
+            <Icon name={isNew ? 'add' : 'edit'} size={17} style={{ color: 'var(--text-accent)', flexShrink: 0 } as React.CSSProperties} />
+            <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+              {isNew ? '予定を追加' : '予定を編集'}
+            </span>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {isNew ? '— 新しい予定の内容を入力して保存してください。' : '— 予定の内容を編集して保存してください。'}
+            </span>
+            <button onClick={onClose} className="smodal__close" title="閉じる" style={{ marginLeft: 'auto', flexShrink: 0 }}>
+              <Icon name="close" size={18} />
+            </button>
+          </div>
 
-        {/* フォームボディ */}
-        <div className="flex-1 overflow-y-auto px-8 py-6 flex flex-col gap-5">
+          {/* ── 本体 2 カラム */}
+          <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
 
-          {/* タイトル */}
-          <Input
-            label="タイトル *"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={100}
-            placeholder="予定のタイトルを入力"
-          />
-
-          {/* カテゴリ */}
-          <div className="flex flex-col gap-1.5">
-            <label
-              className="text-[12px] font-semibold"
-              style={{ color: 'var(--text-secondary)' }}
+            {/* ─ 左: 入力フォーム */}
+            <div
+              className="flex flex-col gap-5 overflow-y-auto"
+              style={{ flex: '0 0 55%', padding: '22px 20px 22px 26px', borderRight: '1px solid var(--border)', minHeight: 0 }}
             >
-              カテゴリ
-            </label>
-            <Dropdown
-              value={categoryId}
-              options={categories.map((c) => ({ value: c.id, label: c.name }))}
-              placeholder="未選択"
-              onChange={setCategoryId}
-              scroll
-            />
-          </div>
+              <Input label="タイトル *" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} placeholder="予定のタイトルを入力" />
 
-          {/* 日時グリッド（2カラム） */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* 開始日時 + 終日トグル（右揃え） */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <label
-                  className="text-[12px] font-semibold"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  開始日時 *
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>カテゴリ</label>
+                <Dropdown value={categoryId} options={categories.map((c) => ({ value: c.id, label: c.name }))} placeholder="未選択" onChange={setCategoryId} scroll />
+              </div>
+
+              {/* 開始日時 / 終了日時 / 終日トグル — 横並び */}
+              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>開始日時 *</label>
+                  <DateField value={startAt} onChange={handleStartAtChange} hideTime={isAllDay} placeholder="開始日時を選択" />
+                </div>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>終了日時</label>
+                  <DateField value={endAt} onChange={(d) => setEndAt(d)} min={startAt ?? undefined} hideTime={isAllDay} placeholder="終了日時を選択" />
+                </div>
+                {/* 終日トグル（.allday CSS クラス） */}
+                <label className={`allday${isAllDay ? ' is-on' : ''}`} onClick={toggleAllDay} style={{ paddingBottom: 11, flexShrink: 0, cursor: 'pointer' }}>
+                  <span className="allday__txt">終日</span>
+                  <span className="allday__sw" />
                 </label>
-                {/* 終日トグル（双方向: ON→OFFも可能） */}
-                <button
-                  type="button"
-                  onClick={toggleAllDay}
-                  className="px-2.5 py-1 rounded-[8px] text-[11px] font-semibold border transition-colors"
-                  style={
-                    isAllDay
-                      ? { borderColor: 'var(--primary)', color: 'var(--primary)' }
-                      : { borderColor: 'var(--border)', color: 'var(--text-muted)' }
-                  }
-                  onMouseEnter={(e) => {
-                    if (!isAllDay) {
-                      (e.currentTarget as HTMLElement).style.borderColor = 'var(--primary-300)';
-                      (e.currentTarget as HTMLElement).style.color = 'var(--primary-300)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isAllDay) {
-                      (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
-                      (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)';
-                    }
-                  }}
-                >
-                  終日
-                </button>
-              </div>
-              <DateField
-                value={startAt}
-                onChange={handleStartAtChange}
-                hideTime={isAllDay}
-                placeholder="開始日時を選択"
-              />
-            </div>
-
-            {/* 終了日時 */}
-            <div className="flex flex-col gap-1.5">
-              <label
-                className="text-[12px] font-semibold"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                終了日時
-              </label>
-              <DateField
-                value={endAt}
-                onChange={(d) => setEndAt(d)}
-                min={startAt ?? undefined}
-                hideTime={isAllDay}
-                placeholder="終了日時を選択"
-              />
-            </div>
-          </div>
-
-          {/* 説明（Markdown エディタ・プレビュー切替付き） */}
-          <MarkdownEditor
-            label="説明"
-            value={description}
-            onChange={setDescription}
-            placeholder="予定の詳細を入力..."
-            maxLength={1000}
-            rows={4}
-          />
-
-          {/* エラーメッセージ */}
-          {error && (
-            <p className="text-[12px]" style={{ color: 'var(--danger)' }}>
-              {error}
-            </p>
-          )}
-
-          {/* コメント / メモ（編集モードのみ表示） */}
-          {!isNew && (
-            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-              <div
-                className="text-[13px] font-semibold tracking-[0.05em] mb-4"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                コメント / メモ
               </div>
 
-              {/* コメントツリー */}
-              {comments.length > 0 && (
-                <div className="flex flex-col gap-4 mb-6">
-                  {comments.map((comment) => (
-                    <div key={comment.id}>
+              <MarkdownEditor label="説明" value={description} onChange={setDescription} placeholder="予定の詳細を入力..." maxLength={1000} rows={5} />
+
+              {error && <p className="text-[12px]" style={{ color: 'var(--danger)' }}>{error}</p>}
+            </div>
+
+            {/* ─ 右: コメント / メモ */}
+            <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+              {/* 右カラムヘッダー */}
+              <div className="flex items-center gap-2 shrink-0 px-5 py-3" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
+                <span className="material-icons text-[15px]" style={{ color: 'var(--text-accent)' }}>chat</span>
+                <span className="text-[12px] font-semibold tracking-[0.05em]" style={{ color: 'var(--text-secondary)' }}>コメント / メモ</span>
+              </div>
+
+              {/* コメント一覧（スクロール可） */}
+              <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4" style={{ minHeight: 0 }}>
+                {isNew ? (
+                  <div className="flex flex-col items-center justify-center h-full gap-2 text-center" style={{ color: 'var(--text-disabled)' }}>
+                    <span className="material-icons text-[32px]">chat_bubble_outline</span>
+                    <p className="text-[12px]">予定を保存すると<br />コメントを残せます</p>
+                  </div>
+                ) : comments.length === 0 ? (
+                  <p className="text-[12px]" style={{ color: 'var(--text-disabled)' }}>まだコメントはありません</p>
+                ) : (
+                  comments.map((comment) => (
+                    <div key={comment.id} className="flex flex-col gap-2">
                       {/* 親コメント */}
-                      <div className="flex gap-3">
-                        <div
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5"
-                          style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
-                        >
-                          {comment.authorInitials}
-                        </div>
-                        <div
-                          className="flex-1 px-4 py-3 rounded-[0_12px_12px_12px]"
-                          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
-                        >
-                          <div
-                            className="flex justify-between text-[12px] mb-1.5"
-                            style={{ color: 'var(--text-muted)' }}
-                          >
-                            <strong style={{ color: 'var(--text-primary)' }}>
-                              {comment.authorName}
-                            </strong>
+                      <div className="flex gap-2.5">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5" style={avatarSm}>{comment.authorInitials}</div>
+                        <div className="flex-1 px-3 py-2.5 rounded-[0_10px_10px_10px] text-[13px]" style={bubbleBase}>
+                          <div className="flex justify-between text-[11px] mb-1" style={{ color: 'var(--text-muted)' }}>
+                            <strong style={{ color: 'var(--text-primary)' }}>{comment.authorName}</strong>
                             <span>{comment.time}</span>
                           </div>
-                          <p
-                            className="text-[14px] leading-relaxed mb-2"
-                            style={{ color: 'var(--text-primary)' }}
-                          >
-                            {comment.text}
-                          </p>
-                          <button
-                            onClick={() =>
-                              setReplyingTo(replyingTo === comment.id ? null : comment.id)
-                            }
-                            className="text-[12px] font-semibold transition-colors"
-                            style={{ color: 'var(--text-muted)' }}
-                            onMouseEnter={(e) => {
-                              (e.currentTarget as HTMLElement).style.color = 'var(--primary-300)';
-                            }}
-                            onMouseLeave={(e) => {
-                              (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)';
-                            }}
-                          >
-                            返信する
-                          </button>
+                          <p className="leading-relaxed mb-1.5" style={{ color: 'var(--text-primary)' }}>{comment.text}</p>
+                          <button className="text-[11px] font-semibold transition-colors" style={{ color: 'var(--text-muted)' }} onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--primary-300)'; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}>返信する</button>
                         </div>
                       </div>
-
                       {/* 返信一覧 */}
                       {comment.replies.map((reply) => (
-                        <div key={reply.id} className="flex gap-3 ml-10 mt-3 relative">
-                          <div className="absolute -left-[22px] top-0 bottom-5 w-0.5 bg-border rounded" />
-                          <div className="absolute -left-[22px] top-5 w-3 h-0.5 bg-border rounded" />
-                          <div
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5"
-                            style={{
-                              background: 'rgba(239,159,39,0.2)',
-                              color: 'var(--amber-l)',
-                            }}
-                          >
-                            {reply.authorInitials}
-                          </div>
-                          <div
-                            className="flex-1 px-4 py-3 rounded-[0_12px_12px_12px]"
-                            style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
-                          >
-                            <div
-                              className="flex justify-between text-[12px] mb-1.5"
-                              style={{ color: 'var(--text-muted)' }}
-                            >
-                              <strong style={{ color: 'var(--text-primary)' }}>
-                                {reply.authorName}
-                              </strong>
+                        <div key={reply.id} className="flex gap-2.5 ml-9 relative">
+                          <div className="absolute -left-[20px] top-0 bottom-4 w-px bg-border rounded" />
+                          <div className="absolute -left-[20px] top-4 w-3 h-px bg-border rounded" />
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5" style={{ background: 'rgba(239,159,39,0.2)', color: 'var(--amber-l)' }}>{reply.authorInitials}</div>
+                          <div className="flex-1 px-3 py-2 rounded-[0_10px_10px_10px] text-[12px]" style={bubbleBase}>
+                            <div className="flex justify-between text-[11px] mb-1" style={{ color: 'var(--text-muted)' }}>
+                              <strong style={{ color: 'var(--text-primary)' }}>{reply.authorName}</strong>
                               <span>{reply.time}</span>
                             </div>
-                            <p
-                              className="text-[14px] leading-relaxed"
-                              style={{ color: 'var(--text-primary)' }}
-                            >
-                              {reply.text}
-                            </p>
+                            <p style={{ color: 'var(--text-primary)' }}>{reply.text}</p>
                           </div>
                         </div>
                       ))}
-
-                      {/* 返信入力欄 */}
+                      {/* 返信入力 */}
                       {replyingTo === comment.id && (
-                        <div className="flex gap-3 ml-10 mt-3">
-                          <div
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5"
-                            style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
-                          >
-                            {myInitials}
-                          </div>
-                          <div className="flex-1 flex flex-col gap-2">
-                            <textarea
-                              value={replyText}
-                              onChange={(e) => setReplyText(e.target.value)}
-                              placeholder="返信を入力..."
-                              rows={2}
-                              className="w-full px-4 py-3 rounded-[12px] text-[13px] outline-none resize-y min-h-[60px] transition-colors"
-                              style={{
-                                background: 'var(--bg)',
-                                border: '1px solid var(--border)',
-                                color: 'var(--text-primary)',
-                              }}
-                            />
-                            <div className="flex gap-2 self-end">
-                              <button
-                                onClick={() => setReplyingTo(null)}
-                                className="px-3 py-1 text-[12px] rounded-[6px] border transition-colors"
-                                style={{
-                                  color: 'var(--text-muted)',
-                                  borderColor: 'var(--border)',
-                                }}
-                              >
-                                キャンセル
-                              </button>
-                              <button
-                                onClick={() => addReply(comment.id)}
-                                disabled={!replyText.trim()}
-                                className="px-3 py-1 text-[12px] rounded-[6px] transition-colors disabled:opacity-40"
-                                style={{
-                                  background: 'var(--purple-d)',
-                                  color: 'var(--purple-l)',
-                                }}
-                                onMouseEnter={(e) => {
-                                  if (replyText.trim())
-                                    (e.currentTarget as HTMLElement).style.background =
-                                      'var(--primary)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  (e.currentTarget as HTMLElement).style.background =
-                                    'var(--purple-d)';
-                                }}
-                              >
-                                送信
-                              </button>
+                        <div className="flex gap-2.5 ml-9">
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5" style={avatarSm}>{myInitials}</div>
+                          <div className="flex-1 flex flex-col gap-1.5">
+                            <textarea value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder="返信を入力..." rows={2} className="w-full px-3 py-2 rounded-[10px] text-[12px] outline-none resize-none" style={bubbleBase} />
+                            <div className="flex gap-1.5 self-end">
+                              <button onClick={() => setReplyingTo(null)} className="px-2.5 py-1 text-[11px] rounded-[6px] border" style={{ color: 'var(--text-muted)', borderColor: 'var(--border)' }}>キャンセル</button>
+                              <button onClick={() => addReply(comment.id)} disabled={!replyText.trim()} className="px-2.5 py-1 text-[11px] rounded-[6px] disabled:opacity-40" style={{ background: 'var(--primary)', color: '#fff' }}>送信</button>
                             </div>
                           </div>
                         </div>
                       )}
                     </div>
-                  ))}
-                </div>
-              )}
+                  ))
+                )}
+              </div>
 
-              {/* 新規コメント入力 */}
-              <div className="flex gap-3">
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5"
-                  style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
-                >
-                  {myInitials}
-                </div>
-                <div className="flex-1 flex flex-col gap-2">
-                  <textarea
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    placeholder="チームへコメントを残す..."
-                    rows={3}
-                    className="w-full px-4 py-3 rounded-[12px] text-[14px] outline-none resize-y min-h-[70px] transition-colors"
-                    style={{
-                      background: 'var(--bg)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text-primary)',
-                    }}
-                  />
-                  <div className="self-end">
-                    <button
-                      onClick={addComment}
-                      disabled={!commentText.trim()}
-                      className="px-4 py-1.5 text-[13px] font-semibold rounded-[12px] transition-colors disabled:opacity-40"
-                      style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
-                      onMouseEnter={(e) => {
-                        if (commentText.trim())
-                          (e.currentTarget as HTMLElement).style.background = 'var(--primary)';
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLElement).style.background = 'var(--purple-d)';
-                      }}
-                    >
-                      送信
+              {/* コメント入力（編集モードのみ） */}
+              {!isNew && (
+                <div className="shrink-0 flex gap-2.5 px-5 py-3" style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5" style={avatarSm}>{myInitials}</div>
+                  <div className="flex-1 flex gap-2">
+                    <textarea value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) addComment(); }} placeholder="コメントを入力… (Ctrl+Enter で送信)" rows={2} className="flex-1 px-3 py-2 rounded-[10px] text-[13px] outline-none resize-none" style={{ ...bubbleBase, minHeight: '60px' }} />
+                    <button onClick={addComment} disabled={!commentText.trim()} className="self-end px-3 py-2 rounded-[10px] text-[12px] font-semibold disabled:opacity-40 flex items-center gap-1" style={{ background: 'var(--primary)', color: '#fff' }}>
+                      <span className="material-icons text-[14px]">send</span>
                     </button>
                   </div>
                 </div>
-              </div>
+              )}
+
             </div>
-          )}
+          </div>
+
+          {/* ── フッター */}
+          <div className="sform__footer">
+            {!isNew && canEdit && (
+              <button onClick={handleDelete} className="btn btn--danger btn--sm">
+                <Icon name="delete" size={15} />削除
+              </button>
+            )}
+            <div className="sform__footer-right">
+              <Button variant="ghost" onClick={onClose}>キャンセル</Button>
+              {canEdit && (
+                <Button variant="primary" onClick={handleSave} loading={saving}>保存する</Button>
+              )}
+            </div>
+          </div>
+
         </div>
 
-        {/* フッター: キャンセル | 削除（編集のみ）| 保存 */}
+        {/* ── リサイズハンドル（カード外・overflow:hidden の影響を受けない） */}
         <div
-          className="px-8 py-4 flex items-center gap-3 shrink-0"
-          style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}
+          className="smodal__resize"
+          onPointerDown={handleResizePointerDown}
+          onPointerMove={handleResizePointerMove}
+          onPointerUp={handleResizePointerUp}
+          onPointerCancel={handleResizePointerUp}
         >
-          {/* 削除ボタン（編集モード・canEdit のみ表示） */}
-          {!isNew && canEdit && (
-            <button
-              onClick={handleDelete}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold border transition-colors"
-              style={{
-                background: 'rgba(226,53,57,0.15)',
-                color: '#ff6b70',
-                borderColor: 'rgba(226,53,57,0.3)',
-              }}
-            >
-              <Icon name="delete" size={16} />
-              削除
-            </button>
-          )}
-          <div className="flex-1" />
-          <Button variant="ghost" onClick={onClose}>
-            キャンセル
-          </Button>
-          {canEdit && (
-            <Button variant="primary" onClick={handleSave} loading={saving}>
-              保存する
-            </Button>
-          )}
+          <span className="material-icons" style={{ fontSize: '16px', userSelect: 'none' }}>open_in_full</span>
         </div>
+
       </div>
     </div>
   );

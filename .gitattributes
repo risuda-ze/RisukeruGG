@@ -1,8 +1,10 @@
 # デフォルト: 自動改行変換
 * text=auto
 
-# シェルスクリプトは常に LF（Linux コンテナで実行するため）
-*.sh text eol=lf
+# シェルスクリプト・Dockerfileは常に LF（Linux コンテナで実行するため）
+*.sh         text eol=lf
+Dockerfile   text eol=lf
+Dockerfile.* text eol=lf
 
 # その他のテキストファイル
 *.ts   text eol=lf
