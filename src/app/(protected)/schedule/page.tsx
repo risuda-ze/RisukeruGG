@@ -163,128 +163,70 @@ export default function SchedulePage() {
 
       {/* カレンダーヘッダー */}
       <div
-        className="flex flex-wrap items-center gap-2 px-4 md:px-6 py-2 shrink-0"
-        style={{ background: 'var(--surface)', borderBottom: '1px solid var(--card-border)' }}
+        className="shrink-0 px-4 md:px-7"
+        style={{ background: 'var(--surface)', borderBottom: '1px solid var(--card-border)', paddingTop: 6 }}
       >
-        {/* 左: 週/月トグル + YYYY年MM月 */}
-        <div className="flex items-center gap-3">
-          {/* 週/月切替セグメント */}
-          <div
-            className="flex border rounded-[8px] p-[3px] gap-[2px]"
-            style={{ background: 'var(--surface)', borderColor: 'var(--card-border)' }}
-          >
-            {(['週', '月'] as const).map((label) => {
-              const v = label === '週' ? 'week' : 'month';
-              return (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className="px-4 py-1.5 rounded-[6px] text-[13px] font-semibold transition-[background,box-shadow,color] active:scale-95"
-                  style={{
-                    background: view === v ? 'var(--primary)' : 'none',
-                    color: view === v ? '#fff' : 'var(--text-secondary)',
-                    boxShadow: view === v ? 'var(--glow-primary)' : 'none',
-                  }}
-                >
-                  {label}
-                </button>
-              );
-            })}
+        <div className="calhd">
+          {/* 週/月セグメントトグル */}
+          <div className="segtoggle">
+            <button className={view === 'week' ? 'is-on' : ''} onClick={() => setView('week')}>週</button>
+            <button className={view === 'month' ? 'is-on' : ''} onClick={() => setView('month')}>月</button>
           </div>
 
           {/* YYYY年MM月 */}
-          <span
-            className="text-[15px] md:text-[17px] font-bold whitespace-nowrap"
-            style={{ fontFamily: 'var(--font-head)', color: 'var(--text-primary)' }}
-          >
-            {year}年{month}月
-          </span>
-        </div>
+          <span className="calhd__month">{year}年 <span className="font-num" style={{ color: 'var(--text-accent)' }}>{month}月</span></span>
 
-        {/* 右: 予定追加 / メンバー切替 / ナビ / ヘルプトグル */}
-        <div className="ml-auto flex items-center gap-2 flex-wrap">
-          {/* 予定追加ボタン */}
-          {canEdit && (
-            <button
-              onClick={() => { setClickedDate(null); setShowCreate(true); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[12px] font-semibold transition-[background,box-shadow,transform] active:scale-95 text-white"
-              style={{ background: 'var(--primary)', boxShadow: 'var(--glow-primary)' }}
-            >
-              <Icon name="add" size={15} />
-              <span className="hidden sm:inline">予定を追加</span>
-            </button>
-          )}
+          {/* 右グループ */}
+          <div className="calhd__right">
+            {/* 予定追加 */}
+            {canEdit && (
+              <button
+                onClick={() => { setClickedDate(null); setShowCreate(true); }}
+                className="btn btn--primary btn--sm"
+              >
+                <Icon name="add" size={16} />
+                <span className="hidden sm:inline">予定を追加</span>
+              </button>
+            )}
 
-          {/* メンバーの予定表示切替 */}
-          <button
-            onClick={() => setShowMemberCalendars((v) => !v)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[8px] text-[12px] font-semibold transition-colors border active:scale-95"
-            style={{
-              background: showMemberCalendars ? 'rgba(91,200,250,0.15)' : 'none',
-              borderColor: showMemberCalendars ? 'rgba(91,200,250,0.5)' : 'var(--border)',
-              color: showMemberCalendars ? 'var(--info)' : 'var(--text-muted)',
-            }}
-          >
-            <Icon name="groups" size={14} />
-            <span className="hidden sm:inline">メンバーの予定</span>
-          </button>
+            {/* メンバーの予定表示切替 */}
+            <button
+              onClick={() => setShowMemberCalendars((v) => !v)}
+              className={`btn btn--sm ${showMemberCalendars ? 'btn--ghost' : 'btn--subtle'}`}
+            >
+              <Icon name="groups" size={15} />
+              <span className="hidden sm:inline">{showMemberCalendars ? 'メンバー表示中' : 'メンバーの予定'}</span>
+            </button>
 
-          {/* 日付ナビ: 前/今日/次 */}
-          <div
-            className="flex items-center rounded-[8px] border p-[3px] gap-[2px]"
-            style={{ background: 'var(--surface)', borderColor: 'var(--card-border)' }}
-          >
+            {/* 日付ナビ */}
+            <div className="datenav">
+              <button className="datenav__arrow" onClick={goBack} aria-label={view === 'month' ? '前月' : '前の週'}>
+                <Icon name="chevron_left" size={18} />
+              </button>
+              <button className="datenav__today" onClick={() => setCurrentDate(new Date())}>今日</button>
+              <button className="datenav__arrow" onClick={goForward} aria-label={view === 'month' ? '翌月' : '次の週'}>
+                <Icon name="chevron_right" size={18} />
+              </button>
+            </div>
+
+            {/* ヘルプトグル */}
             <button
-              onClick={goBack}
-              className="w-8 h-8 flex items-center justify-center rounded-[6px] transition-colors active:scale-95"
-              style={{ color: 'var(--text-secondary)' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--card-raised)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
-              aria-label={view === 'month' ? '前月' : '前の週'}
+              onClick={() => hintVisible ? dismissHint() : showHint()}
+              className={`helptoggle${hintVisible ? ' is-on' : ''}`}
+              aria-label={hintVisible ? 'ヒントを閉じる' : 'ヒントを表示'}
             >
-              <Icon name="chevron_left" size={16} />
-            </button>
-            <button
-              onClick={() => setCurrentDate(new Date())}
-              className="px-3 h-8 rounded-[6px] text-[12px] font-semibold transition-colors active:scale-95"
-              style={{ color: 'var(--text-primary)' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--card-raised)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-accent)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
-            >
-              今日
-            </button>
-            <button
-              onClick={goForward}
-              className="w-8 h-8 flex items-center justify-center rounded-[6px] transition-colors active:scale-95"
-              style={{ color: 'var(--text-secondary)' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--card-raised)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
-              aria-label={view === 'month' ? '翌月' : '次の週'}
-            >
-              <Icon name="chevron_right" size={16} />
+              <Icon name="help_outline" size={17} />
             </button>
           </div>
-
-          {/* ヘルプトグル: ヒントバーを再表示する「?」ボタン */}
-          <button
-            onClick={() => hintVisible ? dismissHint() : showHint()}
-            className="w-9 h-9 flex items-center justify-center rounded-[8px] border transition-colors active:scale-95"
-            style={{
-              borderColor: hintVisible ? 'var(--primary-700)' : 'var(--card-border)',
-              background: hintVisible ? 'var(--primary-950)' : 'var(--surface)',
-              color: hintVisible ? 'var(--text-accent)' : 'var(--text-secondary)',
-            }}
-            aria-label={hintVisible ? 'ヒントを閉じる' : 'ヒントを表示'}
-          >
-            <Icon name="help_outline" size={16} />
-          </button>
         </div>
       </div>
 
-      {/* ヒントバー（初回表示・?ボタンで再表示） */}
-      <HintBar storageKey="riskeru_hint_schedule">
-        カレンダーの日付をクリックすると週表示に切り替わります。「予定を追加」ボタンまたはセルをクリックして予定を追加できます。
-      </HintBar>
+      {/* ヒントバー（初回表示・?ボタンで再表示）: visible は useHintDismiss で一元管理 */}
+      {hintVisible && (
+        <HintBar onDismiss={dismissHint}>
+          カレンダーの日付をクリックすると週表示に切り替わります。「予定を追加」ボタンまたはセルをクリックして予定を追加できます。
+        </HintBar>
+      )}
 
 
       {/* Googleカレンダー接続バナー（未接続・認証期限切れ共通） */}
@@ -314,53 +256,35 @@ export default function SchedulePage() {
         </div>
       )}
 
-      {/* カレンダー */}
-      {loading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <Spinner size="lg" />
-        </div>
-      ) : view === 'month' ? (
-        <MonthCalendar
-          year={year}
-          month={month}
-          schedules={allSchedules}
-          categories={categories}
-          onEventClick={setSelectedSchedule}
-          onDateClick={canEdit ? (d) => { setClickedDate(d ?? null); setShowCreate(true); } : undefined}
-          onDateLabelClick={(date) => {
-            setCurrentDate(date);
-            setView('week');
-          }}
-        />
-      ) : (
-        <WeekCalendar
-          currentDate={currentDate}
-          schedules={allSchedules}
-          categories={categories}
-          onEventClick={setSelectedSchedule}
-          onDateClick={canEdit ? (d) => { setClickedDate(d ?? null); setShowCreate(true); } : undefined}
-        />
-      )}
-
-      {/* カレンダーフッター */}
-      {!loading && (
-        <div className="shrink-0 border-t border-border bg-card px-4 md:px-6 py-2 flex items-center justify-between">
-          <span className="text-[11px] text-muted">
-            {allSchedules.filter((s) => {
-              if (view === 'month') {
-                return (
-                  s.startAt.getFullYear() === year && s.startAt.getMonth() + 1 === month
-                );
-              }
-              return true;
-            }).length}
-            件の予定
-          </span>
-          <span className="text-[11px] text-muted/50 font-num">
-            {view === 'month' ? `${year}年${month}月` : `${year}年${month}月 週表示`}
-          </span>
-        </div>
-      )}
+      {/* カレンダー本体 */}
+      <div className="calwrap">
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <Spinner size="lg" />
+          </div>
+        ) : view === 'month' ? (
+          <MonthCalendar
+            year={year}
+            month={month}
+            schedules={allSchedules}
+            categories={categories}
+            onEventClick={setSelectedSchedule}
+            onDateClick={canEdit ? (d) => { setClickedDate(d ?? null); setShowCreate(true); } : undefined}
+            onDateLabelClick={(date) => {
+              setCurrentDate(date);
+              setView('week');
+            }}
+          />
+        ) : (
+          <WeekCalendar
+            currentDate={currentDate}
+            schedules={allSchedules}
+            categories={categories}
+            onEventClick={setSelectedSchedule}
+            onDateClick={canEdit ? (d) => { setClickedDate(d ?? null); setShowCreate(true); } : undefined}
+          />
+        )}
+      </div>
 
       {/* メンバーの予定の詳細（読み取り専用） */}
       {selectedSchedule?.source === 'member' && (

@@ -157,7 +157,13 @@ export function MarkdownView({
   );
 }
 
-/** マークダウン記法の入力とプレビュー切替をサポートするテキストエリア */
+/**
+ * マークダウンエディタ
+ * - デフォルト: プレビュー表示（テキストボックスなし）
+ * - 「編集」ボタンをクリックすると textarea に切替
+ * - 「完了」ボタンでプレビューに戻る
+ * - readOnly=true の場合は常にプレビューのみ
+ */
 export function MarkdownEditor({
   label,
   value,
@@ -168,35 +174,43 @@ export function MarkdownEditor({
   rows = 4,
   className,
 }: MarkdownEditorProps) {
-  // readOnly の場合は常にプレビュー表示
-  const [preview, setPreview] = useState(readOnly);
+  // 常にプレビューから開始（readOnly でなくても同じ）
+  const [editing, setEditing] = useState(false);
 
   return (
     <div className={`flex flex-col gap-1.5 ${className ?? ''}`}>
       {/* ラベル行 */}
-      {(label || !readOnly) && (
-        <div className="flex items-center justify-between">
-          {label && (
-            <label className="text-[12px] font-semibold text-muted">{label}</label>
-          )}
-          {!readOnly && (
-            <button
-              type="button"
-              onClick={() => setPreview((p) => !p)}
-              className="flex items-center gap-1 text-[11px] text-muted hover:text-purple-l transition-colors"
-              title={preview ? '編集モードに切替' : 'プレビューモードに切替'}
-            >
-              <span className="material-icons text-[14px]">
-                {preview ? 'edit' : 'visibility'}
-              </span>
-              {preview ? '編集' : 'プレビュー'}
-            </button>
-          )}
-        </div>
-      )}
+      <div className="flex items-center justify-between min-h-[22px]">
+        {label && (
+          <label className="text-[12px] font-semibold text-muted">{label}</label>
+        )}
+        {/* 編集 / 完了 ボタン（readOnly でない場合のみ） */}
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={() => setEditing((e) => !e)}
+            className="flex items-center gap-1 text-[11px] transition-colors"
+            style={{ color: editing ? 'var(--primary-300)' : 'var(--text-muted)' }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.color = 'var(--primary-300)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.color = editing
+                ? 'var(--primary-300)'
+                : 'var(--text-muted)';
+            }}
+            title={editing ? 'プレビューに戻る' : '説明を編集'}
+          >
+            <span className="material-icons text-[14px]">
+              {editing ? 'check' : 'edit'}
+            </span>
+            {editing ? '完了' : '編集'}
+          </button>
+        )}
+      </div>
 
-      {/* 編集モード */}
-      {!preview && (
+      {/* 編集モード（editing=true の場合のみ） */}
+      {editing && !readOnly && (
         <textarea
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
@@ -204,31 +218,36 @@ export function MarkdownEditor({
           maxLength={maxLength}
           rows={rows}
           className={textareaClass}
+          autoFocus
         />
       )}
 
-      {/* プレビューモード */}
-      {preview && (
+      {/* プレビューモード（編集中でない、または readOnly） */}
+      {(!editing || readOnly) && (
         <div
           className={[
-            'min-h-[60px] px-3.5 py-2.5 rounded-[12px] text-[14px] text-text leading-relaxed',
-            readOnly ? '' : 'border border-border bg-bg',
+            'min-h-[56px] px-3.5 py-2.5 rounded-[12px] text-[14px] text-text leading-relaxed',
+            readOnly ? '' : 'border border-border bg-bg cursor-text',
           ]
             .filter(Boolean)
             .join(' ')}
+          onClick={() => { if (!readOnly && !editing) setEditing(true); }}
+          title={readOnly ? undefined : '説明を編集'}
         >
           {value ? (
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS}>
               {value}
             </ReactMarkdown>
           ) : (
-            <span className="text-muted/50 italic text-[13px]">{placeholder ?? '内容なし'}</span>
+            <span className="text-muted/50 italic text-[13px]">
+              {readOnly ? '説明なし' : (placeholder ?? '内容なし')}
+            </span>
           )}
         </div>
       )}
 
-      {/* 文字数カウンター */}
-      {maxLength && !readOnly && (
+      {/* 文字数カウンター（編集中のみ） */}
+      {maxLength && !readOnly && editing && (
         <p className="text-[11px] text-muted/50 self-end">
           {value.length} / {maxLength}
         </p>

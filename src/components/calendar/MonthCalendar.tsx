@@ -30,7 +30,7 @@ interface MonthCalendarProps {
 /** 日曜始まりの曜日ヘッダーラベル */
 const DOW_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-const DEFAULT_EVENT_COLOR = '#7F77DD';
+const DEFAULT_EVENT_COLOR = '#3fb6e0';
 const GCAL_EVENT_COLOR = '#4ade80';
 const MEMBER_EVENT_COLOR = '#60a5fa';
 
@@ -230,7 +230,7 @@ function WeekRow({
                   return (
                     <button
                       key={s.id}
-                      className="w-full text-left px-1.5 rounded-[4px] text-[13px] font-medium text-white whitespace-nowrap overflow-hidden shrink-0 border-l-[3px] transition-[filter,transform] hover:brightness-[1.18] hover:translate-x-[1px] flex items-center gap-1 animate-pop-scale"
+                      className="w-full text-left px-1.5 rounded-[4px] text-[13px] font-medium text-white whitespace-nowrap overflow-hidden shrink-0 border-l-[3px] transition-[filter,transform] hover:brightness-[1.18] hover:translate-x-[1px] flex items-center gap-1 animate-pop-bar"
                       style={{ height: `${EVENT_H}px`, background: `${color}55`, borderLeftColor: color }}
                       onClick={(e) => { e.stopPropagation(); onEventClick(s); }}
                       title={s.title}
@@ -280,8 +280,8 @@ function WeekRow({
           <button
             key={`${s.id}-w${weekStart.getTime()}`}
             className={[
-              'absolute overflow-hidden border-l-[3px] animate-pop-scale',
-              'transition-[filter,transform] hover:brightness-[1.18] hover:translate-x-[1px] text-white',
+              'absolute overflow-hidden border-l-[3px] animate-pop-bar',
+              'transition-[filter] hover:brightness-[1.18] text-white',
               'flex items-center',
               !startsBefore ? 'rounded-l-[4px]' : 'border-l-transparent',
               !endsAfter ? 'rounded-r-[4px]' : '',
@@ -298,6 +298,7 @@ function WeekRow({
               paddingLeft: startsBefore ? '3px' : '5px',
               paddingRight: endsAfter ? '2px' : '5px',
               gap: '3px',
+              willChange: 'filter',
             }}
             onClick={(e) => { e.stopPropagation(); onEventClick(s); }}
             title={s.title}
@@ -434,23 +435,16 @@ export function MonthCalendar({
   );
 
   return (
-    <div className="flex flex-col flex-1 bg-bg overflow-hidden">
-      {/* 曜日ヘッダー（高さ削減） */}
-      <div className="grid grid-cols-7 border-b border-border bg-card shrink-0">
+    <div className="cal">
+      {/* 曜日ヘッダー */}
+      <div className="cal__wd">
         {DOW_LABELS.map((d, i) => (
-          <div
-            key={d}
-            className={`text-center py-1 text-[11px] font-medium tracking-widest ${
-              i === 0 ? 'text-live' : i === 6 ? 'text-info' : 'text-muted'
-            }`}
-          >
-            {d}
-          </div>
+          <span key={d} className={i === 0 ? 'is-sun' : i === 6 ? 'is-sat' : ''}>{d}</span>
         ))}
       </div>
 
       {/* 週行グリッド */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="cal__weeks">
         {Array.from({ length: weekCount }, (_, week) => {
           const weekDays = days.slice(week * 7, (week + 1) * 7);
           return (
