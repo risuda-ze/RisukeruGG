@@ -108,11 +108,9 @@ export async function POST(req: NextRequest): Promise<Response> {
 
       const messageOption = interaction.data?.options?.find((o) => o.name === 'message');
       const userMessage = typeof messageOption?.value === 'string' ? messageOption.value : '';
+      const discordUserId = interaction.member?.user?.id ?? interaction.user?.id ?? '';
 
-      // 即座に Deferred Response を返す（Discord の 3 秒制限を回避）
-      // flagsなし = 通常投稿（チャンネルの全員に見える）
-      // waitUntil() でレスポンス送信後もバックグラウンド処理を継続
-      waitUntil(handleAiConversation(guildId, userMessage, appId, token));
+      waitUntil(handleAiConversation(guildId, userMessage, discordUserId, appId, token));
 
       return Response.json({
         type: 5, // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
@@ -140,10 +138,12 @@ export async function POST(req: NextRequest): Promise<Response> {
       targetGuildId === guildId
     ) {
       // ボタンクリックも Deferred Response で応答し、処理をバックグラウンドで実行
+      const buttonDiscordUserId = interaction.member?.user?.id ?? interaction.user?.id ?? '';
       waitUntil(
         handleButtonClick({
           action,
           guildId,
+          discordUserId: buttonDiscordUserId,
           appId,
           token,
         })

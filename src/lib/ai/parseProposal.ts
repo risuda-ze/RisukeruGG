@@ -1,43 +1,63 @@
+import { z } from 'zod';
+
 /**
  * AI 出力の %%PROPOSAL%% ブロックをパースするユーティリティ。
  * Web の chat/route.ts と Discord ボットの handleRisukerugg.ts の両方で共有する。
+ * Zod スキーマで AI 出力の型・長さ・形式を厳密に検証する。
  */
 
-/** スケジュール提案データ */
-export interface ScheduleProposal {
-  type: 'schedule';
-  title: string;
-  startAt: string;  // ISO datetime
-  endAt: string;    // ISO datetime
-  description?: string;
-  participantNames?: string[];
-}
+const STR_MAX = 500;
+const LONG_STR_MAX = 2000;
+const ARRAY_MAX = 10;
 
-/** タスク提案データ */
-export interface TaskProposal {
-  type: 'task';
-  title: string;
-  dueDate?: string;   // ISO date
-  description?: string;
-  assigneeName?: string;
-  columnName?: string;
-}
+// ─── Zod スキーマ ────────────────────────────────────────────
 
-/** コラボ調整提案データ */
-export interface CollabProposal {
-  type: 'collab';
-  title: string;
-  partnerName: string;
-  proposedDates: string[];  // ISO datetime[]
-}
+const ScheduleProposalSchema = z.object({
+  type: z.literal('schedule'),
+  title: z.string().min(1).max(STR_MAX),
+  startAt: z.string().datetime({ message: 'startAt は ISO datetime 形式である必要があります' }),
+  endAt: z.string().datetime({ message: 'endAt は ISO datetime 形式である必要があります' }),
+  description: z.string().max(LONG_STR_MAX).optional(),
+  participantNames: z.array(z.string().max(100)).max(ARRAY_MAX).optional(),
+});
 
-export type ProposalData = ScheduleProposal | TaskProposal | CollabProposal;
+const TaskProposalSchema = z.object({
+  type: z.literal('task'),
+  title: z.string().min(1).max(STR_MAX),
+  dueDate: z.string().date().optional(),
+  description: z.string().max(LONG_STR_MAX).optional(),
+  assigneeName: z.string().max(100).optional(),
+  columnName: z.string().max(100).optional(),
+});
+
+const CollabProposalSchema = z.object({
+  type: z.literal('collab'),
+  title: z.string().min(1).max(STR_MAX),
+  partnerName: z.string().min(1).max(100),
+  proposedDates: z
+    .array(z.string().datetime({ message: 'proposedDates の要素は ISO datetime 形式が必要です' }))
+    .min(1)
+    .max(ARRAY_MAX),
+});
+
+export const ProposalDataSchema = z.discriminatedUnion('type', [
+  ScheduleProposalSchema,
+  TaskProposalSchema,
+  CollabProposalSchema,
+]);
+
+// ─── 型定義（スキーマから自動生成） ────────────────────────────
+
+export type ScheduleProposal = z.infer<typeof ScheduleProposalSchema>;
+export type TaskProposal = z.infer<typeof TaskProposalSchema>;
+export type CollabProposal = z.infer<typeof CollabProposalSchema>;
+export type ProposalData = z.infer<typeof ProposalDataSchema>;
 
 const PROPOSAL_REGEX = /%%PROPOSAL%%\s*([\s\S]*?)\s*%%\/PROPOSAL%%/g;
 
 /**
  * テキストから %%PROPOSAL%% ブロックをすべて抽出してパースする。
- * パース失敗したブロックはスキップする。
+ * Zod バリデーションに失敗したブロックはスキップする（不正なデータを無視）。
  */
 export function extractProposals(text: string): ProposalData[] {
   const proposals: ProposalData[] = [];
@@ -46,8 +66,11 @@ export function extractProposals(text: string): ProposalData[] {
 
   while ((match = PROPOSAL_REGEX.exec(text)) !== null) {
     try {
-      const parsed = JSON.parse(match[1]) as ProposalData;
-      proposals.push(parsed);
+      const raw: unknown = JSON.parse(match[1]);
+      const result = ProposalDataSchema.safeParse(raw);
+      if (result.success) {
+        proposals.push(result.data);
+      }
     } catch {
       // JSON パース失敗はスキップ
     }

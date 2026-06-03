@@ -14,6 +14,7 @@ import { getSession, upsertSession, deleteSession, isSessionExpired } from '../s
 export async function handleAiConversation(
   guildId: string,
   userMessage: string,
+  discordUserId: string,
   appId: string,
   token: string
 ): Promise<void> {
@@ -21,8 +22,17 @@ export async function handleAiConversation(
   const domain =
     process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'https://risukeru.gg';
 
+  // ─── プロンプトインジェクション対策 ──────────────────────────
+  // %%PROPOSAL%% マーカーを含むメッセージは AI 出力フォーマットの偽装を試みる可能性がある
+  if (userMessage.includes('%%PROPOSAL%%') || userMessage.includes('%%/PROPOSAL%%')) {
+    await sendFollowUp(appId, token, '申し訳ありませんが、そのメッセージは処理できません。');
+    return;
+  }
+  // メッセージ長を 2000 文字に制限してトークン過剰消費・コンテキスト汚染を防ぐ
+  const sanitizedMessage = userMessage.slice(0, 2000);
+
   // ─── リセットコマンド ─────────────────────────────────────
-  if (userMessage === 'リセット' || userMessage.toLowerCase() === 'reset') {
+  if (sanitizedMessage === 'リセット' || sanitizedMessage.toLowerCase() === 'reset') {
     await deleteSession(guildId);
     await sendFollowUp(appId, token, '会話をリセットしたよ！また気軽に話しかけてね。');
     return;
@@ -70,7 +80,7 @@ export async function handleAiConversation(
 
   const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
     ...(session?.messages ?? []),
-    { role: 'user', content: userMessage },
+    { role: 'user', content: sanitizedMessage },
   ];
 
   // ─── チームデータ取得（AI コンテキスト生成用） ───────────────
@@ -162,11 +172,13 @@ export async function handleAiConversation(
 
   if (proposals.length > 0) {
     // %%PROPOSAL%% あり: pendingProposal にマージして保存
+    // initiatorDiscordUserId を記録し、confirm/revise/cancel を発行者本人のみに制限する
     await upsertSession(guildId, {
       guildId,
       teamId,
       messages: trimmedMessages,
       pendingProposal: proposals[0] as unknown as Record<string, unknown>,
+      initiatorDiscordUserId: discordUserId,
     });
     // テキスト部分があれば先に送信
     if (replyText) {

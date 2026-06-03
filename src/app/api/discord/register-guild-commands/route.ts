@@ -1,32 +1,23 @@
 import { NextRequest } from 'next/server';
-
-const DISCORD_API = 'https://discord.com/api/v10';
-
-/** /risukerugg スラッシュコマンドの定義 */
-const RISUKERUGG_COMMAND = {
-  name: 'risukerugg',
-  description: 'RisukeruGG AI アシスタントに話しかける',
-  options: [
-    {
-      name: 'message',
-      description: 'AIへのメッセージ',
-      type: 3, // STRING
-      required: true,
-    },
-  ],
-};
+import { registerGuildCommands } from '@/lib/discord/registerGuildCommands';
 
 /**
  * 指定した Discord サーバー（guild）にギルドコマンドとして /risukerugg を登録する。
  * グローバルコマンドは使用しない（無関係なサーバーにコマンドが表示されるのを防ぐ）。
  *
- * この API は /api/discord/save-guild-config から内部呼び出しされる。
- * X-Internal-Secret ヘッダーで保護する（本番環境では環境変数で設定する）。
+ * この API は /api/discord/save-guild-config から直接関数呼び出しに切り替え済み。
+ * 外部からの独立呼び出しにも使用可能だが INTERNAL_API_SECRET による保護が必須。
  */
 export async function POST(req: NextRequest): Promise<Response> {
-  // 内部呼び出しのみ許可
   const secret = req.headers.get('X-Internal-Secret');
-  const expectedSecret = process.env.INTERNAL_API_SECRET ?? 'dev-secret';
+  const expectedSecret = process.env.INTERNAL_API_SECRET;
+
+  // INTERNAL_API_SECRET 未設定の場合はエンドポイントを無効化する
+  if (!expectedSecret) {
+    console.error('[register-guild-commands] INTERNAL_API_SECRET が設定されていません');
+    return Response.json({ error: 'サーバー設定エラーです' }, { status: 503 });
+  }
+
   if (secret !== expectedSecret) {
     return Response.json({ error: '内部 API のみ呼び出し可能です' }, { status: 403 });
   }
@@ -42,37 +33,12 @@ export async function POST(req: NextRequest): Promise<Response> {
     return Response.json({ error: '無効なリクエストボディです' }, { status: 400 });
   }
 
-  const appId = process.env.DISCORD_APPLICATION_ID;
-  const botToken = process.env.DISCORD_BOT_TOKEN;
-
-  if (!appId || !botToken) {
-    return Response.json(
-      { error: 'DISCORD_APPLICATION_ID または DISCORD_BOT_TOKEN が設定されていません' },
-      { status: 503 }
-    );
+  try {
+    await registerGuildCommands(guildId);
+    return Response.json({ success: true, guildId });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'コマンド登録失敗';
+    console.error(`ギルドコマンド登録失敗 (guildId=${guildId}):`, err);
+    return Response.json({ error: message }, { status: 500 });
   }
-
-  // ギルドコマンドとして登録（PUT で上書き）
-  const res = await fetch(
-    `${DISCORD_API}/applications/${appId}/guilds/${guildId}/commands`,
-    {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bot ${botToken}`,
-      },
-      body: JSON.stringify([RISUKERUGG_COMMAND]),
-    }
-  );
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    console.error(`ギルドコマンド登録失敗 (${res.status}):`, body);
-    return Response.json(
-      { error: `ギルドコマンド登録失敗: HTTP ${res.status}` },
-      { status: 500 }
-    );
-  }
-
-  return Response.json({ success: true, guildId });
 }
