@@ -202,7 +202,7 @@ export interface DiscordTeamConfig {
 }
 
 // discord_sessions/{guildId} の型（Sprint 3 AI ボット用）
-// セッションはサーバー単位で管理する。個人ユーザーの特定は行わない。
+// セッションはサーバー単位で管理する。
 export interface DiscordSession {
   guildId: string;    // DiscordサーバーID（セッションキー）
   teamId: string;     // 対応するRisukeruGGチームID
@@ -211,6 +211,9 @@ export interface DiscordSession {
     content: string;
   }>;
   pendingProposal?: Record<string, unknown>;  // 確認待ちの %%PROPOSAL%% データ
+  // プロポーザルを発行した Discord ユーザーの ID。confirm/revise/cancel を本人以外が
+  // 操作できないようにするためのバインドキー。
+  initiatorDiscordUserId?: string;
   updatedAt: Date;  // 30分無操作でセッション自動リセット（sessionManager 側で判定）
 }
 

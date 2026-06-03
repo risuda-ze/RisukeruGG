@@ -105,7 +105,7 @@ function AccountSettings() {
   return (
     <div className="space-y-5">
       <p className="text-[13px] text-muted">
-        Discord 連携はチーム設定から行ってください。
+        Discord 連携は「各種連携 → Discord連携」から行ってください。
       </p>
     </div>
   );
