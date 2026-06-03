@@ -26,6 +26,7 @@ export async function getSession(guildId: string): Promise<DiscordSession | null
     teamId: data.teamId as string,
     messages: (data.messages as DiscordSession['messages']) ?? [],
     pendingProposal: (data.pendingProposal as Record<string, unknown> | undefined) ?? undefined,
+    initiatorDiscordUserId: (data.initiatorDiscordUserId as string | undefined) ?? undefined,
     updatedAt: (data.updatedAt as { toDate: () => Date }).toDate(),
   };
 }

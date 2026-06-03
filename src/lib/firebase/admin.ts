@@ -7,11 +7,22 @@ let adminApp: App;
 /**
  * Firebase Admin SDK を初期化して返す。
  * getApps() で重複初期化を防ぐ（Next.js のホットリロード対応）。
- * 認証には環境変数 FIREBASE_SERVICE_ACCOUNT_KEY（JSON 文字列）を使用する。
+ * - エミュレータ環境: FIREBASE_AUTH_EMULATOR_HOST が設定されている場合はサービスアカウント不要。
+ * - 本番環境: FIREBASE_SERVICE_ACCOUNT_KEY（JSON 文字列）を使用する。
  */
 function getAdminApp(): App {
   if (getApps().length > 0) {
     adminApp = getApps()[0]!;
+    return adminApp;
+  }
+
+  // FIREBASE_AUTH_EMULATOR_HOST が設定されている場合はエミュレータモード。
+  // Admin SDK はこの env を自動検知してエミュレータへルーティングするため、
+  // サービスアカウント不要でプロジェクトIDのみ渡せばよい。
+  if (process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+    adminApp = initializeApp({
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'demo-risukeru',
+    });
     return adminApp;
   }
 

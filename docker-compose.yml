@@ -54,6 +54,10 @@ services:
     environment:
       NEXT_PUBLIC_USE_EMULATORS: 'true'
       NEXT_PUBLIC_EMULATOR_HOST: localhost
+      # Admin SDK (サーバーサイド) がエミュレータを使うための設定
+      # コンテナ内から emulator サービスへはサービス名で到達する
+      FIREBASE_AUTH_EMULATOR_HOST: emulator:9099
+      FIRESTORE_EMULATOR_HOST: emulator:8080
     depends_on:
       emulator:
         condition: service_healthy

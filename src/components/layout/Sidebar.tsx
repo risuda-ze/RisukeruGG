@@ -46,7 +46,7 @@ const NAV_SECTIONS: NavSection[] = [
     label: '各種連携',
     icon: 'integration_instructions',
     items: [
-      { href: '#', label: 'Discord連携',  icon: 'forum',         disabled: true },
+      { href: '/integrations/discord', label: 'Discord連携',  icon: 'discord' },
       { href: '#', label: 'Youtube連携',  icon: 'smart_display', disabled: true },
       { href: '#', label: 'X（旧Twitter）', icon: 'tag',          disabled: true },
     ],

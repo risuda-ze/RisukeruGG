@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { getDiscordSettings, updateDiscordSettings } from '@/lib/repositories/teams';
+import { updateDiscordSettings } from '@/lib/repositories/teams';
 import type { DiscordTeamConfig } from '@/types/entities';
 
 interface DiscordSettingsSectionProps {
@@ -54,12 +54,23 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
   const pendingNonce =
     discordParam === 'channel-select' && nonce && nonce !== dismissedNonce ? nonce : null;
 
+  // Admin SDK 経由で設定を取得（クライアントSDKのセキュリティルール問題を回避）
+  const fetchConfig = useCallback(async (): Promise<DiscordTeamConfig | null> => {
+    if (!idToken) return null;
+    const res = await fetch(`/api/discord/get-config?teamId=${teamId}`, {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { config: DiscordTeamConfig | null };
+    return data.config;
+  }, [idToken, teamId]);
+
   // 設定を読み込む
   useEffect(() => {
-    if (!isOperator) return;
+    if (!isOperator || !idToken) return;
     let cancelled = false;
 
-    getDiscordSettings(teamId)
+    fetchConfig()
       .then((cfg) => {
         if (cancelled) return;
         setConfig(cfg);
@@ -89,7 +100,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
     return () => {
       cancelled = true;
     };
-  }, [teamId, isOperator]);
+  }, [teamId, isOperator, idToken, fetchConfig]);
 
   // URL クエリパラメータから Bot 招待フローの状態を読み取る
   useEffect(() => {
@@ -100,10 +111,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
 
     if (discordParam === 'connected') {
       showToast('success', 'Discord Botを接続しました！');
-      // 設定を再読み込み
-      getDiscordSettings(teamId)
-        .then(setConfig)
-        .catch(() => {});
+      fetchConfig().then(setConfig).catch(() => {});
     } else if (discordParam === 'cancelled') {
       showToast('error', 'Bot招待がキャンセルされました');
     } else if (discordParam === 'error') {
@@ -117,11 +125,16 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
       };
       showToast('error', messages[reason ?? ''] ?? 'エラーが発生しました');
     }
-  }, [discordParam, pendingNonce, searchParams, teamId]);
+  }, [discordParam, pendingNonce, searchParams, teamId, fetchConfig]);
 
   async function fetchPendingChannels(nonce: string) {
-    // API Route 経由でチャンネル一覧とguildIdを取得（Admin SDK はサーバー専用）
-    const res = await fetch(`/api/discord/pending-channels?nonce=${nonce}`);
+    if (!idToken) {
+      setError('ログイン状態を確認できません。再度ログインしてください。');
+      return;
+    }
+    const res = await fetch(`/api/discord/pending-channels?nonce=${nonce}`, {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
     if (!res.ok) {
       setError('チャンネル一覧の取得に失敗しました');
       return;
@@ -194,8 +207,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
       setPendingGuildId(null);
       setAvailableChannels([]);
       showToast('success', 'Discord Botを接続しました！');
-      // 設定を再読み込み
-      const updated = await getDiscordSettings(teamId);
+      const updated = await fetchConfig();
       setConfig(updated);
     } catch (err) {
       setError(err instanceof Error ? err.message : '設定の保存に失敗しました');
@@ -496,12 +508,12 @@ function ToggleRow({
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className="relative w-10 h-6 rounded-full transition-colors focus:outline-none"
+        className="relative shrink-0 w-10 h-6 rounded-full transition-colors focus:outline-none p-0 overflow-hidden"
         style={{ background: checked ? 'var(--purple)' : 'var(--border)' }}
       >
         <span
-          className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
-          style={{ transform: checked ? 'translateX(16px)' : 'translateX(2px)' }}
+          className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+          style={{ transform: checked ? 'translateX(16px)' : 'translateX(0px)' }}
         />
       </button>
     </label>
