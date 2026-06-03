@@ -5,13 +5,9 @@ import { Icon } from '@/components/ui/Icon';
 import { Dropdown } from '@/components/ui/Dropdown';
 
 interface MiniCalendarProps {
-  /** 現在の値 */
   value: Date | null;
-  /** 変更コールバック */
   onChange: (date: Date | null) => void;
-  /** 選択可能な最小日 */
   min?: Date;
-  /** true のとき時刻選択を非表示（終日イベント） */
   allDay?: boolean;
 }
 
@@ -22,18 +18,31 @@ const HOURS = Array.from({ length: 24 }, (_, i) => ({
 }));
 const MINUTES = ['00', '15', '30', '45'].map((m) => ({ value: m, label: m + '分' }));
 
-/** Date を YYYY/M/D（曜日） HH:mm 形式に変換 */
-function formatReadout(date: Date): string {
+/** Date → 表示テキスト */
+function toText(date: Date, allDay: boolean): string {
   const wd = WEEKDAYS[date.getDay()];
+  const base = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}（${wd}）`;
+  if (allDay) return base;
   const h = String(date.getHours()).padStart(2, '0');
   const m = String(date.getMinutes()).padStart(2, '0');
-  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}（${wd}） ${h}:${m}`;
+  return `${base} ${h}:${m}`;
 }
 
-/** Date から YYYY/M/D（曜日） 形式に変換（allDay） */
-function formatReadoutDate(date: Date): string {
-  const wd = WEEKDAYS[date.getDay()];
-  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}（${wd}）`;
+/**
+ * テキストから Date をパース。
+ * 受け入れ形式: YYYY/M/D 、YYYY/M/D（曜）、YYYY/M/D（曜） HH:mm など
+ */
+function parseText(text: string): Date | null {
+  const m = text.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:[^0-9]+(\d{1,2}):(\d{2}))?/);
+  if (!m) return null;
+  const d = new Date(
+    parseInt(m[1]),
+    parseInt(m[2]) - 1,
+    parseInt(m[3]),
+    m[4] ? parseInt(m[4]) : 0,
+    m[5] ? parseInt(m[5]) : 0,
+  );
+  return isNaN(d.getTime()) ? null : d;
 }
 
 export function MiniCalendar({ value, onChange, min, allDay = false }: MiniCalendarProps) {
@@ -42,28 +51,37 @@ export function MiniCalendar({ value, onChange, min, allDay = false }: MiniCalen
     y: value?.getFullYear() ?? today.getFullYear(),
     m: (value?.getMonth() ?? today.getMonth()) + 1,
   });
-  const [hour, setHour] = useState(
-    value ? String(value.getHours()).padStart(2, '0') : '19'
-  );
-  const [minute, setMinute] = useState(
-    value ? (value.getMinutes() < 8 ? '00' : value.getMinutes() < 23 ? '15' : value.getMinutes() < 38 ? '30' : '45') : '00'
-  );
+  const [hour, setHour] = useState(value ? String(value.getHours()).padStart(2, '0') : '19');
+  const [minute, setMinute] = useState(() => {
+    if (!value) return '00';
+    const raw = value.getMinutes();
+    return raw < 8 ? '00' : raw < 23 ? '15' : raw < 38 ? '30' : '45';
+  });
 
-  // value 外部変更を同期（prevValue と比較して不要な setState を抑制）
+  /* readout テキスト状態（編集中は独立して管理） */
+  const [readoutText, setReadoutText] = useState(value ? toText(value, allDay) : '');
+  const [readoutEditing, setReadoutEditing] = useState(false);
+
+  /* value 外部変更を同期 */
   const prevValueRef = useRef<Date | null>(null);
   useEffect(() => {
     const prev = prevValueRef.current;
     prevValueRef.current = value;
-    if (!value) return;
+    if (!value) { setReadoutText(''); return; } // eslint-disable-line react-hooks/set-state-in-effect
     if (prev && prev.getTime() === value.getTime()) return;
-    setYm({ y: value.getFullYear(), m: value.getMonth() + 1 });
-    setHour(String(value.getHours()).padStart(2, '0'));
+    setYm({ y: value.getFullYear(), m: value.getMonth() + 1 }); // eslint-disable-line react-hooks/set-state-in-effect
+    setHour(String(value.getHours()).padStart(2, '0')); // eslint-disable-line react-hooks/set-state-in-effect
     const rawMin = value.getMinutes();
-    const snapMin = rawMin < 8 ? '00' : rawMin < 23 ? '15' : rawMin < 38 ? '30' : '45';
-    setMinute(snapMin);
-  }, [value]);
+    setMinute(rawMin < 8 ? '00' : rawMin < 23 ? '15' : rawMin < 38 ? '30' : '45'); // eslint-disable-line react-hooks/set-state-in-effect
+    if (!readoutEditing) setReadoutText(toText(value, allDay)); // eslint-disable-line react-hooks/set-state-in-effect
+  }, [value, allDay, readoutEditing]);
 
-  /* ── 月ナビ ── */
+  /* allDay 切替でreadout を同期 */
+  useEffect(() => {
+    if (value && !readoutEditing) setReadoutText(toText(value, allDay)); // eslint-disable-line react-hooks/set-state-in-effect
+  }, [allDay]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* 月ナビ */
   const shift = (delta: number) => {
     setYm(({ y, m }) => {
       let nm = m + delta;
@@ -74,47 +92,57 @@ export function MiniCalendar({ value, onChange, min, allDay = false }: MiniCalen
     });
   };
 
-  /* ── グリッド生成 ── */
-  const firstDow = new Date(ym.y, ym.m - 1, 1).getDay(); // 0=日
+  /* グリッド生成 */
+  const firstDow = new Date(ym.y, ym.m - 1, 1).getDay();
   const daysInMonth = new Date(ym.y, ym.m, 0).getDate();
   const cells: (number | null)[] = [
     ...Array(firstDow).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
-  /* ── 日付選択 ── */
+  /* 日付選択 */
   const handleDayClick = (day: number) => {
     const newDate = new Date(ym.y, ym.m - 1, day, parseInt(hour), parseInt(minute));
     onChange(newDate);
   };
 
-  /* ── 時刻変更 ── */
+  /* 時刻変更 */
   const handleTimeChange = (newHour: string, newMinute: string) => {
-    if (!value) return;
-    const newDate = new Date(value);
+    const base = value ?? new Date(ym.y, ym.m - 1, today.getDate());
+    const newDate = new Date(base);
     newDate.setHours(parseInt(newHour));
     newDate.setMinutes(parseInt(newMinute));
     onChange(newDate);
   };
 
-  /* ── readout テキスト ── */
-  const readoutText = value
-    ? allDay
-      ? formatReadoutDate(value)
-      : formatReadout(value)
-    : '';
+  /* readout 確定（Enter / blur） */
+  const commitReadout = () => {
+    const parsed = parseText(readoutText);
+    if (parsed) {
+      onChange(parsed);
+      setReadoutText(toText(parsed, allDay));
+    } else if (value) {
+      /* 無効な入力はリセット */
+      setReadoutText(toText(value, allDay));
+    } else {
+      setReadoutText('');
+    }
+    setReadoutEditing(false);
+  };
 
-  /* ── 選択・今日・min の判定 ── */
-  const selDay = value && value.getFullYear() === ym.y && value.getMonth() + 1 === ym.m
-    ? value.getDate() : null;
-  const todayDay = today.getFullYear() === ym.y && today.getMonth() + 1 === ym.m
-    ? today.getDate() : null;
-  const minDay = min && min.getFullYear() === ym.y && min.getMonth() + 1 === ym.m
-    ? min.getDate() : null;
+  const selDay =
+    value && value.getFullYear() === ym.y && value.getMonth() + 1 === ym.m
+      ? value.getDate() : null;
+  const todayDay =
+    today.getFullYear() === ym.y && today.getMonth() + 1 === ym.m
+      ? today.getDate() : null;
+  const minDay =
+    min && min.getFullYear() === ym.y && min.getMonth() + 1 === ym.m
+      ? min.getDate() : null;
 
   return (
     <div className="minical">
-      {/* ── 月ナビ ── */}
+      {/* ── 月ナビ（全幅） ── */}
       <div className="minical__head">
         <button type="button" className="minical__nav" onClick={() => shift(-1)} title="前の月">
           <Icon name="chevron_left" size={15} />
@@ -125,99 +153,153 @@ export function MiniCalendar({ value, onChange, min, allDay = false }: MiniCalen
         </button>
       </div>
 
-      {/* ── 曜日ヘッダー + 日付グリッド ── */}
-      <div className="minical__grid">
-        {WEEKDAYS.map((wd, i) => (
-          <span
-            key={wd}
-            className={`minical__wd${i === 0 ? ' is-sun' : i === 6 ? ' is-sat' : ''}`}
-          >
-            {wd}
-          </span>
-        ))}
-        {cells.map((day, idx) => {
-          if (day === null) return <span key={`empty-${idx}`} />;
-          const isToday = day === todayDay;
-          const isSel = day === selDay;
-          const isDisabled = minDay !== null && day < minDay;
-          const cls = [
-            'minical__day',
-            isToday ? 'is-today' : '',
-            isSel ? 'is-sel' : '',
-            isDisabled ? 'is-disabled' : '',
-          ]
-            .filter(Boolean)
-            .join(' ');
-          return (
-            <button
-              key={day}
-              type="button"
-              className={cls}
-              onClick={() => !isDisabled && handleDayClick(day)}
-              disabled={isDisabled}
-            >
-              {day}
-            </button>
-          );
-        })}
-      </div>
+      {/* ── 左右分割ボディ ── */}
+      <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
 
-      {/* ── 時刻選択（終日でない場合） ── */}
-      {!allDay && (
-        <div className="minical__time">
-          <span className="minical__time-label">
-            <Icon name="event" size={14} className="ic" />
-            時刻
-          </span>
-          <div className="minical__time-fields">
-            <Dropdown
-              options={HOURS}
-              value={hour}
-              size="sm"
-              scroll
-              up
-              onChange={(v) => {
-                setHour(v);
-                handleTimeChange(v, minute);
-              }}
-            />
-            <span className="minical__colon">:</span>
-            <Dropdown
-              options={MINUTES}
-              value={minute}
-              size="sm"
-              up
-              onChange={(v) => {
-                setMinute(v);
-                handleTimeChange(hour, v);
-              }}
-            />
+        {/* 左: カレンダーグリッド（flex:1 で広く） */}
+        <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+          <div className="minical__grid">
+            {WEEKDAYS.map((wd, i) => (
+              <span
+                key={wd}
+                className={`minical__wd${i === 0 ? ' is-sun' : i === 6 ? ' is-sat' : ''}`}
+              >
+                {wd}
+              </span>
+            ))}
+            {cells.map((day, idx) => {
+              if (day === null) return <span key={`e${idx}`} />;
+              const cls = [
+                'minical__day',
+                day === todayDay ? 'is-today' : '',
+                day === selDay  ? 'is-sel'   : '',
+                minDay !== null && day < minDay ? 'is-disabled' : '',
+              ].filter(Boolean).join(' ');
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  className={cls}
+                  onClick={() => !(minDay !== null && day < minDay) && handleDayClick(day)}
+                  disabled={minDay !== null && day < minDay}
+                >
+                  {day}
+                </button>
+              );
+            })}
           </div>
         </div>
-      )}
 
-      {/* ── readout ── */}
-      <label className="minical__readout">
-        <Icon name="calendar_month" size={15} stroke={2} />
-        <input
-          type="text"
-          value={readoutText}
-          placeholder="日付を選択"
-          readOnly
-          style={{
-            flex: 1,
-            minWidth: 0,
-            border: 'none',
-            outline: 'none',
-            background: 'transparent',
-            color: readoutText ? 'var(--text-primary)' : 'var(--text-muted)',
-            fontFamily: 'var(--font-head)',
-            fontSize: '0.82rem',
-            fontWeight: 600,
-            cursor: 'default',
-          }}
-        />
-      </label>
+        {/* 右: 時刻入力 + readout（終日でない場合のみ） */}
+        {!allDay && (
+          <div
+            style={{
+              flex: '0 0 auto',
+              width: 200,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              paddingTop: 4,
+            }}
+          >
+            {/* 時刻ラベル */}
+            <span className="minical__time-label" style={{ fontSize: '0.76rem' }}>
+              <Icon name="event" size={14} className="ic" />
+              時刻
+            </span>
+
+            {/* 時・分を横並び */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <Dropdown
+                  options={HOURS}
+                  value={hour}
+                  size="sm"
+                  scroll
+                  up
+                  onChange={(v) => {
+                    setHour(v);
+                    handleTimeChange(v, minute);
+                  }}
+                />
+              </div>
+              <span className="minical__colon" style={{ fontSize: '0.9rem', flexShrink: 0 }}>:</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <Dropdown
+                  options={MINUTES}
+                  value={minute}
+                  size="sm"
+                  up
+                  onChange={(v) => {
+                    setMinute(v);
+                    handleTimeChange(hour, v);
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* readout — 編集可能テキストボックス */}
+            <div
+              style={{
+                marginTop: 6,
+                background: 'var(--primary-950)',
+                border: `1px solid ${readoutEditing ? 'var(--primary)' : 'var(--primary-800)'}`,
+                borderRadius: 'var(--radius-md)',
+                padding: '8px 10px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 3,
+                boxShadow: readoutEditing ? 'var(--glow-primary)' : 'none',
+                transition: 'border-color 150ms, box-shadow 150ms',
+              }}
+            >
+              <span style={{ fontSize: '0.64rem', color: 'var(--text-muted)', fontFamily: 'var(--font-head)', fontWeight: 600, letterSpacing: '0.05em' }}>
+                確定日時
+              </span>
+              <input
+                type="text"
+                value={readoutText}
+                placeholder="例: 2026/6/4 21:00"
+                style={{
+                  border: 'none',
+                  outline: 'none',
+                  background: 'transparent',
+                  color: readoutText ? 'var(--text-primary)' : 'var(--text-muted)',
+                  fontFamily: 'var(--font-head)',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  width: '100%',
+                  cursor: 'text',
+                }}
+                onChange={(e) => { setReadoutText(e.target.value); setReadoutEditing(true); }}
+                onFocus={() => setReadoutEditing(true)}
+                onBlur={commitReadout}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commitReadout(); } }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* allDay 時のみ readout を下に表示 */}
+      {allDay && (
+        <label className="minical__readout" style={{ marginTop: 12 }}>
+          <Icon name="calendar_month" size={15} />
+          <input
+            type="text"
+            value={readoutText}
+            placeholder="日付を選択"
+            readOnly
+            style={{
+              flex: 1, minWidth: 0, border: 'none', outline: 'none',
+              background: 'transparent',
+              color: readoutText ? 'var(--text-primary)' : 'var(--text-muted)',
+              fontFamily: 'var(--font-head)', fontSize: '0.82rem', fontWeight: 600,
+              cursor: 'default',
+            }}
+          />
+        </label>
+      )}
     </div>
   );
 }

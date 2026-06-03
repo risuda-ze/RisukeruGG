@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getAdminFirestore, getAdminAuth } from '@/lib/firebase/admin';
+import { registerGuildCommands } from '@/lib/discord/registerGuildCommands';
 
 /**
  * Bot 招待フローの最終ステップ: guildId + channelId を Firestore に保存し、
@@ -77,18 +78,9 @@ export async function POST(req: NextRequest): Promise<Response> {
   // pending データを削除
   await db.doc(`discord_bot_invite_pending/${nonce}`).delete();
 
-  // ギルドコマンドを登録（内部呼び出し）
-  const appUrl = process.env.NEXTAUTH_URL ?? req.nextUrl.origin;
+  // ギルドコマンドを登録（HTTP 自己呼び出しは SSRF リスクがあるため直接関数呼び出しに変更）
   try {
-    await fetch(`${appUrl}/api/discord/register-guild-commands`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // 内部呼び出し用のシークレットヘッダー
-        'X-Internal-Secret': process.env.INTERNAL_API_SECRET ?? 'dev-secret',
-      },
-      body: JSON.stringify({ guildId }),
-    });
+    await registerGuildCommands(guildId);
   } catch (err) {
     // コマンド登録失敗はログのみ（設定保存は成功させる）
     console.error('ギルドコマンド登録失敗:', err);

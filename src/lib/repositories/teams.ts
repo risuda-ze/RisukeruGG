@@ -126,21 +126,6 @@ export const updateDiscordSettings = httpsCallable<
   { success: boolean }
 >(functions, 'updateDiscordSettings');
 
-/** Discord 通知設定を取得する。operator のみアクセス可能（Firestore ルールで制限）。 */
-export async function getDiscordSettings(teamId: string): Promise<DiscordTeamConfig | null> {
-  const snap = await getDoc(doc(db, 'teams', teamId, 'discord', 'config'));
-  if (!snap.exists()) return null;
-  const data = snap.data() as Record<string, unknown>;
-  return {
-    webhookUrl: (data.webhookUrl as string) ?? '',
-    guildId: (data.guildId as string | undefined) ?? undefined,
-    channelId: (data.channelId as string | undefined) ?? undefined,
-    notifyOnCreate: (data.notifyOnCreate as boolean) ?? false,
-    notifyBefore1h: (data.notifyBefore1h as boolean) ?? false,
-    notifyBefore15min: (data.notifyBefore15min as boolean) ?? false,
-  };
-}
-
 /**
  * guildId からチームIDを検索する。
  * discord_sessions/{guildId} と連動して使うためクライアントからは呼ばない（Bot APIルート専用）。

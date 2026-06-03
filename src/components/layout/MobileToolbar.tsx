@@ -32,7 +32,7 @@ const DRAWER_ITEMS: DrawerItem[] = [
   { label: 'チーム管理',    icon: 'groups',          href: '/team' },
   { label: '通知管理',      icon: 'notifications',   href: '/notifications' },
   { label: '個人設定',      icon: 'manage_accounts', href: '/settings/profile' },
-  { label: 'Discord連携',   icon: 'forum',           href: '#' },
+  { label: 'Discord連携',   icon: 'discord',         href: '/integrations/discord' },
   { label: 'Youtube連携',   icon: 'smart_display',   href: '#' },
   { label: 'X（旧Twitter）', icon: 'tag',             href: '#' },
   { label: 'お問い合わせ', icon: 'mail_outline',     href: '/settings/contact' },

@@ -1,40 +1,21 @@
 'use client';
 
 import { Icon } from '@/components/ui/Icon';
-import { useHintDismiss } from '@/hooks/useHintDismiss';
 
 interface HintBarProps {
-  /** localStorage のキー（画面ごとに一意） */
-  storageKey: string;
   children: React.ReactNode;
+  /** 閉じるボタン押下時のコールバック */
+  onDismiss: () => void;
 }
 
-/** 一度閉じると localStorage で非表示状態を永続化できる操作説明バー */
-export function HintBar({ storageKey, children }: HintBarProps) {
-  const { visible, dismiss } = useHintDismiss(storageKey);
-
-  if (!visible) return null;
-
+/** 操作説明バー。表示/非表示は親が useHintDismiss で管理し、onDismiss を渡す */
+export function HintBar({ children, onDismiss }: HintBarProps) {
   return (
-    <div
-      className="flex items-start gap-2.5 px-4 py-2.5 text-[12px] leading-relaxed shrink-0"
-      style={{
-        background: 'var(--primary-950)',
-        borderBottom: '1px solid var(--primary-800)',
-        color: 'var(--text-secondary)',
-      }}
-    >
-      <Icon name="info" size={15} className="shrink-0 mt-[1px]" style={{ color: 'var(--text-accent)' } as React.CSSProperties} />
+    <div className="hint hint--closable shrink-0 mx-4 md:mx-7 mt-3">
+      <Icon name="info" size={16} className="shrink-0" style={{ color: 'var(--text-accent)', marginTop: 1 } as React.CSSProperties} />
       <span className="flex-1">{children}</span>
-      <button
-        onClick={dismiss}
-        aria-label="ヒントを閉じる"
-        className="shrink-0 flex items-center justify-center w-5 h-5 rounded transition-colors"
-        style={{ color: 'var(--text-muted)' }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}
-      >
-        <Icon name="close" size={13} />
+      <button onClick={onDismiss} aria-label="ヒントを閉じる" className="hint__x">
+        <Icon name="close" size={14} />
       </button>
     </div>
   );

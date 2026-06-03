@@ -4,11 +4,12 @@ import { getSession, deleteSession, upsertSession } from '../sessionManager';
 import { registerSchedule } from '../register/registerSchedule';
 import { registerTask } from '../register/registerTask';
 import { registerCollab } from '../register/registerCollab';
-import type { ScheduleProposal, TaskProposal, CollabProposal } from '@/lib/ai/parseProposal';
+import { ProposalDataSchema } from '@/lib/ai/parseProposal';
 
 interface ButtonClickParams {
   action: 'confirm' | 'revise' | 'cancel';
   guildId: string;
+  discordUserId: string;
   appId: string;
   token: string;
 }
@@ -16,11 +17,13 @@ interface ButtonClickParams {
 /**
  * Discord ボタンクリック処理。
  * confirm / revise / cancel の 3 種類のアクションを処理する。
- * セッションキーは guildId（サーバー単位）。ボタンはサーバー内の誰でも押せる。
+ * セッションキーは guildId（サーバー単位）。
+ * confirm/revise はプロポーザルを発行した Discord ユーザー本人のみ操作可能。
  */
 export async function handleButtonClick({
   action,
   guildId,
+  discordUserId,
   appId,
   token,
 }: ButtonClickParams): Promise<void> {
@@ -29,6 +32,19 @@ export async function handleButtonClick({
   if (!session) {
     await sendFollowUp(appId, token, 'セッションが見つかりません。`/risukerugg message:リセット` で再開してください。');
     return;
+  }
+
+  // ─── 操作権限チェック（confirm / revise は発行者本人のみ） ──────────────────
+  if (action === 'confirm' || action === 'revise') {
+    const initiator = session.initiatorDiscordUserId;
+    if (initiator && discordUserId && initiator !== discordUserId) {
+      await sendFollowUp(
+        appId,
+        token,
+        '❌ この操作はプロポーザルを発行した本人のみが実行できます。'
+      );
+      return;
+    }
   }
 
   if (action === 'cancel') {
@@ -60,7 +76,14 @@ export async function handleButtonClick({
     return;
   }
 
-  const proposal = session.pendingProposal as unknown as ScheduleProposal | TaskProposal | CollabProposal;
+  // Zod で再検証（セッション保存後に型が変化した場合やプロンプトインジェクション経由のデータを拒否）
+  const validationResult = ProposalDataSchema.safeParse(session.pendingProposal);
+  if (!validationResult.success) {
+    await sendFollowUp(appId, token, '登録データが無効です。もう一度 AI に依頼してみてください。');
+    await deleteSession(guildId);
+    return;
+  }
+  const proposal = validationResult.data;
 
   const db = getAdminFirestore();
 
