@@ -1,5 +1,5 @@
-# デフォルト: 自動改行変換
-* text=auto
+# デフォルト: LF に統一（core.autocrlf=true 環境でも上書き）
+* text=auto eol=lf
 
 # シェルスクリプト・Dockerfileは常に LF（Linux コンテナで実行するため）
 *.sh         text eol=lf

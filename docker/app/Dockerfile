@@ -11,7 +11,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY functions/package.json ./functions/package.json
 RUN pnpm install --frozen-lockfile --filter "!risukeru-gg-functions"
 COPY docker/app/start-dev.sh /usr/local/bin/start-dev.sh
-RUN chmod +x /usr/local/bin/start-dev.sh
+RUN sed -i $'s/\r//' /usr/local/bin/start-dev.sh && chmod +x /usr/local/bin/start-dev.sh
 
 EXPOSE 3000
 
