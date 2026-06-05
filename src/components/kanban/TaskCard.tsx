@@ -1,19 +1,17 @@
 'use client';
 
-import { useState } from 'react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import type { Task, TeamMember, TaskStatus } from '@/types/entities';
+import type { Task, TeamMember } from '@/types/entities';
 import { useTasksStore } from '@/stores/tasks';
 import { useTaskCategoryStore } from '@/stores/taskCategories';
-import { updateTask } from '@/lib/repositories/tasks';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
-import { Dropdown } from '@/components/ui/Dropdown';
+import UrgencyChip from './UrgencyChip';
+import { getUrgencyLevel } from '@/lib/urgency';
 
 interface TaskCardProps {
   task: Task;
-  teamId: string;
   members: TeamMember[];
   isDragging: boolean;
   canEdit: boolean;
@@ -23,7 +21,6 @@ interface TaskCardProps {
 
 export default function TaskCard({
   task,
-  teamId,
   members,
   isDragging,
   canEdit,
@@ -32,7 +29,6 @@ export default function TaskCard({
 }: TaskCardProps) {
   const { columns } = useTasksStore();
   const { taskCategories } = useTaskCategoryStore();
-  const [movingColumn, setMovingColumn] = useState(false);
 
   const assignee = members.find((m) => m.userId === task.assigneeId);
   const assigneeName = assignee?.displayName ?? (task.assigneeId ? '元メンバー' : null);
@@ -42,120 +38,88 @@ export default function TaskCard({
     ? taskCategories.find((c) => c.id === task.categoryId)
     : null;
 
-  async function handleColumnChange(newColumnId: string) {
-    if (newColumnId === task.columnId) return;
-    setMovingColumn(true);
-    try {
-      await updateTask(teamId, task.id, { columnId: newColumnId }, task.updatedAt);
-    } finally {
-      setMovingColumn(false);
-    }
-  }
+  const column = columns.find((c) => c.id === task.columnId);
+  const isDone = column?.role === 'done';
+  const urgencyLevel = getUrgencyLevel(task.dueDate, isDone);
 
   return (
     <div
-      className={`bg-surface border rounded-[8px] p-3 flex flex-col gap-2 select-none transition-colors cursor-pointer ${
-        isDragging ? 'border-purple shadow-md rotate-1' : 'border-border hover:border-purple'
-      }`}
+      className={`tcard group ${isDone ? 'opacity-[.82]' : ''} ${isDragging ? 'rotate-1 shadow-lg' : ''}`}
+      style={{ '--tc': column?.color ?? 'var(--card-border)' } as React.CSSProperties}
       onClick={onEdit}
     >
-      {/* タスクタイトル + アクションボタン */}
+      {/* カテゴリチップ */}
+      {category && (
+        <span
+          className="inline-flex items-center gap-1 self-start rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide leading-none"
+          style={{
+            backgroundColor: category.color + '26',
+            color: category.color,
+            border: `1px solid ${category.color}4d`,
+          }}
+        >
+          {category.icon && (
+            <span className="material-icons text-[10px]" aria-hidden="true">
+              {category.icon}
+            </span>
+          )}
+          {category.name}
+        </span>
+      )}
+
+      {/* タイトル + アクションボタン */}
       <div className="flex items-start justify-between gap-2">
-        <span className="text-sm font-medium text-text break-words flex-1 leading-snug">
+        <span className="text-[13px] font-semibold text-text break-words flex-1 leading-snug">
           {task.title}
         </span>
         {canEdit && (
-          <div className="flex gap-0.5 shrink-0">
+          <div className="flex gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-100">
             <Button
               variant="ghost"
               size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit();
-              }}
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
               className="px-1.5 py-1 text-muted hover:text-purple-l"
               aria-label="タスクを編集"
             >
-              <svg
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                className="h-3.5 w-3.5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M11.013 2.513a1.75 1.75 0 0 1 2.475 2.474L6.226 12.25a2.751 2.751 0 0 1-.892.566l-2.35.864a.75.75 0 0 1-.96-.96l.864-2.35a2.75 2.75 0 0 1 .566-.892l7.56-7.559Z"
-                />
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11.013 2.513a1.75 1.75 0 0 1 2.475 2.474L6.226 12.25a2.751 2.751 0 0 1-.892.566l-2.35.864a.75.75 0 0 1-.96-.96l.864-2.35a2.75 2.75 0 0 1 .566-.892l7.56-7.559Z" />
               </svg>
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
               className="px-1.5 py-1 text-muted hover:text-live"
               aria-label="タスクを削除"
             >
-              <svg
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                className="h-3.5 w-3.5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M2 4h12M5 4V2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5V4m2 0-1 9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1L3 4"
-                />
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2 4h12M5 4V2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5V4m2 0-1 9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1L3 4" />
               </svg>
             </Button>
           </div>
         )}
       </div>
 
-      {/* メタ情報（カテゴリ・担当者・期限） */}
-      <div className="flex flex-wrap gap-1.5 items-center">
-        {category && (
-          <span
-            className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide"
-            style={{ backgroundColor: category.color + '33', color: category.color }}
-          >
-            {category.name}
+      {/* フッター: 締め切り日時 → 担当者 → 緊急度チップ（v3: 順序・フォーマット変更） */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {/* ① 締め切り日時: M/d HH:mm 形式 */}
+        {task.dueDate && (
+          <span className="text-[10px] text-muted font-num">
+            {format(task.dueDate, 'M/d HH:mm', { locale: ja })}
           </span>
         )}
+        {/* ② 担当者アバター + 名前 */}
         {assigneeName && (
           <div className="flex items-center gap-1">
             <Avatar initials={assigneeInitials} src={assignee?.avatarUrl} size="sm" />
-            <span className="text-[10px] text-muted font-num truncate max-w-[80px]">
+            <span className="text-[10px] text-muted font-num truncate max-w-[70px]">
               {assigneeName}
             </span>
           </div>
         )}
-        {task.dueDate && (
-          <span className="text-[10px] text-muted font-num">
-            {format(task.dueDate, 'M/d', { locale: ja })}
-          </span>
-        )}
+        {/* ③ 緊急度バッジ（末尾に維持） */}
+        <UrgencyChip level={urgencyLevel} dueDate={task.dueDate} />
       </div>
-
-      {/* モバイル向けカラム変更セレクト */}
-      {canEdit && (
-        <div className="sm:hidden" onClick={(e) => e.stopPropagation()}>
-          <Dropdown
-            value={task.columnId}
-            options={columns.map((col: TaskStatus) => ({ value: col.id, label: col.name }))}
-            onChange={handleColumnChange}
-            disabled={movingColumn}
-            size="sm"
-            scroll
-          />
-        </div>
-      )}
     </div>
   );
 }

@@ -29,9 +29,10 @@ interface DrawerItem {
 }
 
 const DRAWER_ITEMS: DrawerItem[] = [
-  { label: 'チーム管理',    icon: 'groups',          href: '/team' },
-  { label: '通知管理',      icon: 'notifications',   href: '/notifications' },
-  { label: '個人設定',      icon: 'manage_accounts', href: '/settings/profile' },
+  { label: 'チーム管理',      icon: 'groups',          href: '/team' },
+  { label: 'タスク管理設定', icon: 'task_alt',        href: '/settings/tasks' },
+  { label: '通知管理',        icon: 'notifications',   href: '/notifications' },
+  { label: '個人設定',        icon: 'manage_accounts', href: '/settings/profile' },
   { label: 'Discord連携',   icon: 'discord',         href: '/integrations/discord' },
   { label: 'Youtube連携',   icon: 'smart_display',   href: '#' },
   { label: 'X（旧Twitter）', icon: 'tag',             href: '#' },

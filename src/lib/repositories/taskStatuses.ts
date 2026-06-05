@@ -19,13 +19,14 @@ function toColumn(id: string, data: Record<string, unknown>): TaskStatus {
     order: data.order as number,
     color: data.color as string,
     role: (data.role as 'done' | null) ?? null,
+    icon: (data.icon as string | null) ?? null,
     createdAt: (data.createdAt as Timestamp).toDate(),
   };
 }
 
 export async function createColumn(
   teamId: string,
-  data: Omit<TaskStatus, 'id' | 'role' | 'createdAt'>
+  data: Omit<TaskStatus, 'id' | 'role' | 'createdAt' | 'icon'> & { icon?: string | null }
 ): Promise<string> {
   const ref = await addDoc(collection(db, 'teams', teamId, 'taskStatuses'), {
     ...data,

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { TaskStatus, Task } from '@/types/entities';
 
 function buildColumn(id: string, order: number): TaskStatus {
-  return { id, name: `Column ${id}`, order, color: '#000', role: null, createdAt: new Date() };
+  return { id, name: `Column ${id}`, order, color: '#000', role: null, icon: null, createdAt: new Date() };
 }
 
 function buildTask(id: string, columnId: string): Task {

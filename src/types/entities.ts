@@ -75,6 +75,8 @@ export interface TaskStatus {
   color: string;
   /** 完了ステータスとしてマークされたカラムは 'done'、それ以外は null */
   role: 'done' | null;
+  /** Material Icons 名。未設定は null */
+  icon: string | null;
   createdAt: Date;
 }
 
@@ -84,6 +86,8 @@ export interface TaskCategory {
   name: string;
   color: string;
   order: number;
+  /** Material Icons 名。未設定は null */
+  icon: string | null;
   createdAt: Date;
 }
 
