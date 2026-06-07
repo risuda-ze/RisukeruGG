@@ -21,13 +21,14 @@ function toTaskCategory(id: string, data: Record<string, unknown>): TaskCategory
     name: data.name as string,
     color: (data.color as string) ?? '#7F77DD',
     order: (data.order as number) ?? 0,
+    icon: (data.icon as string | null) ?? null,
     createdAt: (data.createdAt as Timestamp).toDate(),
   };
 }
 
 export async function createTaskCategory(
   teamId: string,
-  data: Omit<TaskCategory, 'id' | 'createdAt'>
+  data: Omit<TaskCategory, 'id' | 'createdAt' | 'icon'> & { icon?: string | null }
 ): Promise<string> {
   const ref = await addDoc(collection(db, 'teams', teamId, 'taskCategories'), {
     ...data,
@@ -39,7 +40,7 @@ export async function createTaskCategory(
 export async function updateTaskCategory(
   teamId: string,
   categoryId: string,
-  data: Partial<Pick<TaskCategory, 'name' | 'color' | 'order'>>
+  data: Partial<Pick<TaskCategory, 'name' | 'color' | 'order' | 'icon'>>
 ): Promise<void> {
   await updateDoc(doc(db, 'teams', teamId, 'taskCategories', categoryId), data);
 }

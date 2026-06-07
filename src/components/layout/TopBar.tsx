@@ -37,7 +37,7 @@ export function TopBar({ title, subtitle, children }: TopBarProps) {
         </span>
         {subtitle && (
           <span
-            className="text-[11px] font-normal block leading-tight"
+            className="text-[11px] font-normal block leading-tight truncate"
             style={{ color: 'var(--text-muted)' }}
           >
             {subtitle}

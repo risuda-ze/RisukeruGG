@@ -6,7 +6,13 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT START -->
 
-現在進行中のUIリデザイン（共通レイアウト & スケジュール画面）: `specs/013-ui-schedule-redesign/plan.md`
+現在進行中のUIリデザイン（タスク管理画面）v4: `specs/014-task-ui-redesign/plan.md`
+
+**v4 実装スコープ（2026-06-05）**:
+- `/settings/tasks` 専用ルートの新規作成（FR-023）
+- `TaskStatus` / `TaskCategory` に `icon: string | null` フィールド追加（FR-024/025）
+- カンバン列ヘッダー・カテゴリバッジ・タスク詳細モーダルでアイコン表示（FR-026/027/028）
+- タスク管理（v1〜v3）の実装は完了済み（T001〜T050）。v4 は T052〜 から開始
 
 <!-- SPECKIT END -->
 

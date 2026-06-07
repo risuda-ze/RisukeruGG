@@ -6,167 +6,194 @@ import { useAuthStore } from '@/stores/auth';
 import { useTasksStore } from '@/stores/tasks';
 import { useTaskCategoryStore } from '@/stores/taskCategories';
 import { deleteTask } from '@/lib/repositories/tasks';
-import { exportTasksCsv } from '@/lib/utils/exportTasksCsv';
 import { TaskDetailModal } from '@/components/kanban/TaskDetailModal';
+import { TaskControlBar } from '@/components/kanban/TaskControlBar';
 import { Spinner } from '@/components/ui/Spinner';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
 import { TopBar } from '@/components/layout/TopBar';
 import type { Task } from '@/types/entities';
 import { LIGHT_PLAN_LIMITS } from '@/types/entities';
 
 const KanbanBoard = dynamic(() => import('@/components/kanban/KanbanBoard'), {
-  loading: () => (
-    <div className="flex justify-center py-16">
-      <Spinner size="lg" />
-    </div>
-  ),
+  loading: () => <div className="flex justify-center py-16"><Spinner size="lg" /></div>,
   ssr: false,
 });
-const TaskForm = dynamic(() => import('@/components/kanban/TaskForm'));
+const TaskMobileBoard = dynamic(() => import('@/components/kanban/TaskMobileBoard'), { ssr: false });
 
 export default function TasksPage() {
   const { currentUser, currentTeam, members } = useAuthStore();
   const { tasks, columns, loading, subscribe } = useTasksStore();
   const { taskCategories, subscribe: subscribeCategories } = useTaskCategoryStore();
+
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<string>('all');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [defaultColumnId, setDefaultColumnId] = useState<string | undefined>(undefined);
+
+  /* v3: カテゴリ複数選択（空配列 = すべて表示）+ 担当者単一選択（null = すべて表示） */
+  const [activeCategoryIds, setActiveCategoryIds] = useState<string[]>([]);
+  const [activeAssigneeId, setActiveAssigneeId] = useState<string | null>(null);
+
+  /* ヒントバー: localStorage で非表示状態を永続化 */
+  const [hintDismissed, setHintDismissed] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHintDismissed(localStorage.getItem('rgg_task_hint_hidden') === '1');
+  }, []);
+
+  function dismissHint() {
+    localStorage.setItem('rgg_task_hint_hidden', '1');
+    setHintDismissed(true);
+  }
+  function showHint() {
+    localStorage.removeItem('rgg_task_hint_hidden');
+    setHintDismissed(false);
+  }
 
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
 
   const myTaskCount = tasks.filter((t) => t.createdBy === currentUser?.uid).length;
-  const isLightPlanFull =
-    myMember?.plan === 'light' && myTaskCount >= LIGHT_PLAN_LIMITS.monthlyTasks;
+  const isLightPlanFull = myMember?.plan === 'light' && myTaskCount >= LIGHT_PLAN_LIMITS.monthlyTasks;
 
   useEffect(() => {
     if (!teamId) return;
     const unsub1 = subscribe(teamId);
     const unsub2 = subscribeCategories(teamId);
-    return () => {
-      unsub1();
-      unsub2();
-    };
+    return () => { unsub1(); unsub2(); };
   }, [teamId, subscribe, subscribeCategories]);
+
+  function openAdd(columnId?: string) {
+    setSelectedTask(null);
+    setDefaultColumnId(columnId);
+    setIsModalOpen(true);
+  }
+  function openEdit(task: Task) {
+    setSelectedTask(task);
+    setDefaultColumnId(undefined);
+    setIsModalOpen(true);
+  }
+  function closeModal() {
+    setIsModalOpen(false);
+    setSelectedTask(null);
+  }
 
   async function handleDeleteCard(taskId: string) {
     if (!teamId || !confirm('このタスクを削除しますか？')) return;
     await deleteTask(teamId, taskId);
   }
 
-  const filteredTasks =
-    activeFilter === 'all' ? tasks : tasks.filter((t) => t.categoryId === activeFilter);
-
-  if (loading) {
-    return (
-      <div className="flex flex-1 items-center justify-center bg-bg">
-        <Spinner size="lg" />
-      </div>
+  /* カテゴリトグル: 選択済みなら解除、未選択なら追加 */
+  function toggleCategory(catId: string) {
+    setActiveCategoryIds((prev) =>
+      prev.includes(catId) ? prev.filter((id) => id !== catId) : [...prev, catId]
     );
   }
 
+  /* 「すべて」クリック: カテゴリフィルタを全解除 */
+  function clearCategories() {
+    setActiveCategoryIds([]);
+  }
+
+  /* 担当者フィルタ変更 */
+  function changeAssignee(id: string | null) {
+    setActiveAssigneeId(id);
+  }
+
+  /* フィルタロジック: カテゴリ OR条件 × 担当者 AND条件 */
+  const filteredTasks = tasks.filter((t) => {
+    const catMatch =
+      activeCategoryIds.length === 0 ||
+      activeCategoryIds.includes(t.categoryId ?? '');
+    const assigneeMatch =
+      activeAssigneeId === null || t.assigneeId === activeAssigneeId;
+    return catMatch && assigneeMatch;
+  });
+
+  if (loading) {
+    return <div className="flex flex-1 items-center justify-center bg-bg"><Spinner size="lg" /></div>;
+  }
   if (!teamId) {
-    return (
-      <div className="flex flex-1 items-center justify-center text-muted text-sm px-4">
-        チームに参加してからタスク管理を利用できます
-      </div>
-    );
+    return <div className="flex flex-1 items-center justify-center text-muted text-sm px-4">チームに参加してからタスク管理を利用できます</div>;
   }
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* ── トップバー ─────────────────────────────────────── */}
-      <TopBar title="タスク管理" subtitle="タスクの管理・進捗確認ができます">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => exportTasksCsv(tasks, columns, members, taskCategories)}
-        >
-          CSVエクスポート
-        </Button>
-        {canEdit && (
-          <Button
-            variant="amber"
-            size="sm"
-            onClick={() => setShowCreateForm(true)}
-            disabled={isLightPlanFull}
-            aria-label="タスクを追加"
-          >
-            + タスク
-          </Button>
-        )}
-      </TopBar>
+      {/* トップバー: v3 で children 空に（操作ボタンは TaskControlBar に移動） */}
+      <TopBar title="タスク管理" subtitle="タスクの管理・進捗確認ができます" />
 
-      {/* ── カテゴリフィルタタブ ─────────────────────────── */}
-      <div className="flex gap-2 px-4 py-3 md:px-7 overflow-x-auto scrollbar-none shrink-0">
-        <button
-          onClick={() => setActiveFilter('all')}
-          className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
-            activeFilter === 'all'
-              ? 'bg-purple-d text-purple-l'
-              : 'bg-surface border border-border text-muted hover:text-text'
-          }`}
-        >
-          すべて
-        </button>
-        {taskCategories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setActiveFilter(cat.id)}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
-              activeFilter === cat.id
-                ? 'bg-purple-d text-purple-l'
-                : 'bg-surface border border-border text-muted hover:text-text'
-            }`}
-          >
-            {cat.name}
-          </button>
-        ))}
-      </div>
+      {/* TaskControlBar: カテゴリ複数選択・担当者フィルタ・タスク追加・設定・ヒント */}
+      <TaskControlBar
+        categories={taskCategories}
+        members={members}
+        activeCategoryIds={activeCategoryIds}
+        activeAssigneeId={activeAssigneeId}
+        taskCount={filteredTasks.length}
+        canEdit={canEdit}
+        isLightPlanFull={isLightPlanFull}
+        onCategoryToggle={toggleCategory}
+        onClearCategories={clearCategories}
+        onAssigneeChange={changeAssignee}
+        onAddTask={() => openAdd()}
+        onShowHint={showHint}
+      />
 
-      {/* ── カンバンボード ──────────────────────────────────── */}
-      <div className="flex-1 overflow-auto px-4 py-2 md:px-7">
-        {columns.length === 0 ? (
-          <div className="text-center text-muted text-sm py-16">
-            <p>カンバンカラムがありません</p>
-            <p className="mt-1 text-[11px]">設定ページからカラムを追加してください</p>
+      {/* ライトプラン警告 */}
+      {isLightPlanFull && (
+        <div className="mx-4 md:mx-7 mb-2 px-3 py-2 rounded-[8px] text-[12px] bg-amber-d/10 border border-amber/30 text-amber shrink-0">
+          タスク作成上限に達しました（月5件）。PARTYプランにアップグレードしてください。
+        </div>
+      )}
+
+      {/* ── PC: カンバンボード / モバイル: ステータスピル+リスト ── */}
+      {columns.length === 0 ? (
+        <div className="text-center text-muted text-sm py-16">
+          <p>カンバンカラムがありません</p>
+          <p className="mt-1 text-[11px]">設定ページからカラムを追加してください</p>
+        </div>
+      ) : (
+        <>
+          {/* PC カンバン（md 以上） */}
+          <div className="hidden md:flex flex-1 overflow-hidden px-7 py-2 min-h-0">
+            <KanbanBoard
+              teamId={teamId}
+              members={members}
+              canEdit={canEdit}
+              tasks={filteredTasks}
+              showHint={!hintDismissed}
+              onDismissHint={dismissHint}
+              onEditTask={openEdit}
+              onDeleteTask={handleDeleteCard}
+              onAddTask={openAdd}
+            />
           </div>
-        ) : (
-          <KanbanBoard
-            teamId={teamId}
-            members={members}
-            canEdit={canEdit}
-            tasks={filteredTasks}
-            onEditTask={setSelectedTask}
-            onDeleteTask={handleDeleteCard}
-          />
-        )}
-      </div>
 
-      {/* タスク作成モーダル */}
-      <Modal open={showCreateForm} onClose={() => setShowCreateForm(false)} title="タスクを追加">
-        <TaskForm
-          teamId={teamId}
-          members={members}
-          isLightPlanFull={isLightPlanFull}
-          onSuccess={() => setShowCreateForm(false)}
-          onCancel={() => setShowCreateForm(false)}
-        />
-      </Modal>
+          {/* モバイルレイアウト（md 未満） */}
+          <div className="flex md:hidden flex-1 flex-col overflow-hidden pt-2 min-h-0">
+            <TaskMobileBoard
+              tasks={filteredTasks}
+              members={members}
+              categories={taskCategories}
+              canEdit={canEdit}
+              onEdit={openEdit}
+              onDelete={handleDeleteCard}
+              onAdd={openAdd}
+            />
+          </div>
+        </>
+      )}
 
-      {/* タスク詳細モーダル */}
-      {selectedTask && (
+      {/* タスク追加・編集モーダル */}
+      {isModalOpen && (
         <TaskDetailModal
           task={selectedTask}
+          defaultColumnId={defaultColumnId}
           teamId={teamId}
           canEdit={canEdit}
           columns={columns}
           members={members}
           categories={taskCategories}
-          onClose={() => setSelectedTask(null)}
-          onDeleted={() => setSelectedTask(null)}
+          onClose={closeModal}
+          onDeleted={closeModal}
         />
       )}
     </div>

@@ -75,6 +75,8 @@ export interface TaskStatus {
   color: string;
   /** 完了ステータスとしてマークされたカラムは 'done'、それ以外は null */
   role: 'done' | null;
+  /** Material Icons 名。未設定は null */
+  icon: string | null;
   createdAt: Date;
 }
 
@@ -84,6 +86,8 @@ export interface TaskCategory {
   name: string;
   color: string;
   order: number;
+  /** Material Icons 名。未設定は null */
+  icon: string | null;
   createdAt: Date;
 }
 
@@ -138,6 +142,13 @@ export interface Task {
   description: string | null;
   assigneeId: string | null;
   dueDate: Date | null;
+  /**
+   * 締切日が終日かどうか。
+   * true（またはフィールド未設定）: 日付のみ（時刻無視）
+   * false: 日時で指定（dueDate の時刻を使用）
+   * 後方互換のため optional — 未設定は true として扱う
+   */
+  dueDateAllDay?: boolean;
   linkedScheduleId: string | null;
   /** チーム内コメント（CollabComment と同一構造） */
   comments?: CollabComment[];
