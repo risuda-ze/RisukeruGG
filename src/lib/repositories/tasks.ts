@@ -34,6 +34,7 @@ function toTask(id: string, data: Record<string, unknown>): Task {
     description: (data.description as string | null) ?? null,
     assigneeId: (data.assigneeId as string | null) ?? null,
     dueDate: data.dueDate ? (data.dueDate as Timestamp).toDate() : null,
+    dueDateAllDay: (data.dueDateAllDay as boolean | undefined) ?? true,
     linkedScheduleId: (data.linkedScheduleId as string | null) ?? null,
     comments,
     updatedAt: (data.updatedAt as Timestamp).toDate(),
@@ -51,6 +52,8 @@ export const createTask = httpsCallable<
     description?: string | null;
     assigneeId?: string | null;
     dueDate?: string | null;
+    /** 締切日が終日かどうか（false = 時刻あり）。デフォルト true */
+    dueDateAllDay?: boolean;
     linkedScheduleId?: string | null;
   },
   { taskId: string }

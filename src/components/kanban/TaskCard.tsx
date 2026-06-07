@@ -102,10 +102,12 @@ export default function TaskCard({
 
       {/* フッター: 締め切り日時 → 担当者 → 緊急度チップ（v3: 順序・フォーマット変更） */}
       <div className="flex items-center gap-1.5 flex-wrap">
-        {/* ① 締め切り日時: M/d HH:mm 形式 */}
+        {/* ① 締め切り日時: 終日フラグに応じて M/d または M/d HH:mm */}
         {task.dueDate && (
           <span className="text-[10px] text-muted font-num">
-            {format(task.dueDate, 'M/d HH:mm', { locale: ja })}
+            {(task.dueDateAllDay ?? true)
+              ? format(task.dueDate, 'M/d', { locale: ja })
+              : format(task.dueDate, 'M/d HH:mm', { locale: ja })}
           </span>
         )}
         {/* ② 担当者アバター + 名前 */}

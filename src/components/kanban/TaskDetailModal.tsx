@@ -8,7 +8,7 @@ import { Timestamp } from 'firebase/firestore';
 import { updateTask, deleteTask, addTaskComment, createTask } from '@/lib/repositories/tasks';
 import { useAuthStore } from '@/stores/auth';
 import { MarkdownView } from '@/components/ui/MarkdownEditor';
-import { DateInput } from '@/components/ui/DateInput';
+import { DateField } from '@/components/ui/DateField';
 import { Icon } from '@/components/ui/Icon';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import { Dropdown } from '@/components/ui/Dropdown';
@@ -63,7 +63,9 @@ export function TaskDetailModal({
   const [columnId, setColumnId] = useState(task?.columnId ?? defaultColumnId ?? columns[0]?.id ?? '');
   const [categoryId, setCategoryId] = useState(task?.categoryId ?? '');
   const [assigneeId, setAssigneeId] = useState(task?.assigneeId ?? '');
-  const [dueDate, setDueDate] = useState(task?.dueDate ? format(task.dueDate, 'yyyy-MM-dd') : '');
+  /* 締切日: Date 型で管理（終日フラグ false 時は時刻も使用する） */
+  const [dueDate, setDueDate] = useState<Date | null>(task?.dueDate ?? null);
+  const [dueDateAllDay, setDueDateAllDay] = useState<boolean>(task?.dueDateAllDay ?? true);
 
   /* 説明 */
   const [editingDesc, setEditingDesc] = useState(savedDraft?.editingDesc ?? false);
@@ -149,9 +151,30 @@ export function TaskDetailModal({
     setShowAssigneePicker(false);
     if (!isNew) { const p = assigneeId; try { await updateTask(teamId, task!.id, { assigneeId: val || null }); } catch { setAssigneeId(p); } }
   }
-  async function handleDueDateChange(val: string) {
-    setDueDate(val);
-    if (!isNew) { const p = dueDate; try { await updateTask(teamId, task!.id, { dueDate: val ? new Date(val) : null }); } catch { setDueDate(p); } }
+  async function handleDueDateChange(date: Date) {
+    setDueDate(date);
+    if (!isNew) {
+      const prev = dueDate;
+      try { await updateTask(teamId, task!.id, { dueDate: date, dueDateAllDay }); }
+      catch { setDueDate(prev); }
+    }
+  }
+
+  /** 終日トグル: ON→OFF 時は 21:00 をデフォルト時刻に設定 */
+  async function handleDueDateAllDayToggle() {
+    const newAllDay = !dueDateAllDay;
+    const newDate = dueDate ? new Date(dueDate) : null;
+    if (newDate) {
+      newDate.setHours(newAllDay ? 0 : 21, newAllDay ? 0 : 0, 0, 0);
+    }
+    setDueDateAllDay(newAllDay);
+    if (newDate) setDueDate(newDate);
+    if (!isNew) {
+      const prevAllDay = dueDateAllDay;
+      const prevDate = dueDate;
+      try { await updateTask(teamId, task!.id, { dueDateAllDay: newAllDay, dueDate: newDate }); }
+      catch { setDueDateAllDay(prevAllDay); setDueDate(prevDate); }
+    }
   }
 
   /* 説明保存（編集モード） */
@@ -203,7 +226,8 @@ export function TaskDetailModal({
         columnId: columnId || columns[0]?.id || '',
         categoryId: categoryId || null,
         assigneeId: assigneeId || null,
-        dueDate: dueDate ? new Date(dueDate + 'T00:00:00').toISOString() : null,
+        dueDate: dueDate ? dueDate.toISOString() : null,
+        dueDateAllDay,
         description: description || null,
       });
       onClose();
@@ -236,12 +260,12 @@ export function TaskDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-[290] flex items-end md:items-center justify-center md:p-4"
+      className="fixed inset-0 z-[290] flex items-end md:items-center justify-center md:p-8"
       style={{ background: 'rgba(6,6,16,0.85)', backdropFilter: 'blur(6px)' }}
       onMouseDown={(e) => { mouseDownOnOverlay.current = e.target === e.currentTarget; }}
       onClick={() => { if (mouseDownOnOverlay.current) handleCancel(); }}
     >
-      {/* モーダル本体 — .task-modal でモバイル全画面 / PC 960px に切り替わる */}
+      {/* モーダル本体 — .task-modal でモバイル全画面 / PC 1180px（ScheduleModal と同サイズ）に切り替わる */}
       <div
         className="task-modal flex flex-col overflow-hidden"
         style={{
@@ -408,11 +432,37 @@ export function TaskDetailModal({
               </div>
               {/* 締切日 */}
               <div>
-                {canEdit ? <DateInput label="締切日" value={dueDate} onChange={handleDueDateChange} /> : (
+                {canEdit ? (
+                  <>
+                    <label className="block text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-1.5">締切日</label>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <DateField
+                          value={dueDate}
+                          onChange={handleDueDateChange}
+                          hideTime={dueDateAllDay}
+                          placeholder="日付を選択"
+                        />
+                      </div>
+                      <label
+                        className={`allday${dueDateAllDay ? ' is-on' : ''}`}
+                        onClick={handleDueDateAllDayToggle}
+                        style={{ paddingBottom: 11, flexShrink: 0 }}
+                      >
+                        <span className="allday__txt">終日</span>
+                        <span className="allday__sw" />
+                      </label>
+                    </div>
+                  </>
+                ) : (
                   <>
                     <label className="block text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-1.5">締切日</label>
                     <span className="text-[13px] text-text font-num py-2 block">
-                      {task?.dueDate ? format(task.dueDate, 'yyyy/MM/dd', { locale: ja }) : '—'}
+                      {task?.dueDate
+                        ? (task.dueDateAllDay ?? true)
+                          ? format(task.dueDate, 'yyyy/MM/dd', { locale: ja })
+                          : format(task.dueDate, 'yyyy/MM/dd HH:mm', { locale: ja })
+                        : '—'}
                     </span>
                   </>
                 )}

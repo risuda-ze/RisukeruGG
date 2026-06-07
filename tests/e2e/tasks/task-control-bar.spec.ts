@@ -110,7 +110,7 @@ test.describe('SC-012: 担当者プルダウンフィルタ', () => {
 
 /**
  * SC-015: タスクカードフッターに締め切り日時が最初に表示される
- * フッターの先頭要素が M/d HH:mm 形式であることを確認。
+ * dueDateAllDay=true → M/d 形式、false → M/d HH:mm 形式（どちらも先頭に表示）
  */
 test.describe('SC-015: タスクカードフッター日時フォーマット', () => {
   /**
@@ -118,7 +118,7 @@ test.describe('SC-015: タスクカードフッター日時フォーマット', 
    * Firebase Emulator 接続後に有効化すること。
    */
   // test.use({ viewport: { width: 1440, height: 900 } });
-  // test('期限付きタスクカードフッターの先頭要素に M/d HH:mm 形式の日時が表示される (SC-015)', async ({ page }) => {
+  // test('期限付きタスクカードフッターの先頭要素に日付が表示される (SC-015)', async ({ page }) => {
   //   await page.goto('/tasks');
   //   await page.waitForURL(/tasks/);
   //
@@ -126,9 +126,9 @@ test.describe('SC-015: タスクカードフッター日時フォーマット', 
   //   const taskCards = page.locator('.tcard');
   //   await expect(taskCards.first()).toBeVisible();
   //
-  //   // フッターの最初の span が M/d HH:mm 形式であることを確認（例: "6/5 14:30"）
+  //   // dueDateAllDay=true → "M/d" のみ、false → "M/d HH:mm" の両形式に対応する正規表現
   //   const footerFirstSpan = taskCards.first().locator('.flex.items-center.gap-1\\.5 > span').first();
-  //   await expect(footerFirstSpan).toHaveText(/^\d+\/\d+ \d{2}:\d{2}$/);
+  //   await expect(footerFirstSpan).toHaveText(/^\d+\/\d+( \d{2}:\d{2})?$/);
   // });
 });
 

@@ -34,11 +34,14 @@ test.describe('タスク管理 UI 構造確認（Constitution III 必須 E2E）'
 //     await page.waitForURL(/tasks/);
 //   });
 //
-//   test('カンバン列が 304px 幅で表示される (SC-001)', async ({ page }) => {
-//     const cols = page.locator('[data-testid="kanban-column"]');
+//   test('カンバン列が動的均等幅（表示領域 ÷ ステータス数）で表示される (SC-001)', async ({ page }) => {
+//     // v3 変更: 固定 304px 廃止 → flex: 1 1 0 + min-width: 180px の動的均等分割
+//     const cols = page.locator('[data-rbd-droppable-id]');
 //     await expect(cols.first()).toBeVisible();
 //     const box = await cols.first().boundingBox();
-//     expect(box?.width).toBe(304);
+//     // 3 列の場合 1440px ÷ 3 ≒ 480px（サイドバー幅を除く）
+//     expect(box?.width).toBeGreaterThanOrEqual(180);
+//     expect(box?.width).toBeLessThan(1440);
 //   });
 //
 //   test('タスクカードに緊急度チップが表示される (SC-002)', async ({ page }) => {
@@ -67,7 +70,8 @@ test.describe('タスク管理 UI 構造確認（Constitution III 必須 E2E）'
 //     await expect(modal.locator('button:has-text("削除")')).not.toBeVisible();
 //   });
 //
-//   test('タスクカードクリックで 960px モーダルが開く (SC-003)', async ({ page }) => {
+//   test('タスクカードクリックで 1180px モーダルが開く (SC-003)', async ({ page }) => {
+//     // ScheduleModal と同サイズに統一: min(1180px, calc(100vw - 64px))
 //     await page.locator('.tcard').first().click();
 //     const modal = page.locator('.task-modal');
 //     await expect(modal).toBeVisible();

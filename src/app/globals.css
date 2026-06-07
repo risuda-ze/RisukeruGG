@@ -1014,10 +1014,11 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 }
 @media (min-width: 768px) {
   .task-modal {
-    width: min(960px, calc(100vw - 32px));
-    height: min(700px, 92vh);
+    width: min(1180px, calc(100vw - 64px));
+    height: min(720px, calc(100vh - 64px));
+    min-width: 560px;
     min-height: 400px;
-    max-height: calc(100vh - 32px);
+    max-height: calc(100vh - 64px);
     border-radius: 20px;
     resize: both;
   }
