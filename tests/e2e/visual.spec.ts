@@ -21,12 +21,19 @@ const TEST_USER = {
 };
 
 async function switchToTeam(page: Page, targetTeamName: string, expectedTeamCode: string) {
-  if (await page.getByText(expectedTeamCode).count()) {
+  /* チームコードが既に表示されていれば切替不要（Firestore 読み込み後まで最大 10s 待機） */
+  try {
+    await page.getByText(expectedTeamCode).waitFor({ timeout: 10000 });
     return;
+  } catch {
+    // まだ表示されていない場合は切替を実施する
   }
 
-  const switcher = page.getByRole('button', { name: /swap_horiz/ });
-  await switcher.click();
+  /* チーム切替ボタン: data-testid または groups アイコン含むボタンで検索 */
+  const switcher = page.locator(
+    '[data-testid="team-switcher"], button:has(.material-icons:has-text("groups"))'
+  ).first();
+  await switcher.click({ timeout: 15000 });
   await page
     .getByRole('button', { name: new RegExp(targetTeamName) })
     .last()
@@ -52,7 +59,8 @@ test.describe('各ページ表示確認 (シードデータ)', () => {
   // ── ダッシュボード ─────────────────────────────────────────
   test('ダッシュボードが表示される', async ({ page }) => {
     await page.goto('/dashboard');
-    await expect(page.getByText('今月の配信数')).toBeVisible({ timeout: 15000 });
+    /* StatCard はチームデータ読み込み後に描画されるため、タイムアウトを長めに設定 */
+    await expect(page.getByText('今月の配信数')).toBeVisible({ timeout: 25000 });
     await expect(page.getByText('チームメンバー')).toBeVisible();
     await expect(page.getByText('配信太郎').first()).toBeVisible();
     await expect(page.getByText('運営花子').first()).toBeVisible();
@@ -79,7 +87,8 @@ test.describe('各ページ表示確認 (シードデータ)', () => {
     await expect(memberToggle).toBeVisible();
 
     await memberToggle.click();
-    await expect(memberToggle).toHaveClass(/text-\[#60a5fa\]/);
+    /* クリック後はテキストが「メンバー表示中」に変わり btn--ghost クラスが付与される */
+    await expect(page.getByRole('button', { name: 'メンバー表示中' })).toBeVisible();
   });
 
   // ── タスク (カンバン) ──────────────────────────────────────

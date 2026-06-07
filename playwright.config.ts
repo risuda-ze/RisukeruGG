@@ -20,6 +20,7 @@ export default defineConfig({
         '**/e2e/login.spec.ts',
         '**/e2e/schedule.spec.ts',
         '**/e2e/tasks.spec.ts',
+        '**/e2e/tasks/task-control-bar.spec.ts',
         '**/e2e/privacy-policy.spec.ts',
         '**/e2e/contact.spec.ts',
       ],
@@ -29,7 +30,10 @@ export default defineConfig({
     // `pnpm test:e2e --project=emulator` で実行する
     {
       name: 'emulator',
-      testMatch: ['**/e2e/visual.spec.ts'],
+      testMatch: [
+        '**/e2e/visual.spec.ts',
+        '**/e2e/tasks/task-settings-icon.spec.ts',
+      ],
       use: { ...devices['Desktop Chrome'] },
     },
   ],

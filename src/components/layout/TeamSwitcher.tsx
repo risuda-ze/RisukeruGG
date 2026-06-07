@@ -59,6 +59,7 @@ export function TeamSwitcher({ collapsed = false }: TeamSwitcherProps) {
   return (
     <div ref={ref} className="relative">
       <button
+        data-testid="team-switcher"
         onClick={() => setOpen((v) => !v)}
         className={`w-full flex items-center gap-2 px-2 py-2 rounded-[8px] text-muted hover:text-text hover:bg-purple/8 transition-colors ${
           collapsed ? 'justify-center' : ''

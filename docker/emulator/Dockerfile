@@ -32,7 +32,7 @@ COPY functions/tsconfig.json ./functions/
 
 # 起動スクリプト
 COPY docker/emulator/start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
+RUN sed -i $'s/\r//' /usr/local/bin/start.sh && chmod +x /usr/local/bin/start.sh
 
 # エミュレータが使用するポート
 EXPOSE 4000 9099 5001 8080 9199
