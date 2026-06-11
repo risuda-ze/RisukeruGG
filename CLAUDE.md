@@ -6,7 +6,7 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT START -->
 
-UIリデザイン（タスク管理画面）v4 実装完了: `specs/014-task-ui-redesign/plan.md`
+現在のアクティブ機能: コラボ調整機能 UI リデザイン → `specs/015-collab-ui-redesign/plan.md`
 
 <!-- SPECKIT END -->
 
