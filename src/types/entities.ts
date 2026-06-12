@@ -2,7 +2,7 @@ export type UserRole = 'operator' | 'member' | 'rom';
 export type PlanType = 'light' | 'party';
 /** @deprecated 新規コードでは TaskCategory インターフェースと categoryId を使用すること */
 export type TaskCategoryKey = 'shooting' | 'editing' | 'thumbnail' | 'announcement' | 'other';
-export type CollabStatus = 'open' | 'confirmed' | 'expired' | 'cancelled';
+export type CollabStatus = 'draft' | 'open' | 'confirmed' | 'expired' | 'cancelled';
 export type NotificationCategory = 'collab' | 'tasks' | 'reminders' | 'system';
 
 export const LIGHT_PLAN_LIMITS = {
@@ -13,8 +13,9 @@ export const LIGHT_PLAN_LIMITS = {
 
 // CollabSessionStatusのUI表示名マッピング
 export const COLLAB_STATUS_LABELS: Record<CollabStatus, string> = {
-  open: '調整中',
-  confirmed: '予定決定',
+  draft: '準備中',
+  open: '募集中',
+  confirmed: '確定',
   expired: '終了',
   cancelled: '終了',
 } as const;
@@ -183,7 +184,7 @@ export interface CollabSession {
   teamId: string;
   proposedDates: Date[];
   responses: {
-    dates: Record<string, 'ok' | 'ng'>;
+    dates: Record<string, 'ok' | 'ng' | 'maybe'>;
     alternativeDates: Date[];
     respondedAt: Date;
     note: string | null;
@@ -193,11 +194,13 @@ export interface CollabSession {
   confirmedDate: Date | null;
   linkedScheduleId: string | null;
   createdAt: Date;
+  updatedBy?: string;
+  updatedAt?: Date;
   // 拡張フィールド（任意）
   icon?: string | null;
   content?: string | null;
   participants?: CollabParticipant[];
-  participantResponses?: Record<string, Record<string, 'ok' | 'ng' | 'pending'>>;
+  participantResponses?: Record<string, Record<string, 'ok' | 'ng' | 'maybe' | 'pending'>>;
   comments?: CollabComment[];
 }
 

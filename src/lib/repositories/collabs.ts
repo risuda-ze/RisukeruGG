@@ -1,6 +1,7 @@
 import {
   doc,
   collection,
+  addDoc,
   getDoc,
   updateDoc,
   arrayUnion,
@@ -14,7 +15,7 @@ import type { CollabSession, CollabParticipant, CollabComment } from '@/types/en
 
 function toCollabSession(id: string, data: Record<string, unknown>): CollabSession {
   const responses = data.responses as {
-    dates: Record<string, 'ok' | 'ng'>;
+    dates: Record<string, 'ok' | 'ng' | 'maybe'>;
     alternativeDates: Timestamp[];
     respondedAt: Timestamp;
     note: string | null;
@@ -27,6 +28,7 @@ function toCollabSession(id: string, data: Record<string, unknown>): CollabSessi
     authorName: c.authorName as string,
     text: c.text as string,
     createdAt: (c.createdAt as Timestamp).toDate(),
+    ...(c.parentId ? { parentId: c.parentId as string } : {}),
   }));
 
   return {
@@ -49,11 +51,13 @@ function toCollabSession(id: string, data: Record<string, unknown>): CollabSessi
     confirmedDate: data.confirmedDate ? (data.confirmedDate as Timestamp).toDate() : null,
     linkedScheduleId: (data.linkedScheduleId as string | null) ?? null,
     createdAt: (data.createdAt as Timestamp).toDate(),
+    updatedBy: (data.updatedBy as string | undefined) ?? undefined,
+    updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined,
     icon: (data.icon as string | null) ?? null,
     content: (data.content as string | null) ?? null,
     participants: (data.participants as CollabParticipant[] | null) ?? [],
     participantResponses:
-      (data.participantResponses as Record<string, Record<string, 'ok' | 'ng' | 'pending'>> | null) ??
+      (data.participantResponses as Record<string, Record<string, 'ok' | 'ng' | 'maybe' | 'pending'>> | null) ??
       {},
     comments,
   };
@@ -81,53 +85,19 @@ export function subscribeCollabSessions(
   });
 }
 
+/** セッションを更新。updatedBy/updatedAt は自動セット */
 export async function updateCollabSession(
   teamId: string,
   sessionId: string,
-  data: Partial<CollabSession>
+  data: Partial<CollabSession>,
+  updatedByUid?: string
 ): Promise<void> {
-  await updateDoc(
-    doc(db, 'teams', teamId, 'collabSessions', sessionId),
-    data as Record<string, unknown>
-  );
-}
-
-/** 参加者リストを更新 */
-export async function updateCollabParticipants(
-  teamId: string,
-  sessionId: string,
-  participants: CollabParticipant[]
-): Promise<void> {
-  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), { participants });
-}
-
-/** 内容テキストを更新 */
-export async function updateCollabContent(
-  teamId: string,
-  sessionId: string,
-  content: string
-): Promise<void> {
-  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), { content });
-}
-
-/** タイトルを更新 */
-export async function updateCollabTitle(
-  teamId: string,
-  sessionId: string,
-  title: string
-): Promise<void> {
-  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), { title });
-}
-
-/** 候補日程を追加 */
-export async function addCollabProposedDate(
-  teamId: string,
-  sessionId: string,
-  date: Date
-): Promise<void> {
-  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), {
-    proposedDates: arrayUnion(Timestamp.fromDate(date)),
-  });
+  const payload: Record<string, unknown> = { ...(data as Record<string, unknown>) };
+  if (updatedByUid) {
+    payload.updatedBy = updatedByUid;
+    payload.updatedAt = Timestamp.fromDate(new Date());
+  }
+  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), payload);
 }
 
 /** コメントを追加 */
@@ -138,19 +108,6 @@ export async function addCollabComment(
 ): Promise<void> {
   await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), {
     comments: arrayUnion(comment),
-  });
-}
-
-/** 参加者回答を更新 */
-export async function updateParticipantResponse(
-  teamId: string,
-  sessionId: string,
-  participantId: string,
-  dateIndex: string,
-  response: 'ok' | 'ng' | 'pending'
-): Promise<void> {
-  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), {
-    [`participantResponses.${participantId}.${dateIndex}`]: response,
   });
 }
 
@@ -192,15 +149,37 @@ export const reopenCollabSession = httpsCallable<
   { success: boolean }
 >(functions, 'reopenCollabSession');
 
-/** 候補日程・参加者回答を一括置換（編集・削除時に使用） */
-export async function replaceCollabProposedDates(
+/** クライアントから直接セッションを新規作成（draft/open モード） */
+export async function createCollabSessionLocal(
   teamId: string,
-  sessionId: string,
-  newDates: Date[],
-  newParticipantResponses: Record<string, Record<string, 'ok' | 'ng' | 'pending'>>
-): Promise<void> {
-  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), {
-    proposedDates: newDates.map((d) => Timestamp.fromDate(d)),
-    participantResponses: newParticipantResponses,
+  data: {
+    title: string;
+    status: 'draft' | 'open';
+    content?: string;
+    participants: CollabParticipant[];
+    proposedDates: Date[];
+    icon?: string;
+    createdBy: string;
+  }
+): Promise<string> {
+  const ref = await addDoc(collection(db, 'teams', teamId, 'collabSessions'), {
+    title: data.title,
+    partnerName: '',
+    status: data.status,
+    content: data.content ?? '',
+    participants: data.participants,
+    proposedDates: data.proposedDates.map((d) => Timestamp.fromDate(d)),
+    participantResponses: {},
+    comments: [],
+    createdBy: data.createdBy,
+    teamId,
+    expiresAt: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+    icon: data.icon ?? 'sports_esports',
+    createdAt: Timestamp.fromDate(new Date()),
+    responses: null,
+    confirmedDate: null,
+    linkedScheduleId: null,
   });
+  return ref.id;
 }
+
