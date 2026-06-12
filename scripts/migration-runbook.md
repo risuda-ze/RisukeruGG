@@ -1,57 +1,64 @@
-# 本番データ移行バッチ実行手順
+# 本番データ移行バッチ 実行手順
 
-このドキュメントは、scripts 配下の移行バッチを安全に実行するための運用メモです。
+## ⚠️ 絶対に実行しないスクリプト
 
-対象スクリプト:
+| スクリプト | 理由 |
+|-----------|------|
+| `migrate-task-statuses.mjs` | **廃止済み・エミュレーター専用の旧スクリプト。** `migrate-task-schema.mjs` に置き換え済み。package.json のコマンド名も `migrate:task-statuses:DEPRECATED` に変更済み。実行しても即エラー終了するガードを入れてある。 |
 
-- `scripts/migrate-task-schema.mjs`
-- `scripts/migrate-discord-schema.mjs`
+---
+
+## 現行スクリプト一覧
+
+| コマンド | スクリプト | 目的 |
+|---------|-----------|------|
+| `pnpm migrate:task-schema` | `migrate-task-schema.mjs` | kanbanColumns → taskStatuses 移行 / columnId 修復 |
+| `pnpm migrate:team-schema` | `migrate-team-schema.mjs` | ownerId → operatorUids 正規化 / icon フィールドバックフィル |
+| `pnpm migrate:discord-schema` | `migrate-discord-schema.mjs` | Discord セッション guildId 移行 |
+
+全スクリプト共通：
+- **Firebase Admin SDK 使用**（本番接続）
+- **既定は dry-run**。`--apply` を付けない限り Firestore には一切書き込まない
+
+---
 
 ## 前提条件
 
-### 1. サービスアカウントを設定する
-
-両スクリプトは Firebase Admin SDK を使うため、`FIREBASE_SERVICE_ACCOUNT_KEY` が必要です。
-
-PowerShell の例:
+### サービスアカウントキーの設定
 
 ```powershell
 $env:FIREBASE_SERVICE_ACCOUNT_KEY = Get-Content .\service-account.json -Raw
+
+# 確認（project_id が正しいか必ずチェックする）
+$env:FIREBASE_SERVICE_ACCOUNT_KEY | ConvertFrom-Json | Select-Object project_id, client_email
 ```
 
-JSON 文字列がそのまま環境変数に入っている必要があります。
+---
 
-### 2. まず dry-run を実行する
+## 推奨実行順序
 
-両スクリプトとも、既定は dry-run です。`--apply` を付けない限り Firestore には書き込みません。
-
-### 3. 影響範囲を絞る場合は team 指定を使う
-
-特定チームだけ確認したい場合:
-
-```powershell
-pnpm migrate:task-schema -- --team=<teamId>
-pnpm migrate:discord-schema -- --team=<teamId>
+```
+1. migrate:task-schema    dry-run  → 内容確認
+2. migrate:team-schema    dry-run  → 内容確認
+3. migrate:discord-schema dry-run  → 内容確認
+4. migrate:task-schema    --apply [--prune-source]
+5. migrate:team-schema    --apply
+6. migrate:discord-schema --apply  [--prune-legacy]
+7. アプリ主要導線の確認
 ```
 
-## 実行順序
+task スキーマは画面表示・Discord 連携の両方に影響するため最初に当てるのが安全です。
 
-推奨順序は次の通りです。
+---
 
-1. task スキーマ移行の dry-run
-2. discord スキーマ移行の dry-run
-3. task スキーマ移行の本適用
-4. discord スキーマ移行の本適用
-5. アプリ主要導線の確認
+## migrate:task-schema — Task スキーマ移行
 
-task 側は画面表示や Discord タスク登録にも影響するため、先にそろえる方が安全です。
+**対象スキーマ変更（2026-05-30, commit 5e55281）:**
 
-## Task スキーマ移行
-
-対象:
-
-- `teams/{teamId}/kanbanColumns` → `teams/{teamId}/taskStatuses`
-- `teams/{teamId}/tasks/{taskId}.columnId` の整合修復
+| 変更前 | 変更後 |
+|--------|--------|
+| `teams/{id}/kanbanColumns/{colId}` | `teams/{id}/taskStatuses/{colId}` |
+| `tasks/{id}.columnId` = kanbanColumns の ID | `tasks/{id}.columnId` = taskStatuses の ID |
 
 ### dry-run
 
@@ -61,10 +68,9 @@ pnpm migrate:task-schema
 
 確認ポイント:
 
-- `status copies` が想定件数か
-- `task repairs` が想定件数か
-- `warnings` に未知の `columnId` が出ていないか
-- `fallback-required` が出たチームを把握できているか
+- `status copies` — `kanbanColumns` に残っているドキュメント数。0 なら移行済み
+- `task repairs` — `columnId` が旧 ID を指しているタスク数。0 なら修復済み
+- `warnings` — 未解決の `columnId` がないか。`fallback-required` が出たチームは手動確認
 
 ### 本適用
 
@@ -72,32 +78,68 @@ pnpm migrate:task-schema
 pnpm migrate:task-schema -- --apply
 ```
 
-### 元コレクションも削除する場合
+### 元コレクション（kanbanColumns）も削除する場合
 
 ```powershell
 pnpm migrate:task-schema -- --apply --prune-source
 ```
 
-### fallback を許可して強制修復する場合
-
-通常は推奨しません。まず dry-run の warning を確認してください。
-
-```powershell
-pnpm migrate:task-schema -- --apply --apply-fallback
-```
-
-元コレクション削除も同時に行う場合:
+### fallback を許可して強制修復する場合（通常は不要）
 
 ```powershell
 pnpm migrate:task-schema -- --apply --apply-fallback --prune-source
 ```
 
-## Discord スキーマ移行
+---
 
-対象:
+## migrate:team-schema — Team スキーマ最新化
 
-- 旧 `discord_sessions/{discordUserId}` → 現行 `discord_sessions/{guildId}`
-- `teams/{teamId}/discord/config` の既定値正規化
+**対象スキーマ変更:**
+
+| 変更前 | 変更後 | コミット |
+|--------|--------|---------|
+| `teams/{id}.ownerId: string` | `teams/{id}.operatorUids: string[]` | 5e55281 (2026-05-30) |
+| `taskStatuses/{id}` に `icon` フィールドなし | `icon: string\|null` | 4f22765 (2026-06) |
+| `taskCategories/{id}` に `icon` フィールドなし | `icon: string\|null` | 4f22765 (2026-06) |
+
+**補足:**
+- `ownerId` はアプリ側で後方互換を持つが、Cloud Functions（deleteAccount / leaveTeam）が `operatorUids` を書き込む前提のため正規化が必要
+- `icon` はアプリ側が `?? null` でデフォルト処理するが、Firestore に明示的に書いておく
+
+### dry-run
+
+```powershell
+pnpm migrate:team-schema
+```
+
+確認ポイント:
+
+- `owner patches` — `ownerId` のみ持つチーム数。0 なら正規化済み
+- `icon patches` — `icon` フィールドのない `taskStatuses` / `taskCategories` の件数
+- `warnings: missing-owner` — `ownerId` も `operatorUids` もないチームは手動対応が必要
+
+### 本適用
+
+```powershell
+pnpm migrate:team-schema -- --apply
+```
+
+### 特定チームのみ
+
+```powershell
+pnpm migrate:team-schema -- --apply --team=<teamId>
+```
+
+---
+
+## migrate:discord-schema — Discord スキーマ移行
+
+**対象スキーマ変更（2026-05-31, commit 704f6d4）:**
+
+| 変更前 | 変更後 |
+|--------|--------|
+| `discord_sessions/{discordUserId}` | `discord_sessions/{guildId}` |
+| `teams/{id}/discord/config` に `guildId`/`channelId` なし | 既定値で正規化 |
 
 ### dry-run
 
@@ -107,9 +149,9 @@ pnpm migrate:discord-schema
 
 確認ポイント:
 
-- `planned writes` が想定件数か
-- `warnings` に `missing-guild-id` が出ていないか
-- `overwrite current` が意図した件数か
+- `planned writes` — 移行対象のセッション数
+- `warnings: missing-guild-id` — guildId 未設定のチームは自動移行不可（手動対応）
+- `overwrite current` — 既存 guildId セッションを上書きする件数
 
 ### 本適用
 
@@ -123,35 +165,43 @@ pnpm migrate:discord-schema -- --apply
 pnpm migrate:discord-schema -- --apply --prune-legacy
 ```
 
-## 実行後の確認
+---
 
-最低限、次を確認します。
+## 実行後の確認チェックリスト
 
-1. タスク一覧とダッシュボードでステータス名が正常に表示される
-2. タスク詳細のカラム変更が正常に保存される
-3. Discord Bot 経由のタスク登録が失敗しない
-4. Discord AI 会話の継続と confirm / revise / cancel が機能する
-5. 旧形式のドキュメントや orphaned な `columnId` が残っていない
+- [ ] タスク一覧・ダッシュボードでステータス名が正常表示される
+- [ ] タスク詳細でカラム変更が保存される
+- [ ] タスク設定画面でアイコン列が表示される（未設定は空欄）
+- [ ] チーム設定でオーナー権限が正常に機能する
+- [ ] Discord Bot 経由のタスク登録が失敗しない
+- [ ] 旧 `kanbanColumns` コレクションや orphaned な `columnId` が残っていない
 
-## 実行コマンド例
+---
 
-まず確認だけ行う場合:
+## 一括実行（全移行をまとめて行う場合）
 
 ```powershell
+# Step 1: サービスアカウント設定
+$env:FIREBASE_SERVICE_ACCOUNT_KEY = Get-Content .\service-account.json -Raw
+$env:FIREBASE_SERVICE_ACCOUNT_KEY | ConvertFrom-Json | Select-Object project_id, client_email  # 要確認
+
+# Step 2: dry-run（全スクリプト）
 pnpm migrate:task-schema
+pnpm migrate:team-schema
 pnpm migrate:discord-schema
-```
 
-本番適用する場合:
-
-```powershell
-pnpm migrate:task-schema -- --apply --prune-source
+# Step 3: 内容を確認してから本適用
+pnpm migrate:task-schema    -- --apply --prune-source
+pnpm migrate:team-schema    -- --apply
 pnpm migrate:discord-schema -- --apply --prune-legacy
 ```
 
+---
+
 ## 注意事項
 
-- dry-run を見ずに `--apply` しない
-- `--apply-fallback` は warning の内容を確認してから使う
-- source を削除する前に、現行コードが旧 collection を参照していないことを確認する
-- 実行ログは必ず保存する
+- dry-run の出力を必ず確認してから `--apply` を実行する
+- `--apply-fallback` は warning を確認した上で使う
+- `--prune-source` / `--prune-legacy` は現行コードが旧コレクションを参照していないことを確認してから使う
+- 実行ログは必ずコピーして保存する
+- `missing-owner` 警告が出たチームは自動移行できないため手動で Firebase Console から確認する
