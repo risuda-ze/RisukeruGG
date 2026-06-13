@@ -99,6 +99,7 @@ service cloud.firestore {
         // URLトークン（UUID v4）が事実上の認証となるため公開読み取りOK
         allow read: if true;
         allow update, delete: if isOwnerOrEditor(teamId);
+        // 新規作成は Cloud Function (Admin SDK) 経由のみ。クライアント直接作成は不可。
         allow create: if false;
       }
 

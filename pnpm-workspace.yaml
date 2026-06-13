@@ -7,6 +7,10 @@ overrides:
   serialize-javascript: 7.0.5
   qs: 6.15.2
   uuid: 11.1.1
+  # @grpc/grpc-js <1.14.4 の脆弱性対応。firestore は ~1.9.0 固定のためバックポート版 1.9.16 を、
+  # google-gax は ^1.10.9 のため 1.14.4 をそれぞれパッチ範囲内で強制適用する。
+  '@grpc/grpc-js@~1.9.0': 1.9.16
+  '@grpc/grpc-js@>=1.10.0 <1.14.4': 1.14.4
 
 allowBuilds:
   sharp: true

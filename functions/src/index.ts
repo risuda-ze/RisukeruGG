@@ -26,6 +26,7 @@ export * from './schedules/createSchedule';
 
 // Phase 6: US4 — コラボ日程調整
 export * from './collab/createCollabSession';
+export * from './collab/createCollabSessionDraft';
 export * from './collab/respondToCollab';
 export * from './collab/confirmCollabDate';
 export * from './collab/cancelCollabSession';
