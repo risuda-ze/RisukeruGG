@@ -16,7 +16,7 @@
     "start": "next start",
     "migrate:discord-schema": "node scripts/migrate-discord-schema.mjs",
     "migrate:task-schema": "node scripts/migrate-task-schema.mjs",
-    "migrate:task-statuses": "node scripts/migrate-task-statuses.mjs",
+    "migrate:team-schema": "node scripts/migrate-team-schema.mjs",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write .",
