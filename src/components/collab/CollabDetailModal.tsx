@@ -9,7 +9,7 @@ import {
   updateCollabSession,
   addCollabComment,
   reopenCollabSession,
-  createCollabSessionLocal,
+  createCollabSessionDraft,
 } from '@/lib/repositories/collabs';
 import { useAuthStore } from '@/stores/auth';
 import { Icon } from '@/components/ui/Icon';
@@ -18,7 +18,7 @@ import type { CollabSession, CollabParticipant, CollabComment } from '@/types/en
 import { Timestamp, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { MiniCalendar } from '@/components/ui/MiniCalendar';
+import { DateField } from '@/components/ui/DateField';
 
 interface CollabDetailModalProps {
   session: CollabSession | null;
@@ -302,14 +302,13 @@ export function CollabDetailModal({
     setCreateError(null);
     try {
       const safeStatus = statusValue === 'confirmed' ? 'draft' : statusValue as 'draft' | 'open';
-      await createCollabSessionLocal(teamId, {
+      await createCollabSessionDraft(teamId, {
         title,
         status: safeStatus,
         content: contentValue.trim() || undefined,
         participants,
         proposedDates,
         icon: iconValue,
-        createdBy: currentUser.uid,
       });
       onSaved?.();
       onClose();
@@ -863,7 +862,7 @@ export function CollabDetailModal({
                       {isEditing ? (
                         /* インライン編集モード */
                         <div className="w-full flex flex-col gap-3">
-                          <MiniCalendar
+                          <DateField
                             value={editDateValue}
                             onChange={setEditDateValue}
                             min={new Date()}
@@ -948,7 +947,7 @@ export function CollabDetailModal({
                     className="rounded-[12px] p-4 flex flex-col gap-3 border"
                     style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
                   >
-                    <MiniCalendar
+                    <DateField
                       value={newDateValue}
                       onChange={setNewDateValue}
                       min={new Date()}
