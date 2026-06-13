@@ -1,6 +1,7 @@
 import {
   doc,
   collection,
+  addDoc,
   getDoc,
   updateDoc,
   arrayUnion,
