@@ -1,7 +1,6 @@
 import {
   doc,
   collection,
-  addDoc,
   getDoc,
   updateDoc,
   arrayUnion,
@@ -149,8 +148,25 @@ export const reopenCollabSession = httpsCallable<
   { success: boolean }
 >(functions, 'reopenCollabSession');
 
-/** クライアントから直接セッションを新規作成（draft/open モード） */
-export async function createCollabSessionLocal(
+const createCollabSessionDraftFn = httpsCallable<
+  {
+    teamId: string;
+    title: string;
+    status: 'draft' | 'open';
+    content?: string;
+    participants: CollabParticipant[];
+    proposedDates: string[];
+    icon?: string;
+  },
+  { sessionId: string }
+>(functions, 'createCollabSessionDraft');
+
+/**
+ * セッションを新規作成（draft/open モデル）。
+ * 作成はセキュリティルール上 Cloud Function 経由のみ許可されるため、createdBy は
+ * サーバーが認証情報から設定する（クライアントからは渡さない）。
+ */
+export async function createCollabSessionDraft(
   teamId: string,
   data: {
     title: string;
@@ -159,27 +175,17 @@ export async function createCollabSessionLocal(
     participants: CollabParticipant[];
     proposedDates: Date[];
     icon?: string;
-    createdBy: string;
   }
 ): Promise<string> {
-  const ref = await addDoc(collection(db, 'teams', teamId, 'collabSessions'), {
-    title: data.title,
-    partnerName: '',
-    status: data.status,
-    content: data.content ?? '',
-    participants: data.participants,
-    proposedDates: data.proposedDates.map((d) => Timestamp.fromDate(d)),
-    participantResponses: {},
-    comments: [],
-    createdBy: data.createdBy,
+  const res = await createCollabSessionDraftFn({
     teamId,
-    expiresAt: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
-    icon: data.icon ?? 'sports_esports',
-    createdAt: Timestamp.fromDate(new Date()),
-    responses: null,
-    confirmedDate: null,
-    linkedScheduleId: null,
+    title: data.title,
+    status: data.status,
+    content: data.content,
+    participants: data.participants,
+    proposedDates: data.proposedDates.map((d) => d.toISOString()),
+    icon: data.icon,
   });
-  return ref.id;
+  return res.data.sessionId;
 }
 

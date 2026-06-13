@@ -2,7 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomUUID } from 'crypto';
 import { db, getAuthContext, requireOwnerOrEditor, getUserDoc } from '../lib/validateAuth';
-import { LIGHT_PLAN_LIMITS } from '../lib/constants';
+import { assertActiveCollabLimit, assertCollabQuota, incrementCollabCount } from './lib';
 
 interface CreateCollabSessionData {
   teamId: string;
@@ -31,16 +31,8 @@ export const createCollabSession = onCall(
     requireOwnerOrEditor(ctx);
 
     const userData = await getUserDoc(ctx.uid);
-
-    if (
-      userData.plan === 'light' &&
-      userData.monthlyCollabCount >= LIGHT_PLAN_LIMITS.monthlyCollabs
-    ) {
-      throw new HttpsError(
-        'failed-precondition',
-        `LIGHTプランのコラボ作成上限（月${LIGHT_PLAN_LIMITS.monthlyCollabs}件）に達しました。PARTYプランにアップグレードしてください`
-      );
-    }
+    await assertActiveCollabLimit(teamId, userData);
+    assertCollabQuota(userData);
 
     const sessionId = randomUUID();
     const now = FieldValue.serverTimestamp();
@@ -64,11 +56,7 @@ export const createCollabSession = onCall(
         createdAt: now,
       });
 
-      if (userData.plan === 'light') {
-        tx.update(db.doc(`users/${ctx.uid}`), {
-          monthlyCollabCount: FieldValue.increment(1),
-        });
-      }
+      incrementCollabCount(tx, ctx.uid, userData);
     });
 
     const shareUrl = `https://risukeru-gg.vercel.app/collab/${teamId}__${sessionId}`;
