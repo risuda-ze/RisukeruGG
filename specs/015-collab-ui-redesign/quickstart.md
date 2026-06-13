@@ -2,10 +2,25 @@
 
 ## 開発サーバー起動
 
+> **重要**: Sprint 2 以降、コラボ新規作成は Cloud Function (`createCollabSessionDraft`) 経由になっています。
+> ローカルで新規作成をテストするには Firebase Functions Emulator が必要です。
+
+**ターミナル 1 — Functions をビルドしてエミュレータを起動**
+
+```bash
+pnpm functions:build          # functions/src → functions/lib にコンパイル
+firebase emulators:start      # Auth / Firestore / Functions / Storage をまとめて起動
+```
+
+**ターミナル 2 — Next.js 開発サーバー**
+
 ```bash
 pnpm dev
 # http://localhost:3000 で起動
 ```
+
+> `.env.local` に `NEXT_PUBLIC_USE_EMULATORS=true` が設定されている場合は上記の手順が必要です。
+> Functions Emulator が起動していない状態で新規作成を試みると `functions/internal` エラーが発生します。
 
 ## 対象画面
 
