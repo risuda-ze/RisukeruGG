@@ -12,6 +12,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "functions:build": "pnpm --dir functions build",
     "build": "next build",
     "start": "next start",
     "migrate:discord-schema": "node scripts/migrate-discord-schema.mjs",
