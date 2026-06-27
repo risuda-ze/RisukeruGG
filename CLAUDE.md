@@ -6,7 +6,7 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT START -->
 
-現在のアクティブ機能: コラボ調整機能 UI リデザイン → `specs/015-collab-ui-redesign/plan.md`
+現在のアクティブ機能: スケジュール画面のメンバー予定表示バグ修正 → `specs/017-schedule-member-visibility-fix/plan.md`
 
 <!-- SPECKIT END -->
 
