@@ -75,6 +75,9 @@ export function subscribeMemberCalendarEvents(
       callback(
         snap.docs.map((d) => toMemberCalendarEvent(d.id, d.data() as Record<string, unknown>))
       );
+    },
+    (error) => {
+      console.error('[memberCalendars] メンバー予定の購読に失敗しました:', error);
     }
   );
 }
