@@ -6,7 +6,7 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT START -->
 
-現在のアクティブ機能: コラボ新規作成「internal」エラー修正と堅牢化 → `specs/016-collab-create-fix/plan.md`
+現在のアクティブ機能: スケジュール画面のメンバー予定表示バグ修正 → `specs/017-schedule-member-visibility-fix/plan.md`
 
 <!-- SPECKIT END -->
 
