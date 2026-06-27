@@ -1,4 +1,5 @@
 import { HttpsError } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions/v2';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../lib/validateAuth';
 import { LIGHT_PLAN_LIMITS } from '../lib/constants';
@@ -28,13 +29,25 @@ const ACTIVE_COLLAB_STATUSES = ['draft', 'open'] as const;
 export async function assertActiveCollabLimit(teamId: string, userData: UserData): Promise<void> {
   if (userData.plan !== 'light') return;
 
-  const snap = await db
-    .collection(`teams/${teamId}/collabSessions`)
-    .where('status', 'in', [...ACTIVE_COLLAB_STATUSES])
-    .count()
-    .get();
+  // 集計クエリの失敗（インデックス未整備・SDK 差異等）をそのまま internal にせず、
+  // 真因をログに残したうえで意味のあるメッセージで返す。
+  let activeCount: number;
+  try {
+    const snap = await db
+      .collection(`teams/${teamId}/collabSessions`)
+      .where('status', 'in', [...ACTIVE_COLLAB_STATUSES])
+      .count()
+      .get();
+    activeCount = snap.data().count;
+  } catch (err) {
+    logger.error('assertActiveCollabLimit count query failed', {
+      teamId,
+      error: err instanceof Error ? { name: err.name, message: err.message } : String(err),
+    });
+    throw new HttpsError('internal', '同時進行コラボ数の確認に失敗しました。時間をおいて再試行してください');
+  }
 
-  if (snap.data().count >= LIGHT_PLAN_LIMITS.maxActiveCollabs) {
+  if (activeCount >= LIGHT_PLAN_LIMITS.maxActiveCollabs) {
     throw new HttpsError(
       'failed-precondition',
       `LIGHTプランの同時進行コラボ上限（${LIGHT_PLAN_LIMITS.maxActiveCollabs}件）に達しました。進行中のコラボを完了・キャンセルするか、PARTYプランにアップグレードしてください`

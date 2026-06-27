@@ -58,6 +58,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // memberCalendars の events コレクショングループを横断読み取りするために必要
+    // （subscribeMemberCalendarEvents が collectionGroup('events') を使用するため）
+    // teamId フィールドで自分のチームに属するドキュメントのみ許可し、他チームへの漏洩を防ぐ
+    // write は既存のネストルール（/teams/{teamId}/memberCalendars/{userId}/events/{eventId}）が担保する
+    match /{path=**}/events/{eventId} {
+      allow read: if request.auth != null && isTeamMember(resource.data.teamId);
+    }
+
     match /teams/{teamId} {
       allow read: if isTeamMember(teamId);
       allow create: if request.auth != null;
