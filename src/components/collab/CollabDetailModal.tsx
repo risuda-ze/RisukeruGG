@@ -17,6 +17,7 @@ import { COLLAB_STATUS_LABELS } from '@/types/entities';
 import type { CollabSession, CollabParticipant, CollabComment } from '@/types/entities';
 import { Timestamp, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
+import { firebaseFunctionsErrorMessage } from '@/lib/firebase/errors';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { DateField } from '@/components/ui/DateField';
 
@@ -313,7 +314,8 @@ export function CollabDetailModal({
       onSaved?.();
       onClose();
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : '作成に失敗しました');
+      // Functions の "internal" を素通しせず、code に応じた日本語メッセージへ変換
+      setCreateError(firebaseFunctionsErrorMessage(err, '作成に失敗しました'));
     } finally {
       setCreating(false);
     }
