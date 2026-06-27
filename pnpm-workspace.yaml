@@ -11,6 +11,13 @@ overrides:
   # google-gax は ^1.10.9 のため 1.14.4 をそれぞれパッチ範囲内で強制適用する。
   '@grpc/grpc-js@~1.9.0': 1.9.16
   '@grpc/grpc-js@>=1.10.0 <1.14.4': 1.14.4
+  # Dependabot alert 対応（トランジティブ依存の脆弱性修正）
+  vite: '>=8.0.16'
+  protobufjs: '>=7.6.3'
+  form-data: '>=2.5.6'
+  undici: '>=7.28.0'
+  '@babel/core': '>=7.29.6'
+  js-yaml: '>=4.2.0'
 
 allowBuilds:
   sharp: true
