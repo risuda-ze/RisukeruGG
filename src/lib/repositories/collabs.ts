@@ -153,7 +153,6 @@ const createCollabSessionDraftFn = httpsCallable<
   {
     teamId: string;
     title: string;
-    status: 'draft' | 'open';
     content?: string;
     participants: CollabParticipant[];
     proposedDates: string[];
@@ -163,7 +162,7 @@ const createCollabSessionDraftFn = httpsCallable<
 >(functions, 'createCollabSessionDraft');
 
 /**
- * セッションを新規作成（draft/open モデル）。
+ * セッションを新規作成（open 状態で作成）。
  * 作成はセキュリティルール上 Cloud Function 経由のみ許可されるため、createdBy は
  * サーバーが認証情報から設定する（クライアントからは渡さない）。
  */
@@ -171,7 +170,6 @@ export async function createCollabSessionDraft(
   teamId: string,
   data: {
     title: string;
-    status: 'draft' | 'open';
     content?: string;
     participants: CollabParticipant[];
     proposedDates: Date[];
@@ -181,7 +179,6 @@ export async function createCollabSessionDraft(
   const res = await createCollabSessionDraftFn({
     teamId,
     title: data.title,
-    status: data.status,
     content: data.content,
     participants: data.participants,
     proposedDates: data.proposedDates.map((d) => d.toISOString()),

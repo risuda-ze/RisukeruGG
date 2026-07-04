@@ -17,7 +17,6 @@ import type { CollabSession, CollabStatus } from '@/types/entities';
 
 // ステータス → CSSクラスサフィックス
 const STATUS_CLASS: Record<CollabStatus, string> = {
-  draft: 'prep',
   open: 'recruit',
   confirmed: 'fixed',
   expired: 'prep',
@@ -429,8 +428,8 @@ export default function CollabsPage() {
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
 
-  // 調整中ゾーン: draft + open、予定確定ゾーン: confirmed
-  const adjustSessions = sessions.filter((s) => s.status === 'draft' || s.status === 'open');
+  // 調整中ゾーン: open、予定確定ゾーン: confirmed
+  const adjustSessions = sessions.filter((s) => s.status === 'open');
   const fixedSessions = sessions.filter((s) => s.status === 'confirmed');
 
   useEffect(() => {
