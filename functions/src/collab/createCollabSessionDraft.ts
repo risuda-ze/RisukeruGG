@@ -16,7 +16,6 @@ interface CollabParticipantInput {
 interface CreateCollabSessionDraftData {
   teamId: string;
   title: string;
-  status: 'draft' | 'open';
   content?: string;
   participants: CollabParticipantInput[];
   proposedDates: string[]; // ISO 文字列
@@ -27,7 +26,8 @@ interface CreateCollabSessionDraftData {
 const EXPIRES_IN_DAYS = 30;
 
 /**
- * コラボ詳細画面「新規追加」用の作成 CF（参加者型・draft/open モデル）。
+ * コラボ詳細画面「新規追加」用の作成 CF。
+ * 作成時は常に open 状態で作成し、月次カウントに加算する。
  * クライアントからの直接 addDoc はセキュリティルールで禁止しており、作成はこの CF に集約する。
  * 共有リンク型の作成は createCollabSession を参照。
  *
@@ -37,24 +37,20 @@ const EXPIRES_IN_DAYS = 30;
 export const createCollabSessionDraft = onCall(
   { region: 'asia-northeast1' },
   async (request: CallableRequest<CreateCollabSessionDraftData>) => {
-    const { teamId, title, status, content, participants, proposedDates, icon } = request.data;
+    const { teamId, title, content, participants, proposedDates, icon } = request.data;
 
     return withErrorBoundary(
       'createCollabSessionDraft',
       {
         teamId,
         uid: request.auth?.uid,
-        status,
         proposedDatesCount: Array.isArray(proposedDates) ? proposedDates.length : 0,
         participantsCount: Array.isArray(participants) ? participants.length : 0,
       },
       async () => {
         // --- 基本バリデーション ---
-        if (!teamId || !title || !status) {
+        if (!teamId || !title) {
           throw new HttpsError('invalid-argument', '必須項目が不足しています');
-        }
-        if (status !== 'draft' && status !== 'open') {
-          throw new HttpsError('invalid-argument', 'ステータスが不正です');
         }
         if (!Array.isArray(participants) || participants.length === 0) {
           throw new HttpsError('invalid-argument', '参加者を1人以上指定してください');
@@ -83,11 +79,11 @@ export const createCollabSessionDraft = onCall(
 
         const userData = await getUserDoc(ctx.uid);
 
-        // 同時進行中（draft/open）の上限。draft/open いずれの作成も進行中を増やすため対象。
+        // 同時進行中（open）の上限チェック
         await assertActiveCollabLimit(teamId, userData);
 
-        // 月次作成上限は公開(open)作成のみ対象。下書き(draft)はカウントしない。
-        if (status === 'open') assertCollabQuota(userData);
+        // 月次作成上限チェック
+        assertCollabQuota(userData);
 
         // --- 作成 ---
         const sessionId = randomUUID();
@@ -100,7 +96,7 @@ export const createCollabSessionDraft = onCall(
           tx.set(sessionRef, {
             title,
             partnerName: '',
-            status,
+            status: 'open',
             content: content ?? '',
             participants: normalizedParticipants,
             proposedDates: parsedDates,
@@ -116,7 +112,7 @@ export const createCollabSessionDraft = onCall(
             createdAt: now,
           });
 
-          if (status === 'open') incrementCollabCount(tx, ctx.uid, userData);
+          incrementCollabCount(tx, ctx.uid, userData);
         });
 
         return { sessionId };

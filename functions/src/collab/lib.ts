@@ -20,10 +20,10 @@ export function assertCollabQuota(userData: UserData): void {
 }
 
 /** 同時進行中とみなすステータス（調整が継続中のもの） */
-const ACTIVE_COLLAB_STATUSES = ['draft', 'open'] as const;
+const ACTIVE_COLLAB_STATUSES = ['open'] as const;
 
 /**
- * LIGHTプランの場合、チーム内で同時進行中（draft/open）のコラボ調整が
+ * LIGHTプランの場合、チーム内で同時進行中（open）のコラボ調整が
  * 上限に達していれば例外を投げる。PARTYプランは無制限。
  */
 export async function assertActiveCollabLimit(teamId: string, userData: UserData): Promise<void> {

@@ -2,20 +2,19 @@ export type UserRole = 'operator' | 'member' | 'rom';
 export type PlanType = 'light' | 'party';
 /** @deprecated 新規コードでは TaskCategory インターフェースと categoryId を使用すること */
 export type TaskCategoryKey = 'shooting' | 'editing' | 'thumbnail' | 'announcement' | 'other';
-export type CollabStatus = 'draft' | 'open' | 'confirmed' | 'expired' | 'cancelled';
+export type CollabStatus = 'open' | 'confirmed' | 'expired' | 'cancelled';
 export type NotificationCategory = 'collab' | 'tasks' | 'reminders' | 'system';
 
 export const LIGHT_PLAN_LIMITS = {
   maxTeamMembers: 2,
   monthlyTasks: 5,
   monthlyCollabs: 3,
-  /** 同時進行中（draft/open）のコラボ調整の上限 */
+  /** 同時進行中（open）のコラボ調整の上限 */
   maxActiveCollabs: 5,
 } as const;
 
 // CollabSessionStatusのUI表示名マッピング
 export const COLLAB_STATUS_LABELS: Record<CollabStatus, string> = {
-  draft: '準備中',
   open: '募集中',
   confirmed: '確定',
   expired: '終了',
