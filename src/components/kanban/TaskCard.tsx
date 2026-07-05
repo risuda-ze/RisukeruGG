@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import type { Task, TeamMember } from '@/types/entities';
 import { useTasksStore } from '@/stores/tasks';
-import { useTaskCategoryStore } from '@/stores/taskCategories';
+import { useCategoryStore } from '@/stores/categories';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import UrgencyChip from './UrgencyChip';
@@ -28,14 +28,14 @@ export default function TaskCard({
   onDelete,
 }: TaskCardProps) {
   const { columns } = useTasksStore();
-  const { taskCategories } = useTaskCategoryStore();
+  const { categories } = useCategoryStore();
 
   const assignee = members.find((m) => m.userId === task.assigneeId);
   const assigneeName = assignee?.displayName ?? (task.assigneeId ? '元メンバー' : null);
   const assigneeInitials = assigneeName ? assigneeName.slice(0, 2) : '';
 
   const category = task.categoryId
-    ? taskCategories.find((c) => c.id === task.categoryId)
+    ? categories.find((c) => c.id === task.categoryId)
     : null;
 
   const column = columns.find((c) => c.id === task.columnId);

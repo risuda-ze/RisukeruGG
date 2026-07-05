@@ -18,6 +18,7 @@
     "migrate:discord-schema": "node scripts/migrate-discord-schema.mjs",
     "migrate:task-schema": "node scripts/migrate-task-schema.mjs",
     "migrate:team-schema": "node scripts/migrate-team-schema.mjs",
+    "cleanup:discord-invite-temp": "node scripts/cleanup-discord-invite-temp.mjs",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write .",

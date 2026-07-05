@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { useTasksStore } from '@/stores/tasks';
 import { sortTasksByDueDate } from '@/lib/utils/taskOrdering';
-import type { Task, TeamMember, TaskCategory } from '@/types/entities';
+import type { Task, TeamMember, Category } from '@/types/entities';
 import TaskCard from './TaskCard';
 
 interface TaskMobileBoardProps {
   tasks: Task[];
   members: TeamMember[];
-  categories: TaskCategory[];
+  categories: Category[];
   canEdit: boolean;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;

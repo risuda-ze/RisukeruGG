@@ -136,9 +136,9 @@ test.describe('各ページ表示確認 (シードデータ)', () => {
     await page.screenshot({ path: 'screenshots/notifications.png', fullPage: true });
   });
 
-  // ── 設定 ──────────────────────────────────────────────────
+  // ── 設定（カテゴリ設定） ──────────────────────────────────
   test('設定が表示される', async ({ page }) => {
-    await page.goto('/settings');
+    await page.goto('/settings/categories');
     await page.waitForTimeout(3000);
     expect(page.url()).not.toContain('/login');
     await page.screenshot({ path: 'screenshots/settings.png', fullPage: true });

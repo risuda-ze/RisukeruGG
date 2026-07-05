@@ -14,13 +14,13 @@ import {
   isToday,
 } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import type { ScheduleEntry, ScheduleCategory } from '@/types/entities';
+import type { ScheduleEntry, Category } from '@/types/entities';
 
 interface MonthCalendarProps {
   year: number;
   month: number; // 1-12
   schedules: ScheduleEntry[];
-  categories: ScheduleCategory[];
+  categories: Category[];
   onEventClick: (schedule: ScheduleEntry) => void;
   onDateClick?: (date: Date) => void;
   /** 日付番号をクリックしたとき（週表示への切り替えに使用） */
@@ -48,7 +48,7 @@ const CELL_PAD = 4;
 /** カテゴリ/ソースに基づくイベントカラーを返す */
 function getEventColor(
   categoryId: string | null,
-  categories: ScheduleCategory[],
+  categories: Category[],
   source?: 'google' | 'member'
 ): string {
   if (source === 'google') return GCAL_EVENT_COLOR;
@@ -92,7 +92,7 @@ function WeekRow({
   weekDays: Date[];
   multiDayEvents: ScheduleEntry[];
   singleDaySchedules: ScheduleEntry[];
-  categories: ScheduleCategory[];
+  categories: Category[];
   firstDay: Date;
   onEventClick: (s: ScheduleEntry) => void;
   onDateClick?: (d: Date) => void;
@@ -343,7 +343,7 @@ function DayTooltipPanel({
 }: {
   tooltip: NonNullable<DayTooltip>;
   schedules: ScheduleEntry[];
-  categories: ScheduleCategory[];
+  categories: Category[];
 }) {
   const daySchedules = schedules
     .filter((s) => s.startAt <= endOfDay(tooltip.day) && s.endAt >= startOfDay(tooltip.day))

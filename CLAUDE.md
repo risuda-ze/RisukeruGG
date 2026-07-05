@@ -6,7 +6,7 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT START -->
 
-現在のアクティブ機能: スケジュール画面のメンバー予定表示バグ修正 → `specs/017-schedule-member-visibility-fix/plan.md`
+現在のアクティブ機能: カテゴリ統合（スケジュール／タスク共通化） → `specs/018-category-unification/plan.md`
 
 <!-- SPECKIT END -->
 
