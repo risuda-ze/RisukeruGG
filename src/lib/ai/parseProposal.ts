@@ -15,8 +15,15 @@ const ARRAY_MAX = 10;
 const ScheduleProposalSchema = z.object({
   type: z.literal('schedule'),
   title: z.string().min(1).max(STR_MAX),
-  startAt: z.string().datetime({ message: 'startAt は ISO datetime 形式である必要があります' }),
-  endAt: z.string().datetime({ message: 'endAt は ISO datetime 形式である必要があります' }),
+  // AI（およびシステムプロンプトの例）はタイムゾーン無しのローカル日時
+  // （例: 2026-07-11T00:00:00）を出力する。offset/local を許可しないと Zod 検証に
+  // 失敗して %%PROPOSAL%% が無効化され、登録ボタンが出ず「登録した」と誤応答する原因になる。
+  startAt: z
+    .string()
+    .datetime({ offset: true, local: true, message: 'startAt は ISO datetime 形式である必要があります' }),
+  endAt: z
+    .string()
+    .datetime({ offset: true, local: true, message: 'endAt は ISO datetime 形式である必要があります' }),
   description: z.string().max(LONG_STR_MAX).optional(),
   participantNames: z.array(z.string().max(100)).max(ARRAY_MAX).optional(),
 });
@@ -35,7 +42,11 @@ const CollabProposalSchema = z.object({
   title: z.string().min(1).max(STR_MAX),
   partnerName: z.string().min(1).max(100),
   proposedDates: z
-    .array(z.string().datetime({ message: 'proposedDates の要素は ISO datetime 形式が必要です' }))
+    .array(
+      z
+        .string()
+        .datetime({ offset: true, local: true, message: 'proposedDates の要素は ISO datetime 形式が必要です' })
+    )
     .min(1)
     .max(ARRAY_MAX),
 });
