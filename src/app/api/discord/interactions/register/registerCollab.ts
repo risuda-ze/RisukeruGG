@@ -1,6 +1,6 @@
 import { getAdminFirestore } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
-import type { CollabProposal } from '@/lib/ai/parseProposal';
+import { parseProposalDateTime, type CollabProposal } from '@/lib/ai/parseProposal';
 
 /**
  * Discord Bot 経由のコラボ調整登録。
@@ -24,7 +24,8 @@ export async function registerCollab(
     partnerName: proposal.partnerName,
     createdBy: 'discord-bot',  // 個人ユーザーを追跡しないため固定値
     teamId,
-    proposedDates: proposal.proposedDates.map((d) => new Date(d)),
+    // タイムゾーン無しの日時は JST として解釈する（UTC サーバーでのずれ防止）
+    proposedDates: proposal.proposedDates.map((d) => parseProposalDateTime(d)),
     responses: null,
     expiresAt,
     status: 'open',

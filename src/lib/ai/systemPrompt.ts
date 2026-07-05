@@ -106,9 +106,15 @@ export function generateSystemPrompt(
 
 スケジュール:
 %%PROPOSAL%%
-{"type":"schedule","title":"タイトル","startAt":"2024-05-21T20:00:00","endAt":"2024-05-21T22:00:00","description":"説明（省略可）","participantNames":["田中さん"]}
+{"type":"schedule","title":"タイトル","startAt":"2024-05-21T20:00:00","endAt":"2024-05-21T22:00:00","allDay":false,"description":"説明（省略可）","participantNames":["田中さん"]}
 %%/PROPOSAL%%
 - participantNames: チームメンバーの displayName リスト（省略可。不明なら省略）
+- 日時はタイムゾーンを付けず日本時間（JST）の壁時計時刻で表記する（例: 2024-05-21T20:00:00）
+- allDay: 終日予定なら true、時刻を指定する予定なら false（省略時は false 扱い）
+- 終日予定（「終日」「一日中」など）は allDay:true とし、startAt を初日の "00:00:00"、
+  endAt を「最終日の翌日」の "00:00:00"（終了時刻は含まない）にする
+  例: 5/21 が終日 → startAt "2024-05-21T00:00:00", endAt "2024-05-22T00:00:00"
+  例: 5/21〜5/23 が終日 → startAt "2024-05-21T00:00:00", endAt "2024-05-24T00:00:00"
 
 タスク:
 %%PROPOSAL%%
