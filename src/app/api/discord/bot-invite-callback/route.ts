@@ -2,15 +2,7 @@ import { NextRequest } from 'next/server';
 import { getAdminFirestore } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { fetchGuildTextChannels } from '@/lib/discord/sendBotMessage';
-
-/**
- * リダイレクト先のベース URL を返す。
- * Docker 環境では req.nextUrl.origin が 0.0.0.0 になるため
- * NEXTAUTH_URL を優先して使用する。
- */
-function getBaseUrl(req: NextRequest): string {
-  return process.env.NEXTAUTH_URL?.replace(/\/$/, '') ?? req.nextUrl.origin;
-}
+import { getAppBaseUrl as getBaseUrl } from '@/lib/discord/appBaseUrl';
 
 /**
  * Discord Bot 招待 OAuth2 コールバック。
@@ -74,11 +66,19 @@ async function handleCallback(baseUrl: string, state: string, guildId: string): 
   const teamId = nonceData.teamId as string;
 
   // 1サーバー1チーム制約: 既に他チームがこの guildId を使用していないか確認
-  const existingSnap = await db
-    .collectionGroup('discord')
-    .where('guildId', '==', guildId)
-    .limit(1)
-    .get();
+  let existingSnap;
+  try {
+    existingSnap = await db
+      .collectionGroup('discord')
+      .where('guildId', '==', guildId)
+      .limit(1)
+      .get();
+  } catch (err) {
+    console.error('[discord/bot-invite-callback] guildId 重複チェック失敗:', err);
+    return Response.redirect(
+      `${baseUrl}/integrations/discord?discord=error&reason=duplicate-check-failed`
+    );
+  }
   if (!existingSnap.empty) {
     const existingTeamId = existingSnap.docs[0]!.ref.parent.parent?.id;
     if (existingTeamId && existingTeamId !== teamId) {

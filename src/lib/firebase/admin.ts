@@ -17,24 +17,55 @@ function getAdminApp(): App {
   }
 
   // FIREBASE_AUTH_EMULATOR_HOST が設定されている場合はエミュレータモード。
-  // Admin SDK はこの env を自動検知してエミュレータへルーティングするため、
-  // サービスアカウント不要でプロジェクトIDのみ渡せばよい。
+  // ただし Vercel は Preview/Production どちらのデプロイでも NODE_ENV=production になるため、
+  // 本番ビルドではこの分岐を無視してサービスアカウント認証にフォールバックする
+  // （デプロイ環境にエミュレータ変数が誤って残っていても本番の鍵検証を素通りしないようにするため）。
   if (process.env.FIREBASE_AUTH_EMULATOR_HOST) {
-    adminApp = initializeApp({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'demo-risukeru',
-    });
-    return adminApp;
+    if (process.env.NODE_ENV !== 'production') {
+      adminApp = initializeApp({
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'demo-risukeru',
+      });
+      return adminApp;
+    }
+    console.warn(
+      '[firebase-admin] FIREBASE_AUTH_EMULATOR_HOST が本番ビルドで検出されましたが無視します。'
+    );
   }
 
   const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
   if (!serviceAccountKey) {
     throw new Error(
       'FIREBASE_SERVICE_ACCOUNT_KEY 環境変数が設定されていません。' +
-        '.env.local.example を参照してください。'
+        'Firebase Console > プロジェクトの設定 > サービスアカウント で生成したJSONキー全体を' +
+        '1行の文字列としてこの環境変数に設定してください。'
     );
   }
 
-  const serviceAccount = JSON.parse(serviceAccountKey) as Record<string, string>;
+  let serviceAccount: Record<string, string>;
+  try {
+    serviceAccount = JSON.parse(serviceAccountKey) as Record<string, string>;
+  } catch (err) {
+    throw new Error(
+      'FIREBASE_SERVICE_ACCOUNT_KEY の JSON 解析に失敗しました。' +
+        '貼り付け時に private_key 内の \\n がリテラル改行に化けていないか確認してください。' +
+        `（詳細: ${err instanceof Error ? err.message : String(err)}）`
+    );
+  }
+
+  // Vercel等の環境変数UI経由で private_key 内のエスケープ済み \n が
+  // 実際の改行文字として壊れることがあるため、常に正規化しておく。
+  if (typeof serviceAccount.private_key === 'string') {
+    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+  }
+
+  const requiredFields = ['project_id', 'client_email', 'private_key'] as const;
+  const missingFields = requiredFields.filter((field) => !serviceAccount[field]);
+  if (missingFields.length > 0) {
+    throw new Error(
+      `FIREBASE_SERVICE_ACCOUNT_KEY に必須フィールドがありません: ${missingFields.join(', ')}`
+    );
+  }
+
   adminApp = initializeApp({ credential: cert(serviceAccount) });
   return adminApp;
 }

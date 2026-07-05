@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import { getAdminFirestore, getAdminAuth } from '@/lib/firebase/admin';
+import { getAdminFirestore } from '@/lib/firebase/admin';
+import { verifyBearerToken } from '@/lib/firebase/verifyBearerToken';
 
 /**
  * Discord Bot 接続解除エンドポイント。
@@ -7,20 +8,9 @@ import { getAdminFirestore, getAdminAuth } from '@/lib/firebase/admin';
  * operator のみ実行可能。
  */
 export async function POST(req: NextRequest): Promise<Response> {
-  const authorization = req.headers.get('Authorization');
-  if (!authorization?.startsWith('Bearer ')) {
-    return Response.json({ error: '認証が必要です' }, { status: 401 });
-  }
-  const idToken = authorization.slice(7);
-
-  let uid: string;
-  try {
-    const adminAuth = getAdminAuth();
-    const decoded = await adminAuth.verifyIdToken(idToken);
-    uid = decoded.uid;
-  } catch {
-    return Response.json({ error: 'トークンが無効です' }, { status: 401 });
-  }
+  const authResult = await verifyBearerToken(req);
+  if (authResult instanceof Response) return authResult;
+  const { uid } = authResult;
 
   let teamId: string;
   try {
