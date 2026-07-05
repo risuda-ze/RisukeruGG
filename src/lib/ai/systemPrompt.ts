@@ -174,7 +174,11 @@ export function formatSchedules(
   return schedules
     .map((s) => {
       if (s.allDay) {
-        return `- ${s.title}（${s.startAt.split(' ')[0]} 終日）`;
+        const startDate = s.startAt.split(' ')[0];
+        const endDate = s.endAt.split(' ')[0];
+        return startDate === endDate
+          ? `- ${s.title}（${startDate} 終日）`
+          : `- ${s.title}（${startDate} ～ ${endDate} 終日）`;
       }
       return `- ${s.title}（${s.startAt} ～ ${s.endAt}）`;
     })

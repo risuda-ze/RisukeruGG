@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { format, addDays, startOfDay } from 'date-fns';
+import { getEventLastDay } from '@/lib/utils/eventDays';
 import { ja } from 'date-fns/locale';
 import { useAIChatStore } from '@/stores/aiChat';
 import type { ChatMessage, Proposal, ProposalStatus } from '@/stores/aiChat';
@@ -276,7 +277,8 @@ export function AIChatPage() {
         .map((s) => ({
           title: s.title,
           startAt: format(s.startAt, 'yyyy/MM/dd HH:mm'),
-          endAt: format(s.endAt, 'yyyy/MM/dd HH:mm'),
+          /* 終日予定は排他的終了（翌日00:00）のため、AIには「含まれる最終日」を渡す */
+          endAt: format(s.allDay ? getEventLastDay(s) : s.endAt, 'yyyy/MM/dd HH:mm'),
           allDay: s.allDay ?? false,
         })),
       collabs: [],
