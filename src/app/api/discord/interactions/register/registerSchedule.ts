@@ -1,6 +1,6 @@
 import { getAdminFirestore } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
-import type { ScheduleProposal } from '@/lib/ai/parseProposal';
+import { parseProposalDateTime, type ScheduleProposal } from '@/lib/ai/parseProposal';
 
 /**
  * Discord Bot 経由のスケジュール登録。
@@ -25,13 +25,14 @@ export async function registerSchedule(
   await scheduleRef.set({
     title: proposal.title,
     categoryId: null,
-    startAt: new Date(proposal.startAt),
-    endAt: new Date(proposal.endAt),
+    // タイムゾーン無しの日時は JST として解釈する（UTC サーバーでのずれ防止）
+    startAt: parseProposalDateTime(proposal.startAt),
+    endAt: parseProposalDateTime(proposal.endAt),
     description: proposal.description ?? '',
     participantIds,
     collabPartnerName: null,
     linkedTaskIds: [],
-    allDay: false,
+    allDay: proposal.allDay ?? false,
     createdBy: 'discord-bot',  // 個人ユーザーを追跡しないため固定値
     updatedAt: now,
     createdAt: now,
