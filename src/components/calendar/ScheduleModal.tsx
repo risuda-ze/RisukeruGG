@@ -12,14 +12,14 @@ import { Icon } from '@/components/ui/Icon';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import type { ScheduleEntry, ScheduleCategory } from '@/types/entities';
+import type { ScheduleEntry, Category } from '@/types/entities';
 
 export interface ScheduleModalProps {
   schedule: ScheduleEntry | null;
   initialDate?: Date;
   teamId: string;
   canEdit: boolean;
-  categories: ScheduleCategory[];
+  categories: Category[];
   onClose: () => void;
   onDeleted: () => void;
 }

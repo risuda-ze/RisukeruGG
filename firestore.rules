@@ -82,14 +82,10 @@ service cloud.firestore {
         allow write: if isTeamOwner(teamId);
       }
 
-      match /scheduleCategories/{categoryId} {
+      // タスク・スケジュール共通の統合カテゴリ。編集は operator のみ。
+      match /categories/{categoryId} {
         allow read: if isTeamMember(teamId);
-        allow write: if isOwnerOrEditor(teamId);
-      }
-
-      match /taskCategories/{categoryId} {
-        allow read: if isTeamMember(teamId);
-        allow write: if isOwnerOrEditor(teamId);
+        allow write: if isTeamOwner(teamId);
       }
 
       match /schedules/{scheduleId} {

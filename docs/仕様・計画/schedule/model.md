@@ -14,6 +14,7 @@ Firestore コレクション配置: `teams/{teamId}/schedules/{scheduleId}`
 | ---------------- | ------------------------------------- | ---- |
 | `id`             | string                                | Firestore ドキュメント ID |
 | `title`          | string                                | 予定タイトル |
+| `categoryId`     | string \| null                        | カテゴリ ID。未分類なら `null`。タスクと共通の Category を参照する（正本は [task/model.md](../task/model.md) の Category） |
 | `startAt`        | timestamp                             | 開始日時 |
 | `endAt`          | timestamp                             | 終了日時 |
 | `allDay`         | boolean                               | 終日予定かどうか |
@@ -41,6 +42,7 @@ Firestore コレクション配置: `teams/{teamId}/schedules/{scheduleId}`
 
 - 動画投稿予定に紐付くタスク進捗の意味づけ
 - タスク詳細や完了判定のルール
+- `categoryId` が参照する Category（タスク・スケジュール共通カテゴリ）の定義・追加・編集・削除
 
 ### collab 側で管理するもの
 

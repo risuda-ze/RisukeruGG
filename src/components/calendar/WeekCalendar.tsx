@@ -2,12 +2,12 @@
 
 import { format, startOfWeek, addDays, startOfDay, endOfDay, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import type { ScheduleEntry, ScheduleCategory } from '@/types/entities';
+import type { ScheduleEntry, Category } from '@/types/entities';
 
 interface WeekCalendarProps {
   currentDate: Date;
   schedules: ScheduleEntry[];
-  categories: ScheduleCategory[];
+  categories: Category[];
   onEventClick: (schedule: ScheduleEntry) => void;
   onDateClick?: (date: Date) => void;
 }
@@ -21,7 +21,7 @@ const MEMBER_EVENT_COLOR = '#60a5fa';
 
 function getEventStyle(
   categoryId: string | null,
-  categories: ScheduleCategory[],
+  categories: Category[],
   source?: 'google' | 'member'
 ): { background: string; borderLeftColor: string } {
   if (source === 'google') {

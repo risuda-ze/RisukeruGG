@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Modal } from '@/components/ui/Modal';
 import { Avatar } from '@/components/ui/Avatar';
-import { useTaskCategoryStore } from '@/stores/taskCategories';
+import { useCategoryStore } from '@/stores/categories';
 import { sortTasksByDueDate } from '@/lib/utils/taskOrdering';
 import type { Task, TaskStatus, TeamMember } from '@/types/entities';
 
@@ -18,7 +18,7 @@ interface TaskBoardPreviewProps {
 
 export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const { taskCategories } = useTaskCategoryStore();
+  const { categories } = useCategoryStore();
   const sortedTasks = sortTasksByDueDate(tasks);
 
   if (tasks.length === 0) {
@@ -31,7 +31,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
   const getColumnName = (columnId: string) => columns.find((c) => c.id === columnId)?.name ?? '—';
 
   const getCategory = (categoryId: string | null) =>
-    categoryId ? (taskCategories.find((c) => c.id === categoryId) ?? null) : null;
+    categoryId ? (categories.find((c) => c.id === categoryId) ?? null) : null;
 
   const selectedAssignee = selectedTask ? getAssignee(selectedTask.assigneeId) : null;
   const selectedCategory = selectedTask ? getCategory(selectedTask.categoryId) : null;
