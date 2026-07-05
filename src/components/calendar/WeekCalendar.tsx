@@ -1,8 +1,9 @@
 'use client';
 
-import { format, startOfWeek, addDays, startOfDay, endOfDay, isToday } from 'date-fns';
+import { format, startOfWeek, addDays, startOfDay, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import type { ScheduleEntry, Category } from '@/types/entities';
+import { eventOccupiesDay, getEventLastDay, isMultiDayEvent } from '@/lib/utils/eventDays';
 
 interface WeekCalendarProps {
   currentDate: Date;
@@ -42,11 +43,6 @@ function getDowColorClass(i: number): string {
   return 'text-muted';
 }
 
-/** 予定が対象日に表示すべきかを判定する（複数日対応） */
-function isEventOnDay(event: ScheduleEntry, day: Date): boolean {
-  return event.startAt <= endOfDay(day) && event.endAt >= startOfDay(day);
-}
-
 /** 週内でイベントが占める列範囲を取得する（0-indexed, null = 週外） */
 function getEventWeekCols(
   event: ScheduleEntry,
@@ -55,7 +51,7 @@ function getEventWeekCols(
   let startCol = -1;
   let endCol = -1;
   for (let i = 0; i < days.length; i++) {
-    if (event.startAt <= endOfDay(days[i]) && event.endAt >= startOfDay(days[i])) {
+    if (eventOccupiesDay(event, days[i])) {
       if (startCol === -1) startCol = i;
       endCol = i;
     }
@@ -75,14 +71,10 @@ export function WeekCalendar({
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
-  /* allDay フラグ付き・複数日・単日イベントに分類 */
+  /* allDay フラグ付き・複数日・単日イベントに分類（終了境界は排他的に解釈） */
   const allDaySchedules = schedules.filter((s) => s.allDay);
-  const multiDaySchedules = schedules.filter(
-    (s) => !s.allDay && startOfDay(s.startAt).getTime() < startOfDay(s.endAt).getTime()
-  );
-  const singleDaySchedules = schedules.filter(
-    (s) => !s.allDay && startOfDay(s.startAt).getTime() === startOfDay(s.endAt).getTime()
-  );
+  const multiDaySchedules = schedules.filter((s) => !s.allDay && isMultiDayEvent(s));
+  const singleDaySchedules = schedules.filter((s) => !s.allDay && !isMultiDayEvent(s));
   /* all-day ストリップ: allDay + 複数日 */
   const allDayInWeek = [...allDaySchedules, ...multiDaySchedules].filter(
     (s) => getEventWeekCols(s, days) !== null
@@ -121,7 +113,7 @@ export function WeekCalendar({
             const cat = categories.find((c) => c.id === event.categoryId);
             /* 週の外に伸びている場合は角丸/ボーダーを調整 */
             const startsBefore = startOfDay(event.startAt) < startOfDay(days[0]);
-            const endsAfter = startOfDay(event.endAt) > startOfDay(days[6]);
+            const endsAfter = getEventLastDay(event) > startOfDay(days[6]);
 
             return (
               <button
@@ -162,7 +154,7 @@ export function WeekCalendar({
         {days.map((day, i) => {
           /* 複数日対応: 当日の範囲内にある全イベントを取得 */
           const daySchedules = schedules
-            .filter((s) => isEventOnDay(s, day))
+            .filter((s) => eventOccupiesDay(s, day))
             .sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
           const isCurrentDay = isToday(day);
 
@@ -221,7 +213,7 @@ export function WeekCalendar({
                           </span>
                         )}
                         <span className="text-[12px] font-num text-white/60 shrink-0 w-10">
-                          {format(s.startAt, 'HH:mm')}
+                          {s.allDay ? '終日' : format(s.startAt, 'HH:mm')}
                         </span>
                         <span className="text-[14px] font-medium text-white truncate flex-1">
                           {s.title}
@@ -240,7 +232,7 @@ export function WeekCalendar({
       <div className="cwv__cols hidden md:grid">
         {days.map((day) => {
           const daySingleSchedules = singleDaySchedules
-            .filter((s) => isEventOnDay(s, day))
+            .filter((s) => eventOccupiesDay(s, day))
             .sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
           const isCurrentDay = isToday(day);
 

@@ -864,7 +864,7 @@ async function main() {
       allDay: true,
       catId: 'scat001',
       start: d(2026, 6, 22, 0, 0),
-      end: d(2026, 6, 28, 23, 59),
+      end: d(2026, 6, 29, 0, 0), // 排他的終了（6/28まで表示）
       pIds: [UID1],
     },
     {
@@ -873,7 +873,7 @@ async function main() {
       allDay: true,
       catId: 'scat002',
       start: d(2026, 6, 23, 0, 0),
-      end: d(2026, 6, 28, 23, 59),
+      end: d(2026, 6, 29, 0, 0), // 排他的終了（6/28まで表示）
       pIds: [UID1],
     },
     {
@@ -882,7 +882,7 @@ async function main() {
       allDay: true,
       catId: 'scat003',
       start: d(2026, 6, 24, 0, 0),
-      end: d(2026, 6, 28, 23, 59),
+      end: d(2026, 6, 29, 0, 0), // 排他的終了（6/28まで表示）
       pIds: [UID1],
     },
     {
@@ -891,7 +891,7 @@ async function main() {
       allDay: true,
       catId: null,
       start: d(2026, 6, 25, 0, 0),
-      end: d(2026, 6, 28, 23, 59),
+      end: d(2026, 6, 29, 0, 0), // 排他的終了（6/28まで表示）
       pIds: [UID1],
     },
 
@@ -983,7 +983,7 @@ async function main() {
       allDay: true,
       catId: null,
       start: d(2026, 5, 26, 0, 0),
-      end: d(2026, 5, 26, 0, 0),
+      end: d(2026, 5, 27, 0, 0), // 排他的終了（5/26のみ表示）
       pIds: [UID1, UID2],
     },
     {
@@ -1113,7 +1113,7 @@ async function main() {
   await setDoc(`teams/${TEAM_ID}/memberCalendars/${UID4}/events/gcal_evt_002`, {
     title: 'ROM三郎 の予定',
     startAt: d(2026, 5, 22, 0, 0),
-    endAt: d(2026, 5, 22, 0, 0),
+    endAt: d(2026, 5, 23, 0, 0), // 排他的終了（5/22のみ表示）
     allDay: true,
     sourceEventId: 'gcal_evt_002',
     syncedAt: NOW,

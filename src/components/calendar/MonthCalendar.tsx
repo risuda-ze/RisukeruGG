@@ -15,6 +15,12 @@ import {
 } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import type { ScheduleEntry, Category } from '@/types/entities';
+import {
+  eventOccupiesDay,
+  getExclusiveEnd,
+  getEventLastDay,
+  isMultiDayEvent,
+} from '@/lib/utils/eventDays';
 
 interface MonthCalendarProps {
   year: number;
@@ -108,11 +114,11 @@ function WeekRow({
   const eventCols: EventCol[] = [];
 
   for (const s of multiDayEvents) {
-    if (s.startAt > endOfDay(weekEnd) || s.endAt < startOfDay(weekStart)) continue;
+    if (s.startAt > endOfDay(weekEnd) || getExclusiveEnd(s) <= startOfDay(weekStart)) continue;
     let colStart = -1;
     let colEnd = -1;
     for (let i = 0; i < 7; i++) {
-      const inDay = s.startAt <= endOfDay(weekDays[i]) && s.endAt >= startOfDay(weekDays[i]);
+      const inDay = eventOccupiesDay(s, weekDays[i]);
       if (inDay) {
         if (colStart === -1) colStart = i;
         colEnd = i;
@@ -158,7 +164,7 @@ function WeekRow({
           const isCurrentMonth = isSameMonth(day, firstDay);
           const isCurrentDay = isToday(day);
           const daySingles = singleDaySchedules
-            .filter((s) => s.startAt <= endOfDay(day) && s.endAt >= startOfDay(day))
+            .filter((s) => eventOccupiesDay(s, day))
             .sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
 
           {/* この日付セルに表示中の複数日バー本数（MAX_TRACKS 以下のもの） */}
@@ -266,7 +272,7 @@ function WeekRow({
         const color = getEventColor(s.categoryId, categories, s.source);
         const cat = categories.find((c) => c.id === s.categoryId);
         const startsBefore = startOfDay(s.startAt) < startOfDay(weekStart);
-        const endsAfter = startOfDay(s.endAt) > startOfDay(weekEnd);
+        const endsAfter = getEventLastDay(s) > startOfDay(weekEnd);
 
         /* 単日カードと同等の余白を確保: 境界側は0px、開始・終了側は4px */
         const marginLeft = !startsBefore ? CELL_PAD : 0;
@@ -346,7 +352,7 @@ function DayTooltipPanel({
   categories: Category[];
 }) {
   const daySchedules = schedules
-    .filter((s) => s.startAt <= endOfDay(tooltip.day) && s.endAt >= startOfDay(tooltip.day))
+    .filter((s) => eventOccupiesDay(s, tooltip.day))
     .sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
 
   /* パネルサイズ（元の1.5倍）と画面上下オーバーフロー対策 */
@@ -395,7 +401,9 @@ function DayTooltipPanel({
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-medium text-text truncate">{s.title}</p>
                   <p className="text-[10px] text-muted font-num">
-                    {format(s.startAt, 'HH:mm')} – {format(s.endAt, 'HH:mm')}
+                    {s.allDay
+                      ? '終日'
+                      : `${format(s.startAt, 'HH:mm')} – ${format(s.endAt, 'HH:mm')}`}
                   </p>
                 </div>
               </div>
@@ -426,13 +434,9 @@ export function MonthCalendar({
   /* ホバーツールチップの状態 */
   const [dayTooltip, setDayTooltip] = useState<DayTooltip>(null);
 
-  /* allDay フラグ付き単日イベントも複数日バーとして扱う */
-  const multiDaySchedules = schedules.filter(
-    (s) => s.allDay || startOfDay(s.startAt).getTime() < startOfDay(s.endAt).getTime()
-  );
-  const singleDaySchedules = schedules.filter(
-    (s) => !s.allDay && startOfDay(s.startAt).getTime() === startOfDay(s.endAt).getTime()
-  );
+  /* allDay フラグ付き単日イベントも複数日バーとして扱う（終了境界は排他的に解釈） */
+  const multiDaySchedules = schedules.filter((s) => s.allDay || isMultiDayEvent(s));
+  const singleDaySchedules = schedules.filter((s) => !s.allDay && !isMultiDayEvent(s));
 
   return (
     <div className="cal">
