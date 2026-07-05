@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/stores/auth';
 import { useTasksStore } from '@/stores/tasks';
-import { useTaskCategoryStore } from '@/stores/taskCategories';
-import type { TaskStatus, TaskCategory } from '@/types/entities';
+import { useCategoryStore } from '@/stores/categories';
+import type { TaskStatus, Category } from '@/types/entities';
 import {
   createColumn,
   updateColumn,
@@ -12,10 +12,10 @@ import {
   reorderColumns,
 } from '@/lib/repositories/taskStatuses';
 import {
-  createTaskCategory,
-  updateTaskCategory,
-  deleteTaskCategory,
-} from '@/lib/repositories/taskCategories';
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from '@/lib/repositories/categories';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
@@ -55,14 +55,14 @@ const TASK_ICON_OPTIONS = [
   'build',
 ];
 
-export default function TasksSettingsPage() {
+export default function CategorySettingsPage() {
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      <TopBar title="タスク管理設定" />
+      <TopBar title="カテゴリ設定" />
       <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 max-w-3xl">
         <div className="space-y-8">
+          <CategorySettings />
           <KanbanStatusSettings />
-          <TaskCategorySettings />
         </div>
       </div>
     </div>
@@ -494,14 +494,14 @@ function KanbanStatusSettings() {
   );
 }
 
-/* ── タスクカテゴリ管理 ──────────────────────────────────── */
-function TaskCategorySettings() {
+/* ── 統合カテゴリ管理（タスク・スケジュール共通） ──────────────── */
+function CategorySettings() {
   const { currentUser, currentTeam, members } = useAuthStore();
-  const { taskCategories, subscribe } = useTaskCategoryStore();
+  const { categories, subscribe } = useCategoryStore();
   const teamId = currentTeam?.id;
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
+  const isOperator = myMember?.role === 'operator';
 
   useEffect(() => {
     if (!teamId) return;
@@ -514,13 +514,13 @@ function TaskCategorySettings() {
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
-  const [editingCat, setEditingCat] = useState<TaskCategory | null>(null);
+  const [editingCat, setEditingCat] = useState<Category | null>(null);
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState('');
   const [editIcon, setEditIcon] = useState<string | null>(null);
   const [editSaving, setEditSaving] = useState(false);
 
-  const [deleteConfirm, setDeleteConfirm] = useState<TaskCategory | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<Category | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   if (!teamId) {
@@ -537,10 +537,10 @@ function TaskCategorySettings() {
     setAdding(true);
     setAddError(null);
     try {
-      await createTaskCategory(teamId, {
+      await createCategory(teamId, {
         name: newName.trim(),
         color: newColor,
-        order: taskCategories.length,
+        order: categories.length,
         icon: newIcon,
       });
       setNewName('');
@@ -556,7 +556,7 @@ function TaskCategorySettings() {
     if (!editingCat || !teamId) return;
     setEditSaving(true);
     try {
-      await updateTaskCategory(teamId, editingCat.id, {
+      await updateCategory(teamId, editingCat.id, {
         name: editName,
         color: editColor,
         icon: editIcon,
@@ -571,7 +571,7 @@ function TaskCategorySettings() {
     if (!deleteConfirm || !teamId) return;
     setDeleting(true);
     try {
-      await deleteTaskCategory(teamId, deleteConfirm.id);
+      await deleteCategory(teamId, deleteConfirm.id);
       setDeleteConfirm(null);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'カテゴリの削除に失敗しました');
@@ -584,16 +584,18 @@ function TaskCategorySettings() {
     <div className="space-y-5">
       <div>
         <h3 className="text-sm font-semibold text-text">カテゴリの管理</h3>
-        <p className="text-[12px] text-muted mt-0.5">タスクのカテゴリを追加・編集・削除します。</p>
+        <p className="text-[12px] text-muted mt-0.5">
+          タスクとスケジュールで共通して使うカテゴリを追加・編集・削除します。
+        </p>
       </div>
 
       {/* カテゴリ一覧 */}
       <Card noPadding>
-        {taskCategories.length === 0 && (
+        {categories.length === 0 && (
           <p className="px-[18px] py-3 text-sm text-muted">カテゴリがありません</p>
         )}
         <div className="divide-y divide-border">
-          {taskCategories.map((cat) => (
+          {categories.map((cat) => (
             <div key={cat.id} className="flex items-center gap-3 px-[18px] py-3">
               <div
                 className="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0"
@@ -606,7 +608,7 @@ function TaskCategorySettings() {
                 )}
               </div>
               <span className="flex-1 text-sm text-text">{cat.name}</span>
-              {canEdit && (
+              {isOperator && (
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => {
@@ -635,7 +637,7 @@ function TaskCategorySettings() {
       </Card>
 
       {/* カテゴリ追加 */}
-      {canEdit && (
+      {isOperator && (
         <Card>
           <h4 className="text-sm font-medium text-text mb-3">カテゴリを追加</h4>
           <form onSubmit={handleAdd} className="space-y-3">
@@ -852,7 +854,7 @@ function TaskCategorySettings() {
         >
           <p className="text-sm text-text">
             「{deleteConfirm.name}
-            」を削除します。このカテゴリを使用しているタスクのカテゴリは未設定になります。
+            」を削除します。このカテゴリを使用しているタスク・スケジュールのカテゴリは未設定になります。
           </p>
         </Modal>
       )}

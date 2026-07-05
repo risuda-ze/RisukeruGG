@@ -12,7 +12,7 @@ import { DateField } from '@/components/ui/DateField';
 import { Icon } from '@/components/ui/Icon';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import { Dropdown } from '@/components/ui/Dropdown';
-import type { Task, TeamMember, TaskCategory, TaskStatus, CollabComment } from '@/types/entities';
+import type { Task, TeamMember, Category, TaskStatus, CollabComment } from '@/types/entities';
 
 interface TaskDetailDraft {
   description: string;
@@ -28,7 +28,7 @@ interface TaskDetailModalProps {
   canEdit: boolean;
   columns: TaskStatus[];
   members: TeamMember[];
-  categories: TaskCategory[];
+  categories: Category[];
   onClose: () => void;
   onDeleted: () => void;
 }

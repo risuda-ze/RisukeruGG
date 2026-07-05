@@ -8,7 +8,7 @@ import {
 import { ja } from 'date-fns/locale';
 import { useAuthStore } from '@/stores/auth';
 import { useScheduleStore } from '@/stores/schedule';
-import { useScheduleCategoryStore } from '@/stores/scheduleCategories';
+import { useCategoryStore } from '@/stores/categories';
 import { subscribeMemberCalendarEvents } from '@/lib/repositories/memberCalendars';
 import { fetchGCalEvents } from '@/lib/googleCalendar';
 import type { GCalFetchError } from '@/lib/googleCalendar';
@@ -25,7 +25,7 @@ import type { ScheduleEntry, MemberCalendarEvent } from '@/types/entities';
 export default function SchedulePage() {
   const { currentUser, currentTeamId, members, googleAccessToken, signIn, loading: authLoading } = useAuthStore();
   const { schedules, loading, subscribe } = useScheduleStore();
-  const { categories, subscribe: subscribeCategories } = useScheduleCategoryStore();
+  const { categories, subscribe: subscribeCategories } = useCategoryStore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week'>('month');
   const [showCreate, setShowCreate] = useState(false);

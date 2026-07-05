@@ -142,8 +142,8 @@
 | **Team**          | 詳細は [team/model.md](./team/model.md) を参照。チームの保持フィールドと Firestore コレクション配置を管理                                                     |
 | **TeamMember**    | 詳細は [team/model.md](./team/model.md) を参照。ロール（operator/member/rom）と所属関係を管理                                                                 |
 | **TaskStatus**    | 詳細は [task/model.md](./task/model.md) を参照。タスク列定義と完了列判定を task カテゴリで正本化する                                                          |
-| **TaskCategory**  | 詳細は [task/model.md](./task/model.md) を参照。カテゴリ定義とコレクション配置を task カテゴリで正本化する                                                    |
-| **ScheduleEntry** | title, startAt, endAt, allDay, platform, description, participantIds, version（楽観的ロック用）                                                               |
+| **Category**      | 詳細は [task/model.md](./task/model.md) を参照。タスク・スケジュール共通の統合カテゴリ定義とコレクション配置を task カテゴリで正本化する                      |
+| **ScheduleEntry** | title, startAt, endAt, allDay, platform, description, participantIds, categoryId（Category 参照）, version（楽観的ロック用）                                  |
 | **Task**          | 詳細は [task/model.md](./task/model.md) を参照。タスク項目と `columnId` 中心の状態表現を task カテゴリで正本化する                                            |
 | **CollabSession** | 詳細は [collab/model.md](./collab/model.md) を参照。コラボ作成、公開回答、確定、再調整に必要な保持項目を管理                                                  |
 | **CollabComment** | 詳細は [collab/model.md](./collab/model.md) を参照。コラボ内コメント / メモの保持項目を管理                                                                   |

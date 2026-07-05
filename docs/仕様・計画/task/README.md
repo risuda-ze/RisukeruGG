@@ -44,7 +44,7 @@
 
 1. この README: このカテゴリで決める範囲と隣接カテゴリとの境界を把握する
 2. [requirements.md](./requirements.md): タスク管理の規範要件を確認する
-3. [model.md](./model.md): Task / TaskStatus / TaskCategory の保持項目と制約を確認する
+3. [model.md](./model.md): Task / TaskStatus / Category（タスク・スケジュール共通）の保持項目と制約を確認する
 4. [flows.md](./flows.md): 作成、複製新規作成、詳細編集、列移動、カテゴリ管理、集計反映の流れを確認する
 
 ## 採用する後続仕様

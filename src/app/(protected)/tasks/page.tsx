@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useAuthStore } from '@/stores/auth';
 import { useTasksStore } from '@/stores/tasks';
-import { useTaskCategoryStore } from '@/stores/taskCategories';
+import { useCategoryStore } from '@/stores/categories';
 import { deleteTask } from '@/lib/repositories/tasks';
 import { TaskDetailModal } from '@/components/kanban/TaskDetailModal';
 import { TaskControlBar } from '@/components/kanban/TaskControlBar';
@@ -22,7 +22,7 @@ const TaskMobileBoard = dynamic(() => import('@/components/kanban/TaskMobileBoar
 export default function TasksPage() {
   const { currentUser, currentTeam, members } = useAuthStore();
   const { tasks, columns, loading, subscribe } = useTasksStore();
-  const { taskCategories, subscribe: subscribeCategories } = useTaskCategoryStore();
+  const { categories, subscribe: subscribeCategories } = useCategoryStore();
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -123,7 +123,7 @@ export default function TasksPage() {
 
       {/* TaskControlBar: カテゴリ複数選択・担当者フィルタ・タスク追加・設定・ヒント */}
       <TaskControlBar
-        categories={taskCategories}
+        categories={categories}
         members={members}
         activeCategoryIds={activeCategoryIds}
         activeAssigneeId={activeAssigneeId}
@@ -172,7 +172,7 @@ export default function TasksPage() {
             <TaskMobileBoard
               tasks={filteredTasks}
               members={members}
-              categories={taskCategories}
+              categories={categories}
               canEdit={canEdit}
               onEdit={openEdit}
               onDelete={handleDeleteCard}
@@ -191,7 +191,7 @@ export default function TasksPage() {
           canEdit={canEdit}
           columns={columns}
           members={members}
-          categories={taskCategories}
+          categories={categories}
           onClose={closeModal}
           onDeleted={closeModal}
         />
