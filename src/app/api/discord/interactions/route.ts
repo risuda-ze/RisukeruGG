@@ -62,7 +62,17 @@ export async function POST(req: NextRequest): Promise<Response> {
   const timestamp = req.headers.get('x-signature-timestamp') ?? '';
   const rawBody = await req.text();
 
-  const isValid = verifyKey(rawBody, signature, timestamp, publicKey);
+  // discord-interactions v4 で verifyKey は非同期（Promise<boolean>）になった。
+  // await しないと Promise が常に truthy 扱いになり署名検証がバイパスされ、
+  // 無効署名にも 200 を返してしまう → Discord がエンドポイントを不正と判断し無効化 →
+  // 「アプリケーションが応答しませんでした」の原因になる。必ず await する。
+  let isValid = false;
+  try {
+    isValid = await verifyKey(rawBody, signature, timestamp, publicKey);
+  } catch {
+    // 署名やタイムスタンプの形式が壊れている場合も検証失敗として扱う
+    isValid = false;
+  }
   if (!isValid) {
     return new Response('Invalid signature', { status: 401 });
   }
