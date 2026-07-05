@@ -19,6 +19,39 @@ export async function handleAiConversation(
   appId: string,
   token: string
 ): Promise<void> {
+  try {
+    await runAiConversation(guildId, userMessage, discordUserId, appId, token);
+  } catch (err) {
+    // waitUntil() から呼ばれるため、ここで例外を握り潰すと Discord には
+    // フォローアップが届かず「アプリケーションが応答しませんでした」になる。
+    // 必ずログに残し、ユーザーにもエラーを返して沈黙タイムアウトを防ぐ。
+    console.error('[discord] handleAiConversation で例外:', err);
+    await sendFollowUp(
+      appId,
+      token,
+      'ごめん、処理中にエラーが起きちゃった…。時間をおいてもう一度試してみてね。'
+    ).catch((e) => console.error('[discord] エラー通知の送信にも失敗:', e));
+  }
+}
+
+async function runAiConversation(
+  guildId: string,
+  userMessage: string,
+  discordUserId: string,
+  appId: string,
+  token: string
+): Promise<void> {
+  // AI 呼び出しに必須のキーが無い場合は、例外で沈黙する前に明示的に案内する
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error('[discord] ANTHROPIC_API_KEY が未設定です');
+    await sendFollowUp(
+      appId,
+      token,
+      'AI機能の設定が未完了のようです。管理者に連絡してね（ANTHROPIC_API_KEY 未設定）。'
+    );
+    return;
+  }
+
   const db = getAdminFirestore();
   const domain =
     process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'https://risukeru.gg';
