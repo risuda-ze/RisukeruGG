@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, startOfDay, addDays } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { createSchedule, updateSchedule, deleteSchedule } from '@/lib/repositories/schedules';
 import { useAuthStore } from '@/stores/auth';
@@ -13,6 +13,7 @@ import { Dropdown } from '@/components/ui/Dropdown';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import type { ScheduleEntry, Category } from '@/types/entities';
+import { getEventLastDay } from '@/lib/utils/eventDays';
 
 export interface ScheduleModalProps {
   schedule: ScheduleEntry | null;
@@ -64,9 +65,13 @@ export function ScheduleModal({
   const savedDraft = loadDraft<ScheduleModalDraft>(draftKey);
 
   const defaultStart = isNew ? (savedDraft?.startAt ?? initialDate ?? null) : schedule!.startAt;
+  /* 終日予定はデータ上「翌日00:00」の排他的終了で保持しているため、
+   * フォームには「含まれる最終日」に変換して表示する */
   const defaultEnd = isNew
     ? (savedDraft?.endAt ?? (initialDate ? new Date(initialDate.getTime() + 2 * 60 * 60 * 1000) : null))
-    : schedule!.endAt;
+    : schedule!.allDay
+      ? getEventLastDay(schedule!)
+      : schedule!.endAt;
 
   const [title, setTitle] = useState(savedDraft?.title ?? (isNew ? '' : schedule!.title));
   const [categoryId, setCategoryId] = useState(savedDraft?.categoryId ?? (isNew ? '' : (schedule!.categoryId ?? '')));
@@ -166,13 +171,17 @@ export function ScheduleModal({
     if (!title.trim()) { setError('タイトルを入力してください'); return; }
     if (!startAt || !endAt) { setError('開始日時と終了日時を入力してください'); return; }
     if (!isAllDay && endAt <= startAt) { setError('終了日時は開始日時より後にしてください'); return; }
+    if (isAllDay && startOfDay(endAt) < startOfDay(startAt)) { setError('終了日は開始日以降にしてください'); return; }
     setSaving(true); setError(null);
+    /* 終日予定は Google カレンダー仕様（開始日00:00 〜 最終日翌日00:00 の排他的終了）で保存する */
+    const saveStartAt = isAllDay ? startOfDay(startAt) : startAt;
+    const saveEndAt = isAllDay ? addDays(startOfDay(endAt), 1) : endAt;
     try {
       if (isNew) {
         if (!currentUser) return;
-        await createSchedule(teamId, { title: title.trim(), categoryId: categoryId || null, startAt, endAt, description, participantIds: [], collabPartnerName: null, linkedTaskIds: [], allDay: isAllDay, createdBy: currentUser.uid });
+        await createSchedule(teamId, { title: title.trim(), categoryId: categoryId || null, startAt: saveStartAt, endAt: saveEndAt, description, participantIds: [], collabPartnerName: null, linkedTaskIds: [], allDay: isAllDay, createdBy: currentUser.uid });
       } else {
-        await updateSchedule(teamId, schedule!.id, { title: title.trim(), categoryId: categoryId || null, startAt, endAt, description, allDay: isAllDay }, schedule!.updatedAt);
+        await updateSchedule(teamId, schedule!.id, { title: title.trim(), categoryId: categoryId || null, startAt: saveStartAt, endAt: saveEndAt, description, allDay: isAllDay }, schedule!.updatedAt);
       }
       clearDraft(draftKey); onClose();
     } catch { setError('保存に失敗しました。もう一度お試しください'); }

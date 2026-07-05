@@ -52,6 +52,7 @@ ui-debug.log
 functions/lib/
 functions/node_modules/
 .emulator-data/
+*service-account*.json
 
 # env files
 .env.local

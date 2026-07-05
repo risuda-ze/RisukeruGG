@@ -20,6 +20,7 @@ export * from './calendar/syncGoogleCalendar';
 
 // Phase 5: US3 — タスク管理
 export * from './tasks/createTask';
+export * from './tasks/deleteCompletedTasks';
 
 // スケジュール管理
 export * from './schedules/createSchedule';

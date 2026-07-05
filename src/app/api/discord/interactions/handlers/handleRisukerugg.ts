@@ -5,6 +5,7 @@ import { generateSystemPrompt } from '@/lib/ai/systemPrompt';
 import { hasProposal, extractProposals, stripProposalBlocks } from '@/lib/ai/parseProposal';
 import { sendFollowUp, sendProposalMessage } from '../discordFollowUp';
 import { getSession, upsertSession, deleteSession, isSessionExpired } from '../sessionManager';
+import { getEventLastDay } from '@/lib/utils/eventDays';
 
 /**
  * Discord の Deferred Response 後に呼び出すバックグラウンド処理。
@@ -102,11 +103,14 @@ export async function handleAiConversation(
     const data = d.data();
     const startAt = (data.startAt as { toDate: () => Date }).toDate();
     const endAt = (data.endAt as { toDate: () => Date }).toDate();
+    const allDay = (data.allDay as boolean) ?? false;
+    /* 終日予定は排他的終了（翌日00:00）のため、AIには「含まれる最終日」を渡す */
+    const displayEnd = allDay ? getEventLastDay({ startAt, endAt }) : endAt;
     return {
       title: data.title as string,
       startAt: startAt.toLocaleString('ja-JP'),
-      endAt: endAt.toLocaleString('ja-JP'),
-      allDay: (data.allDay as boolean) ?? false,
+      endAt: displayEnd.toLocaleString('ja-JP'),
+      allDay,
     };
   });
 

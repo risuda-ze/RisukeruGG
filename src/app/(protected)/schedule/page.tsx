@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   addMonths, subMonths, addWeeks, subWeeks, format, startOfWeek,
-  startOfMonth, endOfMonth, endOfWeek,
+  startOfMonth, endOfMonth, endOfWeek, isSameDay,
 } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useAuthStore } from '@/stores/auth';
@@ -21,6 +21,7 @@ import { HintBar } from '@/components/ui/HintBar';
 import { useHintDismiss } from '@/hooks/useHintDismiss';
 import { Icon } from '@/components/ui/Icon';
 import type { ScheduleEntry, MemberCalendarEvent } from '@/types/entities';
+import { getEventLastDay } from '@/lib/utils/eventDays';
 
 export default function SchedulePage() {
   const { currentUser, currentTeamId, members, googleAccessToken, signIn, loading: authLoading } = useAuthStore();
@@ -316,7 +317,12 @@ export default function SchedulePage() {
               <h3 className="text-[17px] font-bold text-text mb-3">{selectedSchedule.title}</h3>
               <p className="text-[13px] text-muted">
                 {selectedSchedule.allDay
-                  ? format(selectedSchedule.startAt, 'M月d日(E)', { locale: ja }) + ' 終日'
+                  ? isSameDay(selectedSchedule.startAt, getEventLastDay(selectedSchedule))
+                    ? format(selectedSchedule.startAt, 'M月d日(E)', { locale: ja }) + ' 終日'
+                    : format(selectedSchedule.startAt, 'M月d日(E)', { locale: ja }) +
+                      ' – ' +
+                      format(getEventLastDay(selectedSchedule), 'M月d日(E)', { locale: ja }) +
+                      ' 終日'
                   : format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja }) +
                     ' – ' +
                     format(selectedSchedule.endAt, 'HH:mm')}
