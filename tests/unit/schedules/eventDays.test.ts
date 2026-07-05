@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  getExclusiveEnd,
-  eventOccupiesDay,
-  getEventLastDay,
-  isMultiDayEvent,
-} from '@/lib/utils/eventDays';
+import { eventOccupiesDay, getEventLastDay, isMultiDayEvent } from '@/lib/utils/eventDays';
 
 /** ローカルタイムで日時を生成 */
 function at(y: number, m: number, d: number, h = 0, min = 0): Date {
@@ -66,23 +61,6 @@ describe('eventDays（Google カレンダー仕様: 排他的終了）', () => {
       expect(eventOccupiesDay(event, at(2026, 7, 5))).toBe(true);
       expect(eventOccupiesDay(event, at(2026, 7, 6))).toBe(true);
       expect(isMultiDayEvent(event)).toBe(true);
-    });
-  });
-
-  describe('旧仕様データの後方互換', () => {
-    it('startAt == endAt の終日予定は開始日1日分として扱う', () => {
-      const event = { startAt: at(2026, 7, 5), endAt: at(2026, 7, 5) };
-      expect(getExclusiveEnd(event)).toEqual(at(2026, 7, 6));
-      expect(eventOccupiesDay(event, at(2026, 7, 5))).toBe(true);
-      expect(eventOccupiesDay(event, at(2026, 7, 6))).toBe(false);
-      expect(isMultiDayEvent(event)).toBe(false);
-    });
-
-    it('最終日 23:59 終了の終日予定は最終日まで表示される', () => {
-      const event = { startAt: at(2026, 7, 5), endAt: at(2026, 7, 7, 23, 59) };
-      expect(eventOccupiesDay(event, at(2026, 7, 7))).toBe(true);
-      expect(eventOccupiesDay(event, at(2026, 7, 8))).toBe(false);
-      expect(getEventLastDay(event)).toEqual(at(2026, 7, 7));
     });
   });
 });

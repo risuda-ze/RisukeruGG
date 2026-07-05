@@ -15,12 +15,7 @@ import {
 } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import type { ScheduleEntry, Category } from '@/types/entities';
-import {
-  eventOccupiesDay,
-  getExclusiveEnd,
-  getEventLastDay,
-  isMultiDayEvent,
-} from '@/lib/utils/eventDays';
+import { eventOccupiesDay, getEventLastDay, isMultiDayEvent } from '@/lib/utils/eventDays';
 
 interface MonthCalendarProps {
   year: number;
@@ -114,7 +109,7 @@ function WeekRow({
   const eventCols: EventCol[] = [];
 
   for (const s of multiDayEvents) {
-    if (s.startAt > endOfDay(weekEnd) || getExclusiveEnd(s) <= startOfDay(weekStart)) continue;
+    if (s.startAt > endOfDay(weekEnd) || s.endAt <= startOfDay(weekStart)) continue;
     let colStart = -1;
     let colEnd = -1;
     for (let i = 0; i < 7; i++) {

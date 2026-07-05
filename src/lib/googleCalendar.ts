@@ -58,7 +58,7 @@ export async function fetchGCalEvents(
         const startAt = parseGCalDate(e.start);
         const endAt = parseGCalDate(e.end);
         /* Google カレンダーの終日予定は date のみ保持（終了は翌日 00:00 の排他的境界） */
-        const allDay = Boolean(e.start.date && !e.start.dateTime);
+        const allDay = Boolean(e.start.date);
         return {
           id: `gcal_${e.id}`,
           title: e.summary ?? '(タイトルなし)',
