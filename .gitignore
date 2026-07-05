@@ -58,13 +58,6 @@ functions/node_modules/
 .env.local
 .env.*.local
 
-# PWA generated files
-public/sw.js
-public/workbox-*.js
-public/worker-*.js
-public/sw.js.map
-public/workbox-*.js.map
-
 # test results
 test-results/
 
