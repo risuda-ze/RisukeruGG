@@ -5,6 +5,23 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   experimental: {},
   turbopack: {},
+  async redirects() {
+    return [
+      // カテゴリ統合(#77)で削除・改名された旧設定ルートの互換リダイレクト。
+      // 旧バージョンのPWAキャッシュ・ブックマーク・セッション復元からの
+      // アクセスが404になるのを防ぐ。
+      {
+        source: '/settings',
+        destination: '/settings/categories',
+        permanent: false,
+      },
+      {
+        source: '/settings/tasks',
+        destination: '/settings/categories',
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default withPWA({
