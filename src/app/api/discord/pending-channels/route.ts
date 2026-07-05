@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import { getAdminFirestore, getAdminAuth } from '@/lib/firebase/admin';
+import { getAdminFirestore } from '@/lib/firebase/admin';
+import { verifyBearerToken } from '@/lib/firebase/verifyBearerToken';
 
 /**
  * Bot 招待フロー中のチャンネル選択画面でチャンネル一覧を取得する。
@@ -9,19 +10,9 @@ import { getAdminFirestore, getAdminAuth } from '@/lib/firebase/admin';
  * nonce は URL に露出するため、認証なしでは Discord サーバーのチャンネル情報が漏洩するリスクがある。
  */
 export async function GET(req: NextRequest): Promise<Response> {
-  const authorization = req.headers.get('Authorization');
-  if (!authorization?.startsWith('Bearer ')) {
-    return Response.json({ error: '認証が必要です' }, { status: 401 });
-  }
-  const idToken = authorization.slice(7);
-
-  let uid: string;
-  try {
-    const decoded = await getAdminAuth().verifyIdToken(idToken);
-    uid = decoded.uid;
-  } catch {
-    return Response.json({ error: 'トークンが無効です' }, { status: 401 });
-  }
+  const authResult = await verifyBearerToken(req);
+  if (authResult instanceof Response) return authResult;
+  const { uid } = authResult;
 
   const nonce = req.nextUrl.searchParams.get('nonce');
   if (!nonce) {

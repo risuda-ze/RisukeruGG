@@ -2,7 +2,7 @@
 
 ## モデル方針
 
-Task は制作作業の個票を表し、TaskStatus は表示列と完了判定、TaskCategory は分類情報を表す。
+Task は制作作業の個票を表し、TaskStatus は表示列と完了判定、Category は分類情報を表す。Category はタスクとスケジュールで共通利用する統合カテゴリであり、正本は本ドキュメントとする。
 
 このカテゴリでは、タスク表示・編集・集計に直接関係する項目だけを正本化する。チームロールと所属は team、紐付くスケジュール本体は schedule、通知配送は notification を参照する。
 
@@ -38,25 +38,28 @@ Firestore コレクション配置: `teams/{teamId}/taskStatuses/{columnId}`
 | `isCompleteColumn`  | boolean       | 完了列かどうか |
 | `createdAt`         | timestamp     | 作成日時 |
 
-## TaskCategory
+## Category（タスク・スケジュール共通）
 
-Firestore コレクション配置: `teams/{teamId}/taskCategories/{categoryId}`
+Firestore コレクション配置: `teams/{teamId}/categories/{categoryId}`
 
-| フィールド    | 型 / 例    | 意味 |
-| ------------- | ---------- | ---- |
-| `id`          | string     | Firestore ドキュメント ID |
-| `name`        | string     | カテゴリ名 |
-| `color`       | string     | カテゴリ表示色 |
-| `icon`        | string     | 表示用アイコン |
-| `order`       | number     | 表示順 |
-| `createdAt`   | timestamp  | 作成日時 |
+タスクとスケジュールの両方が同一のカテゴリセットを参照する統合カテゴリ。旧仕様では `taskCategories` / `scheduleCategories` として個別管理していたが、単一コレクションに統合した。schedule 側の `ScheduleEntry.categoryId` もこの Category を参照する（詳細は [schedule/model.md](../schedule/model.md) を参照）。
+
+| フィールド    | 型 / 例         | 意味 |
+| ------------- | --------------- | ---- |
+| `id`          | string          | Firestore ドキュメント ID |
+| `name`        | string          | カテゴリ名 |
+| `color`       | string          | カテゴリ表示色 |
+| `icon`        | string \| null  | 表示用アイコン。任意設定（未設定は `null`） |
+| `order`       | number          | 表示順 |
+| `createdAt`   | timestamp       | 作成日時 |
 
 ## 制約
 
 - タスク状態の正本は `columnId` であり、独立した status フィールドは持たない
 - `TaskStatus.isCompleteColumn` は 1 チームにつき 0 列以上で `true` を取りうる
 - 列は最低 1 つ、最大 10 個まで管理する
-- カテゴリ削除時は関連する全タスクの `categoryId` を `null` に更新する
+- カテゴリ削除時は関連する全タスクおよび全スケジュールの `categoryId` を `null` に更新する
+- カテゴリの追加・編集・削除は `operator` のみ可能とする
 - ボード表示時の並び順は列の `order`、列内タスクは締切優先のソートルールに従う
 - 既存タスクを参照した複製新規作成は保存項目を増やさず、`id`、`createdBy`、`createdAt`、`updatedAt` は新規タスクとして生成する
 

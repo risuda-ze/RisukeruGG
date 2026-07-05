@@ -143,7 +143,7 @@ export function CollabDetailModal({
   /* アイコン */
   const [iconValue, setIconValue] = useState(session?.icon ?? 'sports_esports');
   const [showIconPicker, setShowIconPicker] = useState(false);
-  const [statusValue, setStatusValue] = useState<CollabSession['status']>(session?.status ?? 'draft');
+  const [statusValue, setStatusValue] = useState<CollabSession['status']>(session?.status ?? 'open');
 
   /* タイトル編集 */
   const [editingTitle, setEditingTitle] = useState(isNew);
@@ -302,10 +302,8 @@ export function CollabDetailModal({
     setCreating(true);
     setCreateError(null);
     try {
-      const safeStatus = statusValue === 'confirmed' ? 'draft' : statusValue as 'draft' | 'open';
       await createCollabSessionDraft(teamId, {
         title,
-        status: safeStatus,
         content: contentValue.trim() || undefined,
         participants,
         proposedDates,
@@ -648,7 +646,6 @@ export function CollabDetailModal({
                   style={{ background: 'var(--purple-xs)', color: 'var(--muted)', borderColor: 'var(--border)' }}
                   onMouseDown={(e) => e.stopPropagation()}
                 >
-                  <option value="draft">準備中</option>
                   <option value="open">募集中</option>
                 </select>
               ) : (

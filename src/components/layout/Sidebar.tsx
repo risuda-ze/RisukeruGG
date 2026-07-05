@@ -38,7 +38,7 @@ const NAV_SECTIONS: NavSection[] = [
     icon: 'settings',
     items: [
       { href: '/team',              label: 'チーム管理',   icon: 'groups' },
-      { href: '/settings/tasks',    label: 'タスク管理設定', icon: 'task_alt' },
+      { href: '/settings/categories', label: 'カテゴリ設定', icon: 'task_alt' },
       { href: '/notifications',     label: '通知管理',     icon: 'notifications' },
       { href: '/settings/profile',  label: '個人設定',     icon: 'manage_accounts' },
     ],

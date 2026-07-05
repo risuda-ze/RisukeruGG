@@ -1,21 +1,20 @@
 export type UserRole = 'operator' | 'member' | 'rom';
 export type PlanType = 'light' | 'party';
-/** @deprecated 新規コードでは TaskCategory インターフェースと categoryId を使用すること */
+/** @deprecated 新規コードでは Category インターフェースと categoryId を使用すること */
 export type TaskCategoryKey = 'shooting' | 'editing' | 'thumbnail' | 'announcement' | 'other';
-export type CollabStatus = 'draft' | 'open' | 'confirmed' | 'expired' | 'cancelled';
+export type CollabStatus = 'open' | 'confirmed' | 'expired' | 'cancelled';
 export type NotificationCategory = 'collab' | 'tasks' | 'reminders' | 'system';
 
 export const LIGHT_PLAN_LIMITS = {
   maxTeamMembers: 2,
   monthlyTasks: 5,
   monthlyCollabs: 3,
-  /** 同時進行中（draft/open）のコラボ調整の上限 */
+  /** 同時進行中（open）のコラボ調整の上限 */
   maxActiveCollabs: 5,
 } as const;
 
 // CollabSessionStatusのUI表示名マッピング
 export const COLLAB_STATUS_LABELS: Record<CollabStatus, string> = {
-  draft: '準備中',
   open: '募集中',
   confirmed: '確定',
   expired: '終了',
@@ -83,23 +82,17 @@ export interface TaskStatus {
   createdAt: Date;
 }
 
-/** Firestore バック: teams/{teamId}/taskCategories/{categoryId} */
-export interface TaskCategory {
+/**
+ * タスクとスケジュールで共有する統合カテゴリ。
+ * Firestore バック: teams/{teamId}/categories/{categoryId}
+ */
+export interface Category {
   id: string;
   name: string;
   color: string;
   order: number;
-  /** Material Icons 名。未設定は null */
+  /** Material Icons 名。任意（未設定は null） */
   icon: string | null;
-  createdAt: Date;
-}
-
-export interface ScheduleCategory {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
-  order: number;
   createdAt: Date;
 }
 
@@ -139,7 +132,7 @@ export interface Task {
   id: string;
   title: string;
   columnId: string;
-  /** Firestore カテゴリID。TaskCategory インターフェース参照。未設定は null */
+  /** Firestore カテゴリID。Category インターフェース参照。未設定は null */
   categoryId: string | null;
   /** タスク詳細説明。既存ドキュメントは null にフォールバック */
   description: string | null;

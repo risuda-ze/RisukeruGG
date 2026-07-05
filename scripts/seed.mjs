@@ -351,56 +351,59 @@ async function main() {
   });
   console.log('  ✓ team/members (teamAlpha: 6件, teamBeta: 3件)');
 
-  // ── スケジュールカテゴリ ──────────────────────────────────
-  await setDoc(`teams/${TEAM_ID}/scheduleCategories/scat001`, {
+  // ── 統合カテゴリ（タスク・スケジュール共通） ──────────────────
+  // 旧 scheduleCategories(scat*) と taskCategories(tcat*) を単一の categories
+  // コレクションに統合。既存 ID を維持し、タスク・スケジュールの categoryId 参照を保つ。
+  await setDoc(`teams/${TEAM_ID}/categories/scat001`, {
     name: '配信枠',
     icon: 'live_tv',
     color: '#7F77DD',
     order: 0,
     createdAt: d(2026, 4, 1),
   });
-  await setDoc(`teams/${TEAM_ID}/scheduleCategories/scat002`, {
+  await setDoc(`teams/${TEAM_ID}/categories/scat002`, {
     name: '動画投稿',
     icon: 'video_library',
     color: '#EF9F27',
     order: 1,
     createdAt: d(2026, 4, 1),
   });
-  await setDoc(`teams/${TEAM_ID}/scheduleCategories/scat003`, {
+  await setDoc(`teams/${TEAM_ID}/categories/scat003`, {
     name: 'コラボ',
     icon: 'group',
     color: '#3fcf7f',
     order: 2,
     createdAt: d(2026, 4, 1),
   });
-  console.log('  ✓ scheduleCategories (3件)');
-
-  // ── タスクカテゴリ ────────────────────────────────────────
-  await setDoc(`teams/${TEAM_ID}/taskCategories/tcat001`, {
+  await setDoc(`teams/${TEAM_ID}/categories/tcat001`, {
     name: '動画編集',
+    icon: null,
     color: '#EF9F27',
-    order: 0,
-    createdAt: d(2026, 4, 1),
-  });
-  await setDoc(`teams/${TEAM_ID}/taskCategories/tcat002`, {
-    name: '企画',
-    color: '#534AB7',
-    order: 1,
-    createdAt: d(2026, 4, 1),
-  });
-  await setDoc(`teams/${TEAM_ID}/taskCategories/tcat003`, {
-    name: '台本',
-    color: '#7F77DD',
-    order: 2,
-    createdAt: d(2026, 4, 1),
-  });
-  await setDoc(`teams/${TEAM_ID}/taskCategories/tcat004`, {
-    name: '告知',
-    color: '#ff4d6d',
     order: 3,
     createdAt: d(2026, 4, 1),
   });
-  console.log('  ✓ taskCategories (4件)');
+  await setDoc(`teams/${TEAM_ID}/categories/tcat002`, {
+    name: '企画',
+    icon: null,
+    color: '#534AB7',
+    order: 4,
+    createdAt: d(2026, 4, 1),
+  });
+  await setDoc(`teams/${TEAM_ID}/categories/tcat003`, {
+    name: '台本',
+    icon: null,
+    color: '#7F77DD',
+    order: 5,
+    createdAt: d(2026, 4, 1),
+  });
+  await setDoc(`teams/${TEAM_ID}/categories/tcat004`, {
+    name: '告知',
+    icon: null,
+    color: '#ff4d6d',
+    order: 6,
+    createdAt: d(2026, 4, 1),
+  });
+  console.log('  ✓ categories (統合: 7件)');
 
   // ── カンバンカラム ────────────────────────────────────────
   await setDoc(`teams/${TEAM_ID}/taskStatuses/col001`, {

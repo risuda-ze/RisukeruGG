@@ -15,6 +15,7 @@
 | `pnpm migrate:task-schema` | `migrate-task-schema.mjs` | kanbanColumns → taskStatuses 移行 / columnId 修復 |
 | `pnpm migrate:team-schema` | `migrate-team-schema.mjs` | ownerId → operatorUids 正規化 / icon フィールドバックフィル |
 | `pnpm migrate:discord-schema` | `migrate-discord-schema.mjs` | Discord セッション guildId 移行 |
+| `pnpm cleanup:discord-invite-temp` | `cleanup-discord-invite-temp.mjs` | Bot招待フローの失敗で残った一時データの削除（スキーマ移行ではなく任意メンテナンス） |
 
 全スクリプト共通：
 - **Firebase Admin SDK 使用**（本番接続）
@@ -163,6 +164,36 @@ pnpm migrate:discord-schema -- --apply
 
 ```powershell
 pnpm migrate:discord-schema -- --apply --prune-legacy
+```
+
+---
+
+## cleanup:discord-invite-temp — Bot招待フロー 一時データ クリーンアップ
+
+**これはスキーマ移行ではありません。** Bot招待フロー（bot-invite-start → Discord OAuth →
+bot-invite-callback）が認証エラーや Firestore インデックス不足などで途中失敗すると、
+`discord_bot_invite_requests` / `discord_bot_invite_pending` に削除されないまま
+一時ドキュメントが残ることがある。機能への支障はないが、放置するとゴミが
+蓄積するため任意で削除する。
+
+Windowsで直接実行する場合は `scripts/cleanup-discord-invite-temp.bat` をダブルクリック
+（dry-run → 内容確認 → `apply` と入力した場合のみ削除を実行）。
+
+### dry-run
+
+```powershell
+pnpm cleanup:discord-invite-temp
+```
+
+確認ポイント:
+
+- `stale invite requests` — 期限切れ・expiresAt 欠損の招待リクエスト数
+- `stale pending invites` — 一定時間（既定60分）経過したチャンネル選択待ちの件数
+
+### 本適用
+
+```powershell
+pnpm cleanup:discord-invite-temp -- --apply
 ```
 
 ---

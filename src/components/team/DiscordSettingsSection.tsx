@@ -122,6 +122,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
         'nonce-expired': '招待セッションが期限切れです。やり直してください',
         'channel-fetch-failed': 'チャンネル一覧の取得に失敗しました',
         'invalid-params': '不正なパラメータです',
+        'duplicate-check-failed': '連携状態の確認に失敗しました。時間をおいて再度お試しください',
       };
       showToast('error', messages[reason ?? ''] ?? 'エラーが発生しました');
     }

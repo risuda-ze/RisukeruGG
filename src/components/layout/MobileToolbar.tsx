@@ -30,7 +30,7 @@ interface DrawerItem {
 
 const DRAWER_ITEMS: DrawerItem[] = [
   { label: 'チーム管理',      icon: 'groups',          href: '/team' },
-  { label: 'タスク管理設定', icon: 'task_alt',        href: '/settings/tasks' },
+  { label: 'カテゴリ設定', icon: 'task_alt',        href: '/settings/categories' },
   { label: '通知管理',        icon: 'notifications',   href: '/notifications' },
   { label: '個人設定',        icon: 'manage_accounts', href: '/settings/profile' },
   { label: 'Discord連携',   icon: 'discord',         href: '/integrations/discord' },

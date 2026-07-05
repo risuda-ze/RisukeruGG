@@ -32,21 +32,21 @@ test.beforeEach(async ({ page }) => {
 });
 
 /**
- * SC-016: TaskControlBar の設定ボタンで /settings/tasks に遷移し、
+ * SC-016: TaskControlBar の設定ボタンで /settings/categories に遷移し、
  *         ステータス管理・カテゴリ管理セクションが表示される
  */
-test.describe('SC-016: /settings/tasks ページ遷移', () => {
-  test('タスク管理画面の設定ボタンをクリックすると /settings/tasks に遷移する', async ({ page }) => {
+test.describe('SC-016: /settings/categories ページ遷移', () => {
+  test('タスク管理画面の設定ボタンをクリックすると /settings/categories に遷移する', async ({ page }) => {
     await page.goto('/tasks');
     expect(page.url()).not.toContain('/login');
 
     await page.getByRole('button', { name: /ステータス・カテゴリ設定/ }).click();
-    await expect(page).toHaveURL(/settings\/tasks/, { timeout: 10000 });
-    await expect(page.getByText('タスク管理設定')).toBeVisible();
+    await expect(page).toHaveURL(/settings\/categories/, { timeout: 10000 });
+    await expect(page.getByText('カテゴリ設定')).toBeVisible();
   });
 
-  test('/settings/tasks ページにステータスとカテゴリの管理セクションが表示される', async ({ page }) => {
-    await page.goto('/settings/tasks');
+  test('/settings/categories ページにステータスとカテゴリの管理セクションが表示される', async ({ page }) => {
+    await page.goto('/settings/categories');
     expect(page.url()).not.toContain('/login');
 
     await expect(page.getByText('ステータスの管理')).toBeVisible({ timeout: 10000 });

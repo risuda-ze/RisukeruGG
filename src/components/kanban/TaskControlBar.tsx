@@ -1,11 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import type { TaskCategory, TeamMember } from '@/types/entities';
+import type { Category, TeamMember } from '@/types/entities';
 import { Button } from '@/components/ui/Button';
 
 interface TaskControlBarProps {
-  categories: TaskCategory[];
+  categories: Category[];
   members: TeamMember[];
   activeCategoryIds: string[];
   activeAssigneeId: string | null;
@@ -115,7 +115,7 @@ export function TaskControlBar({
         <Button
           variant="secondary"
           size="sm"
-          onClick={() => router.push('/settings/tasks')}
+          onClick={() => router.push('/settings/categories')}
           aria-label="ステータス・カテゴリ設定"
         >
           設定

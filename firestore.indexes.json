@@ -1,4 +1,10 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "discord",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [{ "fieldPath": "guildId", "order": "ASCENDING" }]
+    }
+  ],
   "fieldOverrides": []
 }
