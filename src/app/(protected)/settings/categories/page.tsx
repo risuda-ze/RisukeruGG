@@ -71,8 +71,12 @@ export default function CategorySettingsPage() {
 
 /* ── ステータス（カラム）管理 ──────────────────────────────── */
 function KanbanStatusSettings() {
-  const { currentUser, currentTeam, members } = useAuthStore();
-  const { tasks, columns, subscribe } = useTasksStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const currentTeam = useAuthStore((s) => s.currentTeam);
+  const members = useAuthStore((s) => s.members);
+  const tasks = useTasksStore((s) => s.tasks);
+  const columns = useTasksStore((s) => s.columns);
+  const subscribe = useTasksStore((s) => s.subscribe);
   const teamId = currentTeam?.id;
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
@@ -496,8 +500,11 @@ function KanbanStatusSettings() {
 
 /* ── 統合カテゴリ管理（タスク・スケジュール共通） ──────────────── */
 function CategorySettings() {
-  const { currentUser, currentTeam, members } = useAuthStore();
-  const { categories, subscribe } = useCategoryStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const currentTeam = useAuthStore((s) => s.currentTeam);
+  const members = useAuthStore((s) => s.members);
+  const categories = useCategoryStore((s) => s.categories);
+  const subscribe = useCategoryStore((s) => s.subscribe);
   const teamId = currentTeam?.id;
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);

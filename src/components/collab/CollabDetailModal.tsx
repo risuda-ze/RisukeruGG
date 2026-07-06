@@ -128,7 +128,9 @@ export function CollabDetailModal({
   onReopen,
   onDuplicate,
 }: CollabDetailModalProps) {
-  const { currentUser, currentTeam, members } = useAuthStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const currentTeam = useAuthStore((s) => s.currentTeam);
+  const members = useAuthStore((s) => s.members);
   const teamId = currentTeam?.id ?? '';
   const isNew = session === null;
   const isOpen = session?.status === 'open' || false;

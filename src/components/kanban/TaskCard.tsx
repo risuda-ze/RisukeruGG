@@ -1,10 +1,9 @@
 'use client';
 
+import { memo } from 'react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import type { Task, TeamMember } from '@/types/entities';
-import { useTasksStore } from '@/stores/tasks';
-import { useCategoryStore } from '@/stores/categories';
+import type { Task, TeamMember, TaskStatus, Category } from '@/types/entities';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import UrgencyChip from './UrgencyChip';
@@ -13,23 +12,25 @@ import { getUrgencyLevel } from '@/lib/urgency';
 interface TaskCardProps {
   task: Task;
   members: TeamMember[];
+  /* columns / categories は親から受け取る（カード内でストアを購読しない） */
+  columns: TaskStatus[];
+  categories: Category[];
   isDragging: boolean;
   canEdit: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit: (task: Task) => void;
+  onDelete: (taskId: string) => void;
 }
 
-export default function TaskCard({
+function TaskCardComponent({
   task,
   members,
+  columns,
+  categories,
   isDragging,
   canEdit,
   onEdit,
   onDelete,
 }: TaskCardProps) {
-  const { columns } = useTasksStore();
-  const { categories } = useCategoryStore();
-
   const assignee = members.find((m) => m.userId === task.assigneeId);
   const assigneeName = assignee?.displayName ?? (task.assigneeId ? '元メンバー' : null);
   const assigneeInitials = assigneeName ? assigneeName.slice(0, 2) : '';
@@ -46,7 +47,7 @@ export default function TaskCard({
     <div
       className={`tcard group ${isDone ? 'opacity-[.82]' : ''} ${isDragging ? 'rotate-1 shadow-lg' : ''}`}
       style={{ '--tc': column?.color ?? 'var(--card-border)' } as React.CSSProperties}
-      onClick={onEdit}
+      onClick={() => onEdit(task)}
     >
       {/* カテゴリチップ */}
       {category && (
@@ -77,7 +78,7 @@ export default function TaskCard({
             <Button
               variant="ghost"
               size="sm"
-              onClick={(e) => { e.stopPropagation(); onEdit(); }}
+              onClick={(e) => { e.stopPropagation(); onEdit(task); }}
               className="px-1.5 py-1 text-muted hover:text-purple-l"
               aria-label="タスクを編集"
             >
@@ -88,7 +89,7 @@ export default function TaskCard({
             <Button
               variant="ghost"
               size="sm"
-              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
               className="px-1.5 py-1 text-muted hover:text-live"
               aria-label="タスクを削除"
             >
@@ -125,3 +126,8 @@ export default function TaskCard({
     </div>
   );
 }
+
+/* memo化: task / members / columns / categories / コールバックが
+   変わらないカードは再レンダリングしない */
+const TaskCard = memo(TaskCardComponent);
+export default TaskCard;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useAuthStore } from '@/stores/auth';
 import { useTasksStore } from '@/stores/tasks';
@@ -21,9 +21,15 @@ const KanbanBoard = dynamic(() => import('@/components/kanban/KanbanBoard'), {
 const TaskMobileBoard = dynamic(() => import('@/components/kanban/TaskMobileBoard'), { ssr: false });
 
 export default function TasksPage() {
-  const { currentUser, currentTeam, members } = useAuthStore();
-  const { tasks, columns, loading, subscribe } = useTasksStore();
-  const { categories, subscribe: subscribeCategories } = useCategoryStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const currentTeam = useAuthStore((s) => s.currentTeam);
+  const members = useAuthStore((s) => s.members);
+  const tasks = useTasksStore((s) => s.tasks);
+  const columns = useTasksStore((s) => s.columns);
+  const loading = useTasksStore((s) => s.loading);
+  const subscribe = useTasksStore((s) => s.subscribe);
+  const categories = useCategoryStore((s) => s.categories);
+  const subscribeCategories = useCategoryStore((s) => s.subscribe);
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -72,20 +78,24 @@ export default function TasksPage() {
     setDefaultColumnId(columnId);
     setIsModalOpen(true);
   }
-  function openEdit(task: Task) {
+  /* memo化した TaskCard に安定参照を渡すため useCallback で固定 */
+  const openEdit = useCallback((task: Task) => {
     setSelectedTask(task);
     setDefaultColumnId(undefined);
     setIsModalOpen(true);
-  }
+  }, []);
   function closeModal() {
     setIsModalOpen(false);
     setSelectedTask(null);
   }
 
-  async function handleDeleteCard(taskId: string) {
-    if (!teamId || !confirm('このタスクを削除しますか？')) return;
-    await deleteTask(teamId, taskId);
-  }
+  const handleDeleteCard = useCallback(
+    async (taskId: string) => {
+      if (!teamId || !confirm('このタスクを削除しますか？')) return;
+      await deleteTask(teamId, taskId);
+    },
+    [teamId]
+  );
 
   /* カテゴリトグル: 選択済みなら解除、未選択なら追加 */
   function toggleCategory(catId: string) {

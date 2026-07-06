@@ -18,7 +18,7 @@ interface TaskBoardPreviewProps {
 
 export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const { categories } = useCategoryStore();
+  const categories = useCategoryStore((s) => s.categories);
   const sortedTasks = sortTasksByDueDate(tasks);
 
   if (tasks.length === 0) {

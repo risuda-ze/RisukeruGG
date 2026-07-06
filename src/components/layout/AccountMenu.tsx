@@ -19,7 +19,8 @@ export function AccountMenu() {
   const [teamModalOpen, setTeamModalOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { currentUser, signOut } = useAuthStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const signOut = useAuthStore((s) => s.signOut);
 
   const initials = currentUser?.displayName
     ? currentUser.displayName.slice(0, 2).toUpperCase()

@@ -21,7 +21,7 @@ const CATEGORY_DOT: Record<Notification['category'], string> = {
 };
 
 export function NotificationBanner() {
-  const { notifications } = useNotificationsStore();
+  const notifications = useNotificationsStore((s) => s.notifications);
   const router = useRouter();
   const [banner, setBanner] = useState<Notification | null>(null);
   const prevNotifIds = useRef<Set<string>>(new Set());

@@ -58,7 +58,7 @@ export function ScheduleModal({
   onClose,
   onDeleted,
 }: ScheduleModalProps) {
-  const { currentUser } = useAuthStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
   const isNew = schedule === null;
 
   const draftKey = isNew ? DRAFT_KEYS.SCHEDULE_NEW : DRAFT_KEYS.scheduleEdit(schedule!.id);

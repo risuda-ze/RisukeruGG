@@ -58,7 +58,9 @@ const AVATAR_PALETTES = [
 ];
 
 export default function TeamPage() {
-  const { currentUser, currentTeam, members } = useAuthStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const currentTeam = useAuthStore((s) => s.currentTeam);
+  const members = useAuthStore((s) => s.members);
   const [dialog, setDialog] = useState<DialogState>(null);
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [teamName, setTeamName] = useState('');

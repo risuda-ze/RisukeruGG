@@ -11,7 +11,8 @@ interface PlanStatusProps {
 }
 
 export function PlanStatus({ monthlyTaskCount, monthlyCollabCount }: PlanStatusProps) {
-  const { currentUser, members } = useAuthStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const members = useAuthStore((s) => s.members);
 
   if (!currentUser) return null;
 
