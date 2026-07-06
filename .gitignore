@@ -60,6 +60,7 @@ functions/node_modules/
 
 # test results
 test-results/
+playwright-report/
 
 # ログインファイル（必要に応じてコミットする）
 *.log

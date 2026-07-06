@@ -36,12 +36,17 @@ export const updateDiscordSettings = onCall(
     }
 
     // サブコレクション方式: teams/{teamId}/discord/config（ドキュメント ID は固定）
-    await db.doc(`teams/${teamId}/discord/config`).set({
-      webhookUrl: webhookUrl ?? '',
-      notifyOnCreate: notifyOnCreate ?? false,
-      notifyBefore1h: notifyBefore1h ?? false,
-      notifyBefore15min: notifyBefore15min ?? false,
-    });
+    // merge: true で既存の guildId / channelId（Bot 連携情報）を保持する。
+    // merge なしだと通知設定の更新だけで連携情報が消え、Bot が「未連携」になる。
+    await db.doc(`teams/${teamId}/discord/config`).set(
+      {
+        webhookUrl: webhookUrl ?? '',
+        notifyOnCreate: notifyOnCreate ?? false,
+        notifyBefore1h: notifyBefore1h ?? false,
+        notifyBefore15min: notifyBefore15min ?? false,
+      },
+      { merge: true }
+    );
 
     return { success: true };
   }
