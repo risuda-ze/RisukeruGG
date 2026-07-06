@@ -167,6 +167,7 @@ const LP_CSS = `
       linear-gradient(rgba(127, 119, 221, 0.06) 1px, transparent 1px),
       linear-gradient(90deg, rgba(127, 119, 221, 0.06) 1px, transparent 1px);
     background-size: 60px 60px;
+    -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 100%);
     mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 100%);
     pointer-events: none;
   }
@@ -175,7 +176,7 @@ const LP_CSS = `
     z-index: 1;
     width: min(1280px, 100%);
     display: grid;
-    grid-template-columns: minmax(0, 1.02fr) minmax(420px, 0.98fr);
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
     align-items: center;
     gap: clamp(24px, 5vw, 72px);
   }

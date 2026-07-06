@@ -23,8 +23,9 @@ describe('LandingPage LP content', () => {
   });
 
   test('活用例セクションと料金表示を更新している', () => {
-    expect(landingPageSource).not.toContain('ユースケース');
+    expect(heroSection).not.toContain('ユースケース');
     expect(landingPageSource).toContain('想像しやすい活用シーン');
+    expect(landingPageSource).toContain('活用シーン 01');
     expect(usecasesSection).toContain('個人配信者');
     expect(usecasesSection).toContain('コラボ多めの配信者');
     expect(usecasesSection).toContain('マネージャー同席チーム');
