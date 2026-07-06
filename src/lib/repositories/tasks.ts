@@ -100,7 +100,25 @@ export function subscribeTasksByTeam(
   teamId: string,
   callback: (tasks: Task[]) => void
 ): Unsubscribe {
+  /* 参照安定化: 変更のないタスクは前回の Task オブジェクトを再利用する。
+     onSnapshot 毎に全ドキュメントを toTask で再生成すると、内容が同じでも
+     参照が変わり memo 化した TaskCard が全て再レンダリングされてしまうため、
+     docChanges() で変更があったドキュメントだけを再生成し、それ以外は
+     キャッシュ済みの参照を使い回す。 */
+  const cache = new Map<string, Task>();
   return onSnapshot(collection(db, 'teams', teamId, 'tasks'), (snap) => {
-    callback(snap.docs.map((d) => toTask(d.id, d.data() as Record<string, unknown>)));
+    for (const change of snap.docChanges()) {
+      if (change.type === 'removed') {
+        cache.delete(change.doc.id);
+      } else {
+        // added / modified: 該当ドキュメントのみ再生成
+        cache.set(change.doc.id, toTask(change.doc.id, change.doc.data() as Record<string, unknown>));
+      }
+    }
+    // 現在のスナップショット順で並べつつ、未変更ドキュメントは参照を維持
+    const tasks = snap.docs.map(
+      (d) => cache.get(d.id) ?? toTask(d.id, d.data() as Record<string, unknown>)
+    );
+    callback(tasks);
   });
 }
