@@ -24,7 +24,7 @@ export default function TaskMobileBoard({
   onDelete,
   onAdd,
 }: TaskMobileBoardProps) {
-  const { columns } = useTasksStore();
+  const columns = useTasksStore((s) => s.columns);
   const [selectedColumnId, setSelectedColumnId] = useState(columns[0]?.id ?? '');
 
   const selectedColumn = columns.find((c) => c.id === selectedColumnId);

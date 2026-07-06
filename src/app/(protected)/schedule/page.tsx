@@ -24,9 +24,17 @@ import type { ScheduleEntry, MemberCalendarEvent } from '@/types/entities';
 import { getEventLastDay } from '@/lib/utils/eventDays';
 
 export default function SchedulePage() {
-  const { currentUser, currentTeamId, members, googleAccessToken, signIn, loading: authLoading } = useAuthStore();
-  const { schedules, loading, subscribe } = useScheduleStore();
-  const { categories, subscribe: subscribeCategories } = useCategoryStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const currentTeamId = useAuthStore((s) => s.currentTeamId);
+  const members = useAuthStore((s) => s.members);
+  const googleAccessToken = useAuthStore((s) => s.googleAccessToken);
+  const signIn = useAuthStore((s) => s.signIn);
+  const authLoading = useAuthStore((s) => s.loading);
+  const schedules = useScheduleStore((s) => s.schedules);
+  const loading = useScheduleStore((s) => s.loading);
+  const subscribe = useScheduleStore((s) => s.subscribe);
+  const categories = useCategoryStore((s) => s.categories);
+  const subscribeCategories = useCategoryStore((s) => s.subscribe);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week'>('month');
   const [showCreate, setShowCreate] = useState(false);

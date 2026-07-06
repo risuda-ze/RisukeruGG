@@ -61,7 +61,10 @@ export function Sidebar() {
   const activeHref = NAV_SECTIONS.flatMap((s) => s.items)
     .filter((i) => !i.disabled && (pathname === i.href || pathname.startsWith(i.href + '/')))
     .reduce((longest, i) => (i.href.length > longest.length ? i.href : longest), '');
-  const { collapsed, openSections, toggleCollapsed, toggleSection } = useSidebarStore();
+  const collapsed = useSidebarStore((s) => s.collapsed);
+  const openSections = useSidebarStore((s) => s.openSections);
+  const toggleCollapsed = useSidebarStore((s) => s.toggleCollapsed);
+  const toggleSection = useSidebarStore((s) => s.toggleSection);
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
 
   return (

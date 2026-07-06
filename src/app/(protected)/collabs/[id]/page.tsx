@@ -30,7 +30,9 @@ export default function CollabDetailPage() {
   const router = useRouter();
   const sessionId = params.id as string;
 
-  const { currentUser, currentTeam, members } = useAuthStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const currentTeam = useAuthStore((s) => s.currentTeam);
+  const members = useAuthStore((s) => s.members);
   const [session, setSession] = useState<CollabSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);

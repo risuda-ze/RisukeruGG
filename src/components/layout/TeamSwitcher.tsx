@@ -12,7 +12,9 @@ interface TeamSwitcherProps {
 }
 
 export function TeamSwitcher({ collapsed = false }: TeamSwitcherProps) {
-  const { currentTeamId, teamIds, currentTeam } = useAuthStore();
+  const currentTeamId = useAuthStore((s) => s.currentTeamId);
+  const teamIds = useAuthStore((s) => s.teamIds);
+  const currentTeam = useAuthStore((s) => s.currentTeam);
   const [open, setOpen] = useState(false);
   const [teams, setTeams] = useState<Team[]>([]);
   const [switching, setSwitching] = useState(false);

@@ -21,9 +21,15 @@ const KanbanBoard = dynamic(() => import('@/components/kanban/KanbanBoard'), {
 const TaskMobileBoard = dynamic(() => import('@/components/kanban/TaskMobileBoard'), { ssr: false });
 
 export default function TasksPage() {
-  const { currentUser, currentTeam, members } = useAuthStore();
-  const { tasks, columns, loading, subscribe } = useTasksStore();
-  const { categories, subscribe: subscribeCategories } = useCategoryStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const currentTeam = useAuthStore((s) => s.currentTeam);
+  const members = useAuthStore((s) => s.members);
+  const tasks = useTasksStore((s) => s.tasks);
+  const columns = useTasksStore((s) => s.columns);
+  const loading = useTasksStore((s) => s.loading);
+  const subscribe = useTasksStore((s) => s.subscribe);
+  const categories = useCategoryStore((s) => s.categories);
+  const subscribeCategories = useCategoryStore((s) => s.subscribe);
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);

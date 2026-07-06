@@ -23,9 +23,15 @@ import { ROLE_BADGE, ROLE_LABELS } from '@/lib/utils/teamRoles';
 import type { CollabSession } from '@/types/entities';
 
 export default function DashboardPage() {
-  const { currentUser, currentTeam, members, loading } = useAuthStore();
-  const { tasks, columns, subscribe: subscribeTasks } = useTasksStore();
-  const { schedules, subscribe: subscribeSchedules } = useScheduleStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const currentTeam = useAuthStore((s) => s.currentTeam);
+  const members = useAuthStore((s) => s.members);
+  const loading = useAuthStore((s) => s.loading);
+  const tasks = useTasksStore((s) => s.tasks);
+  const columns = useTasksStore((s) => s.columns);
+  const subscribeTasks = useTasksStore((s) => s.subscribe);
+  const schedules = useScheduleStore((s) => s.schedules);
+  const subscribeSchedules = useScheduleStore((s) => s.subscribe);
   const [collabSessions, setCollabSessions] = useState<CollabSession[]>([]);
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [teamName, setTeamName] = useState('');

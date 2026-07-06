@@ -13,7 +13,8 @@ interface NotificationDropdownProps {
 
 export function NotificationDropdown({ open, onClose }: NotificationDropdownProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const { notifications, markAllRead } = useNotificationsStore();
+  const notifications = useNotificationsStore((s) => s.notifications);
+  const markAllRead = useNotificationsStore((s) => s.markAllRead);
 
   /* ドロップダウン外クリックで閉じる */
   useEffect(() => {

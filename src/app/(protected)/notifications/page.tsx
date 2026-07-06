@@ -45,8 +45,11 @@ const CATEGORY_DOT: Record<Notification['category'], string> = {
 
 export default function NotificationsPage() {
   const router = useRouter();
-  const { currentUser, currentTeam } = useAuthStore();
-  const { notifications, loading, subscribe } = useNotificationsStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const currentTeam = useAuthStore((s) => s.currentTeam);
+  const notifications = useNotificationsStore((s) => s.notifications);
+  const loading = useNotificationsStore((s) => s.loading);
+  const subscribe = useNotificationsStore((s) => s.subscribe);
   const teamId = currentTeam?.id;
 
   useEffect(() => {

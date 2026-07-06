@@ -27,8 +27,8 @@ export default function TaskCard({
   onEdit,
   onDelete,
 }: TaskCardProps) {
-  const { columns } = useTasksStore();
-  const { categories } = useCategoryStore();
+  const columns = useTasksStore((s) => s.columns);
+  const categories = useCategoryStore((s) => s.categories);
 
   const assignee = members.find((m) => m.userId === task.assigneeId);
   const assigneeName = assignee?.displayName ?? (task.assigneeId ? '元メンバー' : null);

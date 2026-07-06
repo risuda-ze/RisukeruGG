@@ -31,7 +31,8 @@ export default function KanbanBoard({
   onDeleteTask,
   onAddTask,
 }: KanbanBoardProps) {
-  const { tasks: storeTasks, columns } = useTasksStore();
+  const storeTasks = useTasksStore((s) => s.tasks);
+  const columns = useTasksStore((s) => s.columns);
   const tasks = tasksProp ?? storeTasks;
 
   /* カラムごとに「フィルタ＋締切ソート」した結果を事前計算。
