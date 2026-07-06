@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useTasksStore } from '@/stores/tasks';
 import { updateTask } from '@/lib/repositories/tasks';
@@ -32,6 +33,16 @@ export default function KanbanBoard({
 }: KanbanBoardProps) {
   const { tasks: storeTasks, columns } = useTasksStore();
   const tasks = tasksProp ?? storeTasks;
+
+  /* カラムごとに「フィルタ＋締切ソート」した結果を事前計算。
+     tasks / columns が変わらない限り再計算しない */
+  const tasksByColumn = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    for (const column of columns) {
+      map.set(column.id, sortTasksByDueDate(tasks.filter((t) => t.columnId === column.id)));
+    }
+    return map;
+  }, [tasks, columns]);
 
   async function handleDragEnd(result: DropResult) {
     if (!result.destination || !canEdit) return;
@@ -74,7 +85,7 @@ export default function KanbanBoard({
             <TaskStatusPanel
               key={column.id}
               column={column}
-              tasks={sortTasksByDueDate(tasks.filter((t) => t.columnId === column.id))}
+              tasks={tasksByColumn.get(column.id) ?? []}
               teamId={teamId}
               members={members}
               canEdit={canEdit}

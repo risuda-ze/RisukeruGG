@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useAuthStore } from '@/stores/auth';
 import { useTasksStore } from '@/stores/tasks';
@@ -104,15 +104,20 @@ export default function TasksPage() {
     setActiveAssigneeId(id);
   }
 
-  /* フィルタロジック: カテゴリ OR条件 × 担当者 AND条件 */
-  const filteredTasks = tasks.filter((t) => {
-    const catMatch =
-      activeCategoryIds.length === 0 ||
-      activeCategoryIds.includes(t.categoryId ?? '');
-    const assigneeMatch =
-      activeAssigneeId === null || t.assigneeId === activeAssigneeId;
-    return catMatch && assigneeMatch;
-  });
+  /* フィルタロジック: カテゴリ OR条件 × 担当者 AND条件
+     tasks / フィルタ条件が変わらない限り再計算しない */
+  const filteredTasks = useMemo(
+    () =>
+      tasks.filter((t) => {
+        const catMatch =
+          activeCategoryIds.length === 0 ||
+          activeCategoryIds.includes(t.categoryId ?? '');
+        const assigneeMatch =
+          activeAssigneeId === null || t.assigneeId === activeAssigneeId;
+        return catMatch && assigneeMatch;
+      }),
+    [tasks, activeCategoryIds, activeAssigneeId]
+  );
 
   if (loading) {
     return <div className="flex flex-1 items-center justify-center bg-bg"><Spinner size="lg" /></div>;
