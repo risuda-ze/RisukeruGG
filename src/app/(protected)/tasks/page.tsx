@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { useAuthStore } from '@/stores/auth';
 import { useTasksStore } from '@/stores/tasks';
 import { useCategoryStore } from '@/stores/categories';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { deleteTask } from '@/lib/repositories/tasks';
 import { TaskDetailModal } from '@/components/kanban/TaskDetailModal';
 import { TaskControlBar } from '@/components/kanban/TaskControlBar';
@@ -31,6 +32,10 @@ export default function TasksPage() {
   /* v3: カテゴリ複数選択（空配列 = すべて表示）+ 担当者単一選択（null = すべて表示） */
   const [activeCategoryIds, setActiveCategoryIds] = useState<string[]>([]);
   const [activeAssigneeId, setActiveAssigneeId] = useState<string | null>(null);
+
+  /* md ブレークポイント(768px)未満をモバイル判定。CSSで両ボードを隠す代わりに、
+     片方だけをマウントして不要な描画コストを避ける */
+  const isMobile = useMediaQuery(767);
 
   /* ヒントバー: localStorage で非表示状態を永続化 */
   const [hintDismissed, setHintDismissed] = useState(false);
@@ -151,9 +156,22 @@ export default function TasksPage() {
           <p className="mt-1 text-[11px]">設定ページからカラムを追加してください</p>
         </div>
       ) : (
-        <>
-          {/* PC カンバン（md 以上） */}
-          <div className="hidden md:flex flex-1 overflow-hidden px-7 py-2 min-h-0">
+        isMobile ? (
+          /* モバイルレイアウト（md 未満）: モバイルボードのみマウント */
+          <div className="flex flex-1 flex-col overflow-hidden pt-2 min-h-0">
+            <TaskMobileBoard
+              tasks={filteredTasks}
+              members={members}
+              categories={categories}
+              canEdit={canEdit}
+              onEdit={openEdit}
+              onDelete={handleDeleteCard}
+              onAdd={openAdd}
+            />
+          </div>
+        ) : (
+          /* PC カンバン（md 以上）: カンバンボードのみマウント */
+          <div className="flex flex-1 overflow-hidden px-7 py-2 min-h-0">
             <KanbanBoard
               teamId={teamId}
               members={members}
@@ -166,20 +184,7 @@ export default function TasksPage() {
               onAddTask={openAdd}
             />
           </div>
-
-          {/* モバイルレイアウト（md 未満） */}
-          <div className="flex md:hidden flex-1 flex-col overflow-hidden pt-2 min-h-0">
-            <TaskMobileBoard
-              tasks={filteredTasks}
-              members={members}
-              categories={categories}
-              canEdit={canEdit}
-              onEdit={openEdit}
-              onDelete={handleDeleteCard}
-              onAdd={openAdd}
-            />
-          </div>
-        </>
+        )
       )}
 
       {/* タスク追加・編集モーダル */}
