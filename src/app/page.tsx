@@ -1327,7 +1327,7 @@ const LP_HTML = `
       <div class="section-inner">
         <div class="section-eyebrow">こんな悩みありませんか？</div>
         <h2 class="section-title">配信以外の作業が増えるほど<br/>管理の手間が積み上がる</h2>
-        <p class="section-sub">配信の本番より前に、確認・共有・調整で時間を使い切ってしまう。そんな日常をまとめて整理するためのLPに変えます。</p>
+        <p class="section-sub">配信の本番より前に、確認・共有・調整で時間を使い切ってしまう。そんな日常をまとめて整理できるアプリです。</p>
         <div class="problem-grid">
           <div class="problem-card"><div class="problem-icon">📅</div><div class="problem-head">予定が複数ツールに散らばる</div><div class="problem-text">Googleカレンダー、Discord、DM、メモ帳に情報が分散して、チームの誰が最新情報を持っているのか分からなくなる。</div></div>
           <div class="problem-card"><div class="problem-icon">🎬</div><div class="problem-head">制作タスクの依頼が口頭やDMに流れる</div><div class="problem-text">編集、サムネ、概要欄、切り抜き確認などの細かい依頼が流れて、担当漏れや締切の認識違いが起きやすい。</div></div>
