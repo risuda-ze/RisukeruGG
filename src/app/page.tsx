@@ -1131,7 +1131,7 @@ const LP_CSS = `
 const LP_HTML = `
     <!-- NAV -->
     <nav>
-      <a href="/" class="nav-logo">
+      <a href="/" class="nav-logo" aria-label="リスケるGG — ホームへ戻る">
         <div class="nav-logo-icon">
           <svg width="22" height="22" viewBox="0 0 56 56" fill="none">
             <path d="M30 44 Q16 40 13 25 Q10 12 18 9 Q15 18 20 25 Q24 32 30 35 Q36 38 34 46Z" fill="#AFA9EC" opacity="0.8"/>
@@ -1449,15 +1449,15 @@ const LP_HTML = `
             <div class="plan-note">クレジットカード不要・ずっと無料</div>
             <div class="plan-divider"></div>
             <div class="plan-items">
-              <div class="plan-item"><div class="plan-item-check">✓</div>メンバー 2人まで</div>
-              <div class="plan-item"><div class="plan-item-check">✓</div>スケジュール登録 無制限</div>
-              <div class="plan-item"><div class="plan-item-check">✓</div>タスク 月5件まで</div>
-              <div class="plan-item"><div class="plan-item-check">✓</div>コラボ調整 月3件まで</div>
-              <div class="plan-item"><div class="plan-item-check">✓</div>LIVEリマインダー通知</div>
-              <div class="plan-item"><div class="plan-item-check">✓</div>スマートフォン・PC 両対応</div>
+              <div class="plan-item"><div class="plan-item-check" aria-hidden="true">✓</div>メンバー 2人まで</div>
+              <div class="plan-item"><div class="plan-item-check" aria-hidden="true">✓</div>スケジュール登録 無制限</div>
+              <div class="plan-item"><div class="plan-item-check" aria-hidden="true">✓</div>タスク 月5件まで</div>
+              <div class="plan-item"><div class="plan-item-check" aria-hidden="true">✓</div>コラボ調整 月3件まで</div>
+              <div class="plan-item"><div class="plan-item-check" aria-hidden="true">✓</div>LIVEリマインダー通知</div>
+              <div class="plan-item"><div class="plan-item-check" aria-hidden="true">✓</div>スマートフォン・PC 両対応</div>
             </div>
             <div class="plan-notice" style="font-size:12px;color:#f9be5a;background:rgba(249,190,90,0.08);border:1px solid rgba(249,190,90,0.2)">⚠️ バナー広告あり</div>
-            <a href="/login" class="plan-cta-outline">無料で始める</a>
+            <a href="/login" class="plan-cta-outline" aria-label="LIGHTプランで無料で始める">無料で始める</a>
           </div>
           <!-- PARTY -->
           <div class="plan-card plan-card-featured">
@@ -1467,15 +1467,15 @@ const LP_HTML = `
             <div class="plan-note">メンバー各自払い · 14日間無料トライアル</div>
             <div class="plan-divider"></div>
             <div class="plan-items">
-              <div class="plan-item"><div class="plan-item-check">✓</div>メンバー 無制限</div>
-              <div class="plan-item"><div class="plan-item-check">✓</div>スケジュール登録 無制限</div>
-              <div class="plan-item"><div class="plan-item-check">✓</div>タスク 無制限</div>
-              <div class="plan-item"><div class="plan-item-check">✓</div>コラボ調整 無制限</div>
-              <div class="plan-item"><div class="plan-item-check">✓</div>全通知（コラボ返答・タスク更新）</div>
-              <div class="plan-item"><div class="plan-item-check">✓</div>スマートフォン・PC 両対応</div>
+              <div class="plan-item"><div class="plan-item-check" aria-hidden="true">✓</div>メンバー 無制限</div>
+              <div class="plan-item"><div class="plan-item-check" aria-hidden="true">✓</div>スケジュール登録 無制限</div>
+              <div class="plan-item"><div class="plan-item-check" aria-hidden="true">✓</div>タスク 無制限</div>
+              <div class="plan-item"><div class="plan-item-check" aria-hidden="true">✓</div>コラボ調整 無制限</div>
+              <div class="plan-item"><div class="plan-item-check" aria-hidden="true">✓</div>全通知（コラボ返答・タスク更新）</div>
+              <div class="plan-item"><div class="plan-item-check" aria-hidden="true">✓</div>スマートフォン・PC 両対応</div>
             </div>
             <div class="plan-notice" style="font-size:12px;color:var(--green);background:rgba(77,218,174,0.08);border:1px solid rgba(77,218,174,0.2)">✓ 広告なし</div>
-            <button class="plan-cta">14日間無料で試す →</button>
+            <button class="plan-cta" aria-label="PARTYプランを14日間無料で試す">14日間無料で試す →</button>
             <div class="plan-sub">例）3人チームで ¥4,500 / 月</div>
           </div>
         </div>
