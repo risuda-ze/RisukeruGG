@@ -24,7 +24,7 @@ interface DiscordSettingsSectionProps {
  * - 招待済み: 接続済み状態を表示（チャンネル名 + 解除ボタン）
  */
 export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSectionProps) {
-  const { idToken } = useAuthStore();
+  const idToken = useAuthStore((s) => s.idToken);
   const searchParams = useSearchParams();
   const discordParam = searchParams.get('discord');
   const nonce = searchParams.get('nonce');

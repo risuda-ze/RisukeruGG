@@ -48,7 +48,10 @@ const DEFAULT_PREFS: NotificationPreferences = {
 
 export default function ProfileSettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
-  const { currentUser, currentTeam, members, signOut } = useAuthStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const currentTeam = useAuthStore((s) => s.currentTeam);
+  const members = useAuthStore((s) => s.members);
+  const signOut = useAuthStore((s) => s.signOut);
   const router = useRouter();
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);

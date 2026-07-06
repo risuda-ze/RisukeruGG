@@ -416,7 +416,9 @@ function CollabBoard({
 // CollabsPage
 // ============================================================
 export default function CollabsPage() {
-  const { currentUser, currentTeam, members } = useAuthStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const currentTeam = useAuthStore((s) => s.currentTeam);
+  const members = useAuthStore((s) => s.members);
   const [sessions, setSessions] = useState<CollabSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSession, setSelectedSession] = useState<CollabSession | null>(null);

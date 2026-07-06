@@ -19,12 +19,13 @@ interface TaskMobileBoardProps {
 export default function TaskMobileBoard({
   tasks,
   members,
+  categories,
   canEdit,
   onEdit,
   onDelete,
   onAdd,
 }: TaskMobileBoardProps) {
-  const { columns } = useTasksStore();
+  const columns = useTasksStore((s) => s.columns);
   const [selectedColumnId, setSelectedColumnId] = useState(columns[0]?.id ?? '');
 
   const selectedColumn = columns.find((c) => c.id === selectedColumnId);
@@ -101,10 +102,12 @@ export default function TaskMobileBoard({
               key={task.id}
               task={task}
               members={members}
+              columns={columns}
+              categories={categories}
               isDragging={false}
               canEdit={canEdit}
-              onEdit={() => onEdit(task)}
-              onDelete={() => onDelete(task.id)}
+              onEdit={onEdit}
+              onDelete={onDelete}
             />
           ))
         )}

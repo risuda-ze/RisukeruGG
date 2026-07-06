@@ -44,7 +44,7 @@ export function TaskDetailModal({
   onClose,
   onDeleted,
 }: TaskDetailModalProps) {
-  const { currentUser } = useAuthStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
   const isNew = task === null;
 
   /* ドラフト（編集モードのみ） */

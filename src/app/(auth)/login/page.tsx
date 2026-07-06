@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/auth';
 import { Button } from '@/components/ui/Button';
 
 export default function LoginPage() {
-  const { signIn } = useAuthStore();
+  const signIn = useAuthStore((s) => s.signIn);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

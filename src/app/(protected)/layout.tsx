@@ -7,7 +7,8 @@ import { Spinner } from '@/components/ui/Spinner';
 import { AppShell } from '@/components/layout/AppShell';
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const { currentUser, loading } = useAuthStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const loading = useAuthStore((s) => s.loading);
   const router = useRouter();
 
   useEffect(() => {

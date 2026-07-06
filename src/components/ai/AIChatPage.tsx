@@ -201,9 +201,12 @@ export function AIChatPage() {
   } = useAIChatStore();
 
   // アプリデータ
-  const { members, currentUser, currentTeamId } = useAuthStore();
-  const { tasks, columns } = useTasksStore();
-  const { schedules } = useScheduleStore();
+  const members = useAuthStore((s) => s.members);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const currentTeamId = useAuthStore((s) => s.currentTeamId);
+  const tasks = useTasksStore((s) => s.tasks);
+  const columns = useTasksStore((s) => s.columns);
+  const schedules = useScheduleStore((s) => s.schedules);
   const [memberCalendarEvents, setMemberCalendarEvents] = useState<MemberCalendarEvent[]>([]);
 
   // メンバーの予定をFirestoreから購読（AIコンテキスト用）
