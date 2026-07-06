@@ -3,9 +3,10 @@
 import { useMemo } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useTasksStore } from '@/stores/tasks';
+import { useCategoryStore } from '@/stores/categories';
 import { updateTask } from '@/lib/repositories/tasks';
 import { sortTasksByDueDate } from '@/lib/utils/taskOrdering';
-import type { TaskStatus, Task, TeamMember } from '@/types/entities';
+import type { TaskStatus, Task, TeamMember, Category } from '@/types/entities';
 import TaskCard from './TaskCard';
 
 interface KanbanBoardProps {
@@ -33,6 +34,7 @@ export default function KanbanBoard({
 }: KanbanBoardProps) {
   const storeTasks = useTasksStore((s) => s.tasks);
   const columns = useTasksStore((s) => s.columns);
+  const categories = useCategoryStore((s) => s.categories);
   const tasks = tasksProp ?? storeTasks;
 
   /* カラムごとに「フィルタ＋締切ソート」した結果を事前計算。
@@ -89,6 +91,8 @@ export default function KanbanBoard({
               tasks={tasksByColumn.get(column.id) ?? []}
               teamId={teamId}
               members={members}
+              columns={columns}
+              categories={categories}
               canEdit={canEdit}
               onEditTask={onEditTask}
               onDeleteTask={onDeleteTask}
@@ -107,6 +111,8 @@ interface TaskStatusPanelProps {
   tasks: Task[];
   teamId: string;
   members: TeamMember[];
+  columns: TaskStatus[];
+  categories: Category[];
   canEdit: boolean;
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
@@ -117,6 +123,8 @@ function TaskStatusPanel({
   column,
   tasks,
   members,
+  columns,
+  categories,
   canEdit,
   onEditTask,
   onDeleteTask,
@@ -190,10 +198,12 @@ function TaskStatusPanel({
                     <TaskCard
                       task={task}
                       members={members}
+                      columns={columns}
+                      categories={categories}
                       isDragging={snapshot.isDragging}
                       canEdit={canEdit}
-                      onEdit={() => onEditTask(task)}
-                      onDelete={() => onDeleteTask(task.id)}
+                      onEdit={onEditTask}
+                      onDelete={onDeleteTask}
                     />
                   </div>
                 )}

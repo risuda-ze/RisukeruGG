@@ -19,6 +19,7 @@ interface TaskMobileBoardProps {
 export default function TaskMobileBoard({
   tasks,
   members,
+  categories,
   canEdit,
   onEdit,
   onDelete,
@@ -101,10 +102,12 @@ export default function TaskMobileBoard({
               key={task.id}
               task={task}
               members={members}
+              columns={columns}
+              categories={categories}
               isDragging={false}
               canEdit={canEdit}
-              onEdit={() => onEdit(task)}
-              onDelete={() => onDelete(task.id)}
+              onEdit={onEdit}
+              onDelete={onDelete}
             />
           ))
         )}

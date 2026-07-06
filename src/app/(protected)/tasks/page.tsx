@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useAuthStore } from '@/stores/auth';
 import { useTasksStore } from '@/stores/tasks';
@@ -78,20 +78,24 @@ export default function TasksPage() {
     setDefaultColumnId(columnId);
     setIsModalOpen(true);
   }
-  function openEdit(task: Task) {
+  /* memo化した TaskCard に安定参照を渡すため useCallback で固定 */
+  const openEdit = useCallback((task: Task) => {
     setSelectedTask(task);
     setDefaultColumnId(undefined);
     setIsModalOpen(true);
-  }
+  }, []);
   function closeModal() {
     setIsModalOpen(false);
     setSelectedTask(null);
   }
 
-  async function handleDeleteCard(taskId: string) {
-    if (!teamId || !confirm('このタスクを削除しますか？')) return;
-    await deleteTask(teamId, taskId);
-  }
+  const handleDeleteCard = useCallback(
+    async (taskId: string) => {
+      if (!teamId || !confirm('このタスクを削除しますか？')) return;
+      await deleteTask(teamId, taskId);
+    },
+    [teamId]
+  );
 
   /* カテゴリトグル: 選択済みなら解除、未選択なら追加 */
   function toggleCategory(catId: string) {
