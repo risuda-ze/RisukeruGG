@@ -29,6 +29,7 @@ const LP_CSS = `
     --purple-d: #534ab7;
     --amber: #ef9f27;
     --amber-l: #fac775;
+    --amber-d: #c77714;
     --text: #eeeeff;
     --muted: #6666aa;
     --live: #ff4d6d;
@@ -135,25 +136,28 @@ const LP_CSS = `
   /* ── HERO ── */
   #lp-root .hero {
     min-height: 100vh;
+    position: relative;
+    padding: 110px 32px 88px;
+    overflow: hidden;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    position: relative;
-    padding: 100px 24px 80px;
-    overflow: hidden;
-    text-align: center;
   }
   #lp-root .hero-bg {
     position: absolute;
     inset: 0;
     background:
+      linear-gradient(90deg, rgba(8, 8, 26, 0.96) 0%, rgba(8, 8, 26, 0.88) 42%, rgba(8, 8, 26, 0.62) 100%),
+      url('/lp-settings.png'),
       radial-gradient(
         ellipse 80% 60% at 50% 20%,
         rgba(127, 119, 221, 0.18) 0%,
         transparent 60%
       ),
       radial-gradient(ellipse 40% 40% at 80% 80%, rgba(239, 159, 39, 0.1) 0%, transparent 50%);
+    background-size: cover;
+    background-position: center;
+    transform: scale(1.03);
     pointer-events: none;
   }
   #lp-root .hero-grid {
@@ -163,7 +167,21 @@ const LP_CSS = `
       linear-gradient(rgba(127, 119, 221, 0.06) 1px, transparent 1px),
       linear-gradient(90deg, rgba(127, 119, 221, 0.06) 1px, transparent 1px);
     background-size: 60px 60px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 100%);
     pointer-events: none;
+  }
+  #lp-root .hero-shell {
+    position: relative;
+    z-index: 1;
+    width: min(1280px, 100%);
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(420px, 0.98fr);
+    align-items: center;
+    gap: clamp(24px, 5vw, 72px);
+  }
+  #lp-root .hero-copy {
+    text-align: left;
+    max-width: 620px;
   }
   #lp-root .hero-badge {
     display: inline-flex;
@@ -191,10 +209,10 @@ const LP_CSS = `
   }
   #lp-root .hero-title {
     font-family: var(--font-dela-gothic-one), sans-serif;
-    font-size: clamp(36px, 7vw, 80px);
+    font-size: clamp(40px, 6vw, 84px);
     line-height: 1.05;
     letter-spacing: -0.02em;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     animation: fadeUp 0.7s 0.1s ease both;
   }
   #lp-root .hero-title .gg {
@@ -205,10 +223,10 @@ const LP_CSS = `
   }
   #lp-root .hero-sub {
     font-size: clamp(15px, 2.5vw, 20px);
-    color: var(--muted);
-    max-width: 580px;
+    color: rgba(238, 238, 255, 0.78);
+    max-width: 600px;
     line-height: 1.7;
-    margin-bottom: 40px;
+    margin-bottom: 36px;
     animation: fadeUp 0.7s 0.2s ease both;
   }
   #lp-root .hero-sub strong {
@@ -218,9 +236,9 @@ const LP_CSS = `
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-start;
     animation: fadeUp 0.7s 0.3s ease both;
-    margin-bottom: 64px;
+    margin-bottom: 0;
   }
   #lp-root .btn-primary {
     background: var(--amber);
@@ -263,15 +281,72 @@ const LP_CSS = `
 
   /* Hero mockup */
   #lp-root .hero-mockup {
-    width: min(760px, 100%);
-    background: var(--surface);
-    border: 0.5px solid var(--border);
-    border-radius: 16px;
+    width: 100%;
+    min-height: 520px;
+    border: 0.5px solid rgba(176, 170, 248, 0.24);
+    border-radius: 24px;
     overflow: hidden;
     box-shadow:
       0 40px 120px rgba(0, 0, 0, 0.6),
-      0 0 0 0.5px var(--border);
+      0 0 0 0.5px rgba(176, 170, 248, 0.15);
     animation: fadeUp 0.8s 0.4s ease both;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    padding: 24px;
+    background:
+      linear-gradient(180deg, rgba(8, 8, 26, 0.04) 0%, rgba(8, 8, 26, 0.38) 58%, rgba(8, 8, 26, 0.84) 100%),
+      url('/lp-settings.png');
+    background-size: cover;
+    background-position: left top;
+  }
+  #lp-root .hero-mockup::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(127, 119, 221, 0.18), transparent 38%, transparent 62%, rgba(239, 159, 39, 0.14));
+    pointer-events: none;
+  }
+  #lp-root .hero-shot-note {
+    position: absolute;
+    top: 22px;
+    right: 22px;
+    z-index: 1;
+    border-radius: 999px;
+    padding: 10px 16px;
+    background: rgba(8, 8, 26, 0.72);
+    border: 0.5px solid rgba(176, 170, 248, 0.28);
+    backdrop-filter: blur(16px);
+    font-size: 12px;
+    color: var(--text);
+  }
+  #lp-root .hero-shot-panel {
+    position: relative;
+    z-index: 1;
+    max-width: 340px;
+    border-radius: 20px;
+    padding: 20px;
+    background: rgba(8, 8, 26, 0.72);
+    border: 0.5px solid rgba(176, 170, 248, 0.24);
+    backdrop-filter: blur(18px);
+  }
+  #lp-root .hero-shot-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--purple-l);
+    margin-bottom: 10px;
+  }
+  #lp-root .hero-shot-title {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.45;
+    margin-bottom: 10px;
+  }
+  #lp-root .hero-shot-text {
+    font-size: 13px;
+    line-height: 1.75;
+    color: rgba(238, 238, 255, 0.78);
   }
   #lp-root .mockup-bar {
     height: 36px;
@@ -1169,6 +1244,37 @@ const LP_CSS = `
     #lp-root nav .nav-links {
       display: none;
     }
+    #lp-root .hero {
+      padding: 104px 20px 72px;
+    }
+    #lp-root .hero-shell {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    #lp-root .hero-copy {
+      max-width: none;
+      text-align: center;
+    }
+    #lp-root .hero-sub {
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #lp-root .hero-btns {
+      justify-content: center;
+    }
+    #lp-root .hero-mockup {
+      min-height: 360px;
+      padding: 16px;
+      background-position: center top;
+    }
+    #lp-root .hero-shot-note {
+      top: 16px;
+      left: 16px;
+      right: auto;
+    }
+    #lp-root .hero-shot-panel {
+      max-width: 100%;
+    }
     #lp-root .feature-block {
       grid-template-columns: 1fr;
     }
@@ -1230,93 +1336,32 @@ const LP_HTML = `
     <section class="hero">
       <div class="hero-bg"></div>
       <div class="hero-grid"></div>
-      <div class="hero-badge">
-        <div class="hero-badge-dot"></div>
-        配信準備とチーム連携を1か所で進めるアプリ
-      </div>
-      <h1 class="hero-title">
-        <span class="br">配信前の連絡と調整を</span>
-        <span class="br">ひとつにまとめて</span>
-        <span class="br">配信に集中できる毎日へ</span>
-      </h1>
-      <p class="hero-sub">
-        今週の配信予定、コラボ候補日、編集依頼、告知準備まで——<br/>
-        <strong>配信活動で実際に発生するやりとり</strong>をまとめて、配信者もスタッフも同じ画面で動けます。
-      </p>
-      <div class="hero-btns">
-        <a href="/login" class="btn-primary">無料で始める →</a>
-        <a href="#features" class="btn-secondary">機能を見る</a>
-      </div>
-      <div class="hero-mockup">
-        <div class="mockup-bar">
-          <div class="mockup-dot" style="background:#ff5f56"></div>
-          <div class="mockup-dot" style="background:#ffbd2e"></div>
-          <div class="mockup-dot" style="background:#27c93f"></div>
-          <div class="mockup-url">risukeru.gg/dashboard</div>
-        </div>
-        <div class="mockup-body">
-          <div class="mock-sidebar">
-            <div class="mock-s-logo">
-              <div class="mock-s-icon">
-                <svg width="16" height="16" viewBox="0 0 56 56" fill="none">
-                  <ellipse cx="32" cy="37" rx="11" ry="9" fill="#EEEDFE"/>
-                  <ellipse cx="33" cy="23" rx="9" ry="8" fill="#EEEDFE"/>
-                  <ellipse cx="27" cy="14" rx="3.5" ry="5" fill="#EEEDFE"/>
-                  <ellipse cx="38" cy="12" rx="3.5" ry="5" fill="#EEEDFE"/>
-                  <circle cx="30" cy="22" r="1.8" fill="#26215C"/>
-                  <circle cx="37" cy="22" r="1.8" fill="#26215C"/>
-                  <ellipse cx="33" cy="38" rx="3" ry="2" fill="#EF9F27" opacity="0.8"/>
-                </svg>
-              </div>
-              <div class="mock-s-name">リスケる<span>GG</span></div>
-            </div>
-            <div class="mock-nav">
-              <div class="mock-nav-item active">▦ ダッシュボード</div>
-              <div class="mock-nav-item">◷ スケジュール</div>
-              <div class="mock-nav-item">▤ タスク</div>
-              <div class="mock-nav-item">⊕ コラボ調整</div>
-              <div class="mock-nav-item">◎ チーム</div>
-            </div>
+      <div class="hero-shell">
+        <div class="hero-copy">
+          <div class="hero-badge">
+            <div class="hero-badge-dot"></div>
+            配信準備とチーム連携を1か所で進めるアプリ
           </div>
-          <div class="mock-content">
-            <div class="mock-stats">
-              <div class="mock-stat">
-                <div class="mock-stat-l">今月の配信</div>
-                <div class="mock-stat-v" style="color:var(--purple-l)">18</div>
-              </div>
-              <div class="mock-stat">
-                <div class="mock-stat-l">コラボ予定</div>
-                <div class="mock-stat-v" style="color:var(--amber-l)">4</div>
-              </div>
-              <div class="mock-stat">
-                <div class="mock-stat-l">LIVE視聴者</div>
-                <div class="mock-stat-v" style="color:var(--live)">1,204</div>
-              </div>
-              <div class="mock-stat">
-                <div class="mock-stat-l">タスク完了</div>
-                <div class="mock-stat-v" style="color:var(--green)">72%</div>
-              </div>
-            </div>
-            <div class="mock-2col">
-              <div class="mock-cal">
-                <div class="mock-cal-title">今週のスケジュール</div>
-                <div class="mock-cal-days">
-                  <div class="mock-day"><div class="mock-day-d">月</div><div class="mock-day-n">11</div><div class="mock-day-dot" style="background:var(--purple)"></div></div>
-                  <div class="mock-day today"><div class="mock-day-d">火</div><div class="mock-day-n">12</div><div class="mock-day-dot" style="background:var(--amber)"></div></div>
-                  <div class="mock-day"><div class="mock-day-d">水</div><div class="mock-day-n">13</div><div class="mock-day-dot" style="background:var(--amber-d)"></div></div>
-                  <div class="mock-day"><div class="mock-day-d">木</div><div class="mock-day-n">14</div><div class="mock-day-dot" style="background:transparent"></div></div>
-                  <div class="mock-day"><div class="mock-day-d">金</div><div class="mock-day-n">15</div><div class="mock-day-dot" style="background:var(--live)"></div></div>
-                  <div class="mock-day"><div class="mock-day-d">土</div><div class="mock-day-n">16</div><div class="mock-day-dot" style="background:var(--purple)"></div></div>
-                  <div class="mock-day"><div class="mock-day-d">日</div><div class="mock-day-n">17</div><div class="mock-day-dot" style="background:transparent"></div></div>
-                </div>
-              </div>
-              <div class="mock-tasks">
-                <div class="mock-tasks-title">本日のタスク</div>
-                <div class="mock-task">サムネ確認<div><span class="mock-task-tag" style="background:rgba(127,119,221,0.2);color:var(--purple-l)">編集</span></div></div>
-                <div class="mock-task">LIVE配信 20:00〜<div><span class="mock-task-tag" style="background:rgba(255,77,109,0.15);color:var(--live)">LIVE</span></div></div>
-                <div class="mock-task">コラボ打ち合わせ<div><span class="mock-task-tag" style="background:rgba(239,159,39,0.15);color:var(--amber-l)">コラボ</span></div></div>
-              </div>
-            </div>
+          <h1 class="hero-title">
+            <span class="br">配信前の連絡と調整を</span>
+            <span class="br">ひとつにまとめて</span>
+            <span class="br">配信に集中できる毎日へ</span>
+          </h1>
+          <p class="hero-sub">
+            今週の配信予定、コラボ候補日、編集依頼、告知準備まで——<br/>
+            <strong>配信活動で実際に発生するやりとり</strong>をまとめて、配信者もスタッフも同じ画面で動けます。
+          </p>
+          <div class="hero-btns">
+            <a href="/login" class="btn-primary">無料で始める →</a>
+            <a href="#features" class="btn-secondary">できることを見る</a>
+          </div>
+        </div>
+        <div class="hero-mockup" role="img" aria-label="リスケるGGの画面イメージ">
+          <div class="hero-shot-note">配信枠・動画投稿・コラボを同じ画面で整理</div>
+          <div class="hero-shot-panel">
+            <div class="hero-shot-label">画面イメージ</div>
+            <div class="hero-shot-title">カテゴリ分けも、<br/>色分けも、ひと目で把握</div>
+            <div class="hero-shot-text">予定・タスク・設定が同じ流れでつながるから、配信者もチームも「今どこまで進んだか」をすぐ共有できます。</div>
           </div>
         </div>
       </div>
@@ -1352,7 +1397,7 @@ const LP_HTML = `
           <!-- 機能1 -->
           <div class="feature-block">
             <div>
-              <div class="feat-label">ユースケース 01</div>
+              <div class="feat-label">活用シーン 01</div>
               <h3 class="feat-title">今週の配信予定を<br/>チーム全員で同時に把握できる</h3>
               <p class="feat-desc">配信枠、収録、コラボ、撮影日をひとつのカレンダーにまとめることで、「今週どこが動くのか」を毎回説明しなくて済みます。配信者が登録した内容を、編集者やマネージャーも同じ温度感で確認できます。</p>
               <div class="feat-points">
@@ -1380,7 +1425,7 @@ const LP_HTML = `
           <!-- 機能2 -->
           <div class="feature-block rev">
             <div>
-              <div class="feat-label">ユースケース 02</div>
+              <div class="feat-label">活用シーン 02</div>
               <h3 class="feat-title">コラボ候補日の打診から<br/>確定までを迷子にしない</h3>
               <p class="feat-desc">候補日を投げて、返事を待って、確定後に予定へ反映する。コラボ調整で毎回発生する流れをそのまま扱えるので、DMを遡って確認したり、確定内容を別ツールへ転記したりする手間が減ります。</p>
               <div class="feat-points">
@@ -1401,7 +1446,7 @@ const LP_HTML = `
           <!-- 機能3 -->
           <div class="feature-block">
             <div>
-              <div class="feat-label">ユースケース 03</div>
+              <div class="feat-label">活用シーン 03</div>
               <h3 class="feat-title">編集・サムネ・告知の進み具合を<br/>聞かなくても共有できる</h3>
               <p class="feat-desc">動画編集、切り抜き、告知画像、概要欄更新などの作業は、小さくても数が多いもの。タスクとして見える化しておけば、配信者が毎回進捗確認をしなくても、チーム全体で「今どこまで進んでいるか」が分かります。</p>
               <div class="feat-points">
@@ -1434,7 +1479,7 @@ const LP_HTML = `
           <!-- 機能4 -->
           <div class="feature-block rev">
             <div>
-              <div class="feat-label">ユースケース 04</div>
+              <div class="feat-label">活用シーン 04</div>
               <h3 class="feat-title">返答待ちや直前確認を<br/>通知で拾って抜け漏れを防げる</h3>
               <p class="feat-desc">忙しい週ほど、確認するべきことは増えていきます。LIVE前のリマインダーに加えて、コラボ返答やタスク完了も拾えるので、「誰かが覚えているはず」に頼らない運用へ変えられます。</p>
               <div class="feat-points">
@@ -1461,7 +1506,7 @@ const LP_HTML = `
     <section class="usecases" id="usecases">
       <div class="section-inner">
         <div class="section-eyebrow">活用例</div>
-        <h2 class="section-title">「自分たちならどう使うか」が<br/>想像しやすいユースケース</h2>
+        <h2 class="section-title">「自分たちならどう使うか」が<br/>想像しやすい活用シーン</h2>
         <p class="section-sub">個人配信から小規模チーム運営まで、配信活動の規模に合わせて導入しやすい使い方をまとめました。</p>
         <div class="usecase-grid">
           <div class="usecase-card">
@@ -1545,7 +1590,7 @@ const LP_HTML = `
           <div class="plan-card" style="position:relative">
             <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#ef9f27;color:#1a0800;font-size:11px;font-weight:700;padding:4px 16px;border-radius:99px;white-space:nowrap">おすすめ</div>
             <div class="plan-name">PARTY</div>
-            <div class="plan-price">¥1,500 <span>/ 人・月</span></div>
+            <div class="plan-price">¥500 <span>/ 人・月</span></div>
             <div class="plan-note">メンバー全員が個別に支払う方式 · 14日間無料</div>
             <div class="plan-items" style="margin-bottom:8px">
               <div class="plan-item">メンバー 無制限</div>
@@ -1557,7 +1602,7 @@ const LP_HTML = `
             </div>
             <div style="font-size:12px;color:#3fcf7f;background:rgba(63,207,127,0.1);border-radius:8px;padding:8px 12px;margin-bottom:16px">✓ 広告なし</div>
             <button class="plan-cta">14日無料で試す →</button>
-            <div class="plan-sub">例）3人チームで ¥4,500 / 月</div>
+            <div class="plan-sub">例）3人チームで ¥1,500 / 月</div>
           </div>
         </div>
       </div>
