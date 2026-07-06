@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTasksStore } from '@/stores/tasks';
 import { sortTasksByDueDate } from '@/lib/utils/taskOrdering';
 import type { Task, TeamMember, Category } from '@/types/entities';
@@ -28,14 +28,28 @@ export default function TaskMobileBoard({
   const [selectedColumnId, setSelectedColumnId] = useState(columns[0]?.id ?? '');
 
   const selectedColumn = columns.find((c) => c.id === selectedColumnId);
-  const columnTasks = sortTasksByDueDate(tasks.filter((t) => t.columnId === selectedColumnId));
+
+  /* カラムごとの件数を事前集計（ピル表示用）。tasks が変わらない限り再計算しない */
+  const countsByColumn = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const t of tasks) {
+      map.set(t.columnId, (map.get(t.columnId) ?? 0) + 1);
+    }
+    return map;
+  }, [tasks]);
+
+  /* 選択中カラムの「フィルタ＋締切ソート」結果 */
+  const columnTasks = useMemo(
+    () => sortTasksByDueDate(tasks.filter((t) => t.columnId === selectedColumnId)),
+    [tasks, selectedColumnId]
+  );
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
       {/* ステータスピル横スクロール */}
       <div className="flex gap-2 px-4 pb-3 overflow-x-auto scrollbar-none shrink-0">
         {columns.map((col) => {
-          const count = tasks.filter((t) => t.columnId === col.id).length;
+          const count = countsByColumn.get(col.id) ?? 0;
           const isActive = col.id === selectedColumnId;
           return (
             <button
