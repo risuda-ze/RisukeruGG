@@ -42,7 +42,7 @@ Firestore コレクション配置: `teams/{teamId}/memberCalendars/{userId}/eve
 
 ## 制約
 
-- `allDay: true` の場合、Google カレンダー仕様に準拠し「開始日の 00:00:00 〜 最終日翌日の 00:00:00」で保存する（終了は排他的境界。終了時刻ちょうどはイベントに含まれない）。旧仕様（終了時刻を包含的に解釈）で保存された既存データは `scripts/migrate-allday-schedule-encoding.mjs` で本仕様に一括移行済み
+- `allDay: true` の場合、Google カレンダー仕様に準拠し「開始日の 00:00:00 〜 最終日翌日の 00:00:00」で保存する（終了は排他的境界。終了時刻ちょうどはイベントに含まれない）。旧仕様（終了時刻を包含的に解釈）で保存された既存データは移行スクリプトで本仕様に一括移行済み（適用済みスクリプトは削除方針に従い除去。Git 履歴の `scripts/migrate-allday-schedule-encoding.mjs` を参照）
 - `MemberCalendarEvent` の書き込みは所有者本人（`userId == request.auth.uid`）のみ、閲覧は同一チームメンバーに限定する
 - 開始日時入力時に終了日時が未設定の場合、UI は 2 時間後を仮設定として補完する
 - `version` は競合検知のため更新時に利用する

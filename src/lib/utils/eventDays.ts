@@ -8,7 +8,8 @@ import { startOfDay, endOfDay } from 'date-fns';
  * - 終了時刻ちょうど（例: 翌日 00:00）はイベントに含まれない
  *
  * 旧仕様（終了時刻を包含的に解釈していた）で保存された既存データは
- * scripts/migrate-allday-schedule-encoding.mjs で本仕様に一括移行済みの
+ * 移行スクリプト（適用済みのため削除。Git 履歴の
+ * scripts/migrate-allday-schedule-encoding.mjs を参照）で一括移行済みの
  * 前提とし、ここでは後方互換の分岐を持たない。
  */
 
