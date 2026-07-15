@@ -1,0 +1,43 @@
+# integration flows
+
+## Bot 招待フロー
+
+1. `operator` が `/integrations/discord` で「Botをサーバーに追加」を押す
+2. `POST /api/discord/bot-invite-start`（ID トークンで operator 認証）が nonce を発行し、`discord_bot_invite_requests/{nonce}`（期限 10 分）へ保存して Discord OAuth2 URL（scope: `bot applications.commands`、`state=nonce`）を返す
+3. ユーザーが Discord 認証画面でサーバーを選択・許可する
+4. `GET /api/discord/bot-invite-callback` が `state`（nonce）を検証して teamId を解決し、guildId の重複（他チーム使用中）をチェックする。使用中なら `?discord=error&reason=already-linked` で設定画面へ戻す
+5. Bot トークンでチャンネル一覧を取得して `discord_bot_invite_pending/{nonce}` に一時保存し、`?discord=channel-select&nonce=...` で設定画面へリダイレクトする
+6. 設定画面がチャンネル選択ドロップダウンを表示し、`operator` が通知チャンネルを選んで保存する
+7. `POST /api/discord/save-guild-config`（operator 認証）が `guildId` / `channelId` を `teams/{teamId}/discord/config` へ保存し、`/risukerugg` をギルドコマンドとして登録する
+8. 設定画面は「接続済み」表示（サーバー ID・チャンネル ID）に切り替わる
+
+## 通知配送フロー
+
+1. スケジュール作成（Cloud Functions `createSchedule`）またはリマインダー判定（`scheduleReminders`、開始 1 時間前 / 15 分前）が発火する
+2. Admin SDK で `teams/{teamId}/discord/config` を読み、該当トグル（`notifyOnCreate` / `notifyBefore1h` / `notifyBefore15min`）が ON か確認する
+3. Embed メッセージを構築し、`channelId` 設定済みなら Bot API で、未設定かつ `webhookUrl` 設定済みなら Webhook で送信する
+4. 送信失敗はログに記録するのみで、本体処理は成功させる
+
+## `/risukerugg` AI 会話フロー
+
+1. リンク済みサーバーでユーザーが `/risukerugg message:<テキスト>` を実行する
+2. Interactions Endpoint が署名検証後、Deferred Response（通常投稿）を即時返却し、AI 処理をバックグラウンドで実行する
+3. `message` が「リセット」の場合はセッションを削除して完了する
+4. guildId から config を照合してチームを特定する。未連携なら連携手順の案内を返す
+5. セッション（`discord_sessions/{guildId}`）を取得し、30 分超過またはチーム変更があればリセットする
+6. チームデータ（メンバー・スケジュール・タスク・コラボ・タスク列）を Admin SDK で取得し、ai カテゴリ共通のシステムプロンプトで Claude haiku を呼び出す
+7. 応答に `%%PROPOSAL%%` があれば、提案を `pendingProposal` として発行者 ID とともにセッションへ保存し、確認ボタン（登録する / 修正する / キャンセル）付きメッセージを送信する。なければテキストで返信しセッションを更新する
+
+## 提案確定・修正・キャンセルフロー
+
+1. ボタンクリックを Interactions Endpoint が受け取り、Deferred Update で応答してバックグラウンド処理する
+2. 「登録する」「修正する」は発行者本人か検証する（本人以外は拒否メッセージ）
+3. **登録する**: 保存済み提案を Zod で再検証し、種別に応じてスケジュール / タスク / コラボを Admin SDK で登録（表示名 → UID、列名 → 列 ID を解決）。完了メッセージを送りセッションを削除する
+4. **修正する**: `pendingProposal` のみ破棄して会話履歴を保持し、修正点を尋ねるメッセージを返す。ユーザーは次の `/risukerugg` で修正指示を送る
+5. **キャンセル**: セッションを削除し、キャンセルした旨を返す
+
+## 接続解除フロー
+
+1. `operator` が設定画面の「接続を解除する」を押す
+2. `POST /api/discord/disconnect-guild`（operator 認証）が `guildId` / `channelId` を config から削除する
+3. 設定画面は未接続状態（Webhook 設定＋招待ボタン）に戻る

@@ -48,6 +48,8 @@
   - `collab`: `CO`
   - `notification`: `NO`
   - `ui`: `UI`
+  - `integration`: `IN`
+  - `ai`: `AI`
 - 番号は 3 桁ゼロ埋めを基本とし、各機能カテゴリごとに必ず `001` から開始する（例: `TE-001`）
 - 同一機能内で要件を細分化する場合は枝番を付与する（例: `TE-010-1`, `SC-008-2`）
 - 新規要件追加時は同一カテゴリ内で末尾に連番を採番し、他カテゴリの番号は参照しない。既存IDの再利用はしない
@@ -65,6 +67,8 @@
 | `notification` | 通知                 | 通知カテゴリ、既読管理、プッシュ通知、通知設定、遷移ルールを扱う                                           | [README](./notification/README.md) / [requirements](./notification/requirements.md) / [model](./notification/model.md)    |
 | `ui`           | UI・ナビゲーション   | サイドバー、TopBar、通知導線、共通ナビゲーション状態を扱う                                                 | [README](./ui/README.md) / [requirements](./ui/requirements.md) / [model](./ui/model.md)                                  |
 | `platform`     | PWA・オフライン      | PWA インストール、Service Worker、オフライン閲覧、接続断時の扱いを扱う                                     | [README](./platform/README.md) / [requirements](./platform/requirements.md) / [model](./platform/model.md)                |
+| `integration`  | 外部サービス連携     | Discord 連携（通知配送、Bot 招待、`/risukerugg` AI ボット）を扱う                                          | [README](./integration/README.md) / [requirements](./integration/requirements.md) / [model](./integration/model.md)       |
+| `ai`           | AIチャット           | `/chat` の AI アシスタント、提案生成、スケジュール・タスク・コラボ登録連携を扱う                           | [README](./ai/README.md) / [requirements](./ai/requirements.md) / [model](./ai/model.md)                                  |
 
 ### カテゴリ別の役割
 
@@ -113,6 +117,16 @@
 - Web アプリの配布形態とオフライン耐性の責務を持つ
 - PWA と Service Worker を通じて利用継続性を担保する
 
+#### integration
+
+- 外部サービス（Discord）との接続・通知配送・コマンド受け口の責務を持つ
+- チーム単位の連携設定とサーバーサイド専用のセッション・一時データを管理する
+
+#### ai
+
+- 自然言語からの登録提案生成とチームデータ照会の責務を持つ
+- Web チャットと Discord ボットが共用するシステムプロンプト・提案解析の基盤になる
+
 ---
 
 ## 非機能要件（spec 001）
@@ -149,6 +163,9 @@
 | **CollabComment** | 詳細は [collab/model.md](./collab/model.md) を参照。コラボ内コメント / メモの保持項目を管理                                                                   |
 | **Notification**  | receiverId, type, refEntityId, isRead, createdAt                                                                                                              |
 | **SidebarState**  | collapsed（boolean）, openSections（string[]）— Zustand ストア（localStorage 永続化）                                                                         |
+| **DiscordTeamConfig** | 詳細は [integration/model.md](./integration/model.md) を参照。チームの Discord 通知設定（webhookUrl / guildId / channelId / 通知トグル）を管理             |
+| **DiscordSession** | 詳細は [integration/model.md](./integration/model.md) を参照。`/risukerugg` AI ボットのサーバー単位会話セッションを管理                                      |
+| **ChatMessage / Proposal** | 詳細は [ai/model.md](./ai/model.md) を参照。AIチャットの会話履歴と登録提案（セッションメモリのみ・Firestore 永続化なし）                             |
 
 ---
 
