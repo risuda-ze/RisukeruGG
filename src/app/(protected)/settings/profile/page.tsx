@@ -522,6 +522,15 @@ export default function ProfileSettingsPage() {
                   <h3 className="text-sm font-medium text-muted mb-3">法的情報</h3>
                   <div className="space-y-0">
                     <Link
+                      href="/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3 border-b border-border"
+                    >
+                      <span>利用規約</span>
+                      <Icon name="open_in_new" size={20} className="text-muted" />
+                    </Link>
+                    <Link
                       href="/privacy-policy"
                       target="_blank"
                       rel="noopener noreferrer"
@@ -530,10 +539,15 @@ export default function ProfileSettingsPage() {
                       <span>プライバシーポリシー</span>
                       <Icon name="open_in_new" size={20} className="text-muted" />
                     </Link>
-                    <div className="flex items-center justify-between text-sm py-3 border-b border-border">
-                      <span className="text-muted">利用規約</span>
-                      <span className="text-xs text-muted/60">準備中</span>
-                    </div>
+                    <Link
+                      href="/tokushoho"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3 border-b border-border"
+                    >
+                      <span>特定商取引法に基づく表記</span>
+                      <Icon name="open_in_new" size={20} className="text-muted" />
+                    </Link>
                   </div>
                 </div>
 

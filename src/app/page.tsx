@@ -1268,6 +1268,21 @@ const LP_CSS = `
     font-size: 12px;
     color: var(--muted);
   }
+  #lp-root .footer-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  #lp-root .footer-links a {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  #lp-root .footer-links a:hover {
+    color: var(--primary-300, #a0a0ff);
+  }
 
   /* ── RESPONSIVE ── */
   @media (max-width: 768px) {
@@ -1678,6 +1693,11 @@ const LP_HTML = `
           </svg>
         </div>
         <div class="footer-name">リスケる<span>GG</span></div>
+      </div>
+      <div class="footer-links">
+        <a href="/terms">利用規約</a>
+        <a href="/privacy-policy">プライバシーポリシー</a>
+        <a href="/tokushoho">特定商取引法に基づく表記</a>
       </div>
       <div class="footer-copy">© 2026 リスケるGG — 撮影も、コラボも、編集もGGなスケジュールを</div>
     </footer>
