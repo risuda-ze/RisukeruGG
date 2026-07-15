@@ -1,6 +1,8 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions/v2';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { db } from '../lib/admin';
+import { notifyDiscord } from '../discord/notifyDiscord';
 
 interface RespondToCollabData {
   teamId: string;
@@ -102,6 +104,20 @@ export const respondToCollab = onCall(
         }
       }
     });
+
+    // Discord 通知（失敗しても回答本体を失敗させない）
+    try {
+      await notifyDiscord(teamId, 'notifyOnCollabResponse', () => ({
+        title: '💬 コラボ調整に回答がありました',
+        color: 0x5865f2,
+        fields: [
+          { name: 'タイトル', value: session.title as string, inline: true },
+          ...(respondentName ? [{ name: '回答者', value: respondentName, inline: true }] : []),
+        ],
+      }));
+    } catch (err) {
+      logger.warn('コラボ回答 Discord 通知に失敗しました', { teamId, err });
+    }
 
     return { success: true };
   }

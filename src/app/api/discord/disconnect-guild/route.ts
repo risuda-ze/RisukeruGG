@@ -1,11 +1,15 @@
 import { NextRequest } from 'next/server';
 import { getAdminFirestore } from '@/lib/firebase/admin';
 import { verifyBearerToken } from '@/lib/firebase/verifyBearerToken';
+import { deleteGuildCommands, leaveGuild } from '@/lib/discord/guildTeardown';
 
 /**
- * Discord Bot 接続解除エンドポイント。
- * teams/{teamId}/discord/config から guildId と channelId を削除する。
- * operator のみ実行可能。
+ * Discord Bot 登録解除エンドポイント。
+ * Discord 側（スラッシュコマンド・Bot 参加・AI セッション）と Firestore 側
+ * （連携情報・通知設定）を一括でクリーンアップする。operator のみ実行可能。
+ *
+ * Discord API 呼び出しは best-effort。失敗しても Firestore の連携情報は必ず削除し、
+ * アプリ上は「未連携」状態に戻す（Bot を手動で追い出した後の解除にも対応）。
  */
 export async function POST(req: NextRequest): Promise<Response> {
   const authResult = await verifyBearerToken(req);
@@ -31,12 +35,29 @@ export async function POST(req: NextRequest): Promise<Response> {
     return Response.json({ error: 'operator 権限が必要です' }, { status: 403 });
   }
 
-  // guildId と channelId を Firestore から削除（FieldValue.delete() を使用）
-  const { FieldValue } = await import('firebase-admin/firestore');
-  await db.doc(`teams/${teamId}/discord/config`).update({
-    guildId: FieldValue.delete(),
-    channelId: FieldValue.delete(),
-  });
+  const configRef = db.doc(`teams/${teamId}/discord/config`);
+  const configSnap = await configRef.get();
+  const guildId = configSnap.exists
+    ? (configSnap.data()?.guildId as string | undefined)
+    : undefined;
+
+  // Discord 側のクリーンアップ（best-effort）
+  if (guildId) {
+    // コマンド削除は Bot 退出より先に行う（退出後は管理権限を失うため）
+    await deleteGuildCommands(guildId);
+    await leaveGuild(guildId);
+    // AI 会話セッションの削除（失敗しても連携解除は続行する）
+    try {
+      await db.doc(`discord_sessions/${guildId}`).delete();
+    } catch (err) {
+      console.error('discord_sessions の削除に失敗しました:', err);
+    }
+  }
+
+  // 連携情報・通知設定を config ドキュメントごと削除（未連携状態へ初期化）
+  if (configSnap.exists) {
+    await configRef.delete();
+  }
 
   return Response.json({ success: true });
 }
