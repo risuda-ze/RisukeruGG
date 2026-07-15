@@ -2,13 +2,9 @@
 
 こちらのプロジェクトでは配信者向けのタスク管理・スケジュール管理アプリ「RisukeruGG」を開発します。
 
-For additional context about technologies to be used, project structure, shell commands, and other important information, read the current plan at `specs/001-risukeru-gg-app/plan.md`.
+技術スタック・プロジェクト構成・開発コマンドなどの詳細は、正本仕様 `docs/仕様・計画/risukeru_gg_spec.md` と各カテゴリ配下の詳細ファイルを参照してください。
 
-<!-- SPECKIT START -->
-
-現在のアクティブ機能: リリース準備（speckit廃止・課金・広告・デザイン統一ほか） → `docs/変更仕様/release-preparation.md`
-
-<!-- SPECKIT END -->
+現在のアクティブ機能: リリース準備（speckit 廃止・課金・広告・デザイン統一ほか） → `docs/変更仕様/release-preparation.md`
 
 ## Gitブランチ運用
 
@@ -61,64 +57,15 @@ pnpm vitest run tests/unit/tasks/columnTransition.test.ts
 
 ## プロジェクトルール
 
-このプロジェクトは常に3つのサブエージェント（Planner → Generator → Evaluator）によるパイプラインで構築され、質の高い成果物を提供することを目的とする。
+### 仕様の正本と変更管理
 
-- 最新仕様は `docs/仕様・計画/*` を正本とし、仕様の変更履歴や詳細設計、実装計画の補足や差分は `specs/*` に記述する。
+- **正本仕様**は `docs/仕様・計画/*`（カテゴリ別: user / plan / team / schedule / task / collab / notification / ui / platform）。親仕様は `docs/仕様・計画/risukeru_gg_spec.md`。
+- **変更仕様・実装計画**は `docs/変更仕様/*` に記述する。進行中の変更内容・実装方針はここで管理する。
+- 実装時は着手前に該当カテゴリの正本仕様を確認する。仕様変更を伴う実装を行った場合は、実装後に**正本 `docs/仕様・計画/*` を更新して同期**を保つこと。
+- 用語の追加・更新は `docs/共通用語/共通用語.md` を更新する。
 
-### エージェント構成
+### 開発の心得
 
-```
-Planner ──→ Generator ──→ Evaluator
- (企画)      (実装)        (検証)
-              ↑               │
-              └── 不合格時 ──┘
-```
-
-### ファイル規約
-
-- **仕様書は Planner だけが書く。** Generator・Evaluator は読み取り専用。
-- **進捗は Generator だけが書く。** Evaluator は読み取り専用。
-- **フィードバックは Evaluator だけが書く。** Generator は読み取り専用。
-
-### ワークフロー
-
-#### Step 1: 企画（Planner）
-
-- ユーザーのプロンプトを受け取り、仕様書を生成
-- 技術的な実装詳細（DB設計、API設計、技術スタック）には踏み込まない
-- 各スプリントに Evaluator がテスト可能な受け入れ基準を必ず記述する
-
-#### Step 2: 実装（Generator）
-
-- 各仕様書と実装計画書を読み、次の実装を行う
-- 完了時に `/docs/progress.md` へ自己評価と引き渡し事項（起動方法、テストURL、テストシナリオ）を記録
-- 前スプリントのフィードバック（`/docs/feedback/sprint-N.md`）があれば、修正を先に行う
-
-#### Step 3: 検証（Evaluator）
-
-- `/docs/spec.md` の受け入れ基準と `/docs/progress.md` の引き渡し事項を読む
-- Playwright MCP でアプリを実際に操作してテスト
-- 結果を `/docs/feedback/sprint-N.md` に出力
-- 不合格の場合 → Generator に戻って修正（Step 2 へ）
-- 合格の場合 → 次のスプリントへ（Step 2 へ）
-
-### 評価基準と閾値
-
-| 基準               | 閾値     | 不合格時の扱い       |
-| ------------------ | -------- | -------------------- |
-| 機能完全性         | 4/5 以上 | Generator に差し戻し |
-| 動作安定性         | 4/5 以上 | Generator に差し戻し |
-| UI/UX品質          | 3/5 以上 | Generator に差し戻し |
-| エラーハンドリング | 3/5 以上 | Generator に差し戻し |
-| 回帰なし           | 5/5 必須 | Generator に差し戻し |
-
-**1つでも閾値を下回ればスプリント不合格。**
-
-### 絶対ルール
-
-1. **責務を越境しない** - Planner は実装しない。Generator は仕様を変更しない。Evaluator はコードを修正しない。
-2. **スプリント順序を守る** - Sprint 1 → 2 → 3 と順番に実装する。スキップ禁止。
-3. **動作する状態を維持する** - 各スプリント完了時にアプリが正常に起動・動作すること。
-4. **フィードバックを最優先で処理する** - Generator は新スプリント着手前に、前スプリントの不合格フィードバックを修正すること。
-5. **起動手順を必ず記載する** - Generator は `/docs/progress.md` にアプリの起動コマンドを毎回明記する。Evaluator はそれに従って起動する。
-6. **仕様書同期** - Generator は実装前に必ず最新の `/docs/risukeru_gg_spec.md` を読み、仕様変更がないか確認すること。変更があれば Planner に問い合わせること。
+- **動作する状態を維持する** — 変更完了時にアプリが正常に起動・動作すること。
+- **回帰を出さない** — 変更後に `pnpm typecheck` / `pnpm lint` / `pnpm test` を実行し、既存機能への回帰がないことを確認する。
+- ソースコード内コメントは日本語、変数名・コンポーネント名は英語（NFR-013）。
