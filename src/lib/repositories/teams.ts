@@ -119,9 +119,10 @@ export const updateDiscordSettings = httpsCallable<
     webhookUrl: string;
     guildId?: string;
     channelId?: string;
-    notifyOnCreate: boolean;
-    notifyBefore1h: boolean;
-    notifyBefore15min: boolean;
+    notifyOnTaskCreate: boolean;
+    notifyOnTaskUpdate: boolean;
+    notifyOnCollabCreate: boolean;
+    notifyOnCollabResponse: boolean;
   },
   { success: boolean }
 >(functions, 'updateDiscordSettings');

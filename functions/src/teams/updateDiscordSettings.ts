@@ -4,9 +4,10 @@ import { db, getAuthContext, requireOperator } from '../lib/validateAuth';
 interface UpdateDiscordSettingsData {
   teamId: string;
   webhookUrl: string;
-  notifyOnCreate: boolean;
-  notifyBefore1h: boolean;
-  notifyBefore15min: boolean;
+  notifyOnTaskCreate: boolean;
+  notifyOnTaskUpdate: boolean;
+  notifyOnCollabCreate: boolean;
+  notifyOnCollabResponse: boolean;
 }
 
 /**
@@ -17,8 +18,14 @@ interface UpdateDiscordSettingsData {
 export const updateDiscordSettings = onCall(
   { region: 'asia-northeast1' },
   async (request: CallableRequest<UpdateDiscordSettingsData>) => {
-    const { teamId, webhookUrl, notifyOnCreate, notifyBefore1h, notifyBefore15min } =
-      request.data;
+    const {
+      teamId,
+      webhookUrl,
+      notifyOnTaskCreate,
+      notifyOnTaskUpdate,
+      notifyOnCollabCreate,
+      notifyOnCollabResponse,
+    } = request.data;
 
     if (!teamId) {
       throw new HttpsError('invalid-argument', 'teamId が必要です');
@@ -41,9 +48,10 @@ export const updateDiscordSettings = onCall(
     await db.doc(`teams/${teamId}/discord/config`).set(
       {
         webhookUrl: webhookUrl ?? '',
-        notifyOnCreate: notifyOnCreate ?? false,
-        notifyBefore1h: notifyBefore1h ?? false,
-        notifyBefore15min: notifyBefore15min ?? false,
+        notifyOnTaskCreate: notifyOnTaskCreate ?? true,
+        notifyOnTaskUpdate: notifyOnTaskUpdate ?? true,
+        notifyOnCollabCreate: notifyOnCollabCreate ?? true,
+        notifyOnCollabResponse: notifyOnCollabResponse ?? true,
       },
       { merge: true }
     );

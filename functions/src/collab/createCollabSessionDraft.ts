@@ -1,8 +1,10 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomUUID } from 'crypto';
+import { logger } from 'firebase-functions/v2';
 import { db, getAuthContext, requireOwnerOrEditor, getUserDoc } from '../lib/validateAuth';
 import { withErrorBoundary } from '../lib/withErrorBoundary';
+import { notifyDiscord } from '../discord/notifyDiscord';
 import { assertActiveCollabLimit, assertCollabQuota, incrementCollabCount } from './lib';
 import { parseProposedDates, normalizeParticipants } from './draftValidation';
 
@@ -114,6 +116,21 @@ export const createCollabSessionDraft = onCall(
 
           incrementCollabCount(tx, ctx.uid, userData);
         });
+
+        // Discord 通知（失敗してもコラボ作成本体を失敗させない）
+        try {
+          await notifyDiscord(teamId, 'notifyOnCollabCreate', () => ({
+            title: '🤝 コラボ調整が作成されました',
+            color: 0x5865f2,
+            fields: [
+              { name: 'タイトル', value: title, inline: true },
+              { name: '参加者', value: `${normalizedParticipants.length}名`, inline: true },
+              { name: '候補日程', value: `${parsedDates.length}件`, inline: true },
+            ],
+          }));
+        } catch (err) {
+          logger.warn('コラボ作成 Discord 通知に失敗しました', { teamId, err });
+        }
 
         return { sessionId };
       }

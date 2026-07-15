@@ -202,12 +202,13 @@ export interface CollabSession {
 // teams/{teamId}/discord/config サブコレクションの型
 // Team インターフェースには追加しない（サブコレクション方式で operator のみアクセス制限するため）
 export interface DiscordTeamConfig {
-  webhookUrl: string;        // Sprint 1 のみ使用。guildId 設定後は Bot 通知が優先される
-  guildId?: string;          // DiscordサーバーID（Bot 招待完了後に書き込む）
-  channelId?: string;        // Bot 通知先チャンネルID（Bot 招待完了後に書き込む）
-  notifyOnCreate: boolean;   // スケジュール作成時に通知
-  notifyBefore1h: boolean;   // 1時間前リマインダー
-  notifyBefore15min: boolean; // 15分前リマインダー
+  webhookUrl: string;             // Sprint 1 のみ使用。guildId 設定後は Bot 通知が優先される
+  guildId?: string;               // DiscordサーバーID（Bot 招待完了後に書き込む）
+  channelId?: string;             // Bot 通知先チャンネルID（Bot 招待完了後に書き込む）
+  notifyOnTaskCreate: boolean;    // タスク作成時に通知（Discord 経由の作成は除く）
+  notifyOnTaskUpdate: boolean;    // タスク変更時に通知（主要フィールドの変更のみ）
+  notifyOnCollabCreate: boolean;  // コラボ調整作成時に通知
+  notifyOnCollabResponse: boolean; // コラボ調整への回答時に通知
 }
 
 // discord_sessions/{guildId} の型（Sprint 3 AI ボット用）
