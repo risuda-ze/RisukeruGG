@@ -297,4 +297,9 @@ tests/
 
 ---
 
-> 詳細な仕様は [docs/risukeru_gg_spec.md](docs/risukeru_gg_spec.md) を参照してください。
+## ドキュメント
+
+- **正本仕様**: [docs/仕様・計画/risukeru_gg_spec.md](docs/仕様・計画/risukeru_gg_spec.md)（カテゴリ別の詳細は `docs/仕様・計画/` 配下）
+- **変更仕様・実装計画**: `docs/変更仕様/`
+- **LPデザインモック**: [docs/LP/risukeru_gg_lp.html](docs/LP/risukeru_gg_lp.html)（+ `css/` / `js/`）
+  本番LP（`src/app/page.tsx`）のデザイン変更を検討する際の参照用に残している静的HTMLモック。本番実装とは独立しており、ビルド・配信には含まれない。ブラウザで直接開いて確認する。
