@@ -1,9 +1,38 @@
 import type { Metadata } from 'next';
 import { Dela_Gothic_One, Zen_Kaku_Gothic_New } from 'next/font/google';
 
+const LP_DESCRIPTION =
+  '配信スケジュール、もうリスケしない。配信枠の管理・コラボ日程調整・制作タスク管理を、配信者とチームでひとつにまとめる配信者特化型スケジュール管理アプリ。';
+
 export const metadata: Metadata = {
-  title: 'リスケるGG — 撮影も、コラボも、編集もGGなスケジュールを',
-  description: '配信者向けチームスケジュール管理アプリ',
+  // トップページはテンプレートの「| リスケるGG」を付けず、キャッチコピー込みの完全なタイトルにする
+  title: { absolute: 'リスケるGG — 撮影も、コラボも、編集もGGなスケジュールを' },
+  description: LP_DESCRIPTION,
+  alternates: { canonical: '/' },
+  // ページで openGraph / twitter を指定すると layout の同キーは置換されるため、
+  // 画像・カード種別など必要な項目を明示的に再指定する。
+  openGraph: {
+    type: 'website',
+    locale: 'ja_JP',
+    siteName: 'リスケるGG',
+    title: 'リスケるGG — 撮影も、コラボも、編集もGGなスケジュールを',
+    description: LP_DESCRIPTION,
+    url: '/',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'リスケるGG — 配信者特化のチームスケジュール管理アプリ',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'リスケるGG — 撮影も、コラボも、編集もGGなスケジュールを',
+    description: LP_DESCRIPTION,
+    images: ['/og-image.png'],
+  },
 };
 
 const zenKakuGothicNew = Zen_Kaku_Gothic_New({

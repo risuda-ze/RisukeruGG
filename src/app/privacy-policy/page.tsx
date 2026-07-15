@@ -7,8 +7,10 @@ import packageJson from '../../../package.json';
 import { Icon } from '@/components/ui/Icon';
 
 export const metadata: Metadata = {
-  title: 'プライバシーポリシー | リスケるGG',
+  // ルート layout の title テンプレート（%s | リスケるGG）により「プライバシーポリシー | リスケるGG」となる
+  title: 'プライバシーポリシー',
   description: 'リスケるGGのプライバシーポリシーです。個人情報の取り扱いについて説明しています。',
+  alternates: { canonical: '/privacy-policy' },
 };
 
 // プライバシーポリシーの制定日・最終改定日

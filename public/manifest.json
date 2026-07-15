@@ -1,7 +1,7 @@
 {
   "name": "リスケるGG",
   "short_name": "リスケるGG",
-  "description": "配信者向けチームスケジュール管理アプリ",
+  "description": "配信者特化型チームスケジュール管理アプリ。配信枠の管理・コラボ日程調整・制作タスク管理を一元化します。",
   "theme_color": "#534AB7",
   "background_color": "#08081a",
   "display": "standalone",
