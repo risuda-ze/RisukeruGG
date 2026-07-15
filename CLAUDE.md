@@ -6,7 +6,7 @@ For additional context about technologies to be used, project structure, shell c
 
 <!-- SPECKIT START -->
 
-現在のアクティブ機能: カテゴリ統合（スケジュール／タスク共通化） → `specs/018-category-unification/plan.md`
+現在のアクティブ機能: リリース準備（speckit廃止・課金・広告・デザイン統一ほか） → `docs/変更仕様/release-preparation.md`
 
 <!-- SPECKIT END -->
 
