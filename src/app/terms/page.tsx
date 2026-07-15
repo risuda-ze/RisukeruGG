@@ -7,7 +7,7 @@ import packageJson from '../../../package.json';
 import { Icon } from '@/components/ui/Icon';
 
 export const metadata: Metadata = {
-  title: '利用規約 | リスケるGG',
+  title: '利用規約',
   description: 'リスケるGGの利用規約です。本サービスのご利用条件について定めています。',
 };
 

@@ -15,9 +15,12 @@ Firestore コレクション配置: `teams/{teamId}/discord/config`（サブコ�
 | `webhookUrl`        | string           | Discord Webhook URL。`channelId` 未設定時のフォールバック送信先 |
 | `guildId`           | string（任意）   | リンク済み Discord サーバー ID。Bot 招待完了後に書き込む |
 | `channelId`         | string（任意）   | Bot 通知先チャンネル ID。Bot 招待完了後に書き込む |
-| `notifyOnCreate`    | boolean          | スケジュール作成時に通知するか |
-| `notifyBefore1h`    | boolean          | 開始 1 時間前リマインダーを送るか |
-| `notifyBefore15min` | boolean          | 開始 15 分前リマインダーを送るか |
+| `notifyOnTaskCreate`     | boolean     | タスク作成時に通知するか（Discord Bot 経由の作成は除く） |
+| `notifyOnTaskUpdate`     | boolean     | タスク変更時に通知するか（主要フィールドの変更のみ） |
+| `notifyOnCollabCreate`   | boolean     | コラボ調整の作成時に通知するか |
+| `notifyOnCollabResponse` | boolean     | コラボ調整への回答時に通知するか |
+
+トグルはいずれも未設定時デフォルト有効（opt-out）。明示的に `false` の場合のみ送信しない（IN-003）。
 
 ## DiscordSession
 

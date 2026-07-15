@@ -7,9 +7,12 @@
 
 ## 通知配送
 
-- **IN-003**: 通知タイミングは 3 トグル（スケジュール作成時 / 開始 1 時間前 / 開始 15 分前）で個別に ON/OFF できる
-- **IN-004**: 通知は Discord Embed 形式で送信する。`channelId` 設定済みの場合は Bot API（`POST /channels/{channelId}/messages`）で送信し、未設定かつ `webhookUrl` 設定済みの場合は Webhook へフォールバックする（旧 Webhook 方式との後方互換）
-- **IN-005**: Discord 送信の失敗はログに記録するのみとし、スケジュール作成・リマインダー処理本体を失敗させない
+- **IN-003**: 通知タイミングは 4 トグル（タスク作成時 / タスク変更時 / コラボ調整作成時 / コラボ調整への回答時）で個別に ON/OFF できる。トグル未設定（旧スキーマ・新規チーム）はデフォルト有効（opt-out）とし、明示的に `false` の場合のみ送信しない
+  - **IN-003-1**: タスク作成通知は Firestore トリガーで送信する。ただし Discord Bot（`/risukerugg`）経由の作成は二重通知を避けるためスキップする
+  - **IN-003-2**: タスク変更通知は主要フィールド（タイトル / ステータス / 担当 / 締切）の変更時のみ送信する
+  - **IN-003-3**: スケジュール作成・開始前リマインダーの Discord 通知は提供しない（アプリ内通知は notification カテゴリの仕様どおり維持する）
+- **IN-004**: 通知は Discord Embed 形式で送信する。送信は共通ヘルパー `notifyDiscord` に集約し、`channelId` 設定済みの場合は Bot API（`POST /channels/{channelId}/messages`）で送信し、未設定かつ `webhookUrl` 設定済みの場合は Webhook へフォールバックする（旧 Webhook 方式との後方互換）。Embed は送信が確定した後に遅延生成し、未連携・通知 OFF のチームで余分な Firestore 読み取りを行わない
+- **IN-005**: Discord 送信の失敗はログに記録するのみとし、タスク・コラボ処理本体を失敗させない
 
 ## Bot 招待フロー
 
@@ -18,7 +21,7 @@
 - **IN-008**: 1 つの Discord サーバー（guildId）は 1 チームにのみリンクできる。既に他チームが使用中のサーバーへの招待はエラー（`already-linked`）としてブロックする
 - **IN-009**: 招待完了後、Bot トークンで取得したチャンネル一覧を `discord_bot_invite_pending/{nonce}` に一時保存し、設定画面で通知チャンネルを選択・保存させる。保存時に `guildId` / `channelId` を `teams/{teamId}/discord/config` へ書き込む
 - **IN-010**: チャンネル保存時に `/risukerugg` をそのサーバー専用のギルドコマンドとして登録する。グローバルコマンドは使用しない（無関係サーバーへの表示防止）
-- **IN-011**: Bot の kick は自動検知しない。接続解除は設定画面の「接続を解除する」による手動操作のみとし、`guildId` / `channelId` を削除する
+- **IN-011**: Bot の kick は自動検知しない。接続解除は設定画面の「登録を解除する」による手動操作のみとし、破壊的操作のため実行前に確認を挟む。解除時は Discord 側も一括クリーンアップする: ギルドコマンド削除 → Bot 退出 → AI セッション（`discord_sessions/{guildId}`）削除 → `teams/{teamId}/discord/config` 削除。Discord API 呼び出しは best-effort とし、失敗しても解除処理本体は完了させる（Bot が手動削除済みのサーバーでも解除できる）
 
 ## `/risukerugg` AI ボット
 

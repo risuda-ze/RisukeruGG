@@ -7,7 +7,7 @@ import packageJson from '../../../package.json';
 import { Icon } from '@/components/ui/Icon';
 
 export const metadata: Metadata = {
-  title: '特定商取引法に基づく表記 | リスケるGG',
+  title: '特定商取引法に基づく表記',
   description: 'リスケるGGの特定商取引法に基づく表記です。販売価格・支払方法・解約条件等を記載しています。',
 };
 

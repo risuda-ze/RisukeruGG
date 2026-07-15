@@ -13,10 +13,11 @@
 
 ## 通知配送フロー
 
-1. スケジュール作成（Cloud Functions `createSchedule`）またはリマインダー判定（`scheduleReminders`、開始 1 時間前 / 15 分前）が発火する
-2. Admin SDK で `teams/{teamId}/discord/config` を読み、該当トグル（`notifyOnCreate` / `notifyBefore1h` / `notifyBefore15min`）が ON か確認する
-3. Embed メッセージを構築し、`channelId` 設定済みなら Bot API で、未設定かつ `webhookUrl` 設定済みなら Webhook で送信する
+1. タスク作成・変更（Firestore トリガー）またはコラボ調整の作成・回答（Cloud Functions）が発火する
+2. 共通ヘルパー `notifyDiscord` が `teams/{teamId}/discord/config` を読み、該当トグル（`notifyOnTaskCreate` / `notifyOnTaskUpdate` / `notifyOnCollabCreate` / `notifyOnCollabResponse`）を確認する（未設定はデフォルト有効、`false` のみスキップ）
+3. 送信が確定した後に Embed メッセージを遅延生成し、`channelId` 設定済みなら Bot API で、未設定かつ `webhookUrl` 設定済みなら Webhook で送信する
 4. 送信失敗はログに記録するのみで、本体処理は成功させる
+5. スケジュール作成・開始前リマインダーは Discord 通知の対象外（アプリ内通知のみ）
 
 ## `/risukerugg` AI 会話フロー
 
@@ -38,6 +39,7 @@
 
 ## 接続解除フロー
 
-1. `operator` が設定画面の「接続を解除する」を押す
-2. `POST /api/discord/disconnect-guild`（operator 認証）が `guildId` / `channelId` を config から削除する
-3. 設定画面は未接続状態（Webhook 設定＋招待ボタン）に戻る
+1. `operator` が設定画面の「登録を解除する」を押し、確認ダイアログで実行を承認する
+2. `POST /api/discord/disconnect-guild`（operator 認証）が Discord 側を一括クリーンアップする: ギルドコマンド削除 → Bot 退出 → `discord_sessions/{guildId}` 削除（いずれも best-effort。失敗しても続行）
+3. 最後に `teams/{teamId}/discord/config` を削除する
+4. 設定画面は未接続状態（Webhook 設定＋招待ボタン）に戻る
