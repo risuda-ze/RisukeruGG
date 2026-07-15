@@ -5,6 +5,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@firebase/util",
+      "@sentry/cli",
       "protobufjs",
       "sharp",
       "unrs-resolver"
@@ -36,6 +37,7 @@
     "@ai-sdk/anthropic": "^3.0.78",
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.2.2",
+    "@sentry/nextjs": "^10.65.0",
     "@vercel/functions": "^3.6.1",
     "ai": "^6.0.188",
     "date-fns": "^4.1.0",
