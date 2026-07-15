@@ -16,7 +16,7 @@ interface ToolbarItem {
 
 const TOOLBAR_ITEMS: ToolbarItem[] = [
   { key: 'schedule', label: 'スケジュール', icon: 'calendar_month', href: '/schedule' },
-  { key: 'tasks',    label: 'タスク',       icon: 'task_alt',       href: '/tasks' },
+  { key: 'tasks',    label: 'タスク',       icon: 'list_bullet',    href: '/tasks' },
   { key: 'ai',       label: 'AIに相談',     icon: 'auto_awesome',   href: '/chat', ai: true },
   { key: 'collabs',  label: 'コラボ',       icon: 'handshake',      href: '/collabs' },
 ];
