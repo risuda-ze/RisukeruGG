@@ -7,6 +7,7 @@ import { useTasksStore } from '@/stores/tasks';
 import { useScheduleStore } from '@/stores/schedule';
 import { subscribeCollabSessions } from '@/lib/repositories/collabs';
 import { createTeam } from '@/lib/repositories/teams';
+import { trackEvent } from '@/lib/analytics';
 import { StatCard } from '@/components/ui/StatCard';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
@@ -75,6 +76,7 @@ export default function DashboardPage() {
     setCreateError(null);
     try {
       await createTeam({ name: teamName.trim() });
+      trackEvent('team_create');
       setShowCreateTeam(false);
       setTeamName('');
     } catch (err: unknown) {

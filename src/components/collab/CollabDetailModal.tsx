@@ -11,6 +11,7 @@ import {
   reopenCollabSession,
   createCollabSessionDraft,
 } from '@/lib/repositories/collabs';
+import { trackEvent } from '@/lib/analytics';
 import { useAuthStore } from '@/stores/auth';
 import { Icon } from '@/components/ui/Icon';
 import { COLLAB_STATUS_LABELS } from '@/types/entities';
@@ -434,6 +435,7 @@ export function CollabDetailModal({
         sessionId: session!.id,
         confirmedDate: proposedDates[idx].toISOString(),
       });
+      trackEvent('collab_confirm');
       onClose();
     } finally {
       setConfirming(false);

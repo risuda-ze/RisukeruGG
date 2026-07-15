@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Zen_Kaku_Gothic_New, Space_Grotesk } from 'next/font/google';
 import { AuthProvider } from '@/components/AuthProvider';
+import { AnalyticsListener } from '@/components/AnalyticsListener';
 import './globals.css';
 
 /* 日本語本文・見出しフォント */
@@ -83,6 +84,7 @@ export default function RootLayout({
     <html lang="ja" className={`h-full ${zenKaku.variable} ${spaceGrotesk.variable}`}>
       <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" precedence="default" />
       <body className="min-h-full flex flex-col antialiased">
+        <AnalyticsListener />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

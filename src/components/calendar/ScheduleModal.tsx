@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { format, startOfDay, addDays } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { createSchedule, updateSchedule, deleteSchedule } from '@/lib/repositories/schedules';
+import { trackEvent } from '@/lib/analytics';
 import { useAuthStore } from '@/stores/auth';
 import { DateField } from '@/components/ui/DateField';
 import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
@@ -180,6 +181,7 @@ export function ScheduleModal({
       if (isNew) {
         if (!currentUser) return;
         await createSchedule(teamId, { title: title.trim(), categoryId: categoryId || null, startAt: saveStartAt, endAt: saveEndAt, description, participantIds: [], collabPartnerName: null, linkedTaskIds: [], allDay: isAllDay, createdBy: currentUser.uid });
+        trackEvent('schedule_create');
       } else {
         await updateSchedule(teamId, schedule!.id, { title: title.trim(), categoryId: categoryId || null, startAt: saveStartAt, endAt: saveEndAt, description, allDay: isAllDay }, schedule!.updatedAt);
       }

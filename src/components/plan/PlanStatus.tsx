@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuthStore } from '@/stores/auth';
+import { trackEvent } from '@/lib/analytics';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { LIGHT_PLAN_LIMITS } from '@/types/entities';
@@ -46,7 +47,13 @@ export function PlanStatus({ monthlyTaskCount, monthlyCollabCount }: PlanStatusP
       )}
 
       {isLight && signupUrl && (
-        <a href={signupUrl} target="_blank" rel="noopener noreferrer" className="block">
+        <a
+          href={signupUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+          onClick={() => trackEvent('upgrade_cta_click')}
+        >
           <Button variant="amber" className="w-full">
             PARTYプランにアップグレード
           </Button>
