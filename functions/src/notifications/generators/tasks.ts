@@ -1,5 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../../lib/admin';
+import { isPartyPlan } from '../../lib/plan';
 
 export async function createTaskAssignedNotification(
   teamId: string,
@@ -8,7 +9,8 @@ export async function createTaskAssignedNotification(
   taskId: string,
   recipientPlan: 'light' | 'party'
 ): Promise<void> {
-  if (recipientPlan === 'light') return;
+  // LIGHT は tasks カテゴリ通知の対象外（PL-002）。試用モード中は PARTY 相当で送信する
+  if (!isPartyPlan(recipientPlan)) return;
 
   const now = FieldValue.serverTimestamp();
   await db.collection(`teams/${teamId}/notifications`).add({

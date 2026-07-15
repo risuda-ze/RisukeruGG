@@ -3,13 +3,14 @@ import { logger } from 'firebase-functions/v2';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../lib/validateAuth';
 import { LIGHT_PLAN_LIMITS } from '../lib/constants';
+import { isPartyPlan } from '../lib/plan';
 
 type UserData = FirebaseFirestore.DocumentData;
 
 /** LIGHTプランのコラボ作成上限に達していれば例外を投げる */
 export function assertCollabQuota(userData: UserData): void {
   if (
-    userData.plan === 'light' &&
+    !isPartyPlan(userData.plan) &&
     userData.monthlyCollabCount >= LIGHT_PLAN_LIMITS.monthlyCollabs
   ) {
     throw new HttpsError(
@@ -27,7 +28,7 @@ const ACTIVE_COLLAB_STATUSES = ['open'] as const;
  * 上限に達していれば例外を投げる。PARTYプランは無制限。
  */
 export async function assertActiveCollabLimit(teamId: string, userData: UserData): Promise<void> {
-  if (userData.plan !== 'light') return;
+  if (isPartyPlan(userData.plan)) return;
 
   // 集計クエリの失敗（インデックス未整備・SDK 差異等）をそのまま internal にせず、
   // 真因をログに残したうえで意味のあるメッセージで返す。
@@ -61,7 +62,7 @@ export function incrementCollabCount(
   uid: string,
   userData: UserData
 ): void {
-  if (userData.plan === 'light') {
+  if (!isPartyPlan(userData.plan)) {
     tx.update(db.doc(`users/${uid}`), {
       monthlyCollabCount: FieldValue.increment(1),
     });

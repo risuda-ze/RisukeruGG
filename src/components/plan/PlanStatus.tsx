@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { LIGHT_PLAN_LIMITS } from '@/types/entities';
+import { isPartyPlan } from '@/lib/plan';
 
 interface PlanStatusProps {
   monthlyTaskCount: number;
@@ -18,7 +19,7 @@ export function PlanStatus({ monthlyTaskCount, monthlyCollabCount }: PlanStatusP
 
   const signupUrl = process.env.NEXT_PUBLIC_PARTY_SIGNUP_URL;
   const myMember = members.find((m) => m.userId === currentUser.uid);
-  const isLight = myMember?.plan !== 'party';
+  const isLight = !isPartyPlan(myMember?.plan);
 
   return (
     <div className="space-y-3">

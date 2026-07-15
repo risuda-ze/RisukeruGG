@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
 import { TaskBoardPreview } from '@/components/dashboard/TaskBoardPreview';
 import { BannerAd } from '@/components/plan/BannerAd';
+import { isPartyPlan } from '@/lib/plan';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
 import { TopBar } from '@/components/layout/TopBar';
 import { ROLE_BADGE, ROLE_LABELS } from '@/lib/utils/teamRoles';
@@ -267,10 +268,10 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* LIGHTプラン向けバナー広告 */}
-        {myMember?.plan === 'light' && (
+        {/* LIGHTプラン向けバナー広告（実プランから判定。試用モード中は非表示） */}
+        {!isPartyPlan(myMember?.plan) && (
           <div className="mt-4 md:hidden">
-            <BannerAd plan="light" />
+            <BannerAd plan={myMember?.plan ?? 'light'} />
           </div>
         )}
       </div>
