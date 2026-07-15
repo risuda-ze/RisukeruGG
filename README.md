@@ -204,6 +204,18 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
 NEXT_PUBLIC_USE_EMULATORS=true   # Firebase エミュレータ使用時
+
+# 試用モード（PL-011）: 'true' のとき課金なしで全ユーザーを PARTY プラン相当として扱う。
+# クライアント・サーバーの両方で有効化する必要がある。試用終了時は両方を外す（未設定 = 通常運用）。
+NEXT_PUBLIC_FREE_PARTY_MODE=true   # クライアント（広告非表示・CTA非表示・通知制限解除の判定）
+```
+
+Cloud Functions 側は `functions/` の環境変数（`.env` もしくはデプロイ時の設定）に次を追加する:
+
+```env
+# 試用モード（PL-011）のサーバー側フラグ。クライアントの NEXT_PUBLIC_FREE_PARTY_MODE と必ず揃える。
+# 月次上限・チーム参加要件（PL-005）・リマインダー通知などサーバー判定に適用される。
+FREE_PARTY_MODE=true
 ```
 
 ---
