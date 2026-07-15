@@ -203,7 +203,8 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
-NEXT_PUBLIC_USE_EMULATORS=true   # Firebase エミュレータ使用時
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=   # GA4 計測ID。設定時のみ Firebase Analytics を有効化
+NEXT_PUBLIC_USE_EMULATORS=true   # Firebase エミュレータ使用時（Analytics は自動で無効化）
 
 # 試用モード（PL-011）: 'true' のとき課金なしで全ユーザーを PARTY プラン相当として扱う。
 # クライアント・サーバーの両方で有効化する必要がある。試用終了時は両方を外す（未設定 = 通常運用）。
@@ -217,6 +218,20 @@ Cloud Functions 側は `functions/` の環境変数（`.env` もしくはデプ�
 # 月次上限・チーム参加要件（PL-005）・リマインダー通知などサーバー判定に適用される。
 FREE_PARTY_MODE=true
 ```
+
+### エラー監視・アナリティクス（T10）
+
+| 環境変数 | 用途 | 未設定時の挙動 |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SENTRY_DSN` | Sentry のプロジェクト DSN。クライアント・サーバー両方のエラー収集に使用。 | **完全に無効（no-op）**。ビルドにも影響しない。 |
+| `SENTRY_ORG` | Sentry の組織スラッグ（ソースマップアップロード用）。 | ソースマップをアップロードしない。 |
+| `SENTRY_PROJECT` | Sentry のプロジェクトスラッグ（ソースマップアップロード用）。 | ソースマップをアップロードしない。 |
+| `SENTRY_AUTH_TOKEN` | ソースマップアップロード用の認証トークン。**ビルド環境（CI）でのみ設定**。 | ソースマップアップロードをスキップ（ローカルビルド・トークン無しでも `pnpm build` は成功する）。 |
+| `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | GA4 計測ID。ページビュー・主要イベント計測に使用。 | Analytics 未初期化。すべての計測呼び出しが no-op。 |
+
+- **Sentry**: `NEXT_PUBLIC_SENTRY_DSN` が空の場合はクライアント・サーバーとも初期化せず、イベントを一切送信しません。本番の CI ビルドでソースマップをアップロードする場合のみ `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` を設定してください。`tracesSampleRate` は 0.1、`sendDefaultPii` は無効（個人情報を送信しない）設定です。
+- **Cloud Functions のエラー監視**: Firebase 標準の Cloud Logging / Error Reporting を利用するため、Functions 側に Sentry 導入は不要です（追加設定なし）。
+- **Firebase Analytics（GA4）**: `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` が設定され、かつブラウザが対応（`isSupported()` が true）の場合のみ有効化します。エミュレータ利用時（`NEXT_PUBLIC_USE_EMULATORS=true`）は無効化されます。ページビューと主要イベント（`team_create` / `schedule_create` / `collab_confirm` / `upgrade_cta_click`）を計測します。
 
 ---
 
