@@ -1629,14 +1629,14 @@ const LP_HTML = `
               <div class="plan-item">LIVEリマインダー通知</div>
               <div class="plan-item">スマホ・PC 両対応</div>
             </div>
-            <div style="font-size:12px;color:#ef9f27;background:rgba(239,159,39,0.1);border-radius:8px;padding:8px 12px;margin-bottom:16px">⚠️ バナー広告あり</div>
+            <div style="font-size:12px;color:#ef9f27;background:rgba(239,159,39,0.1);border-radius:8px;padding:8px 12px;margin-bottom:16px">⚠️ 広告・告知枠あり</div>
             <button class="plan-cta" style="background:rgba(127,119,221,0.15);color:#a0a0ff;box-shadow:none">無料で始める →</button>
           </div>
           <div class="plan-card" style="position:relative">
             <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#ef9f27;color:#1a0800;font-size:11px;font-weight:700;padding:4px 16px;border-radius:99px;white-space:nowrap">おすすめ</div>
             <div class="plan-name">PARTY</div>
             <div class="plan-price">¥500 <span>/ 人・月</span></div>
-            <div class="plan-note">メンバー全員が個別に支払う方式 · 14日間無料</div>
+            <div class="plan-note">メンバー全員が個別に支払う方式 · いまは公開試用期間につき全機能無料</div>
             <div class="plan-items" style="margin-bottom:8px">
               <div class="plan-item">メンバー 無制限</div>
               <div class="plan-item">スケジュール登録 無制限</div>
@@ -1646,7 +1646,7 @@ const LP_HTML = `
               <div class="plan-item">スマホ・PC 両対応</div>
             </div>
             <div style="font-size:12px;color:#3fcf7f;background:rgba(63,207,127,0.1);border-radius:8px;padding:8px 12px;margin-bottom:16px">✓ 広告なし</div>
-            <button class="plan-cta">14日無料で試す →</button>
+            <button class="plan-cta">いますぐ無料で始める →</button>
             <div class="plan-sub">例）3人チームで ¥1,500 / 月</div>
           </div>
         </div>
