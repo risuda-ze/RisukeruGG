@@ -309,7 +309,8 @@ function CollabBoard({
     <div className="cbboard">
       {/* コントロールバー */}
       <div className="flex items-center justify-end gap-2 px-4 md:px-7 py-2 shrink-0">
-        {canEdit && (
+        {/* PC のみ表示。モバイルの作成導線は下部 FAB（タスク画面と同型）に集約 */}
+        {canEdit && !isMobile && (
           <Button variant="primary" size="sm" onClick={onStartNew}>
             <Icon name="add" size={16} />
             コラボ調整開始
@@ -411,6 +412,18 @@ function CollabBoard({
         )}
       </div>
 
+      {/* モバイル固定 FAB: コラボ作成（タスク画面の FAB と同型・同位置） */}
+      {canEdit && isMobile && (
+        <button
+          onClick={onStartNew}
+          className="fixed bottom-20 right-4 flex items-center gap-2 px-4 h-11 rounded-full shadow-lg font-semibold text-[13px] transition-opacity hover:opacity-90 z-10"
+          style={{ background: 'var(--purple-d)', color: 'var(--purple-l)', boxShadow: 'var(--glow-primary)' }}
+          aria-label="コラボ作成"
+        >
+          <Icon name="add" size={16} />
+          コラボ作成
+        </button>
+      )}
     </div>
   );
 }

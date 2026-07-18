@@ -150,12 +150,9 @@ export default function TasksPage() {
         activeCategoryIds={activeCategoryIds}
         activeAssigneeId={activeAssigneeId}
         taskCount={filteredTasks.length}
-        canEdit={canEdit}
-        isLightPlanFull={isLightPlanFull}
         onCategoryToggle={toggleCategory}
         onClearCategories={clearCategories}
         onAssigneeChange={changeAssignee}
-        onAddTask={() => openAdd()}
         onShowHint={showHint}
       />
 

@@ -291,7 +291,8 @@
 .mtpill.is-on .mtpill__n { background: rgba(var(--cb-accent-rgb), 0.2); color: var(--text-accent); }
 
 /* モバイルカードリスト */
-.mtlist { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+/* 下端余白はモバイル FAB（コラボ作成）とボトムナビのクリアランス */
+.mtlist { padding: 12px 16px 96px; display: flex; flex-direction: column; gap: 10px; }
 .mtlist__hd { display: flex; align-items: center; gap: 9px; margin-bottom: 4px; }
 .mtlist__bar { width: 4px; height: 18px; border-radius: 2px; flex: 0 0 auto; }
 .mtlist__name { font-family: var(--font-head); font-weight: 700; font-size: 1rem; color: var(--text-primary); }
@@ -303,23 +304,25 @@
 /* 外枠（bg/border/radius/shadow/padding/accentレール/hover）は Card コンポーネントに統一。
    ここは内部レイアウトのみを担う。 */
 .mcbcard {
-  display: flex; flex-direction: column; gap: 8px;
+  /* gap はタスクカード（.tcard: 9px）と揃える */
+  display: flex; flex-direction: column; gap: 9px;
   animation: pop-scale var(--duration-base) var(--ease-spring) both;
 }
 .mcbcard:hover { transform: translateX(2px); }
 .mcbcard__top { display: flex; align-items: flex-start; gap: 10px; }
 .mcbcard__title {
   flex: 1; min-width: 0;
-  font-family: var(--font-head); font-weight: 700; font-size: 0.94rem; line-height: 1.35;
+  /* タイポグラフィをタスクカードのタイトル（13px / 600 / 本文フォント）と統一 */
+  font-weight: 600; font-size: 13px; line-height: 1.375;
   color: var(--text-primary);
 }
 .mcbcard__badge { font-size: 0.7rem !important; padding: 3px 9px !important; flex: 0 0 auto; }
-.mcbcard__sub { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--text-muted); }
+.mcbcard__sub { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-muted); }
 .mcbcard__date { display: inline-flex; align-items: center; gap: 5px; }
 .mcbcard__foot { display: flex; align-items: center; gap: 10px; }
 .mcbcard__bar { flex: 1; height: 5px; border-radius: 3px; background: var(--surface); overflow: hidden; }
 .mcbcard__fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--primary-600), var(--primary-300)); }
-.mcbcard__resp { flex: 0 0 auto; font-size: 0.78rem; color: var(--text-secondary); white-space: nowrap; }
+.mcbcard__resp { flex: 0 0 auto; font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
 
 /* ============================================================
    モバイル — 詳細フォーム（2カラム → 1カラム縦積み）
