@@ -1,561 +1,417 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>リスケるGG</title>
+    <title>リスケるGG — 撮影も、コラボも、編集もGGなスケジュールを</title>
     <link
-      href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Dela+Gothic+One&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=M+PLUS+1:wght@900&family=DotGothic16&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/risukeru_gg_lp.css" />
   </head>
   <body>
-    <nav id="navbar">
+    <!-- NAV -->
+    <nav>
       <div class="nav-logo">
-        <img src="../icon-03.png" alt="リスケるGGロゴ" class="nav-logo-icon" />
+        <div class="nav-logo-icon">
+          <svg width="22" height="22" viewBox="0 0 56 56" fill="none">
+            <path d="M30 44 Q16 40 13 25 Q10 12 18 9 Q15 18 20 25 Q24 32 30 35 Q36 38 34 46Z" fill="#AFA9EC" opacity="0.8"/>
+            <ellipse cx="32" cy="37" rx="11" ry="9" fill="#EEEDFE"/>
+            <ellipse cx="33" cy="23" rx="9" ry="8" fill="#EEEDFE"/>
+            <ellipse cx="27" cy="14" rx="3.5" ry="5" fill="#EEEDFE"/>
+            <ellipse cx="27" cy="14" rx="2" ry="3" fill="#CECBF6"/>
+            <ellipse cx="38" cy="12" rx="3.5" ry="5" fill="#EEEDFE"/>
+            <ellipse cx="38" cy="12" rx="2" ry="3" fill="#CECBF6"/>
+            <circle cx="30" cy="22" r="1.8" fill="#26215C"/>
+            <circle cx="37" cy="22" r="1.8" fill="#26215C"/>
+            <ellipse cx="33" cy="26" rx="1.5" ry="1" fill="#534AB7"/>
+            <ellipse cx="28" cy="25" rx="2.5" ry="1.5" fill="#EF9F27" opacity="0.5"/>
+            <ellipse cx="38" cy="25" rx="2.5" ry="1.5" fill="#EF9F27" opacity="0.5"/>
+            <ellipse cx="33" cy="38" rx="3" ry="2" fill="#EF9F27" opacity="0.8"/>
+          </svg>
+        </div>
+        <div class="nav-name">リスケる<span>GG</span></div>
       </div>
-      <div class="nav-name">リスケる<span>GG</span></div>
       <div class="nav-links">
-        <a href="#features">機能</a>
-        <a href="#how">始め方</a>
+        <a href="#features">できること</a>
+        <a href="#usecases">活用例</a>
         <a href="#plan">料金</a>
       </div>
-      <div class="nav-actions">
-        <a href="#" class="nav-login">ログインする</a>
-        <button class="nav-cta">無料で始める</button>
-      </div>
+      <a href="#" class="nav-login">ログイン</a>
+      <a href="#" class="nav-cta">無料で始める</a>
     </nav>
 
+    <!-- HERO（配信待機画面モチーフ） -->
     <section class="hero">
       <div class="hero-bg"></div>
       <div class="hero-grid"></div>
 
-      <div class="hero-badge">
-        <div class="hero-badge-dot"></div>
-        ゲーム配信者に特化した予定管理アプリ
+      <div class="hero-hud" aria-hidden="true">
+        <span class="hud-corner tl"></span>
+        <span class="hud-corner tr"></span>
+        <span class="hud-corner bl"></span>
+        <span class="hud-corner br"></span>
+        <div class="hud-top">
+          <span class="hud-rec"><i></i>REC</span>
+          <span class="hud-clock"><span id="hud-clock">--:--:--</span> JST</span>
+        </div>
+        <div class="hud-bottom">
+          <span>SCHEDULE SYNC ... OK</span>
+          <span>TEAM ONLINE 3/3</span>
+        </div>
       </div>
 
-      <h1 class="hero-title">
-        <span class="br">活動に<span class="gg">照準</span>を</span>
-        <span class="br">ブラさない</span>
-      </h1>
-
-      <p class="hero-sub">
-        配信スケジュールの管理からコラボ調整、編集タスクまで——<br />
-        <span class="no-wrap-pc"
-          ><strong>配信者とチームが必要なものだけ</strong>を、ひとつのアプリにまとめました。</span
-        >
-      </p>
-
-      <div class="hero-btns">
-        <button class="btn-primary">無料で始める →</button>
-        <button class="btn-secondary">ログインする</button>
-      </div>
-
-      <div class="hero-mockup-wrapper">
-        <div class="hero-mockup">
-          <div class="mockup-bar">
-            <div class="mockup-dot" style="background: #ff5f56"></div>
-            <div class="mockup-dot" style="background: #ffbd2e"></div>
-            <div class="mockup-dot" style="background: #27c93f"></div>
-            <div class="mockup-url">risukeru.gg/dashboard</div>
+      <div class="hero-shell">
+        <div class="hero-copy">
+          <div class="hero-badge">
+            <span class="hero-badge-dot"></span>
+            チャンネル運営とチーム連携を1か所で進めるアプリ
           </div>
-          <div class="mockup-body">
-            <div class="mock-sidebar">
-              <div class="mock-s-logo">
-                <div class="mock-s-icon">
-                  <svg width="16" height="16" viewBox="0 0 56 56" fill="none">
-                    <ellipse cx="32" cy="37" rx="11" ry="9" fill="#EEEDFE" />
-                    <ellipse cx="33" cy="23" rx="9" ry="8" fill="#EEEDFE" />
-                    <ellipse cx="27" cy="14" rx="3.5" ry="5" fill="#EEEDFE" />
-                    <ellipse cx="38" cy="12" rx="3.5" ry="5" fill="#EEEDFE" />
-                    <circle cx="30" cy="22" r="1.8" fill="#26215C" />
-                    <circle cx="37" cy="22" r="1.8" fill="#26215C" />
-                    <ellipse cx="33" cy="38" rx="3" ry="2" fill="#EF9F27" opacity="0.8" />
-                  </svg>
-                </div>
-                <div class="mock-s-name">リスケる<span>GG</span></div>
+          <h1 class="hero-title">
+            <span class="br">配信前の連絡と調整<span class="ptc">を</span></span>
+            <span class="br">ひとつにまとめて</span>
+            <span class="br"><span class="gg">配信に集中</span><span class="ptc">できる</span>毎日へ</span>
+          </h1>
+          <p class="hero-sub">
+            配信も、撮影も、動画づくりも、<br />
+            <strong>「毎日のやりとりを、<span class="mk">まるごと一つの場所</span>で管理したい！！——」</strong>
+          </p>
+          <div class="hero-btns">
+            <a href="#" class="btn-primary">無料で始める →</a>
+            <a href="#features" class="btn-secondary">できることを見る</a>
+          </div>
+          <div class="hero-note">Googleアカウントで10秒で開始 ／ クレジットカード不要</div>
+        </div>
+
+        <div class="hero-board-wrap">
+          <div class="hero-board">
+            <div class="board-head">
+              <div class="board-title">今週のスケジュール</div>
+              <div class="board-week">WEEK 05.12-05.18</div>
+            </div>
+            <div class="board-rows">
+              <div class="board-row">
+                <div class="board-day">火<span>13</span></div>
+                <div class="board-time">20:00</div>
+                <div class="board-name">Apex ランク配信</div>
+                <div class="board-tag tag-live">LIVE</div>
               </div>
-              <div class="mock-nav">
-                <div class="mock-nav-item active">▦ ダッシュボード</div>
-                <div class="mock-nav-item">◷ スケジュール</div>
-                <div class="mock-nav-item">▤ タスク</div>
-                <div class="mock-nav-item">⊕ コラボ調整</div>
-                <div class="mock-nav-item">◎ チーム</div>
+              <div class="board-row">
+                <div class="board-day">水<span>14</span></div>
+                <div class="board-time">19:00</div>
+                <div class="board-name">動画「4月まとめ」公開</div>
+                <div class="board-tag tag-video">動画</div>
+              </div>
+              <div class="board-row is-collab">
+                <div class="board-day">金<span>16</span></div>
+                <div class="board-time">21:00</div>
+                <div class="board-name">カズくんGames コラボ</div>
+                <div class="board-tag tag-collab">✓ 確定</div>
+              </div>
+              <div class="board-row">
+                <div class="board-day">土<span>17</span></div>
+                <div class="board-time">15:00</div>
+                <div class="board-name">メン限 雑談配信</div>
+                <div class="board-tag tag-live">LIVE</div>
               </div>
             </div>
-            <div class="mock-content">
-              <div class="mock-stats">
-                <div class="mock-stat">
-                  <div class="mock-stat-l">今月の配信</div>
-                  <div class="mock-stat-v" style="color: var(--purple-l)">18</div>
-                </div>
-                <div class="mock-stat">
-                  <div class="mock-stat-l">コラボ予定</div>
-                  <div class="mock-stat-v" style="color: var(--amber-l)">4</div>
-                </div>
-                <div class="mock-stat">
-                  <div class="mock-stat-l">LIVE視聴者</div>
-                  <div class="mock-stat-v" style="color: var(--live)">1,204</div>
-                </div>
-                <div class="mock-stat">
-                  <div class="mock-stat-l">タスク完了</div>
-                  <div class="mock-stat-v" style="color: var(--green)">72%</div>
-                </div>
-              </div>
-              <div class="mock-2col">
-                <div class="mock-cal">
-                  <div class="mock-cal-title">今週のスケジュール</div>
-                  <div class="mock-cal-days">
-                    <div class="mock-day">
-                      <div class="mock-day-d">月</div>
-                      <div class="mock-day-n">11</div>
-                      <div class="mock-day-dot" style="background: var(--purple)"></div>
-                    </div>
-                    <div class="mock-day today">
-                      <div class="mock-day-d">火</div>
-                      <div class="mock-day-n">12</div>
-                      <div class="mock-day-dot" style="background: var(--amber)"></div>
-                    </div>
-                    <div class="mock-day">
-                      <div class="mock-day-d">水</div>
-                      <div class="mock-day-n">13</div>
-                      <div class="mock-day-dot" style="background: var(--amber-d)"></div>
-                    </div>
-                    <div class="mock-day">
-                      <div class="mock-day-d">木</div>
-                      <div class="mock-day-n">14</div>
-                      <div class="mock-day-dot" style="background: transparent"></div>
-                    </div>
-                    <div class="mock-day">
-                      <div class="mock-day-d">金</div>
-                      <div class="mock-day-n">15</div>
-                      <div class="mock-day-dot" style="background: var(--live)"></div>
-                    </div>
-                    <div class="mock-day">
-                      <div class="mock-day-d">土</div>
-                      <div class="mock-day-n">16</div>
-                      <div class="mock-day-dot" style="background: var(--purple)"></div>
-                    </div>
-                    <div class="mock-day">
-                      <div class="mock-day-d">日</div>
-                      <div class="mock-day-n">17</div>
-                      <div class="mock-day-dot" style="background: transparent"></div>
-                    </div>
-                  </div>
-                </div>
-                <div class="mock-tasks">
-                  <div class="mock-tasks-title">本日のタスク</div>
-                  <div class="mock-task">
-                    サムネ確認
-                    <div>
-                      <span
-                        class="mock-task-tag"
-                        style="background: rgba(127, 119, 221, 0.2); color: var(--purple-l)"
-                        >編集</span
-                      >
-                    </div>
-                  </div>
-                  <div class="mock-task">
-                    LIVE配信 20:00〜
-                    <div>
-                      <span
-                        class="mock-task-tag"
-                        style="background: rgba(255, 77, 109, 0.15); color: var(--live)"
-                        >LIVE</span
-                      >
-                    </div>
-                  </div>
-                  <div class="mock-task">
-                    コラボ打ち合わせ
-                    <div>
-                      <span
-                        class="mock-task-tag"
-                        style="background: rgba(239, 159, 39, 0.15); color: var(--amber-l)"
-                        >コラボ</span
-                      >
-                    </div>
-                  </div>
-                </div>
+            <div class="board-foot">
+              <div class="board-progress-label">今週のタスク <strong>7/9</strong> 完了</div>
+              <div class="pixel-bar" aria-hidden="true">
+                <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i>
               </div>
             </div>
+          </div>
+          <div class="board-toast t1">✅ サムネイル3本 完了</div>
+          <div class="board-toast t2">🤝 コラボの返答が届きました</div>
+          <div class="chaos-layer" aria-hidden="true">
+            <div class="chaos-chip c1">💬 DM「コラボ、いつにする？」</div>
+            <div class="chaos-chip c2">💚 LINE「サムネまだ？」</div>
+            <div class="chaos-chip c3">🎮 Discord「告知って誰が出す？」</div>
+            <div class="chaos-chip c4">🧠「金曜なにかあった気が…」</div>
           </div>
         </div>
       </div>
     </section>
 
+    <!-- TICKER -->
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker-track" id="ticker-track">
+        <span>✅ タスク「サムネイル3本」完了</span><span class="sep">▸▸</span>
+        <span>🤝 コラボ確定 5/16 21:00 カズくんGames</span><span class="sep">▸▸</span>
+        <span>🔴 LIVE開始30分前 リマインド送信</span><span class="sep">▸▸</span>
+        <span>📅 今週の配信 4枠 登録済み</span><span class="sep">▸▸</span>
+        <span>✉ コラボ候補日 3件 送信済み</span><span class="sep">▸▸</span>
+        <span>🎬 動画「4月まとめ」編集 進行中</span><span class="sep">▸▸</span>
+      </div>
+    </div>
+
+    <!-- PROBLEM -->
     <section class="problem" id="problem">
-      <div class="section-inner text-center" style="text-align: center">
-        <div class="section-eyebrow fade-up">こんな悩みありませんか？</div>
-        <h2 class="section-title fade-up delay-100">配信者の「あるある」を<br />全部解決</h2>
-
-        <p class="section-sub fade-up delay-200" style="margin: 0 auto; text-align: center">
-          <span class="no-wrap-pc"
-            >専用ツールがないせいで、<strong style="color: var(--amber)"
-              >本来配信に使えた時間</strong
-            >が管理業務に消えていませんか？</span
-          >
-        </p>
-
+      <div class="section-inner">
+        <div class="section-eyebrow fade-up">▸ 心当たり、ありませんか</div>
+        <h2 class="section-title fade-up delay-100">活動の幅<span class="ptc">が</span>広がるほど<br /><span class="mk">管理の手間</span><span class="ptc">が</span>積み上がる</h2>
+        <p class="section-sub fade-up delay-200">活動以外の、確認と共有と調整で疲弊する。<br class="br-d" />そんな毎日を、まとめて片づけます。</p>
         <div class="problem-grid">
-          <div class="problem-card fade-up delay-100" style="text-align: left">
-            <div class="problem-icon">📅</div>
-            <div class="problem-head">DMがコラボの日程だらけ</div>
-            <div class="problem-text">
-              TwitterのDMやDiscordで調整して、結局どこに記録が残っているかわかりづらい。当日になって「あれ、何時だっけ？」が起きる。
-            </div>
+          <div class="problem-card fade-up delay-100" style="--tilt: -1.1deg">
+            <div class="problem-meta"><span class="app-chip">📅 予定</span></div>
+            <div class="problem-head">情報が散乱してしまう</div>
+            <div class="problem-text">Googleカレンダー、Discord、DM、メモ帳。散らばるほど、最新の情報を持っているのが誰なのか分からなくなる。</div>
           </div>
-          <div class="problem-card fade-up delay-200" style="text-align: left">
-            <div class="problem-icon">🎬</div>
-            <div class="problem-head">編集スタッフへの連絡が大変</div>
-            <div class="problem-text">
-              「この動画いつアップ？」「サムネどうする？」——毎回LINEやDMで確認しているうちに、締切を過ぎてしまう。
-            </div>
+          <div class="problem-card fade-up delay-200" style="--tilt: 0.9deg">
+            <div class="problem-meta"><span class="app-chip">🎬 依頼</span></div>
+            <div class="problem-head">タスクの依頼をよく忘れる</div>
+            <div class="problem-text">編集、サムネ、概要欄、切り抜きの確認。小さな依頼ほどDMの奥に沈んで、担当漏れや締切のズレが生まれます。</div>
           </div>
-          <div class="problem-card fade-up delay-300" style="text-align: left">
-            <div class="problem-icon">🔔</div>
-            <div class="problem-head">告知を忘れる・ミスる</div>
-            <div class="problem-text">
-              配信前の告知ツイートを忘れたり、時間を間違えてツイートしたり…。ファンからの信頼が少しずつ削れていく。
-            </div>
+          <div class="problem-card fade-up delay-100" style="--tilt: 1.2deg">
+            <div class="problem-meta"><span class="app-chip">🤝 調整</span></div>
+            <div class="problem-head">コラボ日程の確定までが長い</div>
+            <div class="problem-text">候補日を出して、返事を待って、決まったら別ツールへ転記する。この地味な往復が、じわじわ効いてくる。</div>
           </div>
-          <div class="problem-card fade-up delay-100" style="text-align: left">
-            <div class="problem-icon">😰</div>
-            <div class="problem-head">スケジュールが頭の中にしかない</div>
-            <div class="problem-text">
-              配信日・コラボ日・撮影日がすべて自分の頭の中。スタッフや共同作業者に毎回ゼロから説明する。
-            </div>
+          <div class="problem-card fade-up delay-200" style="--tilt: -0.8deg">
+            <div class="problem-meta"><span class="app-chip">🔔 告知</span></div>
+            <div class="problem-head">誰かが覚えている前提に…</div>
+            <div class="problem-text">告知も配信前チェックも、気づけば個人の記憶が頼り。忙しい週ほど、どこかが抜けます。</div>
           </div>
         </div>
-
-        <div class="problem-arrow-container fade-up delay-300">
-          <a href="#features" class="problem-arrow">
-            <div class="arrow-down"></div>
-            <div class="label">
-              リスケるGGなら全部まとめて解決 🐿️ <span style="margin-left: 8px">↓</span>
-            </div>
-          </a>
+        <div class="problem-arrow fade-up delay-300">
+          <div class="line"></div>
+          <div class="label">リスケるGGなら「配信前の管理」をひとまとめに 🐿️</div>
+          <div class="line"></div>
         </div>
       </div>
     </section>
 
+    <!-- FEATURES -->
     <section class="features" id="features">
       <div class="section-inner">
-        <div style="text-align: center; margin-bottom: 80px">
-          <div class="section-eyebrow fade-up">シームレスな連携</div>
-          <h2 class="section-title fade-up delay-100">
-            一元管理だからできる、<br />GGなチーム連携。
-          </h2>
-
-          <p class="section-sub fade-up delay-200" style="margin: 0 auto; text-align: center">
-            <span class="no-wrap-pc"
-              >「あれば便利」じゃなく「これがないと困る」機能だけを厳選。複雑な設定なし、すぐ使えます。</span
-            >
-          </p>
-        </div>
-
+        <div class="section-eyebrow fade-up">▸ できること</div>
+        <h2 class="section-title fade-up delay-100">チャンネル運営<span class="ptc">に</span><span class="mk">必要な機能</span><span class="ptc">を</span><br />最低限サポート</h2>
+        <p class="section-sub fade-up delay-200">ユースケースごとに機能を整備。<br class="br-d" />配信も撮影も動画制作も、いつもの流れのままに。</p>
         <div class="feature-blocks">
+          <!-- SCENE 01 -->
           <div class="feature-block fade-up">
+            <div class="feat-ghost" aria-hidden="true">01</div>
             <div>
-              <div class="feat-label">ユースケース 01</div>
-              <h3 class="feat-title">
-                <span
-                  style="
-                    display: inline-block;
-                    white-space: nowrap;
-                    font-size: clamp(24px, 3.5vw, 38px);
-                  "
-                  >コラボ打診からタスク化まで</span
-                ><br />シームレスに連携
-              </h3>
-              <p class="feat-desc">
-                日程調整ツールとタスク管理が別々だと、予定をコピペしてスタッフに伝える手間が発生します。リスケるGGなら、相手のOKでカレンダーに自動登録され、そのままサムネ作成などのタスクへ繋がります。
-              </p>
+              <div class="feat-label"><span class="scene-no">SCENE 01</span>活用シーン</div>
+              <h3 class="feat-title">今週の動き<span class="ptc">が</span>、<span class="mk">全員に見える</span></h3>
+              <p class="feat-desc">配信、収録、コラボ、撮影日をひとつのカレンダーへ。<br class="br-d" />登録すれば、編集者もマネージャーも<strong>同じ画面</strong>を見ています。<br class="br-d" />「今週どこが動くの？」の説明は、もう要りません。</p>
               <div class="feat-points">
-                <div class="feat-point">
-                  <div class="feat-point-dot">✓</div>
-                  候補日を提示して、相手がワンタップでOK/NGを返答
-                </div>
-                <div class="feat-point">
-                  <div class="feat-point-dot">✓</div>
-                  確定したコラボ予定は、チームの共有カレンダーに自動反映
-                </div>
-                <div class="feat-point">
-                  <div class="feat-point-dot">✓</div>
-                  <span
-                    style="
-                      display: inline-block;
-                      white-space: nowrap;
-                      font-size: clamp(12px, 1.8vw, 16px);
-                      letter-spacing: -0.02em;
-                    "
-                    >「サムネ依頼」「告知ツイート」などの関連タスクを即座に紐付け</span
-                  >
-                </div>
+                <div class="feat-point"><div class="feat-point-dot">✓</div>配信日・コラボ日・撮影日を色分けしてひと目で整理</div>
+                <div class="feat-point"><div class="feat-point-dot">✓</div>登録した予定は全員にすぐ共有</div>
+                <div class="feat-point"><div class="feat-point-dot">✓</div>週・月表示で直近も全体も見渡せる</div>
               </div>
             </div>
             <div class="feat-visual">
-              <div class="fv-header">
-                <span>🤝 コラボ から ▤ タスク生成</span>
-              </div>
-              <div class="collab-mock">
-                <div class="collab-card" style="border-color: var(--green)">
-                  <div
-                    class="collab-av"
-                    style="background: rgba(255, 77, 109, 0.2); color: #ff4d6d"
-                  >
-                    KZ
-                  </div>
-                  <div class="collab-info">
-                    <div class="collab-name">カズくんGames</div>
-                    <div class="collab-date">Apex コラボ — 5/18 20:00〜</div>
-                  </div>
-                  <div style="font-size: 12px; color: var(--green); font-weight: 700">✓ 確定済</div>
-                </div>
-                <div class="flow-arrow">↓ そのままタスクを追加</div>
-                <div class="kb-c" style="margin-bottom: 0; border-color: var(--amber-d)">
-                  <div class="kb-c-title">【コラボ】サムネイル作成（カズくんGames）</div>
-                  <div class="kb-c-foot">
-                    <div
-                      class="kb-av"
-                      style="background: rgba(239, 159, 39, 0.3); color: var(--amber-l)"
-                    >
-                      MG
-                    </div>
-                    <div class="kb-due">5/16〆</div>
-                  </div>
+              <div class="fv-header"><span>📅 スケジュール</span><span class="fv-badge badge-purple">5月 第3週</span></div>
+              <div class="feat-shot"><img src="img/lp-feat-schedule.png" alt="リスケるGGのスケジュール画面。配信・収録・コラボの予定を週表示カレンダーで色分け表示している" loading="lazy" /></div>
+              <!-- ▼ 旧CSSモック（復帰用に保存）。実画像へ差し替え済み。
+              <div class="cal-mock">
+                <div class="cal-week"><div class="cal-wday">月</div><div class="cal-wday">火</div><div class="cal-wday">水</div><div class="cal-wday">木</div><div class="cal-wday">金</div><div class="cal-wday">土</div><div class="cal-wday">日</div></div>
+                <div class="cal-week">
+                  <div class="cal-wcell"><div class="cal-cell-date">11</div><div class="cal-event ev-purple">LIVE配信</div></div>
+                  <div class="cal-wcell today"><div class="cal-cell-date">12</div><div class="cal-event ev-live">🔴 LIVE中</div><div class="cal-event ev-amber">コラボMTG</div></div>
+                  <div class="cal-wcell"><div class="cal-cell-date">13</div><div class="cal-event ev-amber">撮影</div></div>
+                  <div class="cal-wcell"><div class="cal-cell-date">14</div></div>
+                  <div class="cal-wcell"><div class="cal-cell-date">15</div><div class="cal-event ev-purple">LIVE配信</div></div>
+                  <div class="cal-wcell"><div class="cal-cell-date">16</div><div class="cal-event ev-green">コラボ確定</div></div>
+                  <div class="cal-wcell"><div class="cal-cell-date">17</div></div>
                 </div>
               </div>
+              -->
             </div>
           </div>
-
+          <!-- SCENE 02 -->
           <div class="feature-block rev fade-up">
+            <div class="feat-ghost" aria-hidden="true">02</div>
             <div>
-              <div class="feat-label">ユースケース 02</div>
-              <h3 class="feat-title">
-                <span
-                  style="
-                    display: inline-block;
-                    white-space: nowrap;
-                    font-size: clamp(24px, 3.5vw, 38px);
-                  "
-                  >スケジュールと制作進捗が連動</span
-                ><br />「あれ、どうなってる？」をゼロに
-              </h3>
-              <p class="feat-desc">
-                「明日の配信サムネ、誰にお願いしたっけ？」「週末の動画、編集どこまで進んでる？」——見えない進捗に対する確認作業はもう不要です。配信カレンダーとタスクボードが一体化しているため、予定を開くだけでチーム全体の「今」が直感的に把握できます。
-              </p>
+              <div class="feat-label"><span class="scene-no">SCENE 02</span>活用シーン</div>
+              <h3 class="feat-title">コラボ調整<span class="ptc">を</span>、<span class="mk">迷子にしない</span></h3>
+              <p class="feat-desc">候補日を送る。返事が来る。決まったら予定に<strong>自動で反映</strong>。<br class="br-d" />DMを遡る時間も、転記も、もう要らない。</p>
               <div class="feat-points">
-                <div class="feat-point">
-                  <div class="feat-point-dot">✓</div>
-                  週表示カレンダーで、チーム全員が一目で予定を把握
-                </div>
-                <div class="feat-point">
-                  <div class="feat-point-dot">✓</div>
-                  カンバンボードで「TODO」「進行中」「完了」を可視化
-                </div>
-                <div class="feat-point">
-                  <div class="feat-point-dot">✓</div>
-                  担当者と締切を設定し、作業の抜け漏れを防止
-                </div>
+                <div class="feat-point"><div class="feat-point-dot">✓</div>候補日を送って、相手はワンタップで返答</div>
+                <div class="feat-point"><div class="feat-point-dot">✓</div>確定はそのまま予定に反映</div>
+                <div class="feat-point"><div class="feat-point-dot">✓</div>履歴が残るから「どこまで決まったか」で迷わない</div>
               </div>
             </div>
             <div class="feat-visual">
-              <div class="fv-header">
-                <span>📅 週間予定 ＆ ▤ タスク進行</span>
+              <div class="fv-header"><span>🤝 コラボ調整</span><span class="fv-badge badge-amber">2件 返答待ち</span></div>
+              <div class="collab-mock">
+                <div class="collab-card"><div class="collab-av av-live">KZ</div><div class="collab-info"><div class="collab-name">カズくんGames</div><div class="collab-date">Apex コラボ希望 — 5/18 20:00〜</div></div><div class="collab-btn-row"><button class="c-btn c-ok" type="button">OK</button><button class="c-btn c-ng" type="button">NG</button></div></div>
+                <div class="collab-card"><div class="collab-av av-purple">HN</div><div class="collab-info"><div class="collab-name">ひなたch</div><div class="collab-date">雑談コラボ — 5/20 or 5/21</div></div><div class="collab-btn-row"><button class="c-btn c-ok" type="button">OK</button><button class="c-btn c-ng" type="button">NG</button></div></div>
+                <div class="collab-card is-done"><div class="collab-av av-green">PK</div><div class="collab-info"><div class="collab-name">ぺこらch</div><div class="collab-date">確定済 — 5/22 21:00〜</div></div><div class="collab-fixed">✓ 確定</div></div>
               </div>
-              <div class="cal-mock" style="padding-bottom: 12px">
-                <div class="cal-week" style="grid-template-columns: repeat(3, 1fr)">
-                  <div class="cal-wday">木</div>
-                  <div class="cal-wday">金</div>
-                  <div class="cal-wday">土</div>
-                </div>
-                <div
-                  class="cal-week"
-                  style="grid-template-columns: repeat(3, 1fr); margin-bottom: 0"
-                >
-                  <div class="cal-wcell">
-                    <div class="cal-cell-date">14</div>
-                    <div
-                      class="cal-event"
-                      style="background: rgba(239, 159, 39, 0.15); color: var(--amber-l)"
-                    >
-                      動画UP
-                    </div>
-                  </div>
-                  <div class="cal-wcell today">
-                    <div class="cal-cell-date" style="color: var(--purple-l)">15</div>
-                    <div
-                      class="cal-event"
-                      style="background: rgba(127, 119, 221, 0.2); color: var(--purple-l)"
-                    >
-                      LIVE配信
-                    </div>
-                  </div>
-                  <div class="cal-wcell">
-                    <div class="cal-cell-date">16</div>
-                    <div
-                      class="cal-event"
-                      style="background: rgba(63, 207, 127, 0.15); color: var(--green)"
-                    >
-                      コラボ
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div style="border-top: 1px dashed var(--border); margin: 0 24px"></div>
-              <div class="kb-mock" style="grid-template-columns: repeat(2, 1fr); padding-top: 16px">
-                <div>
-                  <div class="kb-col-h" style="color: var(--amber)">進行中</div>
-                  <div class="kb-c" style="border-color: var(--amber-d); margin-bottom: 0">
-                    <div class="kb-c-title">14日分 動画編集</div>
-                    <div class="kb-c-foot">
-                      <div
-                        class="kb-av"
-                        style="background: rgba(63, 207, 127, 0.3); color: var(--green)"
-                      >
-                        SA
-                      </div>
-                      <div class="kb-due">本日〆</div>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <div class="kb-col-h" style="color: var(--green)">完了</div>
-                  <div class="kb-c" style="opacity: 0.6; margin-bottom: 0">
-                    <div class="kb-c-title">15日分 配信枠作成</div>
-                    <div class="kb-c-foot">
-                      <div
-                        class="kb-av"
-                        style="background: rgba(127, 119, 221, 0.3); color: var(--purple-l)"
-                      >
-                        RK
-                      </div>
-                      <div class="kb-due">昨日</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <!-- ▼ ユーザー撮影後: 上の .collab-mock を削除し、下のコメントを解除する（画像は docs/LP/img/lp-feat-collab.png に配置） -->
+              <!-- <div class="feat-shot"><img src="img/lp-feat-collab.png" alt="リスケるGGのコラボ調整画面。返答待ちのコラボ依頼を一覧で管理している" loading="lazy" /></div> -->
             </div>
           </div>
-
+          <!-- SCENE 03 -->
           <div class="feature-block fade-up">
+            <div class="feat-ghost" aria-hidden="true">03</div>
             <div>
-              <div class="feat-label">ユースケース 03</div>
-              <h3 class="feat-title">配信前のバタバタを防ぐ<br />確実な通知とリマインド</h3>
-              <p class="feat-desc">
-                予定とタスクが一元管理されているからこそできる、正確でタイムリーな通知。スタッフの作業完了や、配信開始のリマインドが適切なタイミングで届くため、あなたは本番に全集中できます。
-              </p>
+              <div class="feat-label"><span class="scene-no">SCENE 03</span>活用シーン</div>
+              <h3 class="feat-title"><span class="mk">わざわざ聞かなくても</span>共有できる</h3>
+              <p class="feat-desc">編集、切り抜き、サムネ、概要欄。小さい作業ほど数が多い。<br class="br-d" />ボードに並べれば、「あれどうなってる？」を<strong>聞かずに済みます</strong>。</p>
               <div class="feat-points">
-                <div class="feat-point">
-                  <div class="feat-point-dot">✓</div>
-                  編集スタッフがタスクを「完了」にすると即座に通知
-                </div>
-                <div class="feat-point">
-                  <div class="feat-point-dot">✓</div>
-                  LIVE開始前に自動リマインダーを受信
-                </div>
-                <div class="feat-point">
-                  <div class="feat-point-dot">✓</div>
-                  スマホのホーム画面に追加して、プッシュ通知で受け取り可能
-                </div>
+                <div class="feat-point"><div class="feat-point-dot">✓</div>「やること」「進行中」「完了」で作業状況を共有</div>
+                <div class="feat-point"><div class="feat-point-dot">✓</div>担当と締切をセットで依頼</div>
+                <div class="feat-point"><div class="feat-point-dot">✓</div>完了は通知でお知らせ</div>
               </div>
             </div>
             <div class="feat-visual">
-              <div class="fv-header">
-                <span>🔔 タイムラインとアラート</span>
+              <div class="fv-header"><span>▤ タスクボード</span></div>
+              <div class="feat-shot"><img src="img/lp-feat-tasks.png" alt="リスケるGGのタスク画面。編集・サムネ・告知タスクをカンバン形式で管理している" loading="lazy" /></div>
+              <!-- ▼ 旧CSSモック（復帰用に保存）。実画像へ差し替え済み。
+              <div class="kb-mock">
+                <div>
+                  <div class="kb-col-h">TODO</div>
+                  <div class="kb-c"><div class="kb-c-title">概要欄テンプレ更新</div><div class="kb-c-foot"><div class="kb-av av-purple">RK</div><div class="kb-due">5/14</div></div></div>
+                  <div class="kb-c"><div class="kb-c-title">Shorts台本 3本</div><div class="kb-c-foot"><div class="kb-av av-amber">TK</div><div class="kb-due">5/16</div></div></div>
+                </div>
+                <div>
+                  <div class="kb-col-h h-amber">進行中</div>
+                  <div class="kb-c is-doing"><div class="kb-c-title">4月振り返り動画 編集</div><div class="kb-c-foot"><div class="kb-av av-green">SA</div><div class="kb-due">5/13</div></div></div>
+                  <div class="kb-c is-doing"><div class="kb-c-title">サムネイル 3本</div><div class="kb-c-foot"><div class="kb-av av-amber">MG</div><div class="kb-due">5/12</div></div></div>
+                </div>
+                <div>
+                  <div class="kb-col-h h-green">完了</div>
+                  <div class="kb-c is-done"><div class="kb-c-title">先週LIVE アーカイブ公開</div><div class="kb-c-foot"><div class="kb-av av-purple">RK</div><div class="kb-due">5/11</div></div></div>
+                  <div class="kb-c is-done"><div class="kb-c-title">Short素材 撮影 2本</div><div class="kb-c-foot"><div class="kb-av av-purple">RK</div><div class="kb-due">5/12</div></div></div>
+                </div>
               </div>
+              -->
+            </div>
+          </div>
+          <!-- SCENE 04 -->
+          <div class="feature-block rev fade-up">
+            <div class="feat-ghost" aria-hidden="true">04</div>
+            <div>
+              <div class="feat-label"><span class="scene-no">SCENE 04</span>活用シーン</div>
+              <h3 class="feat-title">抜け漏れ<span class="ptc">は</span>、<span class="mk">通知が拾う</span></h3>
+              <p class="feat-desc">LIVE前のリマインダーも、コラボの返答も、タスクの完了も。<br class="br-d" /><strong>通知が拾ってくれる</strong>から、「誰かが覚えているはず」に頼らずに済みます。</p>
+              <div class="feat-points">
+                <div class="feat-point"><div class="feat-point-dot">✓</div>LIVE開始前に自動リマインダー</div>
+                <div class="feat-point"><div class="feat-point-dot">✓</div>コラボ返答・タスク完了を即通知 ※</div>
+                <div class="feat-point"><div class="feat-point-dot">✓</div>ホーム画面に追加していつでも確認</div>
+              </div>
+            </div>
+            <div class="feat-visual">
+              <div class="fv-header"><span>🔔 通知センター</span><span class="fv-badge badge-live">3件 未読</span></div>
               <div class="notif-mock">
-                <div
-                  class="notif-row"
-                  style="border-color: var(--green); background: rgba(63, 207, 127, 0.05)"
-                >
-                  <div class="notif-icon">✅</div>
-                  <div>
-                    <div class="notif-text">
-                      タスク「14日分
-                      動画編集」が<strong>完了</strong>しました。サムネイルの確認をお願いします。
-                    </div>
-                    <div class="notif-time">たった今</div>
-                  </div>
-                </div>
-                <div
-                  class="notif-row"
-                  style="border-color: var(--live); background: rgba(255, 77, 109, 0.05)"
-                >
-                  <div class="notif-icon">🔴</div>
-                  <div>
-                    <div class="notif-text">
-                      <strong>LIVE開始まで1時間</strong>です。配信タイトルと概要欄を確認しましょう。
-                    </div>
-                    <div class="notif-time">1時間前</div>
-                  </div>
-                </div>
-                <div class="notif-row" style="opacity: 0.6">
-                  <div class="notif-icon">📅</div>
-                  <div>
-                    <div class="notif-text">
-                      <strong>明日 20:00</strong>
-                      にカズくんGamesさんとのコラボ配信が予定されています。
-                    </div>
-                    <div class="notif-time">昨日</div>
-                  </div>
-                </div>
+                <div class="notif-row"><div class="notif-icon">🔴</div><div><div class="notif-text"><strong>LIVE開始まで1時間</strong>です。配信タイトルを確認しましょう。</div><div class="notif-time">19:00 に通知予定</div></div></div>
+                <div class="notif-row"><div class="notif-icon">🤝</div><div><div class="notif-text"><strong>カズくんGames</strong> からコラボ打診が届きました。</div><div class="notif-time">2時間前</div></div></div>
+                <div class="notif-row"><div class="notif-icon">✅</div><div><div class="notif-text">タスク「サムネイルデザイン」が<strong>完了</strong>しました。</div><div class="notif-time">3時間前</div></div></div>
+                <div class="notif-row is-read"><div class="notif-icon">📅</div><div><div class="notif-text"><strong>明日 20:00</strong> にLIVE配信が予定されています。</div><div class="notif-time">昨日</div></div></div>
               </div>
+              <!-- ▼ ユーザー撮影後: 上の .notif-mock を削除し、下のコメントを解除する（画像は docs/LP/img/lp-feat-notify.png に配置） -->
+              <!-- <div class="feat-shot"><img src="img/lp-feat-notify.png" alt="リスケるGGの通知画面。LIVEリマインダーやコラボ返答・タスク完了の通知が届く" loading="lazy" /></div> -->
+            </div>
+          </div>
+        </div>
+        <p class="section-note fade-up">※ コラボ返答・タスク完了の通知はPARTYプランの機能です。LIVEリマインダーは全プランで使えます。</p>
+      </div>
+    </section>
+
+    <!-- USECASES -->
+    <section class="usecases" id="usecases">
+      <div class="section-inner">
+        <div class="section-eyebrow fade-up">▸ 活用例</div>
+        <h2 class="section-title fade-up delay-100">あなたのチーム<span class="ptc">なら、</span><br /><span class="mk">こう使える</span></h2>
+        <div class="usecase-grid">
+          <div class="usecase-card fade-up delay-100">
+            <div class="usecase-label">個人配信者</div>
+            <div class="usecase-title">配信・撮影・告知を<br />ひとりでも整理しやすい</div>
+            <div class="usecase-points">
+              <div class="usecase-point">配信・収録・告知を1か所に</div>
+              <div class="usecase-point">頭の中の予定を見える化</div>
+              <div class="usecase-point">今週やることを時系列で確認</div>
+              <div class="usecase-point">公開作業の抜け漏れを防ぐ</div>
+            </div>
+          </div>
+          <div class="usecase-card fade-up delay-200">
+            <div class="usecase-label">配信者 + 編集者</div>
+            <div class="usecase-title">依頼と締切を明文化して<br />確認コストを減らせる</div>
+            <div class="usecase-points">
+              <div class="usecase-point">編集・サムネの依頼をタスク化</div>
+              <div class="usecase-point">担当と締切をセットで共有</div>
+              <div class="usecase-point">「これお願いしたっけ？」が消える</div>
+              <div class="usecase-point">進捗確認のDM往復を削減</div>
+            </div>
+          </div>
+          <div class="usecase-card fade-up delay-100">
+            <div class="usecase-label">コラボ多めの配信者</div>
+            <div class="usecase-title">候補日提示から確定までを<br />迷わず進めやすい</div>
+            <div class="usecase-points">
+              <div class="usecase-point">複数のコラボ調整を一覧で把握</div>
+              <div class="usecase-point">返答待ちをまとめて確認</div>
+              <div class="usecase-point">確定したらそのまま予定へ反映</div>
+            </div>
+          </div>
+          <div class="usecase-card fade-up delay-200">
+            <div class="usecase-label">マネージャー同席チーム</div>
+            <div class="usecase-title">本人・運営・制作が<br />同じ予定表を見て動ける</div>
+            <div class="usecase-points">
+              <div class="usecase-point">全員が同じ予定表を見て動ける</div>
+              <div class="usecase-point">日程確認が誰かに集中しない</div>
+              <div class="usecase-point">配信前の確認をチームで補える</div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
+    <!-- HOW IT WORKS -->
     <section class="how" id="how">
       <div class="section-inner">
-        <div class="section-eyebrow fade-up">使い方</div>
-        <h2 class="section-title fade-up delay-100">3ステップで<br />今日から使える</h2>
-        <p class="section-sub fade-up delay-200" style="margin: 0 auto">
-          アカウント作成から実際に使い始めるまで、5分もかかりません。難しい設定は一切なし。
-        </p>
-
-        <div class="how-steps">
-          <div class="how-step fade-up delay-100">
-            <div class="how-num">1</div>
-            <div class="how-step-title">Googleで<br />ログイン</div>
-            <div class="how-step-text">
-              Googleアカウントがあればすぐ始められます。パスワード登録も不要。
-            </div>
+        <div class="section-eyebrow fade-up">▸ 使い方</div>
+        <h2 class="section-title fade-up delay-100">始め方<span class="ptc">は</span><span class="mk">シンプル</span>。<br />使い始めた瞬間<span class="ptc">に</span>整理が進む</h2>
+        <div class="how-map fade-up delay-200">
+          <div class="how-phase phase-solo"><span class="phase-tag">SOLO</span>ひとりで始める</div>
+          <div class="how-card sc">
+            <div class="hc-num">STEP 1</div>
+            <div class="hc-body"><div class="hc-title">Googleでログイン</div><div class="hc-sub">10秒で完了</div></div>
           </div>
-          <div class="how-step fade-up delay-200">
-            <div class="how-num">2</div>
-            <div class="how-step-title">チームを作って<br />メンバーを招待</div>
-            <div class="how-step-text">
-              編集スタッフ、マネージャーをリンクで招待するだけ。すぐに共有カレンダーが使えます。
-            </div>
+          <div class="how-card sc">
+            <div class="hc-num">STEP 2</div>
+            <div class="hc-body"><div class="hc-title">予定とタスクを登録</div><div class="hc-sub">配信・撮影・公開日を1か所に</div></div>
           </div>
-          <div class="how-step fade-up delay-300">
-            <div class="how-num">3</div>
-            <div class="how-step-title">配信枠を登録して<br />GGスタート</div>
-            <div class="how-step-text">
-              今週の配信予定を入れるだけ。コラボ調整もタスク管理も、全部ここから。
-            </div>
+          <div class="how-card sc">
+            <div class="hc-num">STEP 3</div>
+            <div class="hc-body"><div class="hc-title">コラボもここで調整</div><div class="hc-sub">確定したら自動反映</div></div>
+          </div>
+          <div class="how-phase phase-team"><span class="phase-tag">TEAM</span>チームに広げる</div>
+          <div class="how-card tc">
+            <div class="hc-num">STEP 4</div>
+            <div class="hc-body"><div class="hc-title">チームを作成</div><div class="hc-sub">チーム名を入れるだけ</div></div>
+          </div>
+          <div class="how-card tc">
+            <div class="hc-num">STEP 5</div>
+            <div class="hc-body"><div class="hc-title">コードで招待</div><div class="hc-sub">入力だけで参加完了</div></div>
+          </div>
+          <div class="how-card tc">
+            <div class="hc-num">STEP 6</div>
+            <div class="hc-body"><div class="hc-title">担当を割り振る</div><div class="hc-sub">担当と締切をセット</div></div>
+          </div>
+          <div class="how-card tc">
+            <div class="hc-num">STEP 7</div>
+            <div class="hc-body"><div class="hc-title">あとは本番に集中</div><div class="hc-sub">進捗と通知はおまかせ</div></div>
           </div>
         </div>
       </div>
     </section>
 
+    <!-- PLAN -->
     <section class="plan" id="plan">
       <div class="plan-inner">
-        <div>
-          <div class="section-eyebrow fade-up">料金プラン</div>
-          <h2 class="section-title fade-up delay-100">2つのプランで<br />どんなチームにも対応</h2>
-          <p class="section-sub fade-up delay-200" style="margin: 0 auto">
-            まずはLIGHTで無料スタート。チームが動き始めたらPARTYへ。
-          </p>
+        <div class="plan-head">
+          <div class="section-eyebrow fade-up">▸ PLAN SELECT ─ 料金プラン</div>
+          <h2 class="section-title fade-up delay-100"><span class="mk">2つのプラン</span><span class="ptc">で</span><br />どんなチーム<span class="ptc">にも</span>対応</h2>
+          <p class="section-sub fade-up delay-200">まずは無料で、自分の整理から。<br class="br-d" />チームのやりとりが増えてきたら、そのとき広げれば十分です。</p>
         </div>
-
         <div class="plan-grid">
           <div class="plan-card fade-up delay-100">
-            <div class="plan-name">LIGHT</div>
+            <div class="plan-name latin">LIGHT</div>
             <div class="plan-price">¥0 <span>/ 月</span></div>
             <div class="plan-note">クレジットカード不要・ずっと無料</div>
             <div class="plan-items">
@@ -564,76 +420,93 @@
               <div class="plan-item">タスク 月5件まで</div>
               <div class="plan-item">コラボ調整 月3件まで</div>
               <div class="plan-item">LIVEリマインダー通知</div>
+              <div class="plan-item">スマホ・PC 両対応</div>
             </div>
-            <button class="plan-cta outline">無料で始める →</button>
+            <div class="plan-flag flag-warn">⚠️ 広告・告知枠あり</div>
+            <a href="#" class="plan-cta outline">無料で始める →</a>
           </div>
-
           <div class="plan-card pro fade-up delay-200">
-            <div
-              style="
-                position: absolute;
-                top: 20px;
-                right: -40px;
-                background: var(--amber);
-                color: #1a0800;
-                font-size: 12px;
-                font-weight: 700;
-                padding: 6px 44px;
-                transform: rotate(45deg);
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-              "
-            >
-              おすすめ
-            </div>
-            <div class="plan-name">PARTY</div>
-            <div class="plan-price">¥1,500 <span>/ 人・月</span></div>
-            <div class="plan-note">メンバー全員が個別に支払う方式 · 14日間無料</div>
+            <div class="plan-reco">おすすめ</div>
+            <div class="plan-name latin">PARTY</div>
+            <div class="plan-price">¥500 <span>/ 人・月</span></div>
+            <div class="plan-note">14日間無料トライアル</div>
             <div class="plan-items">
               <div class="plan-item">メンバー 無制限</div>
               <div class="plan-item">スケジュール登録 無制限</div>
               <div class="plan-item">タスク 無制限</div>
               <div class="plan-item">コラボ調整 無制限</div>
               <div class="plan-item">全通知（コラボ返答・タスク更新）</div>
+              <div class="plan-item">スマホ・PC 両対応</div>
             </div>
-            <button class="plan-cta">14日無料で試す →</button>
-            <div class="plan-sub">例）3人チームで ¥4,500 / 月</div>
+            <div class="plan-flag flag-ok">✓ 広告なし</div>
+            <a href="#" class="plan-cta">14日無料で試す →</a>
+          </div>
+        </div>
+        <p class="section-note fade-up">※ PARTYは申し込みから14日間、全機能を無料でお試しできます。トライアル中に解約すれば料金はかかりません。<br class="br-d" />※ PARTYの料金はメンバーそれぞれが自分の分（¥500/月）を支払います。チームまとめ払いはありません。</p>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="testi">
+      <div class="section-inner">
+        <div class="section-eyebrow fade-up">▸ 導入後の変化</div>
+        <h2 class="section-title fade-up delay-100">使いはじめて、<br /><span class="mk">何が変わったか</span></h2>
+        <div class="ba-list">
+          <div class="ba-row fade-up delay-100">
+            <div class="ba-panel before"><div class="ba-label">BEFORE</div><div class="ba-text">コラボの日程調整はDMで延々と往復</div></div>
+            <div class="ba-arrow" aria-hidden="true">▸</div>
+            <div class="ba-panel after"><div class="ba-label">AFTER</div><div class="ba-text">相手はOKをタップするだけ。断然スムーズ</div></div>
+            <div class="ba-who"><div class="testi-av av-live">KZ</div><div class="ba-name">カズくんGames<span>Twitch配信者 / フォロワー4.2万</span></div></div>
+          </div>
+          <div class="ba-row fade-up delay-200">
+            <div class="ba-panel before"><div class="ba-label">BEFORE</div><div class="ba-text">編集スタッフとのやりとりでLINEの未読が山積み</div></div>
+            <div class="ba-arrow" aria-hidden="true">▸</div>
+            <div class="ba-panel after"><div class="ba-label">AFTER</div><div class="ba-text">やりとりはアプリで完結。配信に集中できる</div></div>
+            <div class="ba-who"><div class="testi-av av-purple">HN</div><div class="ba-name">ひなたch<span>YouTube配信者 / 登録者1.8万</span></div></div>
+          </div>
+          <div class="ba-row fade-up delay-300">
+            <div class="ba-panel before"><div class="ba-label">BEFORE</div><div class="ba-text">「今週どうする？」とSlackで毎週聞かれる</div></div>
+            <div class="ba-arrow" aria-hidden="true">▸</div>
+            <div class="ba-panel after"><div class="ba-label">AFTER</div><div class="ba-text">マネージャーと同じ予定表。聞かれることがなくなった</div></div>
+            <div class="ba-who"><div class="testi-av av-green">RN</div><div class="ba-name">レイノスゲーム<span>YouTube / Twitch配信者 / 登録者8.6万</span></div></div>
           </div>
         </div>
       </div>
     </section>
 
+    <!-- FINAL CTA -->
     <section class="final-cta">
-      <div class="section-inner" style="max-width: 700px; margin: 0 auto">
-        <h2 class="final-cta-title fade-up">
-          今日から配信に<br />
-          <span class="accent">全集中</span>しよう
-        </h2>
-        <p class="final-cta-sub fade-up delay-100">
-          スケジュール管理、コラボ調整、チーム連携——<br />
-          面倒なことはリスケるGGに任せて、あなたは配信だけ考えていてください。
-        </p>
-        <div class="hero-btns fade-up delay-200" style="margin-bottom: 0">
-          <button class="btn-primary" style="font-size: 20px; padding: 22px 56px">
-            ログインする
-          </button>
+      <div class="final-cta-inner">
+        <div class="final-hud" aria-hidden="true">READY TO STREAM ?</div>
+        <h2 class="final-cta-title fade-up">管理のための時間<span class="ptc">を</span>減らして<br /><span class="accent px-ul">配信に集中</span>しよう</h2>
+        <p class="final-cta-sub fade-up delay-100">細かい管理はこちらに任せて、あなたとチームは本番へ。</p>
+        <div class="hero-btns fade-up delay-200">
+          <a href="#" class="btn-primary">無料で始める →</a>
+          <a href="#usecases" class="btn-secondary">活用例をもっと見る</a>
         </div>
       </div>
     </section>
 
+    <!-- FOOTER -->
     <footer>
       <div class="footer-logo">
-        <div class="nav-logo-icon" style="width: 32px; height: 32px; border-radius: 7px">
+        <div class="nav-logo-icon footer-icon">
           <svg width="18" height="18" viewBox="0 0 56 56" fill="none">
-            <ellipse cx="32" cy="37" rx="11" ry="9" fill="#EEEDFE" />
-            <ellipse cx="33" cy="23" rx="9" ry="8" fill="#EEEDFE" />
-            <ellipse cx="27" cy="14" rx="3.5" ry="5" fill="#EEEDFE" />
-            <ellipse cx="38" cy="12" rx="3.5" ry="5" fill="#EEEDFE" />
-            <circle cx="30" cy="22" r="1.8" fill="#26215C" />
-            <circle cx="37" cy="22" r="1.8" fill="#26215C" />
-            <ellipse cx="33" cy="38" rx="3" ry="2" fill="#EF9F27" opacity="0.8" />
+            <ellipse cx="32" cy="37" rx="11" ry="9" fill="#EEEDFE"/>
+            <ellipse cx="33" cy="23" rx="9" ry="8" fill="#EEEDFE"/>
+            <ellipse cx="27" cy="14" rx="3.5" ry="5" fill="#EEEDFE"/>
+            <ellipse cx="38" cy="12" rx="3.5" ry="5" fill="#EEEDFE"/>
+            <circle cx="30" cy="22" r="1.8" fill="#26215C"/>
+            <circle cx="37" cy="22" r="1.8" fill="#26215C"/>
+            <ellipse cx="33" cy="38" rx="3" ry="2" fill="#EF9F27" opacity="0.8"/>
           </svg>
         </div>
         <div class="footer-name">リスケる<span>GG</span></div>
+      </div>
+      <div class="footer-links">
+        <a href="/terms">利用規約</a>
+        <a href="/privacy-policy">プライバシーポリシー</a>
+        <a href="/tokushoho">特定商取引法に基づく表記</a>
       </div>
       <div class="footer-copy">© 2026 リスケるGG — 撮影も、コラボも、編集もGGなスケジュールを</div>
     </footer>
