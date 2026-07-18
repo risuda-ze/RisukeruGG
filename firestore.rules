@@ -95,7 +95,10 @@ service cloud.firestore {
     // クライアントからの書き換えを禁止し、課金状態の不正操作を防ぐ（T4 / PL-009）。
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow create, delete: if request.auth != null && request.auth.uid == userId;
+      // 作成は onUserCreate（Admin SDK）、削除は deleteAccount（Admin SDK）のみが行う。
+      // クライアントに create/delete を許すと「削除→plan:'party' で再作成」による
+      // 課金バイパスが可能になるため禁止する（T4 / PL-009）。
+      allow create, delete: if false;
       allow update: if request.auth != null && request.auth.uid == userId &&
                        !request.resource.data.diff(resource.data)
                           .affectedKeys()
