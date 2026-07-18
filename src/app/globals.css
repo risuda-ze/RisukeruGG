@@ -368,6 +368,9 @@ input[type='time']::-webkit-calendar-picker-indicator {
 }
 .ds-card--raised { background: var(--card-raised); border-color: var(--card-border-raised); }
 .ds-card--hover:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-lg), var(--glow-primary); }
+/* クリック可能カード（accent の左レール色は inline style が優先されるため hover でも保持される） */
+.ds-card--interactive { cursor: pointer; }
+.ds-card--interactive:hover { border-color: var(--primary); box-shadow: var(--shadow-md), var(--glow-primary); }
 
 /* ── Badge ──────────────────────────────────────────────────── */
 .ds-badge {
@@ -1097,8 +1100,10 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   background: var(--card);
   border: 1px solid var(--card-border);
   border-left: 3px solid var(--tc, var(--card-border));
-  border-radius: 8px;
-  padding: 11px 12px;
+  /* 外枠数値を Card 規格に一致（radius-lg / padding 16px / border トークン）。
+     D&D の制約により Card への載せ替えは未実施。 */
+  border-radius: var(--radius-lg);
+  padding: 16px;
   cursor: pointer;
   animation: pop-scale 0.18s var(--ease-spring);
   transition: transform var(--duration-fast) var(--ease-out),

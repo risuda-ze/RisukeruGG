@@ -11,6 +11,7 @@ import { CollabDetailModal } from '@/components/collab/CollabDetailModal';
 import { Spinner } from '@/components/ui/Spinner';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { COLLAB_STATUS_LABELS } from '@/types/entities';
 import type { CollabSession, CollabStatus } from '@/types/entities';
@@ -193,8 +194,10 @@ function MCollabCard({ collab, onOpen, onDelete }: CollabRowProps) {
   const pct = total > 0 ? (responded / total) * 100 : 0;
 
   return (
-    <div
-      className={`mcbcard${isFixed ? ' mcbcard--fixed' : ''}`}
+    <Card
+      accent={isFixed ? 'success' : 'primary'}
+      interactive
+      className="mcbcard"
       onClick={() => onOpen(collab)}
     >
       <div className="mcbcard__top">
@@ -236,7 +239,7 @@ function MCollabCard({ collab, onOpen, onDelete }: CollabRowProps) {
           </span>
         </div>
       ) : null}
-    </div>
+    </Card>
   );
 }
 

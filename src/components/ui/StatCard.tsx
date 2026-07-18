@@ -1,5 +1,7 @@
 /* ダッシュボード統計カード — 数値を大きく強調表示 */
 
+import { Card } from './Card';
+
 export type StatColor = 'purple' | 'amber' | 'live' | 'green';
 
 export interface StatCardProps {
@@ -22,12 +24,12 @@ const colorClasses: Record<StatColor, string> = {
 
 export function StatCard({ label, value, color = 'purple', sub }: StatCardProps) {
   return (
-    <div className="bg-card border border-border rounded-lg px-[18px] py-[16px]">
+    <Card>
       <p className="text-[11px] text-muted mb-1.5 tracking-wide">{label}</p>
       <p className={`text-[26px] font-bold leading-none font-num ${colorClasses[color]}`}>
         {value}
       </p>
       {sub && <p className="text-[11px] text-muted mt-1.5">{sub}</p>}
-    </div>
+    </Card>
   );
 }
