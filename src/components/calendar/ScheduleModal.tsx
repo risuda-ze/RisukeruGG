@@ -13,6 +13,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { ScheduleEntry, Category } from '@/types/entities';
 import { getEventLastDay } from '@/lib/utils/eventDays';
 
@@ -61,6 +62,8 @@ export function ScheduleModal({
 }: ScheduleModalProps) {
   const currentUser = useAuthStore((s) => s.currentUser);
   const isNew = schedule === null;
+  /* スマホ縦持ち（md 未満）ではボトムシート表示・ドラッグ/リサイズ無効化 */
+  const isMobile = useMediaQuery(767);
 
   const draftKey = isNew ? DRAFT_KEYS.SCHEDULE_NEW : DRAFT_KEYS.scheduleEdit(schedule!.id);
   const savedDraft = loadDraft<ScheduleModalDraft>(draftKey);
@@ -215,46 +218,52 @@ export function ScheduleModal({
   /* ─────────────────── レンダリング ─────────────────── */
   return (
     <div
-      className="fixed inset-0 z-[280] flex items-center justify-center p-8"
+      className="fixed inset-0 z-[280] flex items-end justify-center p-0 md:items-center md:p-8"
       style={{ background: 'rgba(6,6,16,0.85)', backdropFilter: 'blur(6px)', animation: 'fade-in 200ms ease-out both' }}
       onMouseDown={(e) => { mouseDownOnOverlay.current = e.target === e.currentTarget; }}
       onClick={() => { if (mouseDownOnOverlay.current) onClose(); }}
     >
       {/* ── ドラッグ移動ラッパー（position=0 のときは transform を省略して不要な stacking context を避ける） */}
       <div
+        className="w-full md:w-auto"
         style={{
           position: 'relative',
-          ...(position.x !== 0 || position.y !== 0
+          ...(!isMobile && (position.x !== 0 || position.y !== 0)
             ? { transform: `translate(${position.x}px, ${position.y}px)` }
             : {}),
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ── モーダル本体 */}
+        {/* ── モーダル本体（スマホは全幅ボトムシート） */}
         <div
           ref={cardRef}
           className="smodal__card"
-          style={{
-            width: modalSize?.width ?? 'min(1180px, calc(100vw - 64px))',
-            height: modalSize?.height ?? 'min(720px, calc(100vh - 64px))',
-            minWidth: '560px',
-          }}
+          style={
+            isMobile
+              ? { width: '100%', height: '92dvh', minWidth: 0, borderRadius: '20px 20px 0 0' }
+              : {
+                  width: modalSize?.width ?? 'min(1180px, calc(100vw - 64px))',
+                  height: modalSize?.height ?? 'min(720px, calc(100vh - 64px))',
+                  minWidth: '560px',
+                }
+          }
         >
 
           {/* ── ヘッダー（ドラッグハンドル / タイトル inline） */}
           <div
             className="smodal__hd"
-            style={{ padding: '11px 18px 11px 22px', cursor: 'grab', userSelect: 'none', alignItems: 'center' }}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
+            style={{ padding: '11px 18px 11px 22px', cursor: isMobile ? 'default' : 'grab', userSelect: 'none', alignItems: 'center' }}
+            onPointerDown={isMobile ? undefined : handlePointerDown}
+            onPointerMove={isMobile ? undefined : handlePointerMove}
+            onPointerUp={isMobile ? undefined : handlePointerUp}
+            onPointerCancel={isMobile ? undefined : handlePointerUp}
           >
             <Icon name={isNew ? 'add' : 'edit'} size={17} style={{ color: 'var(--text-accent)', flexShrink: 0 } as React.CSSProperties} />
             <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
               {isNew ? '予定を追加' : '予定を編集'}
             </span>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {/* サブ説明はスマホでは非表示（幅確保） */}
+            <span className="hidden md:inline" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {isNew ? '— 新しい予定の内容を入力して保存してください。' : '— 予定の内容を編集して保存してください。'}
             </span>
             <button onClick={onClose} className="smodal__close" title="閉じる" style={{ marginLeft: 'auto', flexShrink: 0 }}>
@@ -262,13 +271,21 @@ export function ScheduleModal({
             </button>
           </div>
 
-          {/* ── 本体 2 カラム */}
-          <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
+          {/* ── 本体 2 カラム（スマホは縦積み・全体スクロール） */}
+          <div
+            className="flex flex-col md:flex-row"
+            style={{ flex: 1, minHeight: 0, overflow: isMobile ? 'auto' : 'hidden' }}
+          >
 
             {/* ─ 左: 入力フォーム */}
             <div
-              className="flex flex-col gap-5 overflow-y-auto"
-              style={{ flex: '0 0 55%', padding: '22px 20px 22px 26px', borderRight: '1px solid var(--border)', minHeight: 0 }}
+              className="flex flex-col gap-5 md:overflow-y-auto"
+              style={{
+                flex: isMobile ? '0 0 auto' : '0 0 55%',
+                padding: isMobile ? '18px 16px' : '22px 20px 22px 26px',
+                borderRight: isMobile ? 'none' : '1px solid var(--border)',
+                minHeight: 0,
+              }}
             >
               <Input label="タイトル *" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} placeholder="予定のタイトルを入力" />
 
@@ -277,13 +294,13 @@ export function ScheduleModal({
                 <Dropdown value={categoryId} options={categories.map((c) => ({ value: c.id, label: c.name }))} placeholder="未選択" onChange={setCategoryId} scroll />
               </div>
 
-              {/* 開始日時 / 終了日時 / 終日トグル — 横並び */}
-              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
-                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {/* 開始日時 / 終了日時 / 終日トグル — 横並び（スマホは折り返し） */}
+              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 130px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <label className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>開始日時 *</label>
                   <DateField value={startAt} onChange={handleStartAtChange} hideTime={isAllDay} placeholder="開始日時を選択" />
                 </div>
-                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div style={{ flex: '1 1 130px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <label className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>終了日時</label>
                   <DateField value={endAt} onChange={(d) => setEndAt(d)} min={startAt ?? undefined} hideTime={isAllDay} placeholder="終了日時を選択" />
                 </div>
@@ -299,8 +316,18 @@ export function ScheduleModal({
               {error && <p className="text-[12px]" style={{ color: 'var(--danger)' }}>{error}</p>}
             </div>
 
-            {/* ─ 右: コメント / メモ */}
-            <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {/* ─ 右: コメント / メモ（スマホの新規作成時はコメント不可のため非表示） */}
+            {!(isMobile && isNew) && (
+            <div
+              style={{
+                flex: 1,
+                minHeight: isMobile ? 260 : 0,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                borderTop: isMobile ? '1px solid var(--border)' : 'none',
+              }}
+            >
 
               {/* 右カラムヘッダー */}
               <div className="flex items-center gap-2 shrink-0 px-5 py-3" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
@@ -379,6 +406,7 @@ export function ScheduleModal({
               )}
 
             </div>
+            )}
           </div>
 
           {/* ── フッター */}
@@ -398,7 +426,8 @@ export function ScheduleModal({
 
         </div>
 
-        {/* ── リサイズハンドル（カード外・overflow:hidden の影響を受けない） */}
+        {/* ── リサイズハンドル（カード外・overflow:hidden の影響を受けない。スマホでは非表示） */}
+        {!isMobile && (
         <div
           className="smodal__resize"
           onPointerDown={handleResizePointerDown}
@@ -408,6 +437,7 @@ export function ScheduleModal({
         >
           <span className="material-icons" style={{ fontSize: '16px', userSelect: 'none' }}>open_in_full</span>
         </div>
+        )}
 
       </div>
     </div>

@@ -19,6 +19,7 @@ import { ScheduleModal } from '@/components/calendar/ScheduleModal';
 import { Spinner } from '@/components/ui/Spinner';
 import { HintBar } from '@/components/ui/HintBar';
 import { useHintDismiss } from '@/hooks/useHintDismiss';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Icon } from '@/components/ui/Icon';
 import type { ScheduleEntry, MemberCalendarEvent } from '@/types/entities';
 import { getEventLastDay } from '@/lib/utils/eventDays';
@@ -37,6 +38,9 @@ export default function SchedulePage() {
   const subscribeCategories = useCategoryStore((s) => s.subscribe);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week'>('month');
+  /* スマホ縦持ちでは初期表示を週（アジェンダ）にして、密な月グリッドを避ける */
+  const isMobile = useMediaQuery(767);
+  const didInitMobileView = useRef(false);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleEntry | null>(null);
   /* セルクリック時の初期日付（ScheduleModal に渡す） */
@@ -57,6 +61,13 @@ export default function SchedulePage() {
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
+
+  /* 初回マウント時、スマホなら週表示を初期選択にする（以降のユーザー操作は尊重） */
+  useEffect(() => {
+    if (didInitMobileView.current) return;
+    didInitMobileView.current = true;
+    if (isMobile) setView('week'); // eslint-disable-line react-hooks/set-state-in-effect
+  }, [isMobile]);
 
   useEffect(() => {
     if (!currentTeamId) return;
@@ -194,7 +205,7 @@ export default function SchedulePage() {
                 className="btn btn--primary btn--sm"
               >
                 <Icon name="add" size={16} />
-                <span className="hidden sm:inline">予定を追加</span>
+                <span className="hidden md:inline">予定を追加</span>
               </button>
             )}
 
@@ -204,7 +215,7 @@ export default function SchedulePage() {
               className={`btn btn--sm ${showMemberCalendars ? 'btn--ghost' : 'btn--subtle'}`}
             >
               <Icon name="groups" size={15} />
-              <span className="hidden sm:inline">{showMemberCalendars ? 'メンバー表示中' : 'メンバーの予定'}</span>
+              <span className="hidden md:inline">{showMemberCalendars ? 'メンバー表示中' : 'メンバーの予定'}</span>
             </button>
 
             {/* 日付ナビ */}

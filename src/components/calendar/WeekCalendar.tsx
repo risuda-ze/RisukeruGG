@@ -4,6 +4,7 @@ import { format, startOfWeek, addDays, startOfDay, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import type { ScheduleEntry, Category } from '@/types/entities';
 import { eventOccupiesDay, getEventLastDay, isMultiDayEvent } from '@/lib/utils/eventDays';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 interface WeekCalendarProps {
   currentDate: Date;
@@ -67,6 +68,8 @@ export function WeekCalendar({
   onEventClick,
   onDateClick,
 }: WeekCalendarProps) {
+  /* スマホ縦持ち（md 未満）はアジェンダ表示のみをマウント（PC グリッドとの二重マウントを回避） */
+  const isMobile = useMediaQuery(767);
   /* 日曜始まり（weekStartsOn: 0）*/
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -84,7 +87,8 @@ export function WeekCalendar({
     <div className="calweekview">
 
       {/* ── 曜日ヘッダー（デスクトップ） ────────────────────── */}
-      <div className="cwv__head hidden md:grid">
+      {!isMobile && (
+      <div className="cwv__head grid">
         {days.map((day, i) => {
           const isCurrentDay = isToday(day);
           return (
@@ -100,11 +104,12 @@ export function WeekCalendar({
           );
         })}
       </div>
+      )}
 
       {/* ── all-day ストリップ（デスクトップ） ── */}
-      {allDayInWeek.length > 0 && (
+      {!isMobile && allDayInWeek.length > 0 && (
         <div
-          className="hidden md:grid grid-cols-7 border-b border-border shrink-0 bg-card/20 py-1 gap-y-0.5"
+          className="grid grid-cols-7 border-b border-border shrink-0 bg-card/20 py-1 gap-y-0.5"
           style={{ gridAutoRows: '22px' }}
         >
           {allDayInWeek.map((event) => {
@@ -150,7 +155,8 @@ export function WeekCalendar({
       )}
 
       {/* ── モバイル: アジェンダリスト表示 ──────────────────── */}
-      <div className="md:hidden flex-1 overflow-y-auto divide-y divide-border/60">
+      {isMobile && (
+      <div className="flex-1 overflow-y-auto divide-y divide-border/60">
         {days.map((day, i) => {
           /* 複数日対応: 当日の範囲内にある全イベントを取得 */
           const daySchedules = schedules
@@ -200,7 +206,7 @@ export function WeekCalendar({
                     return (
                       <button
                         key={s.id}
-                        className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-[8px] border-l-[3px] transition-opacity active:opacity-70 min-h-[40px]"
+                        className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-[8px] border-l-[3px] transition-opacity active:opacity-70 min-h-[44px]"
                         style={style}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -227,9 +233,11 @@ export function WeekCalendar({
           );
         })}
       </div>
+      )}
 
       {/* ── デスクトップ: 単日イベントのグリッド ────────────── */}
-      <div className="cwv__cols hidden md:grid">
+      {!isMobile && (
+      <div className="cwv__cols grid">
         {days.map((day) => {
           const daySingleSchedules = singleDaySchedules
             .filter((s) => eventOccupiesDay(s, day))
@@ -271,6 +279,7 @@ export function WeekCalendar({
           );
         })}
       </div>
+      )}
     </div>
   );
 }
