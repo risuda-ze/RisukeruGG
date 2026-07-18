@@ -6,6 +6,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import packageJson from '../../../../../package.json';
 import { auth, db, storage } from '@/lib/firebase/client';
 import { useAuthStore } from '@/stores/auth';
 import { deleteAccount } from '@/lib/repositories/teams';
@@ -572,8 +573,7 @@ export default function ProfileSettingsPage() {
                     </div>
                     <div className="flex justify-between items-center py-3">
                       <span className="text-muted">バージョン</span>
-                      {/* TODO: バージョンは package.json から動的取得も可（resolveJsonModule: true 有効）*/}
-                      <span className="text-text">0.1.0</span>
+                      <span className="text-text">v{packageJson.version}</span>
                     </div>
                   </div>
                 </div>

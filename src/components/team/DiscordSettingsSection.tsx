@@ -330,9 +330,14 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
             className="text-[12px] rounded-[8px] px-3 py-2 border"
             style={{
               color: toast.type === 'success' ? 'var(--green)' : 'var(--live)',
-              background: toast.type === 'success' ? 'rgba(74,222,128,0.1)' : 'rgba(239,68,68,0.1)',
+              background:
+                toast.type === 'success'
+                  ? 'color-mix(in oklab, var(--success) 10%, transparent)'
+                  : 'color-mix(in oklab, var(--danger) 10%, transparent)',
               borderColor:
-                toast.type === 'success' ? 'rgba(74,222,128,0.3)' : 'rgba(239,68,68,0.3)',
+                toast.type === 'success'
+                  ? 'color-mix(in oklab, var(--success) 30%, transparent)'
+                  : 'color-mix(in oklab, var(--danger) 30%, transparent)',
             }}
           >
             {toast.message}
@@ -357,7 +362,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
               </div>
               <span
                 className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(74,222,128,0.15)', color: 'var(--green)' }}
+                style={{ background: 'var(--success-dim)', color: 'var(--green)' }}
               >
                 接続済み
               </span>

@@ -184,7 +184,9 @@ function TaskStatusPanel({
             {...provided.droppableProps}
             className="flex flex-col gap-2.5 p-3 flex-1 transition-colors"
             style={{
-              background: snapshot.isDraggingOver ? 'rgba(127,119,221,0.05)' : undefined,
+              background: snapshot.isDraggingOver
+                ? 'color-mix(in oklab, var(--primary) 6%, transparent)'
+                : undefined,
               minHeight: 60,
             }}
           >
