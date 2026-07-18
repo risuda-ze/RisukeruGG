@@ -89,6 +89,8 @@ export function WeekCalendar({
   const allDayInWeek = [...allDaySchedules, ...multiDaySchedules].filter(
     (s) => getEventWeekCols(s, days) !== null
   );
+  /* モバイル連日ストリップ: 複数日イベントのみ（単日終日は日別リスト側だけに出す） */
+  const multiDayStripInWeek = allDayInWeek.filter((s) => isMultiDayEvent(s));
 
   return (
     <div className="calweekview">
@@ -164,13 +166,14 @@ export function WeekCalendar({
       {/* ── モバイル: アジェンダリスト表示 ──────────────────── */}
       {isMobile && (
       <div className="flex-1 overflow-y-auto divide-y divide-border/60">
-        {/* 連日・終日の予定ストリップ（週内で一度だけ表示） */}
-        {allDayInWeek.length > 0 && (
+        {/* 連日予定ストリップ（週内で一度だけ表示）。
+            単日の終日イベントは日別リスト側にのみ出し、二重表示を避ける */}
+        {multiDayStripInWeek.length > 0 && (
           <div className="px-3 py-2.5 flex flex-col gap-1.5 bg-card/25">
             <span className="text-[10px] font-medium tracking-widest text-muted/70 px-1">
-              連日・終日の予定
+              連日の予定
             </span>
-            {allDayInWeek.map((event) => {
+            {multiDayStripInWeek.map((event) => {
               const style = getEventStyle(event.categoryId, categories, event.source);
               const last = getEventLastDay(event);
               const rangeLabel = isSameDay(event.startAt, last)
