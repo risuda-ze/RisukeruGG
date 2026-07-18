@@ -1,4 +1,4 @@
-import { startOfDay, endOfDay } from 'date-fns';
+import { startOfDay, endOfDay, differenceInCalendarDays } from 'date-fns';
 
 /**
  * イベントの日付跨ぎ判定ユーティリティ。
@@ -31,4 +31,14 @@ export function getEventLastDay(event: EventRange): Date {
 /** 複数の暦日にまたがるイベントか */
 export function isMultiDayEvent(event: EventRange): boolean {
   return startOfDay(event.startAt).getTime() < getEventLastDay(event).getTime();
+}
+
+/** イベントが占有する暦日の総数（開始日〜最終日を含む。単日なら 1） */
+export function getEventDayCount(event: EventRange): number {
+  return differenceInCalendarDays(getEventLastDay(event), startOfDay(event.startAt)) + 1;
+}
+
+/** 指定日がイベントの何日目か（開始日 = 1）。占有日であることを前提とする */
+export function getEventDayIndex(event: EventRange, day: Date): number {
+  return differenceInCalendarDays(startOfDay(day), startOfDay(event.startAt)) + 1;
 }

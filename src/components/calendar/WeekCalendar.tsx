@@ -1,10 +1,17 @@
 'use client';
 
-import { format, startOfWeek, addDays, startOfDay, isToday } from 'date-fns';
+import { format, startOfWeek, addDays, startOfDay, isToday, isSameDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import type { ScheduleEntry, Category } from '@/types/entities';
-import { eventOccupiesDay, getEventLastDay, isMultiDayEvent } from '@/lib/utils/eventDays';
+import {
+  eventOccupiesDay,
+  getEventLastDay,
+  isMultiDayEvent,
+  getEventDayCount,
+  getEventDayIndex,
+} from '@/lib/utils/eventDays';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { Icon } from '@/components/ui/Icon';
 
 interface WeekCalendarProps {
   currentDate: Date;
@@ -157,6 +164,37 @@ export function WeekCalendar({
       {/* ── モバイル: アジェンダリスト表示 ──────────────────── */}
       {isMobile && (
       <div className="flex-1 overflow-y-auto divide-y divide-border/60">
+        {/* 連日・終日の予定ストリップ（週内で一度だけ表示） */}
+        {allDayInWeek.length > 0 && (
+          <div className="px-3 py-2.5 flex flex-col gap-1.5 bg-card/25">
+            <span className="text-[10px] font-medium tracking-widest text-muted/70 px-1">
+              連日・終日の予定
+            </span>
+            {allDayInWeek.map((event) => {
+              const style = getEventStyle(event.categoryId, categories, event.source);
+              const last = getEventLastDay(event);
+              const rangeLabel = isSameDay(event.startAt, last)
+                ? format(event.startAt, 'M/d(E)', { locale: ja })
+                : `${format(event.startAt, 'M/d(E)', { locale: ja })}〜${format(last, 'M/d(E)', { locale: ja })}`;
+              return (
+                <button
+                  key={event.id}
+                  className="w-full text-left flex items-center gap-2.5 pl-3 pr-3 py-2 rounded-[8px] border-l-[3px] transition-opacity active:opacity-70 min-h-[44px]"
+                  style={style}
+                  onClick={() => onEventClick(event)}
+                >
+                  <span className="text-[13px] font-medium text-white truncate flex-1">
+                    {event.title}
+                  </span>
+                  <span className="text-[11px] font-num text-white/55 shrink-0">
+                    {rangeLabel}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {days.map((day, i) => {
           /* 複数日対応: 当日の範囲内にある全イベントを取得 */
           const daySchedules = schedules
@@ -186,32 +224,65 @@ export function WeekCalendar({
                     今日
                   </span>
                 )}
+                {/* 予定がある日: 日付ヘッダー右端の追加ボタン（編集権限がある場合のみ） */}
+                {onDateClick && daySchedules.length > 0 && (
+                  <button
+                    onClick={() => onDateClick(day)}
+                    className="ml-auto shrink-0 w-9 h-9 -my-1 flex items-center justify-center rounded-[8px] text-muted active:text-accent active:bg-surface transition-colors"
+                    aria-label={`${format(day, 'M月d日', { locale: ja })}に予定を追加`}
+                  >
+                    <Icon name="add" size={18} />
+                  </button>
+                )}
               </div>
 
               {daySchedules.length === 0 ? (
-                <div
-                  className={`px-5 py-3 text-[12px] text-muted/40 ${onDateClick ? 'cursor-pointer' : ''}`}
-                  onClick={() => onDateClick?.(day)}
-                >
-                  —
-                </div>
+                onDateClick ? (
+                  /* 予定が無い日: 追加を促す空状態行（タップで作成モーダル） */
+                  <button
+                    onClick={() => onDateClick(day)}
+                    className="w-full text-left flex items-center gap-2 px-5 py-2.5 min-h-[44px] text-[12px] text-muted/45 active:text-accent transition-colors"
+                  >
+                    <Icon name="add" size={15} />
+                    <span>予定を追加</span>
+                  </button>
+                ) : (
+                  <div className="px-5 py-3 text-[12px] text-muted/40">—</div>
+                )
               ) : (
-                <div
-                  className={`px-3 py-2 flex flex-col gap-1.5 ${onDateClick ? 'cursor-pointer' : ''}`}
-                  onClick={() => onDateClick?.(day)}
-                >
+                <div className="px-3 py-2 flex flex-col gap-1.5">
                   {daySchedules.map((s) => {
                     const style = getEventStyle(s.categoryId, categories, s.source);
                     const cat = categories.find((c) => c.id === s.categoryId);
+                    const isMulti = isMultiDayEvent(s);
+                    const isContinuation = isMulti && !isSameDay(s.startAt, day);
+
+                    /* 継続日: 薄い 1 行チップ（n/総日目） */
+                    if (isContinuation) {
+                      return (
+                        <button
+                          key={s.id}
+                          className="w-full text-left flex items-center gap-2.5 px-3 h-8 rounded-[8px] border-l-[3px] opacity-60 transition-opacity active:opacity-40"
+                          style={{ borderLeftColor: style.borderLeftColor, background: 'transparent' }}
+                          onClick={() => onEventClick(s)}
+                        >
+                          <span className="text-[12px] font-medium text-muted truncate flex-1">
+                            {s.title}
+                          </span>
+                          <span className="text-[10px] font-num text-muted/70 shrink-0">
+                            {getEventDayIndex(s, day)}/{getEventDayCount(s)}日目
+                          </span>
+                        </button>
+                      );
+                    }
+
+                    /* 開始日 or 単日: 通常カード（複数日の開始日は開始マーク付き） */
                     return (
                       <button
                         key={s.id}
                         className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-[8px] border-l-[3px] transition-opacity active:opacity-70 min-h-[44px]"
                         style={style}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEventClick(s);
-                        }}
+                        onClick={() => onEventClick(s)}
                       >
                         {cat?.icon && (
                           <span className="material-icons text-[14px] opacity-80 shrink-0">
@@ -221,8 +292,11 @@ export function WeekCalendar({
                         <span className="text-[12px] font-num text-white/60 shrink-0 w-10">
                           {s.allDay ? '終日' : format(s.startAt, 'HH:mm')}
                         </span>
-                        <span className="text-[14px] font-medium text-white truncate flex-1">
-                          {s.title}
+                        <span className="text-[14px] font-medium text-white truncate flex-1 flex items-center gap-1.5">
+                          {isMulti && (
+                            <Icon name="chevron_right" size={14} className="text-white/50 shrink-0" />
+                          )}
+                          <span className="truncate">{s.title}</span>
                         </span>
                       </button>
                     );

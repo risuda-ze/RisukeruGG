@@ -110,6 +110,9 @@ export function MobileToolbar() {
         className="flex md:hidden fixed bottom-0 left-0 right-0 z-40 items-stretch justify-around"
         style={{
           height: '66px',
+          /* ホームインジケーター等のセーフエリア分を下に確保 */
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          boxSizing: 'content-box',
           background: 'var(--surface)',
           borderTop: '1px solid var(--border)',
         }}
