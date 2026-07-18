@@ -16,7 +16,9 @@ import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Icon } from '@/components/ui/Icon';
 import { Dropdown } from '@/components/ui/Dropdown';
-import { isPartyPlan } from '@/lib/plan';
+import { isPartyPlan, isFreePartyMode } from '@/lib/plan';
+import { createStripeCheckoutSession, createStripePortalSession } from '@/lib/repositories/billing';
+import { trackEvent } from '@/lib/analytics';
 import type { NotificationPreferences } from '@/types/entities';
 
 // アプリ情報タブを含む5タブ構成
@@ -153,21 +155,44 @@ export default function ProfileSettingsPage() {
     }
   }
 
-  /* ── プラン ───────────────────────────────────────────────── */
-  const [savingPlan, setSavingPlan] = useState(false);
+  /* ── プラン（Stripe 課金導線・T4） ─────────────────────────── */
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingError, setBillingError] = useState<string | null>(null);
+  // 試用モード中（PL-011）は課金導線を出さない。
+  const showBilling = !isFreePartyMode();
 
-  async function handlePlanChange(newPlan: 'light' | 'party') {
-    if (!currentUser) return;
-    setSavingPlan(true);
+  async function handleUpgrade() {
+    setBillingLoading(true);
+    setBillingError(null);
     try {
-      await updateDoc(doc(db, 'users', currentUser.uid), { plan: newPlan });
-      if (currentTeam) {
-        await updateDoc(doc(db, 'teams', currentTeam.id, 'members', currentUser.uid), {
-          plan: newPlan,
-        });
+      trackEvent('upgrade_cta_click');
+      const { data } = await createStripeCheckoutSession({});
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setBillingError('決済ページの生成に失敗しました');
       }
+    } catch {
+      setBillingError('決済ページの生成に失敗しました');
     } finally {
-      setSavingPlan(false);
+      setBillingLoading(false);
+    }
+  }
+
+  async function handleManageBilling() {
+    setBillingLoading(true);
+    setBillingError(null);
+    try {
+      const { data } = await createStripePortalSession({});
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setBillingError('支払い設定ページの生成に失敗しました');
+      }
+    } catch {
+      setBillingError('支払い設定ページの生成に失敗しました');
+    } finally {
+      setBillingLoading(false);
     }
   }
 
@@ -386,7 +411,8 @@ export default function ProfileSettingsPage() {
             <h3 className="text-sm font-semibold text-text">プランの管理</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {(['light', 'party'] as const).map((plan) => {
-                const isCurrent = myMember?.plan === plan;
+                // 現在プランの表示は実効プラン（試用モード中は PARTY）に合わせる
+                const isCurrent = (isParty ? 'party' : 'light') === plan;
                 return (
                   <Card key={plan} className={isCurrent ? 'border-purple/60' : ''}>
                     <div className="flex items-start justify-between mb-3">
@@ -454,15 +480,50 @@ export default function ProfileSettingsPage() {
                       )}
                     </ul>
 
-                    {!isCurrent && (
-                      <Button size="sm" loading={savingPlan} onClick={() => handlePlanChange(plan)}>
-                        {plan === 'party' ? 'アップグレードする' : 'ダウングレードする'}
+                    {plan === 'party' && !isCurrent && showBilling && (
+                      <Button size="sm" loading={billingLoading} onClick={handleUpgrade}>
+                        アップグレードする
                       </Button>
                     )}
                   </Card>
                 );
               })}
             </div>
+
+            {/* ── 課金アクション ─────────────────────────────── */}
+            {showBilling && isParty && (
+              <Card>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold text-text mb-0.5">支払い設定</p>
+                    <p className="text-[12px] text-muted">
+                      解約・支払い方法の変更・請求履歴の確認は Stripe の管理ページで行えます。
+                    </p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    loading={billingLoading}
+                    onClick={handleManageBilling}
+                  >
+                    支払い設定を開く
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {!showBilling && (
+              <Card className="border-amber/20">
+                <p className="text-sm font-medium text-amber-l mb-1">
+                  現在は公開試用期間につき全機能を無料でご利用いただけます
+                </p>
+                <p className="text-[12px] text-muted">
+                  試用期間の終了後にPARTYプランの課金導線を有効化します。
+                </p>
+              </Card>
+            )}
+
+            {billingError && <p className="text-[12px] text-live">{billingError}</p>}
           </div>
         )}
 
