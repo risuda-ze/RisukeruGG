@@ -42,3 +42,6 @@ export * from './notifications/taskDiscordNotifications';
 // お問い合わせフォーム
 export * from './contact/sendContactEmail';
 
+// クローズドベータ利用申請（T11）
+export * from './beta/requestBetaAccess';
+

@@ -209,6 +209,11 @@ NEXT_PUBLIC_USE_EMULATORS=true   # Firebase エミュレータ使用時（Analyt
 # 試用モード（PL-011）: 'true' のとき課金なしで全ユーザーを PARTY プラン相当として扱う。
 # クライアント・サーバーの両方で有効化する必要がある。試用終了時は両方を外す（未設定 = 通常運用）。
 NEXT_PUBLIC_FREE_PARTY_MODE=true   # クライアント（広告非表示・CTA非表示・通知制限解除の判定）
+
+# クローズドベータ入場制限（T11）: 'true' のとき allowlist 外ユーザーに待機画面を表示する。
+# 表示切替用のクライアントフラグ。実際のデータアクセス拒否は firestore.rules と
+# Firestore の app_config/beta { enabled } / beta_allowlist が担保する（下記「クローズドベータ」参照）。
+NEXT_PUBLIC_CLOSED_BETA=true
 ```
 
 Cloud Functions 側は `functions/` の環境変数（`.env` もしくはデプロイ時の設定）に次を追加する:
@@ -232,6 +237,34 @@ FREE_PARTY_MODE=true
 - **Sentry**: `NEXT_PUBLIC_SENTRY_DSN` が空の場合はクライアント・サーバーとも初期化せず、イベントを一切送信しません。本番の CI ビルドでソースマップをアップロードする場合のみ `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` を設定してください。`tracesSampleRate` は 0.1、`sendDefaultPii` は無効（個人情報を送信しない）設定です。
 - **Cloud Functions のエラー監視**: Firebase 標準の Cloud Logging / Error Reporting を利用するため、Functions 側に Sentry 導入は不要です（追加設定なし）。
 - **Firebase Analytics（GA4）**: `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` が設定され、かつブラウザが対応（`isSupported()` が true）の場合のみ有効化します。エミュレータ利用時（`NEXT_PUBLIC_USE_EMULATORS=true`）は無効化されます。ページビューと主要イベント（`team_create` / `schedule_create` / `collab_confirm` / `upgrade_cta_click`）を計測します。
+
+### クローズドベータ入場制限（T11）
+
+正式リリース（課金開始）までは、招待したテスターのみがアプリを利用できるようにする仕組みです。ゲートの正は Firestore にあり、環境変数はクライアントの表示切替にのみ使います。
+
+| 設定 | 役割 |
+| --- | --- |
+| `NEXT_PUBLIC_CLOSED_BETA=true` | クライアント側の表示切替。allowlist 外ユーザーに待機画面を表示する。 |
+| `app_config/beta { enabled: true }`（Firestore） | ゲートの正。`firestore.rules` が `get()` で参照し、`enabled=true` かつ allowlist 非在籍のユーザーのデータアクセスを拒否する。 |
+| `beta_allowlist/{email}`（Firestore） | 許可ユーザー。ドキュメント ID = 小文字正規化したメールアドレス。**メールはリポジトリに記録しない**。 |
+| `beta_requests/{uid}`（Firestore） | 利用申請の記録（Callable `requestBetaAccess` が書き込み、管理者へ通知メール送信）。 |
+
+有効化の手順:
+
+1. Firestore コンソールで `app_config/beta` ドキュメントを作成し `enabled: true`（boolean）を設定する。
+2. `.env.local` に `NEXT_PUBLIC_CLOSED_BETA=true` を追加する。
+3. Cloud Functions の Secret `GMAIL_USER` / `GMAIL_APP_PASSWORD`（お問い合わせ機能と共用）を設定する。
+4. 招待するテスターを allowlist に登録する（下記スクリプト）。
+
+allowlist の管理（`FIREBASE_SERVICE_ACCOUNT_KEY` にサービスアカウント JSON を設定して実行）:
+
+```bash
+node scripts/beta-allowlist.mjs add    user@example.com [別のメール...]
+node scripts/beta-allowlist.mjs remove user@example.com
+node scripts/beta-allowlist.mjs list
+```
+
+解除（課金開始時）: `app_config/beta.enabled = false`（または doc 削除）＋ `NEXT_PUBLIC_CLOSED_BETA` を外すと、全ユーザーが即時開放されます。待機中に作成されたアカウント・ソロチームはそのまま利用に移行します。
 
 ---
 
