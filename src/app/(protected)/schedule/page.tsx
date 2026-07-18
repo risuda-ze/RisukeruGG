@@ -67,7 +67,11 @@ export default function SchedulePage() {
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
 
-  /* 初回マウント時、スマホなら週表示を初期選択にする（以降のユーザー操作は尊重） */
+  /* マウント時に一度だけ、スマホなら初期ビューを週表示に切り替える。
+     ビュー選択（週/月）はこの画面の React state のみで管理しており、
+     localStorage 等への永続化は行っていない。そのためこの初期化が効くのは
+     マウント時の1回だけで、以降ユーザーが月表示へ切り替えても強制的に週へ
+     戻すことはない（ページを開き直すと再びモバイル既定＝週表示から始まる）。 */
   useEffect(() => {
     if (didInitMobileView.current) return;
     didInitMobileView.current = true;
