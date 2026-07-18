@@ -14,6 +14,7 @@ import { LeaveTeamDialog } from '@/components/team/LeaveTeamDialog';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { createTeam, dissolveTeam } from '@/lib/repositories/teams';
+import { trackEvent } from '@/lib/analytics';
 import { Icon } from '@/components/ui/Icon';
 import { Dropdown } from '@/components/ui/Dropdown';
 import type { TeamMember, UserRole } from '@/types/entities';
@@ -132,6 +133,7 @@ export default function TeamPage() {
     setCreateError(null);
     try {
       await createTeam({ name: teamName.trim() });
+      trackEvent('team_create');
       setShowCreateTeam(false);
       setTeamName('');
     } catch (err: unknown) {

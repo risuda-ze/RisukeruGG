@@ -1,9 +1,11 @@
 'use client';
 
 import { useAuthStore } from '@/stores/auth';
+import { trackEvent } from '@/lib/analytics';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { LIGHT_PLAN_LIMITS } from '@/types/entities';
+import { isPartyPlan } from '@/lib/plan';
 
 interface PlanStatusProps {
   monthlyTaskCount: number;
@@ -18,7 +20,7 @@ export function PlanStatus({ monthlyTaskCount, monthlyCollabCount }: PlanStatusP
 
   const signupUrl = process.env.NEXT_PUBLIC_PARTY_SIGNUP_URL;
   const myMember = members.find((m) => m.userId === currentUser.uid);
-  const isLight = myMember?.plan !== 'party';
+  const isLight = !isPartyPlan(myMember?.plan);
 
   return (
     <div className="space-y-3">
@@ -45,7 +47,13 @@ export function PlanStatus({ monthlyTaskCount, monthlyCollabCount }: PlanStatusP
       )}
 
       {isLight && signupUrl && (
-        <a href={signupUrl} target="_blank" rel="noopener noreferrer" className="block">
+        <a
+          href={signupUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+          onClick={() => trackEvent('upgrade_cta_click')}
+        >
           <Button variant="amber" className="w-full">
             PARTYプランにアップグレード
           </Button>

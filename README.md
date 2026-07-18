@@ -203,8 +203,35 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
-NEXT_PUBLIC_USE_EMULATORS=true   # Firebase エミュレータ使用時
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=   # GA4 計測ID。設定時のみ Firebase Analytics を有効化
+NEXT_PUBLIC_USE_EMULATORS=true   # Firebase エミュレータ使用時（Analytics は自動で無効化）
+
+# 試用モード（PL-011）: 'true' のとき課金なしで全ユーザーを PARTY プラン相当として扱う。
+# クライアント・サーバーの両方で有効化する必要がある。試用終了時は両方を外す（未設定 = 通常運用）。
+NEXT_PUBLIC_FREE_PARTY_MODE=true   # クライアント（広告非表示・CTA非表示・通知制限解除の判定）
 ```
+
+Cloud Functions 側は `functions/` の環境変数（`.env` もしくはデプロイ時の設定）に次を追加する:
+
+```env
+# 試用モード（PL-011）のサーバー側フラグ。クライアントの NEXT_PUBLIC_FREE_PARTY_MODE と必ず揃える。
+# 月次上限・チーム参加要件（PL-005）・リマインダー通知などサーバー判定に適用される。
+FREE_PARTY_MODE=true
+```
+
+### エラー監視・アナリティクス（T10）
+
+| 環境変数 | 用途 | 未設定時の挙動 |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SENTRY_DSN` | Sentry のプロジェクト DSN。クライアント・サーバー両方のエラー収集に使用。 | **完全に無効（no-op）**。ビルドにも影響しない。 |
+| `SENTRY_ORG` | Sentry の組織スラッグ（ソースマップアップロード用）。 | ソースマップをアップロードしない。 |
+| `SENTRY_PROJECT` | Sentry のプロジェクトスラッグ（ソースマップアップロード用）。 | ソースマップをアップロードしない。 |
+| `SENTRY_AUTH_TOKEN` | ソースマップアップロード用の認証トークン。**ビルド環境（CI）でのみ設定**。 | ソースマップアップロードをスキップ（ローカルビルド・トークン無しでも `pnpm build` は成功する）。 |
+| `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | GA4 計測ID。ページビュー・主要イベント計測に使用。 | Analytics 未初期化。すべての計測呼び出しが no-op。 |
+
+- **Sentry**: `NEXT_PUBLIC_SENTRY_DSN` が空の場合はクライアント・サーバーとも初期化せず、イベントを一切送信しません。本番の CI ビルドでソースマップをアップロードする場合のみ `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` を設定してください。`tracesSampleRate` は 0.1、`sendDefaultPii` は無効（個人情報を送信しない）設定です。
+- **Cloud Functions のエラー監視**: Firebase 標準の Cloud Logging / Error Reporting を利用するため、Functions 側に Sentry 導入は不要です（追加設定なし）。
+- **Firebase Analytics（GA4）**: `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` が設定され、かつブラウザが対応（`isSupported()` が true）の場合のみ有効化します。エミュレータ利用時（`NEXT_PUBLIC_USE_EMULATORS=true`）は無効化されます。ページビューと主要イベント（`team_create` / `schedule_create` / `collab_confirm` / `upgrade_cta_click`）を計測します。
 
 ---
 
@@ -259,15 +286,20 @@ tests/
 
 ## 料金プラン
 
-| 機能           | LIGHTプラン（無料）  | PARTYプラン（¥1,500/人・月） |
+| 機能           | LIGHTプラン（無料）  | PARTYプラン（¥500/人・月）   |
 | -------------- | -------------------- | ---------------------------- |
 | メンバー数     | 2人まで              | 無制限                       |
 | タスク管理     | 月5件まで            | 無制限                       |
 | コラボ調整     | 月3件まで            | 無制限                       |
 | 通知           | LIVEリマインダーのみ | 全種類                       |
-| バナー広告     | あり                 | なし                         |
-| 無料トライアル | —                    | 14日間                       |
+| 広告・告知枠   | あり                 | なし                         |
+| 無料トライアル | —                    | 14日間（正式課金開始時に提供予定） |
 
 ---
 
-> 詳細な仕様は [docs/risukeru_gg_spec.md](docs/risukeru_gg_spec.md) を参照してください。
+## ドキュメント
+
+- **正本仕様**: [docs/仕様・計画/risukeru_gg_spec.md](docs/仕様・計画/risukeru_gg_spec.md)（カテゴリ別の詳細は `docs/仕様・計画/` 配下）
+- **変更仕様・実装計画**: `docs/変更仕様/`
+- **LPデザインモック**: [docs/LP/risukeru_gg_lp.html](docs/LP/risukeru_gg_lp.html)（+ `css/` / `js/`）
+  本番LP（`src/app/page.tsx`）のデザイン変更を検討する際の参照用に残している静的HTMLモック。本番実装とは独立しており、ビルド・配信には含まれない。ブラウザで直接開いて確認する。

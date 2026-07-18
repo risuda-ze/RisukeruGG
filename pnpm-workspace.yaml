@@ -24,3 +24,4 @@ allowBuilds:
   unrs-resolver: true
   '@firebase/util': true
   protobufjs: true
+  '@sentry/cli': true

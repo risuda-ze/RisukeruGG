@@ -37,7 +37,7 @@ if (
 ) {
   window.__firebaseEmulatorsConnected = true;
   const emulatorHost = process.env.NEXT_PUBLIC_EMULATOR_HOST ?? 'localhost';
-  connectAuthEmulator(auth, `http://${emulatorHost}:9099`, { disableWarnings: false });
+  connectAuthEmulator(auth, `http://${emulatorHost}:9098`, { disableWarnings: false });
   connectFirestoreEmulator(db, emulatorHost, 8080);
   connectStorageEmulator(storage, emulatorHost, 9199);
   connectFunctionsEmulator(functions, emulatorHost, 5001);

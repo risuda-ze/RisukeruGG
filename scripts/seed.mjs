@@ -7,7 +7,7 @@
  *   または: scripts\seed.bat
  *
  * 前提: Docker コンテナ (emulator) が起動済みであること
- *   - Auth      http://localhost:9099
+ *   - Auth      http://localhost:9098
  *   - Firestore http://localhost:8080
  *   - Functions http://localhost:5001
  *
@@ -21,7 +21,7 @@
  */
 
 const PROJECT_ID = 'demo-risukeru';
-const AUTH_BASE = 'http://localhost:9099';
+const AUTH_BASE = 'http://localhost:9098';
 const FS_BASE = `http://localhost:8080/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 const API_KEY = 'demo-api-key';
 

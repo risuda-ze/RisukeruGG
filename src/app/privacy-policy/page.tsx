@@ -7,14 +7,15 @@ import packageJson from '../../../package.json';
 import { Icon } from '@/components/ui/Icon';
 
 export const metadata: Metadata = {
-  title: 'プライバシーポリシー | リスケるGG',
+  // ルート layout の title テンプレート（%s | リスケるGG）により「プライバシーポリシー | リスケるGG」となる
+  title: 'プライバシーポリシー',
   description: 'リスケるGGのプライバシーポリシーです。個人情報の取り扱いについて説明しています。',
+  alternates: { canonical: '/privacy-policy' },
 };
 
 // プライバシーポリシーの制定日・最終改定日
-// TODO: 制定日を記入してください
-const EFFECTIVE_DATE = '2026年XX月XX日';
-const LAST_UPDATED = '2026年XX月XX日';
+const EFFECTIVE_DATE = '2026年7月15日';
+const LAST_UPDATED = '2026年7月15日';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -60,24 +61,28 @@ export default function PrivacyPolicyPage() {
 
         {/* はじめに */}
         <p className="text-sm text-muted leading-relaxed mb-10">
-          【事業者名】（以下「当社」または「当方」）は、配信者向けスケジュール管理アプリ「リスケるGG」（以下「本サービス」）における利用者の個人情報の取り扱いについて、以下のとおりプライバシーポリシー（以下「本ポリシー」）を定めます。
-          {/* TODO: 事業者情報を記入してください */}
+          リスケるGG運営（以下「当方」）は、配信者向けスケジュール管理アプリ「リスケるGG」（以下「本サービス」）における利用者の個人情報の取り扱いについて、以下のとおりプライバシーポリシー（以下「本ポリシー」）を定めます。
         </p>
 
         {/* ─── セクション 1: 事業者情報 ─────────────────── */}
         <Section title="1. 事業者情報">
-          {/* TODO: 事業者情報を記入してください */}
           <dl className="space-y-2 text-sm">
-            <Row label="名称" value="【事業者名または個人名】" />
-            <Row label="所在地" value="【住所】" />
-            <Row label="代表者" value="【代表者名】" />
-            <Row label="お問い合わせ先" value="【メールアドレスまたは問い合わせフォームURL】" />
+            <Row label="名称" value="リスケるGG運営" />
+            <Row
+              label="運営責任者"
+              value="お取引に関するお問い合わせについて、請求があった場合には遅滞なく開示いたします。"
+            />
+            <Row
+              label="所在地"
+              value="お取引に関するお問い合わせについて、請求があった場合には遅滞なく開示いたします。"
+            />
+            <Row label="お問い合わせ先" value="pianshoul@gmail.com" />
           </dl>
         </Section>
 
         {/* ─── セクション 2: 取得する個人情報 ──────────── */}
         <Section title="2. 取得する個人情報">
-          <p className="text-sm text-muted mb-3">当社は、以下の個人情報を取得します。</p>
+          <p className="text-sm text-muted mb-3">当方は、以下の個人情報を取得します。</p>
 
           <h3 className="text-sm font-semibold text-text mb-2">
             Googleアカウント連携時に取得する情報
@@ -130,7 +135,7 @@ export default function PrivacyPolicyPage() {
         {/* ─── セクション 4: 第三者への提供 ─────────────── */}
         <Section title="4. 第三者への提供">
           <p className="text-sm text-muted leading-relaxed mb-3">
-            当社は、以下の場合を除き、ユーザーの個人情報を第三者に提供しません。
+            当方は、以下の場合を除き、ユーザーの個人情報を第三者に提供しません。
           </p>
           <ul className="list-disc list-inside text-sm text-muted space-y-2 ml-2">
             <li>ユーザーの同意がある場合</li>
@@ -144,7 +149,7 @@ export default function PrivacyPolicyPage() {
         {/* ─── セクション 5: 委託先への提供 ─────────────── */}
         <Section title="5. 委託先への提供">
           <p className="text-sm text-muted leading-relaxed mb-4">
-            当社は、本サービスの運営のために必要な業務の一部を以下の事業者に委託しており、業務に必要な範囲で個人情報を提供します。なお、これらは個人情報保護法上の「第三者提供」には該当しません。当社は委託先に対し、適切な安全管理措置を講じるよう監督します。
+            当方は、本サービスの運営のために必要な業務の一部を以下の事業者に委託しており、業務に必要な範囲で個人情報を提供します。なお、これらは個人情報保護法上の「第三者提供」には該当しません。当方は委託先に対し、適切な安全管理措置を講じるよう監督します。
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
@@ -171,7 +176,7 @@ export default function PrivacyPolicyPage() {
         {/* ─── セクション 6: 外国への個人情報の提供 ─────── */}
         <Section title="6. 外国への個人情報の提供">
           <p className="text-sm text-muted leading-relaxed mb-3">
-            上記委託先（Google LLC・Vercel Inc.）は米国に所在します。米国は、個人情報保護委員会が定める「十分な保護水準を確保している外国」（十分性認定）には該当しませんが、当社は各社との間でデータ処理契約（DPA）を締結し、個人情報の適切な保護措置を確保しています。
+            上記委託先（Google LLC・Vercel Inc.）は米国に所在します。米国は、個人情報保護委員会が定める「十分な保護水準を確保している外国」（十分性認定）には該当しませんが、当方は各社との間でデータ処理契約（DPA）を締結し、個人情報の適切な保護措置を確保しています。
           </p>
           <p className="text-sm text-muted leading-relaxed mb-3">
             各委託先のプライバシーポリシーは以下よりご確認いただけます。
@@ -200,20 +205,28 @@ export default function PrivacyPolicyPage() {
           </ul>
         </Section>
 
-        {/* ─── セクション 7: Cookie・認証トークンの使用 ──── */}
-        <Section title="7. Cookieおよび認証トークンの使用">
-          <p className="text-sm text-muted leading-relaxed mb-3">
+        {/* ─── セクション 7: Cookie・アクセス解析・広告配信 ──── */}
+        <Section title="7. Cookie・アクセス解析・広告配信について">
+          <h3 className="text-sm font-semibold text-text mb-2">認証のためのCookie</h3>
+          <p className="text-sm text-muted leading-relaxed mb-4">
             本サービスは、ユーザー認証のために Firebase Authentication が発行する認証トークンをCookieまたはSession Storageに保存します。これらはサービスの提供に必要不可欠であり、ブラウザの設定で無効化した場合はサービスをご利用いただけなくなります。
           </p>
+
+          <h3 className="text-sm font-semibold text-text mb-2">アクセス解析・エラー監視ツール</h3>
+          <p className="text-sm text-muted leading-relaxed mb-4">
+            本サービスは、サービスの利用状況の把握と品質改善のため、今後、Google が提供するアクセス解析ツール（Google Analytics / Firebase Analytics）やエラー監視ツール（Sentry 等）を利用する場合があります。これらのツールはCookie等を用いて利用者の利用状況（アクセス状況・端末情報・発生したエラー情報等）を収集することがありますが、これらの情報は個人を直接特定するものではありません。利用者は、ブラウザの設定やGoogleが提供するオプトアウト手段により、これらの情報収集を無効化することができます。
+          </p>
+
+          <h3 className="text-sm font-semibold text-text mb-2">第三者配信の広告について</h3>
           <p className="text-sm text-muted leading-relaxed">
-            本サービスは、第三者のトラッキングCookieや広告Cookieを使用していません。
+            本サービスは、無料プラン（LIGHTプラン）において、今後、第三者配信の広告サービス（Google AdSense 等）を利用する場合があります。これらの広告配信事業者は、利用者の興味・関心に応じた広告を表示するため、Cookie等を用いて本サービスや他のサイトへのアクセス情報を取得することがあります。利用者は、広告設定ページ等を通じて、パーソナライズド広告（興味・関心に基づく広告）を無効にすることができます。第三者による情報の取り扱いについては、各事業者のプライバシーポリシーをご確認ください。なお、これらのツール・広告を導入する際は、本ポリシーを更新のうえ周知いたします。
           </p>
         </Section>
 
         {/* ─── セクション 8: 安全管理措置 ───────────────── */}
         <Section title="8. 安全管理措置">
           <p className="text-sm text-muted leading-relaxed mb-3">
-            当社は、個人情報の漏洩・滅失・毀損の防止その他の安全管理のために、以下の措置を講じています。
+            当方は、個人情報の漏洩・滅失・毀損の防止その他の安全管理のために、以下の措置を講じています。
           </p>
           <ul className="list-disc list-inside text-sm text-muted space-y-2 ml-2">
             <li>Firebase Security Rules によるデータアクセス制御（チーム単位でのデータ分離）</li>
@@ -227,7 +240,7 @@ export default function PrivacyPolicyPage() {
         {/* ─── セクション 9: 個人情報に関するご請求 ─────── */}
         <Section title="9. 個人情報に関するご請求">
           <p className="text-sm text-muted leading-relaxed mb-3">
-            ユーザーは、当社が保有するご自身の個人情報について、以下の権利を有します（個人情報保護法第33条〜第38条）。
+            ユーザーは、当方が保有するご自身の個人情報について、以下の権利を有します（個人情報保護法第33条〜第38条）。
           </p>
           <ul className="list-disc list-inside text-sm text-muted space-y-2 mb-4 ml-2">
             <li>
@@ -250,27 +263,28 @@ export default function PrivacyPolicyPage() {
 
         {/* ─── セクション 10: お問い合わせ窓口 ──────────── */}
         <Section title="10. お問い合わせ窓口">
-          {/* TODO: 事業者情報を記入してください */}
           <p className="text-sm text-muted leading-relaxed mb-3">
             個人情報の取り扱いに関するお問い合わせは、以下の窓口までご連絡ください。
           </p>
           <dl className="space-y-2 text-sm">
-            <Row label="担当" value="【事業者名】 個人情報取扱窓口" />
-            <Row label="メール" value="【問い合わせメールアドレス】" />
-            <Row label="受付時間" value="【対応時間】" />
+            <Row label="担当" value="リスケるGG運営 個人情報取扱窓口" />
+            <Row label="メール" value="pianshoul@gmail.com" />
+            <Row
+              label="受付時間"
+              value="メールにて随時受け付けております（返信までにお時間をいただく場合があります）。"
+            />
           </dl>
         </Section>
 
         {/* ─── セクション 11: プライバシーポリシーの変更 ── */}
         <Section title="11. プライバシーポリシーの変更">
           <p className="text-sm text-muted leading-relaxed">
-            当社は、法令の変更またはサービスの変更に伴い、本ポリシーを改定することがあります。重要な変更はアプリ内通知またはサービス上での告知により周知いたします。改定後のポリシーは、本ページへの掲載をもって効力を生じるものとします。
+            当方は、法令の変更またはサービスの変更に伴い、本ポリシーを改定することがあります。重要な変更はアプリ内通知またはサービス上での告知により周知いたします。改定後のポリシーは、本ページへの掲載をもって効力を生じるものとします。
           </p>
         </Section>
 
         {/* 制定日・バージョン */}
         <div className="mt-10 pt-6 border-t border-border text-xs text-muted space-y-1">
-          {/* TODO: 制定日を記入してください */}
           <p>制定日: {EFFECTIVE_DATE}</p>
           <p>最終改定日: {LAST_UPDATED}</p>
           <p className="mt-2">リスケるGG v{packageJson.version}</p>

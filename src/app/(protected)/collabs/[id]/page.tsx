@@ -10,6 +10,7 @@ import {
   confirmCollabDate,
   cancelCollabSession,
 } from '@/lib/repositories/collabs';
+import { trackEvent } from '@/lib/analytics';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardHeader } from '@/components/ui/Card';
@@ -58,6 +59,7 @@ export default function CollabDetailPage() {
     setConfirming(true);
     try {
       await confirmCollabDate({ teamId, sessionId, confirmedDate: selectedDate });
+      trackEvent('collab_confirm');
     } finally {
       setConfirming(false);
     }

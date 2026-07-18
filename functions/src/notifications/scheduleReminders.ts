@@ -2,6 +2,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { db } from '../lib/admin';
+import { isPartyPlan } from '../lib/plan';
 
 export const scheduleReminders = onSchedule(
   { schedule: '* * * * *', region: 'asia-northeast1' },
@@ -39,7 +40,8 @@ export const scheduleReminders = onSchedule(
             if (!userSnap.exists) continue;
 
             const user = userSnap.data()!;
-            if (user.plan === 'light') continue;
+            // LIGHT はリマインダー通知対象外（PL-002）。試用モード中は PARTY 相当で送信する
+            if (!isPartyPlan(user.plan)) continue;
 
             const notifRef = db.collection(`teams/${teamId}/notifications`).doc();
             await notifRef.set({

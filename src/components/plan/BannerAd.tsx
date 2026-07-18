@@ -1,11 +1,15 @@
 /* LIGHTプランユーザー向けバナー広告プレースホルダー */
 
+import { isPartyPlan } from '@/lib/plan';
+import type { PlanType } from '@/types/entities';
+
 interface BannerAdProps {
-  plan: 'light' | 'party';
+  plan: PlanType;
 }
 
 export function BannerAd({ plan }: BannerAdProps) {
-  if (plan !== 'light') return null;
+  // PARTY プラン相当（試用モード中を含む）は広告を表示しない
+  if (isPartyPlan(plan)) return null;
 
   return (
     <div

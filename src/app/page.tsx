@@ -1,9 +1,38 @@
 import type { Metadata } from 'next';
 import { Dela_Gothic_One, Zen_Kaku_Gothic_New } from 'next/font/google';
 
+const LP_DESCRIPTION =
+  '配信スケジュール、もうリスケしない。配信枠の管理・コラボ日程調整・制作タスク管理を、配信者とチームでひとつにまとめる配信者特化型スケジュール管理アプリ。';
+
 export const metadata: Metadata = {
-  title: 'リスケるGG — 撮影も、コラボも、編集もGGなスケジュールを',
-  description: '配信者向けチームスケジュール管理アプリ',
+  // トップページはテンプレートの「| リスケるGG」を付けず、キャッチコピー込みの完全なタイトルにする
+  title: { absolute: 'リスケるGG — 撮影も、コラボも、編集もGGなスケジュールを' },
+  description: LP_DESCRIPTION,
+  alternates: { canonical: '/' },
+  // ページで openGraph / twitter を指定すると layout の同キーは置換されるため、
+  // 画像・カード種別など必要な項目を明示的に再指定する。
+  openGraph: {
+    type: 'website',
+    locale: 'ja_JP',
+    siteName: 'リスケるGG',
+    title: 'リスケるGG — 撮影も、コラボも、編集もGGなスケジュールを',
+    description: LP_DESCRIPTION,
+    url: '/',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'リスケるGG — 配信者特化のチームスケジュール管理アプリ',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'リスケるGG — 撮影も、コラボも、編集もGGなスケジュールを',
+    description: LP_DESCRIPTION,
+    images: ['/og-image.png'],
+  },
 };
 
 const zenKakuGothicNew = Zen_Kaku_Gothic_New({
@@ -1239,6 +1268,21 @@ const LP_CSS = `
     font-size: 12px;
     color: var(--muted);
   }
+  #lp-root .footer-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  #lp-root .footer-links a {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  #lp-root .footer-links a:hover {
+    color: var(--primary-300, #a0a0ff);
+  }
 
   /* ── RESPONSIVE ── */
   @media (max-width: 768px) {
@@ -1585,14 +1629,14 @@ const LP_HTML = `
               <div class="plan-item">LIVEリマインダー通知</div>
               <div class="plan-item">スマホ・PC 両対応</div>
             </div>
-            <div style="font-size:12px;color:#ef9f27;background:rgba(239,159,39,0.1);border-radius:8px;padding:8px 12px;margin-bottom:16px">⚠️ バナー広告あり</div>
+            <div style="font-size:12px;color:#ef9f27;background:rgba(239,159,39,0.1);border-radius:8px;padding:8px 12px;margin-bottom:16px">⚠️ 広告・告知枠あり</div>
             <button class="plan-cta" style="background:rgba(127,119,221,0.15);color:#a0a0ff;box-shadow:none">無料で始める →</button>
           </div>
           <div class="plan-card" style="position:relative">
             <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#ef9f27;color:#1a0800;font-size:11px;font-weight:700;padding:4px 16px;border-radius:99px;white-space:nowrap">おすすめ</div>
             <div class="plan-name">PARTY</div>
             <div class="plan-price">¥500 <span>/ 人・月</span></div>
-            <div class="plan-note">メンバー全員が個別に支払う方式 · 14日間無料</div>
+            <div class="plan-note">メンバー全員が個別に支払う方式 · いまは公開試用期間につき全機能無料</div>
             <div class="plan-items" style="margin-bottom:8px">
               <div class="plan-item">メンバー 無制限</div>
               <div class="plan-item">スケジュール登録 無制限</div>
@@ -1602,7 +1646,7 @@ const LP_HTML = `
               <div class="plan-item">スマホ・PC 両対応</div>
             </div>
             <div style="font-size:12px;color:#3fcf7f;background:rgba(63,207,127,0.1);border-radius:8px;padding:8px 12px;margin-bottom:16px">✓ 広告なし</div>
-            <button class="plan-cta">14日無料で試す →</button>
+            <button class="plan-cta">いますぐ無料で始める →</button>
             <div class="plan-sub">例）3人チームで ¥1,500 / 月</div>
           </div>
         </div>
@@ -1649,6 +1693,11 @@ const LP_HTML = `
           </svg>
         </div>
         <div class="footer-name">リスケる<span>GG</span></div>
+      </div>
+      <div class="footer-links">
+        <a href="/terms">利用規約</a>
+        <a href="/privacy-policy">プライバシーポリシー</a>
+        <a href="/tokushoho">特定商取引法に基づく表記</a>
       </div>
       <div class="footer-copy">© 2026 リスケるGG — 撮影も、コラボも、編集もGGなスケジュールを</div>
     </footer>
