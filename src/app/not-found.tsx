@@ -30,7 +30,7 @@ export default function NotFound() {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(127,119,221,.18) 0%, transparent 70%)',
+            'radial-gradient(ellipse 60% 50% at 50% 40%, color-mix(in oklab, var(--primary) 18%, transparent) 0%, transparent 70%)',
         }}
       />
       <div className="relative z-10 w-full max-w-sm text-center">

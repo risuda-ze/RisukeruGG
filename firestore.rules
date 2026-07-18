@@ -16,9 +16,68 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ── クローズドベータ入場制限（T11） ─────────────────────────
+    // ゲートの正は Firestore。環境変数はルールから参照できないため、
+    //   app_config/beta { enabled: bool }  … ゲートの有効/無効
+    //   beta_allowlist/{email}             … 許可ユーザー（ID = 小文字正規化メール）
+    // を get()/exists() で参照して判定する。
+    // get() 呼び出しは関数化して共通化し、1 評価内でキャッシュされる同一ドキュメント
+    // 参照に留めることで課金・上限（1リクエストあたり get/exists 数）への影響を抑える。
+
+    // ベータゲートが現在アクティブか（doc 未作成 or enabled=false のときは非アクティブ）
+    function betaGateActive() {
+      return exists(/databases/$(database)/documents/app_config/beta) &&
+             get(/databases/$(database)/documents/app_config/beta).data.enabled == true;
+    }
+
+    // 認証ユーザーのメールが allowlist に在籍しているか（ID = 小文字正規化メール）
+    function isBetaAllowed() {
+      return request.auth != null &&
+             request.auth.token.email != null &&
+             exists(/databases/$(database)/documents/beta_allowlist/$(request.auth.token.email.lower()));
+    }
+
+    // ベータゲートを通過できるか（非アクティブなら全員通過、アクティブなら allowlist 在籍のみ）
+    function passesBetaGate() {
+      return !betaGateActive() || isBetaAllowed();
+    }
+
+    // 自分のメールと一致する allowlist ドキュメント ID か（get 限定の在籍確認用）
+    function isOwnAllowlistDoc(docEmail) {
+      return request.auth != null &&
+             request.auth.token.email != null &&
+             request.auth.token.email.lower() == docEmail &&
+             // email/password ユーザーは検証済みメールのみ許可（Google は常に検証済み）
+             (request.auth.token.firebase.sign_in_provider != 'password' ||
+              request.auth.token.email_verified == true);
+    }
+
+    // クローズドベータ許可リスト。
+    // - list は全面拒否（列挙・推測確認を防止）
+    // - get は自分のメールと一致する ID のみ許可
+    // - write は Admin SDK（管理スクリプト）のみ
+    match /beta_allowlist/{email} {
+      allow get: if isOwnAllowlistDoc(email);
+      allow list: if false;
+      allow write: if false;
+    }
+
+    // ベータゲートフラグ。クライアントは NEXT_PUBLIC_CLOSED_BETA で表示切替するため
+    // クライアントからの直接読み書きは不要（rules 内の get() は本ルールの影響を受けない）。
+    match /app_config/{configId} {
+      allow read, write: if false;
+    }
+
+    // ベータ利用申請の記録。書き込みは Callable Function（Admin SDK）経由のみ。
+    match /beta_requests/{uid} {
+      allow read, write: if false;
+    }
+
     function isTeamMember(teamId) {
       return request.auth != null &&
-             exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid));
+             exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)) &&
+             // クローズドベータ期間中は allowlist 在籍を必須にする（未在籍はデータアクセス不可）
+             passesBetaGate();
     }
 
     function isTeamOwner(teamId) {
@@ -32,13 +91,23 @@ service cloud.firestore {
     }
 
     // ユーザードキュメント（自分のみ読み書き）
+    // plan / planUpdatedAt / stripeCustomerId はサーバー（Stripe Webhook / Admin SDK）専用フィールド。
+    // クライアントからの書き換えを禁止し、課金状態の不正操作を防ぐ（T4 / PL-009）。
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // 作成は onUserCreate（Admin SDK）、削除は deleteAccount（Admin SDK）のみが行う。
+      // クライアントに create/delete を許すと「削除→plan:'party' で再作成」による
+      // 課金バイパスが可能になるため禁止する（T4 / PL-009）。
+      allow create, delete: if false;
+      allow update: if request.auth != null && request.auth.uid == userId &&
+                       !request.resource.data.diff(resource.data)
+                          .affectedKeys()
+                          .hasAny(['plan', 'planUpdatedAt', 'stripeCustomerId']);
     }
 
     // チームコード（認証済みユーザーが読み取り可、書き込みはCloud Functionsのみ）
     match /teamCodes/{code} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && passesBetaGate();
       allow write: if false;
     }
 
@@ -68,13 +137,20 @@ service cloud.firestore {
 
     match /teams/{teamId} {
       allow read: if isTeamMember(teamId);
-      allow create: if request.auth != null;
+      allow create: if request.auth != null && passesBetaGate();
       allow update, delete: if isTeamOwner(teamId);
 
       match /members/{memberId} {
         allow read: if isTeamMember(teamId);
-        allow write: if isTeamOwner(teamId) ||
-                        (request.auth != null && request.auth.uid == memberId);
+        allow create, delete: if isTeamOwner(teamId) ||
+                        (request.auth != null && request.auth.uid == memberId && passesBetaGate());
+        // plan はサーバー（Stripe Webhook / Admin SDK）が伝播する参照用スナップショット。
+        // クライアントからの書き換えを禁止する（T4 / PL-009）。
+        allow update: if (isTeamOwner(teamId) ||
+                        (request.auth != null && request.auth.uid == memberId && passesBetaGate())) &&
+                        !request.resource.data.diff(resource.data)
+                           .affectedKeys()
+                           .hasAny(['plan']);
       }
 
       match /taskStatuses/{columnId} {
@@ -112,7 +188,7 @@ service cloud.firestore {
 
         match /events/{eventId} {
           allow read: if isTeamMember(teamId);
-          allow write: if request.auth != null && request.auth.uid == userId;
+          allow write: if request.auth != null && request.auth.uid == userId && passesBetaGate();
         }
       }
 
@@ -124,10 +200,12 @@ service cloud.firestore {
 
       match /notifications/{notificationId} {
         allow read: if request.auth != null &&
-                       request.auth.uid == resource.data.recipientId;
+                       request.auth.uid == resource.data.recipientId &&
+                       passesBetaGate();
         // isReadフィールドのみクライアントから更新可
         allow update: if request.auth != null &&
                          request.auth.uid == resource.data.recipientId &&
+                         passesBetaGate() &&
                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
         allow create, delete: if false;
       }

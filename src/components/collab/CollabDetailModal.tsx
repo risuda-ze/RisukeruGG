@@ -859,7 +859,7 @@ export function CollabDetailModal({
                   return (
                     <div
                       key={originalIndex}
-                      className="flex items-center justify-between rounded-[12px] px-4 py-3 border transition-colors"
+                      className="flex flex-wrap items-center justify-between gap-y-2 rounded-[12px] px-4 py-3 border transition-colors"
                       style={{ background: 'var(--surface)', borderColor: isSelected ? 'var(--purple)' : 'var(--border)' }}
                     >
                       {isEditing ? (

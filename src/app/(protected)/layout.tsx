@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { Spinner } from '@/components/ui/Spinner';
 import { AppShell } from '@/components/layout/AppShell';
+import { BetaGate } from '@/components/BetaGate';
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -29,5 +30,10 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     return null;
   }
 
-  return <AppShell>{children}</AppShell>;
+  // クローズドベータ期間中は allowlist 判定を挟む（allowlist 外は待機画面のみ）
+  return (
+    <BetaGate>
+      <AppShell>{children}</AppShell>
+    </BetaGate>
+  );
 }

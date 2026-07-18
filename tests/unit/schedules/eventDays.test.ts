@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { eventOccupiesDay, getEventLastDay, isMultiDayEvent } from '@/lib/utils/eventDays';
+import {
+  eventOccupiesDay,
+  getEventLastDay,
+  isMultiDayEvent,
+  getEventDayCount,
+  getEventDayIndex,
+} from '@/lib/utils/eventDays';
 
 /** ローカルタイムで日時を生成 */
 function at(y: number, m: number, d: number, h = 0, min = 0): Date {
@@ -61,6 +67,35 @@ describe('eventDays（Google カレンダー仕様: 排他的終了）', () => {
       expect(eventOccupiesDay(event, at(2026, 7, 5))).toBe(true);
       expect(eventOccupiesDay(event, at(2026, 7, 6))).toBe(true);
       expect(isMultiDayEvent(event)).toBe(true);
+    });
+  });
+
+  describe('日数カウント（アジェンダの「n/総日目」表示用）', () => {
+    it('単日の終日予定は総日数 1・開始日は 1 日目', () => {
+      const event = { startAt: at(2026, 7, 5), endAt: at(2026, 7, 6) };
+      expect(getEventDayCount(event)).toBe(1);
+      expect(getEventDayIndex(event, at(2026, 7, 5))).toBe(1);
+    });
+
+    it('7/5〜7/7 の複数日予定は総日数 3・各日のインデックスが 1..3', () => {
+      const event = { startAt: at(2026, 7, 5), endAt: at(2026, 7, 8) };
+      expect(getEventDayCount(event)).toBe(3);
+      expect(getEventDayIndex(event, at(2026, 7, 5))).toBe(1);
+      expect(getEventDayIndex(event, at(2026, 7, 6))).toBe(2);
+      expect(getEventDayIndex(event, at(2026, 7, 7))).toBe(3);
+    });
+
+    it('深夜をまたぐ時刻付き予定（22:00〜翌1:00）は総日数 2', () => {
+      const event = { startAt: at(2026, 7, 5, 22, 0), endAt: at(2026, 7, 6, 1, 0) };
+      expect(getEventDayCount(event)).toBe(2);
+      expect(getEventDayIndex(event, at(2026, 7, 5))).toBe(1);
+      expect(getEventDayIndex(event, at(2026, 7, 6))).toBe(2);
+    });
+
+    it('継続日は開始日より大きいインデックスを返す', () => {
+      const event = { startAt: at(2026, 7, 5), endAt: at(2026, 7, 8) };
+      // 開始日判定に使える（index === 1 が開始日）
+      expect(getEventDayIndex(event, at(2026, 7, 6))).toBeGreaterThan(1);
     });
   });
 });

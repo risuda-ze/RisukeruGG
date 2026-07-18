@@ -13,6 +13,7 @@ Plan は、利用者ごとの契約状態と月次利用カウントを表す論
 | `userId` | string | プランを所有するユーザーの UID |
 | `planType` | `light` \| `party` | 現在のプラン種別 |
 | `planUpdatedAt` | timestamp | プラン状態の最終更新時刻 |
+| `stripeCustomerId` | string \| null | Stripe の Customer ID（T4）。初回チェックアウト時に採番・保存し、以降は再利用する。未課金は `null` |
 | `monthlyTaskCount` | number | 当月に作成したタスク数 |
 | `monthlyCollabCount` | number | 当月に作成したコラボ数 |
 | `countResetAt` | timestamp | 月次カウントを最後にリセットした時刻 |
@@ -27,6 +28,7 @@ users/{uid}
 
 - `plan`
 - `planUpdatedAt`
+- `stripeCustomerId`
 - `monthlyTaskCount`
 - `monthlyCollabCount`
 - `countResetAt`

@@ -19,6 +19,7 @@ import { ScheduleModal } from '@/components/calendar/ScheduleModal';
 import { Spinner } from '@/components/ui/Spinner';
 import { HintBar } from '@/components/ui/HintBar';
 import { useHintDismiss } from '@/hooks/useHintDismiss';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Icon } from '@/components/ui/Icon';
 import type { ScheduleEntry, MemberCalendarEvent } from '@/types/entities';
 import { getEventLastDay } from '@/lib/utils/eventDays';
@@ -37,6 +38,9 @@ export default function SchedulePage() {
   const subscribeCategories = useCategoryStore((s) => s.subscribe);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week'>('month');
+  /* スマホ縦持ちでは初期表示を週（アジェンダ）にして、密な月グリッドを避ける */
+  const isMobile = useMediaQuery(767);
+  const didInitMobileView = useRef(false);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleEntry | null>(null);
   /* セルクリック時の初期日付（ScheduleModal に渡す） */
@@ -47,6 +51,11 @@ export default function SchedulePage() {
   const [memberCalendarEvents, setMemberCalendarEvents] = useState<MemberCalendarEvent[]>([]);
   /* ヒントバーの表示/非表示（localStorage 永続化） */
   const { visible: hintVisible, dismiss: dismissHint, show: showHint } = useHintDismiss('riskeru_hint_schedule');
+  /* Googleカレンダー接続バナーの表示/非表示（×で閉じたら localStorage 永続化） */
+  const { visible: gcalBannerVisible, dismiss: dismissGcalBanner } = useHintDismiss('riskeru_gcal_banner_schedule');
+  /* モバイルヘッダーの「⋯」メニュー開閉 */
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
 
   /* 読み取り専用ポップアップのドラッグ移動 */
   const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
@@ -57,6 +66,17 @@ export default function SchedulePage() {
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
+
+  /* マウント時に一度だけ、スマホなら初期ビューを週表示に切り替える。
+     ビュー選択（週/月）はこの画面の React state のみで管理しており、
+     localStorage 等への永続化は行っていない。そのためこの初期化が効くのは
+     マウント時の1回だけで、以降ユーザーが月表示へ切り替えても強制的に週へ
+     戻すことはない（ページを開き直すと再びモバイル既定＝週表示から始まる）。 */
+  useEffect(() => {
+    if (didInitMobileView.current) return;
+    didInitMobileView.current = true;
+    if (isMobile) setView('week'); // eslint-disable-line react-hooks/set-state-in-effect
+  }, [isMobile]);
 
   useEffect(() => {
     if (!currentTeamId) return;
@@ -73,6 +93,16 @@ export default function SchedulePage() {
     if (!currentTeamId || !showMemberCalendars) return;
     return subscribeMemberCalendarEvents(currentTeamId, setMemberCalendarEvents);
   }, [currentTeamId, showMemberCalendars]);
+
+  // モバイルヘッダー「⋯」メニュー: 外側タップで閉じる
+  useEffect(() => {
+    if (!moreOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [moreOpen]);
 
   // 読み取り専用ポップアップのドラッグ
   useEffect(() => {
@@ -175,6 +205,8 @@ export default function SchedulePage() {
         className="shrink-0 px-4 md:px-7"
         style={{ background: 'var(--surface)', borderBottom: '1px solid var(--card-border)', paddingTop: 6 }}
       >
+        {/* ── PC ヘッダー（md 以上・従来レイアウトを維持） ── */}
+        {!isMobile && (
         <div className="calhd">
           {/* 週/月セグメントトグル */}
           <div className="segtoggle">
@@ -194,7 +226,7 @@ export default function SchedulePage() {
                 className="btn btn--primary btn--sm"
               >
                 <Icon name="add" size={16} />
-                <span className="hidden sm:inline">予定を追加</span>
+                <span className="hidden md:inline">予定を追加</span>
               </button>
             )}
 
@@ -204,7 +236,7 @@ export default function SchedulePage() {
               className={`btn btn--sm ${showMemberCalendars ? 'btn--ghost' : 'btn--subtle'}`}
             >
               <Icon name="groups" size={15} />
-              <span className="hidden sm:inline">{showMemberCalendars ? 'メンバー表示中' : 'メンバーの予定'}</span>
+              <span className="hidden md:inline">{showMemberCalendars ? 'メンバー表示中' : 'メンバーの予定'}</span>
             </button>
 
             {/* 日付ナビ */}
@@ -228,6 +260,80 @@ export default function SchedulePage() {
             </button>
           </div>
         </div>
+        )}
+
+        {/* ── モバイルヘッダー（md 未満・44px 1 行に統合） ── */}
+        {isMobile && (
+        <div className="mcalbar">
+          {/* 週/月セグメント */}
+          <div className="mseg">
+            <button className={view === 'week' ? 'is-on' : ''} onClick={() => setView('week')}>週</button>
+            <button className={view === 'month' ? 'is-on' : ''} onClick={() => setView('month')}>月</button>
+          </div>
+
+          {/* 月ナビ（‹ N月 › ・年を小さく併記） */}
+          <div className="mcalnav">
+            <button className="mcalnav__arrow" onClick={goBack} aria-label={view === 'month' ? '前月' : '前の週'}>
+              <Icon name="chevron_left" size={20} />
+            </button>
+            <span className="mcalnav__label">
+              <span className="mcalnav__year font-num">{year}</span>
+              <span className="mcalnav__month font-num">{month}月</span>
+            </span>
+            <button className="mcalnav__arrow" onClick={goForward} aria-label={view === 'month' ? '翌月' : '次の週'}>
+              <Icon name="chevron_right" size={20} />
+            </button>
+          </div>
+
+          {/* 今日 */}
+          <button className="mcaltoday" onClick={() => setCurrentDate(new Date())}>今日</button>
+
+          <span className="mcalbar__spacer" />
+
+          {/* ⋯ 低頻度操作メニュー */}
+          <div className="relative" ref={moreRef}>
+            <button
+              className={`mcalmore${moreOpen ? ' is-on' : ''}`}
+              onClick={() => setMoreOpen((v) => !v)}
+              aria-label="その他の操作"
+              aria-expanded={moreOpen}
+            >
+              <Icon name="more_horiz" size={22} />
+            </button>
+            {moreOpen && (
+              <div className="mcalmenu animate-pop-modal">
+                {/* メンバーの予定 表示/非表示 */}
+                <button
+                  className="mcalmenu__item"
+                  onClick={() => { setShowMemberCalendars((v) => !v); setMoreOpen(false); }}
+                >
+                  <Icon name="groups" size={18} />
+                  <span>{showMemberCalendars ? 'メンバーの予定を隠す' : 'メンバーの予定を表示'}</span>
+                </button>
+                {/* ヒント表示切替 */}
+                <button
+                  className="mcalmenu__item"
+                  onClick={() => { if (hintVisible) dismissHint(); else showHint(); setMoreOpen(false); }}
+                >
+                  <Icon name="help_outline" size={18} />
+                  <span>{hintVisible ? 'ヒントを隠す' : 'ヒントを表示'}</span>
+                </button>
+                {/* Googleカレンダー接続 */}
+                <button
+                  className="mcalmenu__item"
+                  onClick={async () => {
+                    setMoreOpen(false);
+                    try { await signIn(); setGcalError(null); } catch { /* ポップアップブロック等は無視 */ }
+                  }}
+                >
+                  <Icon name="event" size={18} />
+                  <span>{googleAccessToken ? 'Googleカレンダー再接続' : 'Googleカレンダーを接続'}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        )}
       </div>
 
       {/* ヒントバー（初回表示・?ボタンで再表示）: visible は useHintDismiss で一元管理 */}
@@ -238,8 +344,8 @@ export default function SchedulePage() {
       )}
 
 
-      {/* Googleカレンダー接続バナー（未接続・認証期限切れ共通） */}
-      {!authLoading && !googleAccessToken && (
+      {/* Googleカレンダー接続バナー（未接続・認証期限切れ共通・×で閉じたら永続非表示） */}
+      {!authLoading && !googleAccessToken && gcalBannerVisible && (
         <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-amber/10 border-b border-amber/30 text-[12px] text-amber-l">
           <span className="material-icons text-[16px]">
             {gcalError === 'auth_expired' ? 'warning' : 'link_off'}
@@ -261,6 +367,13 @@ export default function SchedulePage() {
             className="shrink-0 px-3 py-1 rounded-[6px] text-[11px] font-bold bg-amber/20 border border-amber/50 hover:bg-amber/30 transition-colors"
           >
             {gcalError === 'auth_expired' ? '再接続' : '接続する'}
+          </button>
+          <button
+            onClick={dismissGcalBanner}
+            aria-label="バナーを閉じる"
+            className="shrink-0 flex items-center justify-center w-6 h-6 rounded-[6px] text-amber-l/70 hover:text-amber-l hover:bg-amber/15 transition-colors"
+          >
+            <Icon name="close" size={15} />
           </button>
         </div>
       )}

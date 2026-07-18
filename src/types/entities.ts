@@ -38,6 +38,8 @@ export interface User {
   teamIds: string[];
   plan: PlanType;
   planUpdatedAt: Date;
+  /** Stripe の Customer ID（T4）。課金導線を一度も通っていない場合は null。 */
+  stripeCustomerId?: string | null;
   monthlyTaskCount: number;
   monthlyCollabCount: number;
   countResetAt: Date;

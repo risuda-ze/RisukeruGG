@@ -270,7 +270,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* LIGHTプラン向けバナー広告（実プランから判定。試用モード中は非表示） */}
+        {/* LIGHTプラン向け自社告知枠（実プランから判定。試用モード中・PARTYは非表示） */}
         {!isPartyPlan(myMember?.plan) && (
           <div className="mt-4 md:hidden">
             <BannerAd plan={myMember?.plan ?? 'light'} />

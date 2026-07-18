@@ -15,7 +15,12 @@
 - **PL-005**: 3 名以上のチームへ参加するには、参加者を含む全メンバーが PARTY プランである必要がある。条件を満たさない場合は参加をブロックし、参加者へ要件を表示するとともに既存の全 LIGHT メンバーへシステム通知を送る
 - **PL-006**: LIGHT プランの月次上限に達した場合、該当操作をブロックし、PARTY プランへのアップグレード案内を表示する
 - **PL-007**: LIGHT プランの月次カウント（タスク数・コラボ数）は毎月 1 日 0:00 JST に自動リセットする
-- **PL-008**: フェーズ 1 の「PARTY プランへアップグレード」CTA は外部申し込みページ（Google Form 等）へ遷移する。URL 未設定時はボタンを非表示にする
+- **PL-008**: PARTY プランの課金は Stripe Checkout + Customer Portal で行う（2026-07-17 決定 / T4）
+  - 課金単位はユーザー単位・月額500円（税込）。新規契約時は Stripe の `trial_period_days = 14`（14日間無料トライアル）を付与する
+  - 「PARTY プランへアップグレード」CTA は Cloud Functions の `createStripeCheckoutSession`（callable）を呼び出し、返却された Checkout URL へ遷移する。契約済み PARTY ユーザーには Customer Portal（`createStripePortalSession`）への「支払い設定」導線を表示する
+  - プラン状態の反映は Stripe Webhook（`stripeWebhook`）が担う。`checkout.session.completed` → `plan = party`、`customer.subscription.deleted` → `plan = light`。支払い失敗（`invoice.payment_failed`）時の猶予は Stripe 側に委ね、降格は subscription 削除の受信時のみ行う
+  - `users/{uid}.plan` / `planUpdatedAt` / `stripeCustomerId` および `teams/{teamId}/members/{uid}.plan` はサーバー（Webhook / Admin SDK）専用フィールドとし、Firestore ルールでクライアントからの書き換えを禁止する（PL-009）
+  - 試用モード（PL-011）が有効な間は課金導線を表示しない。T4 完了・課金公開と同時に `FREE_PARTY_MODE` を無効化する
 - **PL-009**: 月次制限値の強制はバックエンドで行い、クライアントだけで迂回できないようにする
 - **PL-010**: 新規ユーザーのプラン関連フィールドは初期値として `plan = light`、`planUpdatedAt = 現在時刻`、`monthlyTaskCount = 0`、`monthlyCollabCount = 0`、`countResetAt = 現在時刻` で初期化する
 - **PL-011**: 試用モード（FREE_PARTY_MODE）を提供する。動作テスト・公開試用のあいだ、課金なしで全ユーザーを PARTY プラン相当として扱うための一時的な運用モードである
@@ -28,4 +33,4 @@
 ## 注記
 
 - タスク数 / コラボ数のインクリメント条件は task / collab カテゴリの作成フローに連動する
-- PARTY の決済基盤詳細はフェーズ 2 以降で扱い、フェーズ 1 では外部申し込みページ連携に留める
+- 決済基盤は Stripe（Checkout + Customer Portal）。実装詳細・環境変数（Secrets）は README「Stripe 課金（T4）」を参照

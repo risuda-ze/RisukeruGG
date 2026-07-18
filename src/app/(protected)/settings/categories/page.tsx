@@ -218,7 +218,7 @@ function KanbanStatusSettings() {
               {col.role === 'done' && (
                 <span
                   className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
-                  style={{ background: 'rgba(74,222,128,0.15)', color: 'var(--green)' }}
+                  style={{ background: 'var(--success-dim)', color: 'var(--green)' }}
                 >
                   完了列
                 </span>

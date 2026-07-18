@@ -29,6 +29,7 @@ export const onUserCreate = v1.auth.user().onCreate(async (user) => {
     teamIds: [soloTeamId],
     plan: 'light',
     planUpdatedAt: now,
+    stripeCustomerId: null,
     monthlyTaskCount: 0,
     monthlyCollabCount: 0,
     countResetAt: now,
