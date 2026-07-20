@@ -47,12 +47,12 @@ export default function LoginPage() {
         }}
       />
 
-      {/* ラジアルグラデーション（中央パープル光源） */}
+      {/* ラジアルグラデーション（中央アクセント光源） */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(127,119,221,.18) 0%, transparent 70%)',
+            'radial-gradient(ellipse 60% 50% at 50% 40%, color-mix(in oklab, var(--primary) 18%, transparent) 0%, transparent 70%)',
         }}
       />
 
@@ -122,9 +122,18 @@ export default function LoginPage() {
             Googleでサインイン
           </Button>
 
-          {/* プライバシーポリシーへのリンクを含む同意テキスト */}
+          {/* 利用規約・プライバシーポリシーへのリンクを含む同意テキスト */}
           <p className="text-center text-[11px] text-muted mt-5">
-            サインインすることで利用規約・
+            サインインすることで
+            <Link
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-text transition-colors"
+            >
+              利用規約
+            </Link>
+            ・
             <Link
               href="/privacy-policy"
               target="_blank"

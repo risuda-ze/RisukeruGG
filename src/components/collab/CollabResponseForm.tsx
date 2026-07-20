@@ -304,7 +304,7 @@ export default function CollabResponseForm({
                 <button
                   type="button"
                   onClick={() => toggleDate(originalIndex, 'ok')}
-                  className={`px-2 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
+                  className={`px-3 py-2 min-h-[40px] rounded-[6px] text-xs font-medium transition-colors ${
                     val === 'ok'
                       ? 'bg-green/15 border border-green/40 text-green'
                       : 'bg-bg border border-border text-muted hover:text-green hover:border-green/40'
@@ -315,7 +315,7 @@ export default function CollabResponseForm({
                 <button
                   type="button"
                   onClick={() => toggleDate(originalIndex, 'ng')}
-                  className={`px-2 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
+                  className={`px-3 py-2 min-h-[40px] rounded-[6px] text-xs font-medium transition-colors ${
                     val === 'ng'
                       ? 'bg-live/10 border border-live/30 text-live'
                       : 'bg-bg border border-border text-muted hover:text-live hover:border-live/30'
@@ -326,7 +326,7 @@ export default function CollabResponseForm({
                 <button
                   type="button"
                   onClick={() => toggleDate(originalIndex, 'pending')}
-                  className={`px-2 py-1.5 rounded-[6px] text-xs font-medium transition-colors ${
+                  className={`px-3 py-2 min-h-[40px] rounded-[6px] text-xs font-medium transition-colors ${
                     val === 'pending'
                       ? 'bg-amber/15 border border-amber/40 text-amber-l'
                       : 'bg-bg border border-border text-muted hover:text-amber-l hover:border-amber/40'

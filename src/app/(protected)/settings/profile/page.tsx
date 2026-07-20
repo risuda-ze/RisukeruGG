@@ -6,6 +6,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import packageJson from '../../../../../package.json';
 import { auth, db, storage } from '@/lib/firebase/client';
 import { useAuthStore } from '@/stores/auth';
 import { deleteAccount } from '@/lib/repositories/teams';
@@ -16,34 +17,18 @@ import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Icon } from '@/components/ui/Icon';
 import { Dropdown } from '@/components/ui/Dropdown';
-import type { NotificationPreferences } from '@/types/entities';
+import { isPartyPlan, isFreePartyMode } from '@/lib/plan';
+import { createStripeCheckoutSession, createStripePortalSession } from '@/lib/repositories/billing';
+import { trackEvent } from '@/lib/analytics';
 
-// アプリ情報タブを含む5タブ構成
-type Tab = 'profile' | 'notifications' | 'plan' | 'account' | 'app-info';
+// アプリ情報タブを含む4タブ構成
+type Tab = 'profile' | 'plan' | 'account' | 'app-info';
 
 const TAB_LABELS: Record<Tab, string> = {
   profile: 'プロフィール',
-  notifications: '通知設定',
   plan: 'プラン',
   account: 'アカウント',
   'app-info': 'アプリ情報',
-};
-
-type NotifCategory = keyof NotificationPreferences;
-type NotifChannel = 'inApp' | 'push';
-
-const NOTIF_CATEGORY_LABELS: Record<NotifCategory, string> = {
-  collab: 'コラボ',
-  tasks: 'タスク',
-  reminders: 'リマインダー',
-  system: 'システム',
-};
-
-const DEFAULT_PREFS: NotificationPreferences = {
-  collab: { inApp: true, push: true },
-  tasks: { inApp: true, push: true },
-  reminders: { inApp: true, push: true },
-  system: { inApp: true, push: false },
 };
 
 export default function ProfileSettingsPage() {
@@ -56,7 +41,8 @@ export default function ProfileSettingsPage() {
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const isOperatorWithMembers = myMember?.role === 'operator' && members.length > 1;
-  const isParty = myMember?.plan === 'party';
+  // 通知制限（PL-002）の判定。試用モード中は PARTY 相当として全通知カテゴリを解放する
+  const isParty = isPartyPlan(myMember?.plan);
 
   /* ── プロフィール ──────────────────────────────────────────── */
   const [displayNameDraft, setDisplayNameDraft] = useState<string | null>(null);
@@ -130,42 +116,44 @@ export default function ProfileSettingsPage() {
     }
   }
 
-  /* ── 通知設定 ─────────────────────────────────────────────── */
-  const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_PREFS);
-  const [savingPrefs, setSavingPrefs] = useState(false);
+  /* ── プラン（Stripe 課金導線・T4） ─────────────────────────── */
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingError, setBillingError] = useState<string | null>(null);
+  // 試用モード中（PL-011）は課金導線を出さない。
+  const showBilling = !isFreePartyMode();
 
-  async function togglePref(category: NotifCategory, channel: NotifChannel) {
-    if (!currentUser) return;
-    const newPrefs = {
-      ...prefs,
-      [category]: { ...prefs[category], [channel]: !prefs[category][channel] },
-    };
-    setPrefs(newPrefs);
-    setSavingPrefs(true);
+  async function handleUpgrade() {
+    setBillingLoading(true);
+    setBillingError(null);
     try {
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        notificationPreferences: newPrefs,
-      });
+      trackEvent('upgrade_cta_click');
+      const { data } = await createStripeCheckoutSession({});
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setBillingError('決済ページの生成に失敗しました');
+      }
+    } catch {
+      setBillingError('決済ページの生成に失敗しました');
     } finally {
-      setSavingPrefs(false);
+      setBillingLoading(false);
     }
   }
 
-  /* ── プラン ───────────────────────────────────────────────── */
-  const [savingPlan, setSavingPlan] = useState(false);
-
-  async function handlePlanChange(newPlan: 'light' | 'party') {
-    if (!currentUser) return;
-    setSavingPlan(true);
+  async function handleManageBilling() {
+    setBillingLoading(true);
+    setBillingError(null);
     try {
-      await updateDoc(doc(db, 'users', currentUser.uid), { plan: newPlan });
-      if (currentTeam) {
-        await updateDoc(doc(db, 'teams', currentTeam.id, 'members', currentUser.uid), {
-          plan: newPlan,
-        });
+      const { data } = await createStripePortalSession({});
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setBillingError('支払い設定ページの生成に失敗しました');
       }
+    } catch {
+      setBillingError('支払い設定ページの生成に失敗しました');
     } finally {
-      setSavingPlan(false);
+      setBillingLoading(false);
     }
   }
 
@@ -206,7 +194,6 @@ export default function ProfileSettingsPage() {
   }
 
   const initials = (currentUser?.displayName ?? 'U').slice(0, 2).toUpperCase();
-  const notifCategories: NotifCategory[] = ['collab', 'tasks', 'reminders', 'system'];
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -315,76 +302,14 @@ export default function ProfileSettingsPage() {
           </div>
         )}
 
-        {/* ── 通知設定 ─────────────────────────────────────── */}
-        {activeTab === 'notifications' && (
-          <div className="space-y-5">
-            <h3 className="text-sm font-semibold text-text">通知設定</h3>
-
-            {!isParty && (
-              <Card className="border-amber/20">
-                <p className="text-sm font-medium text-amber-l mb-1">
-                  LIGHTプランではシステム通知のみ利用可能です
-                </p>
-                <p className="text-[12px] text-muted">
-                  PARTYプランにアップグレードすると全4カテゴリの通知を設定できます。
-                </p>
-              </Card>
-            )}
-
-            <Card noPadding>
-              <div className="grid grid-cols-3 border-b border-border px-[18px] py-2 bg-surface/50">
-                <span className="text-[11px] font-medium text-muted">カテゴリ</span>
-                <span className="text-[11px] font-medium text-muted text-center">アプリ内</span>
-                <span className="text-[11px] font-medium text-muted text-center">プッシュ</span>
-              </div>
-              {notifCategories.map((category) => {
-                const isLocked = !isParty && category !== 'system';
-                return (
-                  <div
-                    key={category}
-                    className={`grid grid-cols-3 px-[18px] py-3 border-b border-border last:border-0 ${
-                      isLocked ? 'opacity-40' : ''
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <span className="text-sm text-text">{NOTIF_CATEGORY_LABELS[category]}</span>
-                    </div>
-                    {(['inApp', 'push'] as NotifChannel[]).map((channel) => (
-                      <div key={channel} className="flex justify-center items-center">
-                        <button
-                          type="button"
-                          onClick={() => !isLocked && togglePref(category, channel)}
-                          disabled={isLocked || savingPrefs}
-                          role="switch"
-                          aria-checked={prefs[category][channel]}
-                          className={`relative w-10 h-6 rounded-full transition-colors ${
-                            !isLocked && prefs[category][channel] ? 'bg-purple' : 'bg-border'
-                          } ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                        >
-                          <span
-                            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-text rounded-full shadow transition-transform ${
-                              !isLocked && prefs[category][channel]
-                                ? 'translate-x-4'
-                                : 'translate-x-0'
-                            }`}
-                          />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
-            </Card>
-          </div>
-        )}
-
         {/* ── プラン ───────────────────────────────────────── */}
         {activeTab === 'plan' && (
           <div className="space-y-5">
             <h3 className="text-sm font-semibold text-text">プランの管理</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {(['light', 'party'] as const).map((plan) => {
-                const isCurrent = myMember?.plan === plan;
+                // 現在プランの表示は実効プラン（試用モード中は PARTY）に合わせる
+                const isCurrent = (isParty ? 'party' : 'light') === plan;
                 return (
                   <Card key={plan} className={isCurrent ? 'border-purple/60' : ''}>
                     <div className="flex items-start justify-between mb-3">
@@ -452,15 +377,50 @@ export default function ProfileSettingsPage() {
                       )}
                     </ul>
 
-                    {!isCurrent && (
-                      <Button size="sm" loading={savingPlan} onClick={() => handlePlanChange(plan)}>
-                        {plan === 'party' ? 'アップグレードする' : 'ダウングレードする'}
+                    {plan === 'party' && !isCurrent && showBilling && (
+                      <Button size="sm" loading={billingLoading} onClick={handleUpgrade}>
+                        アップグレードする
                       </Button>
                     )}
                   </Card>
                 );
               })}
             </div>
+
+            {/* ── 課金アクション ─────────────────────────────── */}
+            {showBilling && isParty && (
+              <Card>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold text-text mb-0.5">支払い設定</p>
+                    <p className="text-[12px] text-muted">
+                      解約・支払い方法の変更・請求履歴の確認は Stripe の管理ページで行えます。
+                    </p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    loading={billingLoading}
+                    onClick={handleManageBilling}
+                  >
+                    支払い設定を開く
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {!showBilling && (
+              <Card className="border-amber/20">
+                <p className="text-sm font-medium text-amber-l mb-1">
+                  現在は公開試用期間につき全機能を無料でご利用いただけます
+                </p>
+                <p className="text-[12px] text-muted">
+                  試用期間の終了後にPARTYプランの課金導線を有効化します。
+                </p>
+              </Card>
+            )}
+
+            {billingError && <p className="text-[12px] text-live">{billingError}</p>}
           </div>
         )}
 
@@ -509,8 +469,7 @@ export default function ProfileSettingsPage() {
                     </div>
                     <div className="flex justify-between items-center py-3">
                       <span className="text-muted">バージョン</span>
-                      {/* TODO: バージョンは package.json から動的取得も可（resolveJsonModule: true 有効）*/}
-                      <span className="text-text">0.1.0</span>
+                      <span className="text-text">v{packageJson.version}</span>
                     </div>
                   </div>
                 </div>
@@ -520,6 +479,15 @@ export default function ProfileSettingsPage() {
                   <h3 className="text-sm font-medium text-muted mb-3">法的情報</h3>
                   <div className="space-y-0">
                     <Link
+                      href="/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3 border-b border-border"
+                    >
+                      <span>利用規約</span>
+                      <Icon name="open_in_new" size={20} className="text-muted" />
+                    </Link>
+                    <Link
                       href="/privacy-policy"
                       target="_blank"
                       rel="noopener noreferrer"
@@ -528,10 +496,15 @@ export default function ProfileSettingsPage() {
                       <span>プライバシーポリシー</span>
                       <Icon name="open_in_new" size={20} className="text-muted" />
                     </Link>
-                    <div className="flex items-center justify-between text-sm py-3 border-b border-border">
-                      <span className="text-muted">利用規約</span>
-                      <span className="text-xs text-muted/60">準備中</span>
-                    </div>
+                    <Link
+                      href="/tokushoho"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3 border-b border-border"
+                    >
+                      <span>特定商取引法に基づく表記</span>
+                      <Icon name="open_in_new" size={20} className="text-muted" />
+                    </Link>
                   </div>
                 </div>
 
@@ -609,7 +582,7 @@ export default function ProfileSettingsPage() {
             </li>
             <li className="flex items-center gap-2">
               <Icon name="close" size={14} className="text-live" />
-              タスク・通知などのアプリデータ
+              タスクなどのアプリデータ
             </li>
           </ul>
           <p className="text-[12px] text-live font-semibold pt-1">この操作は取り消せません。</p>

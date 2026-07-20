@@ -32,13 +32,17 @@ export async function GET(req: NextRequest): Promise<Response> {
   }
 
   const data = snap.data()!;
+  // 通知トグルは未設定をデフォルト有効（opt-out）として扱う
   const config: DiscordTeamConfig = {
     webhookUrl: (data.webhookUrl as string) ?? '',
     guildId: (data.guildId as string | undefined) ?? undefined,
     channelId: (data.channelId as string | undefined) ?? undefined,
-    notifyOnCreate: (data.notifyOnCreate as boolean) ?? false,
-    notifyBefore1h: (data.notifyBefore1h as boolean) ?? false,
-    notifyBefore15min: (data.notifyBefore15min as boolean) ?? false,
+    notifyOnTaskCreate: (data.notifyOnTaskCreate as boolean) ?? true,
+    notifyOnTaskUpdate: (data.notifyOnTaskUpdate as boolean) ?? true,
+    notifyOnCollabCreate: (data.notifyOnCollabCreate as boolean) ?? true,
+    notifyOnCollabResponse: (data.notifyOnCollabResponse as boolean) ?? true,
+    notifyBefore1h: (data.notifyBefore1h as boolean) ?? true,
+    notifyBefore15min: (data.notifyBefore15min as boolean) ?? true,
   };
 
   return Response.json({ config });

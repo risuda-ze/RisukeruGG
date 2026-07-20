@@ -1,4 +1,4 @@
-import { startOfDay, endOfDay } from 'date-fns';
+import { startOfDay, endOfDay, differenceInCalendarDays } from 'date-fns';
 
 /**
  * イベントの日付跨ぎ判定ユーティリティ。
@@ -8,7 +8,8 @@ import { startOfDay, endOfDay } from 'date-fns';
  * - 終了時刻ちょうど（例: 翌日 00:00）はイベントに含まれない
  *
  * 旧仕様（終了時刻を包含的に解釈していた）で保存された既存データは
- * scripts/migrate-allday-schedule-encoding.mjs で本仕様に一括移行済みの
+ * 移行スクリプト（適用済みのため削除。Git 履歴の
+ * scripts/migrate-allday-schedule-encoding.mjs を参照）で一括移行済みの
  * 前提とし、ここでは後方互換の分岐を持たない。
  */
 
@@ -30,4 +31,14 @@ export function getEventLastDay(event: EventRange): Date {
 /** 複数の暦日にまたがるイベントか */
 export function isMultiDayEvent(event: EventRange): boolean {
   return startOfDay(event.startAt).getTime() < getEventLastDay(event).getTime();
+}
+
+/** イベントが占有する暦日の総数（開始日〜最終日を含む。単日なら 1） */
+export function getEventDayCount(event: EventRange): number {
+  return differenceInCalendarDays(getEventLastDay(event), startOfDay(event.startAt)) + 1;
+}
+
+/** 指定日がイベントの何日目か（開始日 = 1）。占有日であることを前提とする */
+export function getEventDayIndex(event: EventRange, day: Date): number {
+  return differenceInCalendarDays(startOfDay(day), startOfDay(event.startAt)) + 1;
 }

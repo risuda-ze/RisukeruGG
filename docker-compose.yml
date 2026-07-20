@@ -5,7 +5,8 @@ services:
       dockerfile: docker/emulator/Dockerfile
     ports:
       - '4000:4000' # Emulator UI
-      - '9099:9099' # Auth
+      # 9099 はホスト常駐アプリ（TourBox Console）と衝突するため 9098 を使用
+      - '9098:9098' # Auth
       - '5001:5001' # Functions
       - '8080:8080' # Firestore
       - '9199:9199' # Storage
@@ -56,7 +57,7 @@ services:
       NEXT_PUBLIC_EMULATOR_HOST: localhost
       # Admin SDK (サーバーサイド) がエミュレータを使うための設定
       # コンテナ内から emulator サービスへはサービス名で到達する
-      FIREBASE_AUTH_EMULATOR_HOST: emulator:9099
+      FIREBASE_AUTH_EMULATOR_HOST: emulator:9098
       FIRESTORE_EMULATOR_HOST: emulator:8080
     depends_on:
       emulator:

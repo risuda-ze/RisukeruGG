@@ -17,7 +17,7 @@ export function AppShell({ children }: AppShellProps) {
 
       {/* ── メインコンテンツエリア ──────────────────────── */}
       {/* 各ページが TopBar + スクロール可能コンテンツを管理する */}
-      <main className="flex-1 flex flex-col overflow-hidden min-w-0 pb-16 md:pb-0">
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0 pb-[calc(66px+env(safe-area-inset-bottom))] md:pb-0">
         {children}
       </main>
 

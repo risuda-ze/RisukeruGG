@@ -61,6 +61,10 @@ functions/node_modules/
 # test results
 test-results/
 playwright-report/
+screenshots/
+
+# worktree 残骸
+.clone/
 
 # ログインファイル（必要に応じてコミットする）
 *.log

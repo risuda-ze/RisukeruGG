@@ -34,10 +34,18 @@ export * from './collab/cancelCollabSession';
 export * from './collab/reopenCollabSession';
 export * from './collab/expireCollabSessions';
 
-// Phase 8: US6 — 通知
-export * from './notifications/markNotificationRead';
+// Phase 8: US6 — Discord 通知
 export * from './notifications/scheduleReminders';
+export * from './notifications/taskDiscordNotifications';
 
 // お問い合わせフォーム
 export * from './contact/sendContactEmail';
+
+// クローズドベータ利用申請（T11）
+export * from './beta/requestBetaAccess';
+
+// T4: Stripe 課金
+export * from './stripe/createCheckoutSession';
+export * from './stripe/createPortalSession';
+export * from './stripe/stripeWebhook';
 

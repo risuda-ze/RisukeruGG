@@ -10,19 +10,17 @@ interface TaskControlBarProps {
   activeCategoryIds: string[];
   activeAssigneeId: string | null;
   taskCount: number;
-  canEdit: boolean;
-  isLightPlanFull: boolean;
   onCategoryToggle: (categoryId: string) => void;
   onClearCategories: () => void;
   onAssigneeChange: (assigneeId: string | null) => void;
-  onAddTask: () => void;
   onShowHint: () => void;
 }
 
 /**
  * タスク管理画面のコントロールバー。
  * 左エリア: カテゴリ複数選択バッジ（OR条件）+ 担当者プルダウン（単一選択）。
- * 右エリア: タスク件数 + タスク追加ボタン + 設定ボタン + ヒントボタン。
+ * 右エリア: タスク件数 + 設定ボタン + ヒントボタン。
+ * タスク追加の導線は PC=各列下部の「＋」、モバイル=FAB（TaskMobileBoard）に集約する。
  * モバイル (390px) でも同一1行レイアウトを維持する（左エリアは横スクロール）。
  */
 export function TaskControlBar({
@@ -31,12 +29,9 @@ export function TaskControlBar({
   activeCategoryIds,
   activeAssigneeId,
   taskCount,
-  canEdit,
-  isLightPlanFull,
   onCategoryToggle,
   onClearCategories,
   onAssigneeChange,
-  onAddTask,
   onShowHint,
 }: TaskControlBarProps) {
   const router = useRouter();
@@ -98,18 +93,7 @@ export function TaskControlBar({
         {/* タスク件数テキスト */}
         <span className="text-[12px] text-muted whitespace-nowrap">{taskCount}件</span>
 
-        {/* タスク追加ボタン: ライトプラン上限時 disabled */}
-        {canEdit && (
-          <Button
-            variant="amber"
-            size="sm"
-            onClick={onAddTask}
-            disabled={isLightPlanFull}
-            aria-label="タスクを追加"
-          >
-            + タスク
-          </Button>
-        )}
+        {/* タスク追加の導線はPC=各列下部の「＋」、モバイル=FABに集約（ツールバーのボタンは廃止） */}
 
         {/* ステータス・カテゴリ設定ボタン: Next.js router で遷移 */}
         <Button

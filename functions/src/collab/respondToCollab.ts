@@ -1,6 +1,9 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions/v2';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { db } from '../lib/admin';
+import { notifyDiscord } from '../discord/notifyDiscord';
+import { discordBotToken } from '../discord/botToken';
 
 interface RespondToCollabData {
   teamId: string;
@@ -12,7 +15,7 @@ interface RespondToCollabData {
 }
 
 export const respondToCollab = onCall(
-  { region: 'asia-northeast1' },
+  { region: 'asia-northeast1', secrets: [discordBotToken] },
   async (request: CallableRequest<RespondToCollabData>) => {
     const { teamId, sessionId, respondentName, dates, alternativeDates, note } = request.data;
 
@@ -79,29 +82,21 @@ export const respondToCollab = onCall(
       });
     }
 
-    await db.runTransaction(async (tx) => {
-      tx.update(sessionRef, updatePayload);
+    await sessionRef.update(updatePayload);
 
-      /* チームの Owner/Editor へ通知 */
-      const membersSnap = await db.collection(`teams/${teamId}/members`).get();
-      for (const memberDoc of membersSnap.docs) {
-        const member = memberDoc.data();
-        if (member.role === 'operator' || member.role === 'member') {
-          const notifRef = db.collection(`teams/${teamId}/notifications`).doc();
-          tx.set(notifRef, {
-            recipientId: memberDoc.id,
-            category: 'collab',
-            type: 'collab_responded',
-            title: 'コラボ日程の回答が届きました',
-            body: `「${session.title}」${respondentName ? `（${respondentName}）` : ''}への回答が届きました`,
-            refType: 'collab',
-            refId: sessionId,
-            isRead: false,
-            createdAt: now,
-          });
-        }
-      }
-    });
+    // Discord 通知（失敗しても回答本体を失敗させない）
+    try {
+      await notifyDiscord(teamId, 'notifyOnCollabResponse', () => ({
+        title: '💬 コラボ調整に回答がありました',
+        color: 0x5865f2,
+        fields: [
+          { name: 'タイトル', value: session.title as string, inline: true },
+          ...(respondentName ? [{ name: '回答者', value: respondentName, inline: true }] : []),
+        ],
+      }));
+    } catch (err) {
+      logger.warn('コラボ回答 Discord 通知に失敗しました', { teamId, err });
+    }
 
     return { success: true };
   }

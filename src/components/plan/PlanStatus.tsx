@@ -1,9 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { useAuthStore } from '@/stores/auth';
+import { trackEvent } from '@/lib/analytics';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { LIGHT_PLAN_LIMITS } from '@/types/entities';
+import { isPartyPlan, isFreePartyMode } from '@/lib/plan';
+import { createStripeCheckoutSession, createStripePortalSession } from '@/lib/repositories/billing';
 
 interface PlanStatusProps {
   monthlyTaskCount: number;
@@ -14,11 +18,50 @@ export function PlanStatus({ monthlyTaskCount, monthlyCollabCount }: PlanStatusP
   const currentUser = useAuthStore((s) => s.currentUser);
   const members = useAuthStore((s) => s.members);
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   if (!currentUser) return null;
 
-  const signupUrl = process.env.NEXT_PUBLIC_PARTY_SIGNUP_URL;
   const myMember = members.find((m) => m.userId === currentUser.uid);
-  const isLight = myMember?.plan !== 'party';
+  const isLight = !isPartyPlan(myMember?.plan);
+  // 試用モード中は課金導線を一切出さない（PL-011）。
+  const showBilling = !isFreePartyMode();
+
+  async function handleUpgrade() {
+    setLoading(true);
+    setError(null);
+    try {
+      trackEvent('upgrade_cta_click');
+      const { data } = await createStripeCheckoutSession({});
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError('決済ページの生成に失敗しました');
+      }
+    } catch {
+      setError('決済ページの生成に失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleManageBilling() {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await createStripePortalSession({});
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError('支払い設定ページの生成に失敗しました');
+      }
+    } catch {
+      setError('支払い設定ページの生成に失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="space-y-3">
@@ -44,13 +87,24 @@ export function PlanStatus({ monthlyTaskCount, monthlyCollabCount }: PlanStatusP
         </div>
       )}
 
-      {isLight && signupUrl && (
-        <a href={signupUrl} target="_blank" rel="noopener noreferrer" className="block">
-          <Button variant="amber" className="w-full">
-            PARTYプランにアップグレード
-          </Button>
-        </a>
+      {showBilling && isLight && (
+        <Button variant="amber" className="w-full" loading={loading} onClick={handleUpgrade}>
+          PARTYプランにアップグレード
+        </Button>
       )}
+
+      {showBilling && !isLight && (
+        <Button
+          variant="secondary"
+          className="w-full"
+          loading={loading}
+          onClick={handleManageBilling}
+        >
+          支払い設定（Customer Portal）
+        </Button>
+      )}
+
+      {error && <p className="text-[12px] text-live">{error}</p>}
     </div>
   );
 }

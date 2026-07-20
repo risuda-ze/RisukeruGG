@@ -5,6 +5,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@firebase/util",
+      "@sentry/cli",
       "protobufjs",
       "sharp",
       "unrs-resolver"
@@ -15,10 +16,6 @@
     "functions:build": "pnpm --dir functions build",
     "build": "next build",
     "start": "next start",
-    "migrate:discord-schema": "node scripts/migrate-discord-schema.mjs",
-    "migrate:task-schema": "node scripts/migrate-task-schema.mjs",
-    "migrate:team-schema": "node scripts/migrate-team-schema.mjs",
-    "migrate:category-schema": "node scripts/migrate-category-schema.mjs",
     "cleanup:discord-invite-temp": "node scripts/cleanup-discord-invite-temp.mjs",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
@@ -36,6 +33,7 @@
     "@ai-sdk/anthropic": "^3.0.78",
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.2.2",
+    "@sentry/nextjs": "^10.65.0",
     "@vercel/functions": "^3.6.1",
     "ai": "^6.0.188",
     "date-fns": "^4.1.0",
@@ -67,6 +65,7 @@
     "jsdom": "^29.1.1",
     "prettier": "^3.8.3",
     "react-big-calendar": "^1.19.4",
+    "sharp": "^0.35.3",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite": "^8.1.0",

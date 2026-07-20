@@ -35,7 +35,7 @@ COPY docker/emulator/start.sh /usr/local/bin/start.sh
 RUN sed -i $'s/\r//' /usr/local/bin/start.sh && chmod +x /usr/local/bin/start.sh
 
 # エミュレータが使用するポート
-EXPOSE 4000 9099 5001 8080 9199
+EXPOSE 4000 9098 5001 8080 9199
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=90s --retries=12 \
     CMD curl -f http://localhost:4000 || exit 1

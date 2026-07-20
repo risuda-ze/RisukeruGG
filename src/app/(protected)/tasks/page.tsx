@@ -13,6 +13,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { TopBar } from '@/components/layout/TopBar';
 import type { Task } from '@/types/entities';
 import { LIGHT_PLAN_LIMITS } from '@/types/entities';
+import { isPartyPlan } from '@/lib/plan';
 
 const KanbanBoard = dynamic(() => import('@/components/kanban/KanbanBoard'), {
   loading: () => <div className="flex justify-center py-16"><Spinner size="lg" /></div>,
@@ -64,7 +65,8 @@ export default function TasksPage() {
   const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
 
   const myTaskCount = tasks.filter((t) => t.createdBy === currentUser?.uid).length;
-  const isLightPlanFull = myMember?.plan === 'light' && myTaskCount >= LIGHT_PLAN_LIMITS.monthlyTasks;
+  const isLightPlanFull =
+    !isPartyPlan(myMember?.plan) && myTaskCount >= LIGHT_PLAN_LIMITS.monthlyTasks;
 
   useEffect(() => {
     if (!teamId) return;
@@ -148,12 +150,9 @@ export default function TasksPage() {
         activeCategoryIds={activeCategoryIds}
         activeAssigneeId={activeAssigneeId}
         taskCount={filteredTasks.length}
-        canEdit={canEdit}
-        isLightPlanFull={isLightPlanFull}
         onCategoryToggle={toggleCategory}
         onClearCategories={clearCategories}
         onAssigneeChange={changeAssignee}
-        onAddTask={() => openAdd()}
         onShowHint={showHint}
       />
 

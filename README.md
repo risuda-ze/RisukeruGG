@@ -38,7 +38,8 @@
 
 ## デザインシステム
 
-ネオン・パープルを基調としたダークテーマのゲーミングUIデザイン。
+ネオン・シアンを基調としたダークテーマのゲーミングUIデザイン。
+（トークンの正は `src/app/globals.css`。本表は主要トークンの抜粋）
 
 ### カラーパレット
 
@@ -48,8 +49,8 @@
 | `--surface`        | `#11112a` | サイドバー・ヘッダー背景           |
 | `--card`           | `#16163a` | カード背景                         |
 | `--card-raised`    | `#1c1c42` | 浮き上がりカード背景               |
-| `--primary`        | `#7f77dd` | プライマリアクション・ナビアクティブ |
-| `--primary-300`    | `#a0a0ff` | アクセントテキスト・アイコン       |
+| `--primary`        | `#3fb6e0` | プライマリアクション・ナビアクティブ |
+| `--primary-300`    | `#8fe0ff` | アクセントテキスト・アイコン       |
 | `--success`        | `#3dd68c` | 完了・成功状態                     |
 | `--warning`        | `#ef9f27` | 警告・保留状態                     |
 | `--danger`         | `#f0506e` | エラー・削除・LIVE状態             |
@@ -203,8 +204,133 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
-NEXT_PUBLIC_USE_EMULATORS=true   # Firebase エミュレータ使用時
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=   # GA4 計測ID。設定時のみ Firebase Analytics を有効化
+NEXT_PUBLIC_USE_EMULATORS=true   # Firebase エミュレータ使用時（Analytics は自動で無効化）
+
+# 試用モード（PL-011）: 'true' のとき課金なしで全ユーザーを PARTY プラン相当として扱う。
+# クライアント・サーバーの両方で有効化する必要がある。試用終了時は両方を外す（未設定 = 通常運用）。
+NEXT_PUBLIC_FREE_PARTY_MODE=true   # クライアント（広告非表示・CTA非表示・通知制限解除の判定）
+
+# クローズドベータ入場制限（T11）: 'true' のとき allowlist 外ユーザーに待機画面を表示する。
+# 表示切替用のクライアントフラグ。実際のデータアクセス拒否は firestore.rules と
+# Firestore の app_config/beta { enabled } / beta_allowlist が担保する（下記「クローズドベータ」参照）。
+NEXT_PUBLIC_CLOSED_BETA=true
 ```
+
+Cloud Functions 側は `functions/` の環境変数（`.env` もしくはデプロイ時の設定）に次を追加する:
+
+```env
+# 試用モード（PL-011）のサーバー側フラグ。クライアントの NEXT_PUBLIC_FREE_PARTY_MODE と必ず揃える。
+# 月次上限・チーム参加要件（PL-005）・リマインダー通知などサーバー判定に適用される。
+FREE_PARTY_MODE=true
+```
+
+### エラー監視・アナリティクス（T10）
+
+| 環境変数 | 用途 | 未設定時の挙動 |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SENTRY_DSN` | Sentry のプロジェクト DSN。クライアント・サーバー両方のエラー収集に使用。 | **完全に無効（no-op）**。ビルドにも影響しない。 |
+| `SENTRY_ORG` | Sentry の組織スラッグ（ソースマップアップロード用）。 | ソースマップをアップロードしない。 |
+| `SENTRY_PROJECT` | Sentry のプロジェクトスラッグ（ソースマップアップロード用）。 | ソースマップをアップロードしない。 |
+| `SENTRY_AUTH_TOKEN` | ソースマップアップロード用の認証トークン。**ビルド環境（CI）でのみ設定**。 | ソースマップアップロードをスキップ（ローカルビルド・トークン無しでも `pnpm build` は成功する）。 |
+| `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | GA4 計測ID。ページビュー・主要イベント計測に使用。 | Analytics 未初期化。すべての計測呼び出しが no-op。 |
+
+- **Sentry**: `NEXT_PUBLIC_SENTRY_DSN` が空の場合はクライアント・サーバーとも初期化せず、イベントを一切送信しません。本番の CI ビルドでソースマップをアップロードする場合のみ `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` を設定してください。`tracesSampleRate` は 0.1、`sendDefaultPii` は無効（個人情報を送信しない）設定です。
+- **Cloud Functions のエラー監視**: Firebase 標準の Cloud Logging / Error Reporting を利用するため、Functions 側に Sentry 導入は不要です（追加設定なし）。
+- **Firebase Analytics（GA4）**: `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` が設定され、かつブラウザが対応（`isSupported()` が true）の場合のみ有効化します。エミュレータ利用時（`NEXT_PUBLIC_USE_EMULATORS=true`）は無効化されます。ページビューと主要イベント（`team_create` / `schedule_create` / `collab_confirm` / `upgrade_cta_click`）を計測します。
+
+### クローズドベータ入場制限（T11）
+
+正式リリース（課金開始）までは、招待したテスターのみがアプリを利用できるようにする仕組みです。ゲートの正は Firestore にあり、環境変数はクライアントの表示切替にのみ使います。
+
+| 設定 | 役割 |
+| --- | --- |
+| `NEXT_PUBLIC_CLOSED_BETA=true` | クライアント側の表示切替。allowlist 外ユーザーに待機画面を表示する。 |
+| `app_config/beta { enabled: true }`（Firestore） | ゲートの正。`firestore.rules` が `get()` で参照し、`enabled=true` かつ allowlist 非在籍のユーザーのデータアクセスを拒否する。 |
+| `beta_allowlist/{email}`（Firestore） | 許可ユーザー。ドキュメント ID = 小文字正規化したメールアドレス。**メールはリポジトリに記録しない**。 |
+| `beta_requests/{uid}`（Firestore） | 利用申請の記録（Callable `requestBetaAccess` が書き込み、管理者へ通知メール送信）。 |
+
+有効化の手順:
+
+1. Firestore コンソールで `app_config/beta` ドキュメントを作成し `enabled: true`（boolean）を設定する。
+2. `.env.local` に `NEXT_PUBLIC_CLOSED_BETA=true` を追加する。
+3. Cloud Functions の Secret `GMAIL_USER` / `GMAIL_APP_PASSWORD`（お問い合わせ機能と共用）を設定する。
+4. 招待するテスターを allowlist に登録する（下記スクリプト）。
+
+allowlist の管理（`FIREBASE_SERVICE_ACCOUNT_KEY` にサービスアカウント JSON を設定して実行）:
+
+```bash
+node scripts/beta-allowlist.mjs add    user@example.com [別のメール...]
+node scripts/beta-allowlist.mjs remove user@example.com
+node scripts/beta-allowlist.mjs list
+```
+
+解除（課金開始時）: `app_config/beta.enabled = false`（または doc 削除）＋ `NEXT_PUBLIC_CLOSED_BETA` を外すと、全ユーザーが即時開放されます。待機中に作成されたアカウント・ソロチームはそのまま利用に移行します。
+
+### Stripe 課金（T4）
+
+PARTY プラン（ユーザー単位・月額500円税込・14日間無料トライアル）の課金を Stripe Checkout + Customer Portal で提供します。プラン状態の反映は Webhook が担い、`users/{uid}.plan` と所属チームの `teams/{teamId}/members/{uid}.plan` を更新します。
+
+関連 Cloud Functions:
+
+| Function | 種別 | 役割 |
+| --- | --- | --- |
+| `createStripeCheckoutSession` | callable | Checkout セッションを作成し遷移 URL を返す（`trial_period_days = 14`、`client_reference_id = uid`） |
+| `createStripePortalSession` | callable | Customer Portal（解約・支払い方法変更）へのセッションを作成 |
+| `stripeWebhook` | HTTP (onRequest) | 署名検証のうえプラン遷移を反映。`stripeEvents/{eventId}` で冪等性を担保 |
+
+Webhook イベントとプラン遷移:
+
+| イベント | plan 遷移 |
+| --- | --- |
+| `checkout.session.completed` | → `party`（`stripeCustomerId` も保存） |
+| `customer.subscription.deleted` | → `light` |
+| `invoice.payment_failed` | 変更なし（猶予は Stripe 側。降格は subscription 削除時のみ） |
+
+環境変数 / Secrets（Cloud Functions 側）:
+
+| 変数 | 種別 | 用途 | 未設定時の挙動 |
+| --- | --- | --- | --- |
+| `STRIPE_SECRET_KEY` | Secret | Stripe シークレットキー（`sk_...`） | 該当 Function 実行時にのみ参照。未設定でもデプロイ・ビルドは成功 |
+| `STRIPE_PRICE_ID` | Secret | PARTY プランの Price ID（`price_...`） | 同上 |
+| `STRIPE_WEBHOOK_SECRET` | Secret | Webhook 署名シークレット（`whsec_...`） | 同上（未設定時は署名検証に失敗し 400 を返す） |
+| `NEXT_PUBLIC_APP_URL` | 環境変数 | Checkout 成功/キャンセル・Portal 戻り先 URL のベース | `https://risukeru.gg` にフォールバック |
+
+> ⚠️ **備忘（2026-07-20）**: 初回デプロイ時に `STRIPE_SECRET_KEY` / `STRIPE_PRICE_ID` / `STRIPE_WEBHOOK_SECRET` へ**仮のダミー値**を登録した。現状のままでは Checkout / Portal / Webhook はすべて失敗する（課金機能は動作しない）。**課金を開始する前に、下記の手順で必ず正式な値に差し替えること。**
+>
+> 差し替え方法:
+>
+> ```bash
+> # 1. 各シークレットを正式な値で上書き（実行するとマスク付きの入力プロンプトが出る）
+> firebase functions:secrets:set STRIPE_SECRET_KEY      # sk_live_...（テスト検証時は sk_test_...）
+> firebase functions:secrets:set STRIPE_PRICE_ID        # price_...
+> firebase functions:secrets:set STRIPE_WEBHOOK_SECRET  # whsec_...
+>
+> # 2. 再デプロイ（シークレットは関数がバージョン固定で参照するため、set しただけでは反映されない）
+> firebase deploy --only functions
+>
+> # 確認: 現在の値を参照する場合
+> firebase functions:secrets:access STRIPE_SECRET_KEY
+> ```
+>
+> 正式な値の取得元は下記「本番セットアップ手順」1〜2 を参照（Price ID は Stripe ダッシュボードの Product、`whsec_...` は Webhook エンドポイント登録時に発行される）。
+
+**本番セットアップ手順**（実 Stripe アカウントで一度だけ実施）:
+
+1. Stripe ダッシュボードで **Product** を作成し、**Price** を「月額500円（税込・JPY）／継続」で登録して Price ID（`price_...`）を控える。
+2. **Webhook エンドポイント**を登録する。URL は デプロイ後の `stripeWebhook` の関数 URL（例: `https://asia-northeast1-<project>.cloudfunctions.net/stripeWebhook`）。購読イベントは `checkout.session.completed` / `customer.subscription.deleted` / `invoice.payment_failed`。発行された署名シークレット（`whsec_...`）を控える。
+3. **Customer Portal** を有効化する（Billing → Customer portal の設定で解約・支払い方法変更を許可）。
+4. Secrets を登録する:
+   ```bash
+   firebase functions:secrets:set STRIPE_SECRET_KEY
+   firebase functions:secrets:set STRIPE_PRICE_ID
+   firebase functions:secrets:set STRIPE_WEBHOOK_SECRET
+   ```
+5. `functions` の環境変数に `NEXT_PUBLIC_APP_URL` を本番ドメインで設定する（未設定時は既定ドメインを使用）。
+6. デプロイ後、Stripe のテストモードで Checkout → Webhook 受信までを疎通確認する。
+7. 課金公開と同時に試用モード（`FREE_PARTY_MODE` / `NEXT_PUBLIC_FREE_PARTY_MODE`）を無効化する。
+
+> クライアントからの `plan` / `planUpdatedAt` / `stripeCustomerId` 書き換えは Firestore ルールで禁止しています（サーバー専用フィールド。PL-009）。
 
 ---
 
@@ -259,15 +385,20 @@ tests/
 
 ## 料金プラン
 
-| 機能           | LIGHTプラン（無料）  | PARTYプラン（¥1,500/人・月） |
+| 機能           | LIGHTプラン（無料）  | PARTYプラン（¥500/人・月）   |
 | -------------- | -------------------- | ---------------------------- |
 | メンバー数     | 2人まで              | 無制限                       |
 | タスク管理     | 月5件まで            | 無制限                       |
 | コラボ調整     | 月3件まで            | 無制限                       |
 | 通知           | LIVEリマインダーのみ | 全種類                       |
-| バナー広告     | あり                 | なし                         |
-| 無料トライアル | —                    | 14日間                       |
+| 広告・告知枠   | あり                 | なし                         |
+| 無料トライアル | —                    | 14日間（正式課金開始時に提供予定） |
 
 ---
 
-> 詳細な仕様は [docs/risukeru_gg_spec.md](docs/risukeru_gg_spec.md) を参照してください。
+## ドキュメント
+
+- **正本仕様**: [docs/仕様・計画/risukeru_gg_spec.md](docs/仕様・計画/risukeru_gg_spec.md)（カテゴリ別の詳細は `docs/仕様・計画/` 配下）
+- **変更仕様・実装計画**: `docs/変更仕様/`
+- **LPデザインモック**: [docs/LP/risukeru_gg_lp.html](docs/LP/risukeru_gg_lp.html)（+ `css/` / `js/`）
+  本番LP（`src/app/page.tsx`）のデザイン変更を検討する際の参照用に残している静的HTMLモック。本番実装とは独立しており、ビルド・配信には含まれない。ブラウザで直接開いて確認する。

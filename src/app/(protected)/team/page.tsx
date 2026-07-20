@@ -14,6 +14,7 @@ import { LeaveTeamDialog } from '@/components/team/LeaveTeamDialog';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { createTeam, dissolveTeam } from '@/lib/repositories/teams';
+import { trackEvent } from '@/lib/analytics';
 import { Icon } from '@/components/ui/Icon';
 import { Dropdown } from '@/components/ui/Dropdown';
 import type { TeamMember, UserRole } from '@/types/entities';
@@ -38,12 +39,12 @@ const ROLE_BADGE: Record<UserRole, { bg: string; text: string; border: string }>
     border: 'var(--purple)',
   },
   member: {
-    bg: 'rgba(239,159,39,0.15)',
+    bg: 'var(--warning-dim)',
     text: 'var(--amber-l)',
     border: 'var(--amber)',
   },
   rom: {
-    bg: 'rgba(102,102,170,0.15)',
+    bg: 'color-mix(in oklab, var(--muted) 16%, transparent)',
     text: 'var(--muted-l)',
     border: 'var(--border-l)',
   },
@@ -52,9 +53,9 @@ const ROLE_BADGE: Record<UserRole, { bg: string; text: string; border: string }>
 /* アバター背景色 */
 const AVATAR_PALETTES = [
   { bg: 'var(--purple-d)', text: 'var(--purple-l)' },
-  { bg: 'rgba(74,222,128,0.2)', text: '#4ade80' },
-  { bg: 'rgba(239,159,39,0.2)', text: 'var(--amber-l)' },
-  { bg: 'rgba(127,119,221,0.2)', text: 'var(--purple-l)' },
+  { bg: 'var(--success-dim)', text: 'var(--green)' },
+  { bg: 'var(--warning-dim)', text: 'var(--amber-l)' },
+  { bg: 'var(--purple-sm)', text: 'var(--purple-l)' },
 ];
 
 export default function TeamPage() {
@@ -132,6 +133,7 @@ export default function TeamPage() {
     setCreateError(null);
     try {
       await createTeam({ name: teamName.trim() });
+      trackEvent('team_create');
       setShowCreateTeam(false);
       setTeamName('');
     } catch (err: unknown) {
@@ -171,8 +173,8 @@ export default function TeamPage() {
     return (
       <div className="flex flex-col flex-1 overflow-hidden">
         <TopBar title="チームメンバー" />
-        <div className="flex-1 overflow-y-auto p-6 max-w-lg">
-          <div className="bg-card border border-border rounded-[18px] p-6">
+        <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 max-w-lg">
+          <Card>
             <h3 className="text-sm font-semibold text-text mb-1">チームに参加または作成する</h3>
             <p className="text-[12px] text-muted mb-5">
               チームメンバーとスケジュールを共有できます
@@ -191,7 +193,7 @@ export default function TeamPage() {
                 チームを作成する
               </Button>
             </div>
-          </div>
+          </Card>
           <Modal
             open={showCreateTeam}
             onClose={() => setShowCreateTeam(false)}
@@ -454,8 +456,8 @@ export default function TeamPage() {
           <div
             className="rounded-[10px] p-3 border text-[12px]"
             style={{
-              background: 'rgba(226,53,57,0.08)',
-              borderColor: 'rgba(226,53,57,0.3)',
+              background: 'color-mix(in oklab, var(--danger) 8%, transparent)',
+              borderColor: 'color-mix(in oklab, var(--danger) 30%, transparent)',
               color: 'var(--live)',
             }}
           >

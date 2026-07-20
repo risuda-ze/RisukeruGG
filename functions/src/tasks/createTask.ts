@@ -2,6 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { FieldValue } from 'firebase-admin/firestore';
 import { db, getAuthContext, requireOwnerOrEditor, getUserDoc } from '../lib/validateAuth';
 import { LIGHT_PLAN_LIMITS } from '../lib/constants';
+import { isPartyPlan } from '../lib/plan';
 
 interface CreateTaskData {
   teamId: string;
@@ -29,8 +30,8 @@ export const createTask = onCall(
 
     const userData = await getUserDoc(ctx.uid);
 
-    // LIGHTプランの月次制限チェック
-    if (userData.plan === 'light' && userData.monthlyTaskCount >= LIGHT_PLAN_LIMITS.monthlyTasks) {
+    // LIGHTプランの月次制限チェック（試用モード中は PARTY 相当で無制限）
+    if (!isPartyPlan(userData.plan) && userData.monthlyTaskCount >= LIGHT_PLAN_LIMITS.monthlyTasks) {
       throw new HttpsError(
         'failed-precondition',
         `LIGHTプランのタスク作成上限（月${LIGHT_PLAN_LIMITS.monthlyTasks}件）に達しました。PARTYプランにアップグレードしてください`
@@ -54,26 +55,10 @@ export const createTask = onCall(
         createdAt: now,
       });
 
-      // 月次カウントをインクリメント（LIGHTプランのみ）
-      if (userData.plan === 'light') {
+      // 月次カウントをインクリメント（LIGHTプランのみ。試用モード中はカウントしない）
+      if (!isPartyPlan(userData.plan)) {
         tx.update(db.doc(`users/${ctx.uid}`), {
           monthlyTaskCount: FieldValue.increment(1),
-        });
-      }
-
-      // 担当者に通知
-      if (assigneeId && assigneeId !== ctx.uid) {
-        const notifRef = db.collection(`teams/${teamId}/notifications`).doc();
-        tx.set(notifRef, {
-          recipientId: assigneeId,
-          category: 'tasks',
-          type: 'task_assigned',
-          title: 'タスクが割り当てられました',
-          body: `「${title}」があなたに割り当てられました`,
-          refType: 'task',
-          refId: taskRef.id,
-          isRead: false,
-          createdAt: now,
         });
       }
 

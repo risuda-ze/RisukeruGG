@@ -249,10 +249,10 @@ export function TaskDetailModal({
 
   /* アバタースタイル */
   function avatarBg(name: string) {
-    return ['var(--purple-d)', 'rgba(74,222,128,0.2)', 'rgba(239,159,39,0.2)', 'rgba(255,77,109,0.2)'][name.charCodeAt(0) % 4];
+    return ['var(--purple-d)', 'var(--success-dim)', 'var(--warning-dim)', 'var(--danger-dim)'][name.charCodeAt(0) % 4];
   }
   function avatarColor(name: string) {
-    return ['var(--purple-l)', '#4ade80', 'var(--amber-l)', '#ff6b70'][name.charCodeAt(0) % 4];
+    return ['var(--purple-l)', 'var(--green)', 'var(--amber-l)', 'var(--danger)'][name.charCodeAt(0) % 4];
   }
   function memberAvatarUrl(authorId: string) {
     return members.find((m) => m.userId === authorId)?.avatarUrl ?? null;
@@ -598,7 +598,7 @@ export function TaskDetailModal({
           {!isNew && canEdit && (
             <button onClick={handleDelete}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] text-[13px] font-semibold border transition-colors mr-auto"
-              style={{ background: 'rgba(226,53,57,0.15)', color: '#ff6b70', borderColor: 'rgba(226,53,57,0.3)' }}>
+              style={{ background: 'var(--danger-dim)', color: 'var(--danger)', borderColor: 'color-mix(in oklab, var(--danger) 30%, transparent)' }}>
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2 4h12M5 4V2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5V4m2 0-1 9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1L3 4" />
               </svg>

@@ -45,9 +45,13 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
 
   // Sprint 1 Webhook 設定用の state（guildId 未設定時のみ表示）
   const [webhookUrl, setWebhookUrl] = useState('');
-  const [notifyOnCreate, setNotifyOnCreate] = useState(false);
-  const [notifyBefore1h, setNotifyBefore1h] = useState(false);
-  const [notifyBefore15min, setNotifyBefore15min] = useState(false);
+  // 通知トグル（未設定はデフォルト有効）
+  const [notifyOnTaskCreate, setNotifyOnTaskCreate] = useState(true);
+  const [notifyOnTaskUpdate, setNotifyOnTaskUpdate] = useState(true);
+  const [notifyOnCollabCreate, setNotifyOnCollabCreate] = useState(true);
+  const [notifyOnCollabResponse, setNotifyOnCollabResponse] = useState(true);
+  const [notifyBefore1h, setNotifyBefore1h] = useState(true);
+  const [notifyBefore15min, setNotifyBefore15min] = useState(true);
   const [savingWebhook, setSavingWebhook] = useState(false);
 
   const loading = isOperator && loadedTeamId !== teamId;
@@ -76,14 +80,20 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
         setConfig(cfg);
         if (cfg) {
           setWebhookUrl(cfg.webhookUrl ?? '');
-          setNotifyOnCreate(cfg.notifyOnCreate);
+          setNotifyOnTaskCreate(cfg.notifyOnTaskCreate);
+          setNotifyOnTaskUpdate(cfg.notifyOnTaskUpdate);
+          setNotifyOnCollabCreate(cfg.notifyOnCollabCreate);
+          setNotifyOnCollabResponse(cfg.notifyOnCollabResponse);
           setNotifyBefore1h(cfg.notifyBefore1h);
           setNotifyBefore15min(cfg.notifyBefore15min);
         } else {
           setWebhookUrl('');
-          setNotifyOnCreate(false);
-          setNotifyBefore1h(false);
-          setNotifyBefore15min(false);
+          setNotifyOnTaskCreate(true);
+          setNotifyOnTaskUpdate(true);
+          setNotifyOnCollabCreate(true);
+          setNotifyOnCollabResponse(true);
+          setNotifyBefore1h(true);
+          setNotifyBefore15min(true);
         }
       })
       .catch(() => {
@@ -219,18 +229,19 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
 
   async function handleDisconnect() {
     if (!idToken) return;
+    // 登録解除は Bot のサーバー退出・コマンド削除を伴い、再連携には再招待が必要
+    if (
+      !confirm(
+        'Discord の登録を解除しますか？\nBot がサーバーから退出し、スラッシュコマンドと通知設定も削除されます。再度使うには招待からやり直しになります。'
+      )
+    ) {
+      return;
+    }
     setError(null);
     try {
-      await updateDiscordSettings({
-        teamId,
-        webhookUrl: config?.webhookUrl ?? '',
-        notifyOnCreate: config?.notifyOnCreate ?? false,
-        notifyBefore1h: config?.notifyBefore1h ?? false,
-        notifyBefore15min: config?.notifyBefore15min ?? false,
-        // guildId と channelId を空文字で上書き（削除）
-      });
-      // guildId/channelId を Firestore から削除するために Admin SDK 経由の API を呼ぶ
-      await fetch('/api/discord/disconnect-guild', {
+      // Discord 側（コマンド・Bot 参加・セッション）と Firestore 側（連携情報・通知設定）を
+      // まとめて削除する Admin SDK 経由の API を呼ぶ
+      const res = await fetch('/api/discord/disconnect-guild', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${idToken}`,
@@ -238,8 +249,18 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
         },
         body: JSON.stringify({ teamId }),
       });
-      setConfig((prev) => (prev ? { ...prev, guildId: undefined, channelId: undefined } : null));
-      showToast('success', 'Discord Bot の接続を解除しました');
+      if (!res.ok) throw new Error('登録解除に失敗しました');
+
+      // config ドキュメントごと削除されるため、UI 状態も未連携・初期値へ戻す
+      setConfig(null);
+      setWebhookUrl('');
+      setNotifyOnTaskCreate(true);
+      setNotifyOnTaskUpdate(true);
+      setNotifyOnCollabCreate(true);
+      setNotifyOnCollabResponse(true);
+      setNotifyBefore1h(true);
+      setNotifyBefore15min(true);
+      showToast('success', 'Discord の登録を解除しました');
     } catch {
       setError('解除に失敗しました');
     }
@@ -253,7 +274,10 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
       await updateDiscordSettings({
         teamId,
         webhookUrl,
-        notifyOnCreate,
+        notifyOnTaskCreate,
+        notifyOnTaskUpdate,
+        notifyOnCollabCreate,
+        notifyOnCollabResponse,
         notifyBefore1h,
         notifyBefore15min,
       });
@@ -263,6 +287,22 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
     } finally {
       setSavingWebhook(false);
     }
+  }
+
+  /** 接続済みトグルの即時保存。teamId / webhookUrl の共通項をまとめる（送信は fire-and-forget） */
+  function persistNotify(next: {
+    notifyOnTaskCreate: boolean;
+    notifyOnTaskUpdate: boolean;
+    notifyOnCollabCreate: boolean;
+    notifyOnCollabResponse: boolean;
+    notifyBefore1h: boolean;
+    notifyBefore15min: boolean;
+  }) {
+    void updateDiscordSettings({
+      teamId,
+      webhookUrl: config?.webhookUrl ?? '',
+      ...next,
+    }).catch(() => {});
   }
 
   // operator 以外には表示しない
@@ -287,7 +327,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
       <CardHeader title="Discord 連携" />
       <div className="p-[18px] space-y-5">
         <p className="text-[13px] text-muted">
-          Discord サーバーに RisukeruGG Bot を追加すると、スケジュール通知や AI
+          Discord サーバーに RisukeruGG Bot を追加すると、タスク・コラボ通知や AI
           アシスタントが使えます。
         </p>
 
@@ -302,9 +342,14 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
             className="text-[12px] rounded-[8px] px-3 py-2 border"
             style={{
               color: toast.type === 'success' ? 'var(--green)' : 'var(--live)',
-              background: toast.type === 'success' ? 'rgba(74,222,128,0.1)' : 'rgba(239,68,68,0.1)',
+              background:
+                toast.type === 'success'
+                  ? 'color-mix(in oklab, var(--success) 10%, transparent)'
+                  : 'color-mix(in oklab, var(--danger) 10%, transparent)',
               borderColor:
-                toast.type === 'success' ? 'rgba(74,222,128,0.3)' : 'rgba(239,68,68,0.3)',
+                toast.type === 'success'
+                  ? 'color-mix(in oklab, var(--success) 30%, transparent)'
+                  : 'color-mix(in oklab, var(--danger) 30%, transparent)',
             }}
           >
             {toast.message}
@@ -329,7 +374,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
               </div>
               <span
                 className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(74,222,128,0.15)', color: 'var(--green)' }}
+                style={{ background: 'var(--success-dim)', color: 'var(--green)' }}
               >
                 接続済み
               </span>
@@ -338,7 +383,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
               onClick={handleDisconnect}
               className="text-[12px] text-muted hover:text-live transition-colors"
             >
-              接続を解除する
+              登録を解除する
             </button>
           </div>
         )}
@@ -415,17 +460,32 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
                 <div className="space-y-3">
                   <p className="text-[12px] font-semibold text-text">通知タイミング</p>
                   <ToggleRow
-                    label="スケジュール作成時に通知"
-                    checked={notifyOnCreate}
-                    onChange={setNotifyOnCreate}
+                    label="タスク作成時に通知"
+                    checked={notifyOnTaskCreate}
+                    onChange={setNotifyOnTaskCreate}
                   />
                   <ToggleRow
-                    label="開始 1 時間前にリマインダー"
+                    label="タスク変更時に通知"
+                    checked={notifyOnTaskUpdate}
+                    onChange={setNotifyOnTaskUpdate}
+                  />
+                  <ToggleRow
+                    label="コラボ調整の作成時に通知"
+                    checked={notifyOnCollabCreate}
+                    onChange={setNotifyOnCollabCreate}
+                  />
+                  <ToggleRow
+                    label="コラボ調整への回答時に通知"
+                    checked={notifyOnCollabResponse}
+                    onChange={setNotifyOnCollabResponse}
+                  />
+                  <ToggleRow
+                    label="スケジュール開始1時間前に通知"
                     checked={notifyBefore1h}
                     onChange={setNotifyBefore1h}
                   />
                   <ToggleRow
-                    label="開始 15 分前にリマインダー"
+                    label="スケジュール開始15分前に通知"
                     checked={notifyBefore15min}
                     onChange={setNotifyBefore15min}
                   />
@@ -443,45 +503,93 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
           <div className="space-y-3 border-t border-border pt-4">
             <p className="text-[12px] font-semibold text-text">通知タイミング</p>
             <ToggleRow
-              label="スケジュール作成時に通知"
-              checked={notifyOnCreate}
-              onChange={async (v) => {
-                setNotifyOnCreate(v);
-                await updateDiscordSettings({
-                  teamId,
-                  webhookUrl: config?.webhookUrl ?? '',
-                  notifyOnCreate: v,
+              label="タスク作成時に通知"
+              checked={notifyOnTaskCreate}
+              onChange={(v) => {
+                setNotifyOnTaskCreate(v);
+                persistNotify({
+                  notifyOnTaskCreate: v,
+                  notifyOnTaskUpdate,
+                  notifyOnCollabCreate,
+                  notifyOnCollabResponse,
                   notifyBefore1h,
                   notifyBefore15min,
-                }).catch(() => {});
+                });
               }}
             />
             <ToggleRow
-              label="開始 1 時間前にリマインダー"
+              label="タスク変更時に通知"
+              checked={notifyOnTaskUpdate}
+              onChange={(v) => {
+                setNotifyOnTaskUpdate(v);
+                persistNotify({
+                  notifyOnTaskCreate,
+                  notifyOnTaskUpdate: v,
+                  notifyOnCollabCreate,
+                  notifyOnCollabResponse,
+                  notifyBefore1h,
+                  notifyBefore15min,
+                });
+              }}
+            />
+            <ToggleRow
+              label="コラボ調整の作成時に通知"
+              checked={notifyOnCollabCreate}
+              onChange={(v) => {
+                setNotifyOnCollabCreate(v);
+                persistNotify({
+                  notifyOnTaskCreate,
+                  notifyOnTaskUpdate,
+                  notifyOnCollabCreate: v,
+                  notifyOnCollabResponse,
+                  notifyBefore1h,
+                  notifyBefore15min,
+                });
+              }}
+            />
+            <ToggleRow
+              label="コラボ調整への回答時に通知"
+              checked={notifyOnCollabResponse}
+              onChange={(v) => {
+                setNotifyOnCollabResponse(v);
+                persistNotify({
+                  notifyOnTaskCreate,
+                  notifyOnTaskUpdate,
+                  notifyOnCollabCreate,
+                  notifyOnCollabResponse: v,
+                  notifyBefore1h,
+                  notifyBefore15min,
+                });
+              }}
+            />
+            <ToggleRow
+              label="スケジュール開始1時間前に通知"
               checked={notifyBefore1h}
-              onChange={async (v) => {
+              onChange={(v) => {
                 setNotifyBefore1h(v);
-                await updateDiscordSettings({
-                  teamId,
-                  webhookUrl: config?.webhookUrl ?? '',
-                  notifyOnCreate,
+                persistNotify({
+                  notifyOnTaskCreate,
+                  notifyOnTaskUpdate,
+                  notifyOnCollabCreate,
+                  notifyOnCollabResponse,
                   notifyBefore1h: v,
                   notifyBefore15min,
-                }).catch(() => {});
+                });
               }}
             />
             <ToggleRow
-              label="開始 15 分前にリマインダー"
+              label="スケジュール開始15分前に通知"
               checked={notifyBefore15min}
-              onChange={async (v) => {
+              onChange={(v) => {
                 setNotifyBefore15min(v);
-                await updateDiscordSettings({
-                  teamId,
-                  webhookUrl: config?.webhookUrl ?? '',
-                  notifyOnCreate,
+                persistNotify({
+                  notifyOnTaskCreate,
+                  notifyOnTaskUpdate,
+                  notifyOnCollabCreate,
+                  notifyOnCollabResponse,
                   notifyBefore1h,
                   notifyBefore15min: v,
-                }).catch(() => {});
+                });
               }}
             />
           </div>

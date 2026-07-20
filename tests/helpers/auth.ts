@@ -8,7 +8,7 @@
 import { Page } from '@playwright/test';
 
 const FIREBASE_API_KEY = 'demo-api-key';
-const AUTH_EMULATOR = 'http://localhost:9099';
+const AUTH_EMULATOR = 'http://localhost:9098';
 
 export interface EmulatorUser {
   localId: string;

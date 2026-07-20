@@ -31,7 +31,6 @@ interface DrawerItem {
 const DRAWER_ITEMS: DrawerItem[] = [
   { label: 'チーム管理',      icon: 'groups',          href: '/team' },
   { label: 'カテゴリ設定', icon: 'task_alt',        href: '/settings/categories' },
-  { label: '通知管理',        icon: 'notifications',   href: '/notifications' },
   { label: '個人設定',        icon: 'manage_accounts', href: '/settings/profile' },
   { label: 'Discord連携',   icon: 'discord',         href: '/integrations/discord' },
   { label: 'Youtube連携',   icon: 'smart_display',   href: '#' },
@@ -110,6 +109,9 @@ export function MobileToolbar() {
         className="flex md:hidden fixed bottom-0 left-0 right-0 z-40 items-stretch justify-around"
         style={{
           height: '66px',
+          /* ホームインジケーター等のセーフエリア分を下に確保 */
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          boxSizing: 'content-box',
           background: 'var(--surface)',
           borderTop: '1px solid var(--border)',
         }}

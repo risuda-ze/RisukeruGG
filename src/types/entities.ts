@@ -3,7 +3,6 @@ export type PlanType = 'light' | 'party';
 /** @deprecated 新規コードでは Category インターフェースと categoryId を使用すること */
 export type TaskCategoryKey = 'shooting' | 'editing' | 'thumbnail' | 'announcement' | 'other';
 export type CollabStatus = 'open' | 'confirmed' | 'expired' | 'cancelled';
-export type NotificationCategory = 'collab' | 'tasks' | 'reminders' | 'system';
 
 export const LIGHT_PLAN_LIMITS = {
   maxTeamMembers: 2,
@@ -21,13 +20,6 @@ export const COLLAB_STATUS_LABELS: Record<CollabStatus, string> = {
   cancelled: '終了',
 } as const;
 
-export interface NotificationPreferences {
-  collab: { inApp: boolean; push: boolean };
-  tasks: { inApp: boolean; push: boolean };
-  reminders: { inApp: boolean; push: boolean };
-  system: { inApp: boolean; push: boolean };
-}
-
 export interface User {
   uid: string;
   displayName: string;
@@ -38,12 +30,12 @@ export interface User {
   teamIds: string[];
   plan: PlanType;
   planUpdatedAt: Date;
+  /** Stripe の Customer ID（T4）。課金導線を一度も通っていない場合は null。 */
+  stripeCustomerId?: string | null;
   monthlyTaskCount: number;
   monthlyCollabCount: number;
   countResetAt: Date;
   createdAt: Date;
-  notificationPreferences: NotificationPreferences;
-  fcmTokens: string[];
   googleCalendar: {
     connected: boolean;
     syncError: string | null;
@@ -202,12 +194,15 @@ export interface CollabSession {
 // teams/{teamId}/discord/config サブコレクションの型
 // Team インターフェースには追加しない（サブコレクション方式で operator のみアクセス制限するため）
 export interface DiscordTeamConfig {
-  webhookUrl: string;        // Sprint 1 のみ使用。guildId 設定後は Bot 通知が優先される
-  guildId?: string;          // DiscordサーバーID（Bot 招待完了後に書き込む）
-  channelId?: string;        // Bot 通知先チャンネルID（Bot 招待完了後に書き込む）
-  notifyOnCreate: boolean;   // スケジュール作成時に通知
-  notifyBefore1h: boolean;   // 1時間前リマインダー
-  notifyBefore15min: boolean; // 15分前リマインダー
+  webhookUrl: string;             // Sprint 1 のみ使用。guildId 設定後は Bot 通知が優先される
+  guildId?: string;               // DiscordサーバーID（Bot 招待完了後に書き込む）
+  channelId?: string;             // Bot 通知先チャンネルID（Bot 招待完了後に書き込む）
+  notifyOnTaskCreate: boolean;    // タスク作成時に通知（Discord 経由の作成は除く）
+  notifyOnTaskUpdate: boolean;    // タスク変更時に通知（主要フィールドの変更のみ）
+  notifyOnCollabCreate: boolean;  // コラボ調整作成時に通知
+  notifyOnCollabResponse: boolean; // コラボ調整への回答時に通知
+  notifyBefore1h: boolean;        // スケジュール開始1時間前にリマインダー通知
+  notifyBefore15min: boolean;     // スケジュール開始15分前にリマインダー通知
 }
 
 // discord_sessions/{guildId} の型（Sprint 3 AI ボット用）
@@ -225,18 +220,4 @@ export interface DiscordSession {
   initiatorDiscordUserId?: string;
   updatedAt: Date;  // 30分無操作でセッション自動リセット（sessionManager 側で判定）
 }
-
-export interface Notification {
-  id: string;
-  recipientId: string;
-  category: NotificationCategory;
-  type: string;
-  title: string;
-  body: string;
-  refType: 'schedule' | 'task' | 'collab' | 'team' | null;
-  refId: string | null;
-  isRead: boolean;
-  createdAt: Date;
-}
-
 

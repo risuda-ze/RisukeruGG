@@ -7,6 +7,7 @@ import { useTasksStore } from '@/stores/tasks';
 import { useScheduleStore } from '@/stores/schedule';
 import { subscribeCollabSessions } from '@/lib/repositories/collabs';
 import { createTeam } from '@/lib/repositories/teams';
+import { trackEvent } from '@/lib/analytics';
 import { StatCard } from '@/components/ui/StatCard';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
@@ -17,6 +18,7 @@ import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
 import { TaskBoardPreview } from '@/components/dashboard/TaskBoardPreview';
 import { BannerAd } from '@/components/plan/BannerAd';
+import { isPartyPlan } from '@/lib/plan';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
 import { TopBar } from '@/components/layout/TopBar';
 import { ROLE_BADGE, ROLE_LABELS } from '@/lib/utils/teamRoles';
@@ -74,6 +76,7 @@ export default function DashboardPage() {
     setCreateError(null);
     try {
       await createTeam({ name: teamName.trim() });
+      trackEvent('team_create');
       setShowCreateTeam(false);
       setTeamName('');
     } catch (err: unknown) {
@@ -267,10 +270,10 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* LIGHTプラン向けバナー広告 */}
-        {myMember?.plan === 'light' && (
+        {/* LIGHTプラン向け自社告知枠（実プランから判定。試用モード中・PARTYは非表示） */}
+        {!isPartyPlan(myMember?.plan) && (
           <div className="mt-4 md:hidden">
-            <BannerAd plan="light" />
+            <BannerAd plan={myMember?.plan ?? 'light'} />
           </div>
         )}
       </div>

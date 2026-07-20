@@ -29,17 +29,11 @@ export const onUserCreate = v1.auth.user().onCreate(async (user) => {
     teamIds: [soloTeamId],
     plan: 'light',
     planUpdatedAt: now,
+    stripeCustomerId: null,
     monthlyTaskCount: 0,
     monthlyCollabCount: 0,
     countResetAt: now,
     createdAt: now,
-    notificationPreferences: {
-      collab: { inApp: true, push: false },
-      tasks: { inApp: true, push: false },
-      reminders: { inApp: true, push: false },
-      system: { inApp: true, push: false },
-    },
-    fcmTokens: [],
     googleCalendar: null,
   });
 
