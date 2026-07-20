@@ -1610,6 +1610,21 @@ const LP_CSS = `
     transform: none;
     box-shadow: none;
   }
+  #lp-root .plan-cta.soon {
+    font-family: var(--pixel);
+    font-size: 14px;
+    letter-spacing: 0.18em;
+    background: rgba(137, 135, 189, 0.14);
+    color: var(--faint);
+    border: 1px dashed var(--border);
+    box-shadow: none;
+    cursor: default;
+  }
+  #lp-root .plan-cta.soon:hover {
+    background: rgba(137, 135, 189, 0.14);
+    transform: none;
+    box-shadow: none;
+  }
 
   /* ── TESTIMONIALS ── */
   #lp-root .testi {
@@ -2440,7 +2455,7 @@ const LP_HTML = `
             <div class="plan-reco">おすすめ</div>
             <div class="plan-name latin">PARTY</div>
             <div class="plan-price">¥500 <span>/ 人・月</span></div>
-            <div class="plan-note">14日間無料トライアル</div>
+            <div class="plan-note">開発中 — リリース時に14日間無料トライアル付き</div>
             <div class="plan-items">
               <div class="plan-item">メンバー 無制限</div>
               <div class="plan-item">スケジュール登録 無制限</div>
@@ -2450,10 +2465,10 @@ const LP_HTML = `
               <div class="plan-item">スマホ・PC 両対応</div>
             </div>
             <div class="plan-flag flag-ok">✓ 広告なし</div>
-            <a href="/login" class="plan-cta">14日無料で試す →</a>
+            <div class="plan-cta soon" aria-disabled="true">COMING SOON…</div>
           </div>
         </div>
-        <p class="section-note fade-up">※ PARTYは申し込みから14日間、全機能を無料でお試しできます。トライアル中に解約すれば料金はかかりません。<br class="br-d"/>※ PARTYの料金はメンバーそれぞれが自分の分（¥500/月）を支払います。チームまとめ払いはありません。</p>
+        <p class="section-note fade-up">※ PARTYプランは現在開発中です。リリース時には、申し込みから14日間の無料トライアルを用意します。<br class="br-d"/>※ PARTYの料金はメンバーそれぞれが自分の分（¥500/月）を支払います。チームまとめ払いはありません。</p>
       </div>
     </section>
 

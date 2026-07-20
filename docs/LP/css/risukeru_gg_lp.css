@@ -1551,6 +1551,21 @@ body.lp-anim .problem-card:not(.is-visible) {
   transform: none;
   box-shadow: none;
 }
+.plan-cta.soon {
+  font-family: var(--pixel);
+  font-size: 14px;
+  letter-spacing: 0.18em;
+  background: rgba(137, 135, 189, 0.14);
+  color: var(--faint);
+  border: 1px dashed var(--border);
+  box-shadow: none;
+  cursor: default;
+}
+.plan-cta.soon:hover {
+  background: rgba(137, 135, 189, 0.14);
+  transform: none;
+  box-shadow: none;
+}
 
 /* ── TESTIMONIALS ── */
 .testi {
