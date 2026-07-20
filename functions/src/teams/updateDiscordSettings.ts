@@ -8,6 +8,8 @@ interface UpdateDiscordSettingsData {
   notifyOnTaskUpdate: boolean;
   notifyOnCollabCreate: boolean;
   notifyOnCollabResponse: boolean;
+  notifyBefore1h: boolean;
+  notifyBefore15min: boolean;
 }
 
 /**
@@ -25,6 +27,8 @@ export const updateDiscordSettings = onCall(
       notifyOnTaskUpdate,
       notifyOnCollabCreate,
       notifyOnCollabResponse,
+      notifyBefore1h,
+      notifyBefore15min,
     } = request.data;
 
     if (!teamId) {
@@ -52,6 +56,8 @@ export const updateDiscordSettings = onCall(
         notifyOnTaskUpdate: notifyOnTaskUpdate ?? true,
         notifyOnCollabCreate: notifyOnCollabCreate ?? true,
         notifyOnCollabResponse: notifyOnCollabResponse ?? true,
+        notifyBefore1h: notifyBefore1h ?? true,
+        notifyBefore15min: notifyBefore15min ?? true,
       },
       { merge: true }
     );

@@ -41,6 +41,8 @@ export async function GET(req: NextRequest): Promise<Response> {
     notifyOnTaskUpdate: (data.notifyOnTaskUpdate as boolean) ?? true,
     notifyOnCollabCreate: (data.notifyOnCollabCreate as boolean) ?? true,
     notifyOnCollabResponse: (data.notifyOnCollabResponse as boolean) ?? true,
+    notifyBefore1h: (data.notifyBefore1h as boolean) ?? true,
+    notifyBefore15min: (data.notifyBefore15min as boolean) ?? true,
   };
 
   return Response.json({ config });

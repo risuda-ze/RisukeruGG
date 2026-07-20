@@ -18,7 +18,6 @@ export default function robots(): MetadataRoute.Robots {
         '/tasks',
         '/collabs',
         '/team',
-        '/notifications',
         '/settings',
         '/chat',
         '/integrations',

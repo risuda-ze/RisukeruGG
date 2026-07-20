@@ -38,23 +38,6 @@ export const joinTeam = onCall(
       const lightMemberCount = members.filter((m) => !isPartyPlan(m.plan)).length;
 
       if (lightMemberCount >= LIGHT_PLAN_LIMITS.maxTeamMembers && !isPartyPlan(userData.plan)) {
-        const now = FieldValue.serverTimestamp();
-        for (const docSnap of membersSnap.docs) {
-          if (!isPartyPlan(docSnap.data().plan)) {
-            const notifRef = db.collection(`teams/${teamId}/notifications`).doc();
-            tx.set(notifRef, {
-              recipientId: docSnap.id,
-              category: 'system',
-              type: 'light_limit_reached',
-              title: 'チームメンバー上限',
-              body: '全員がPARTYプランにアップグレードすると3名以上のチームが作れます',
-              refType: 'team',
-              refId: teamId,
-              isRead: false,
-              createdAt: now,
-            });
-          }
-        }
         throw new HttpsError(
           'failed-precondition',
           '全員がPARTYプランにアップグレードする必要があります'

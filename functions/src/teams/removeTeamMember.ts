@@ -63,19 +63,6 @@ export const removeTeamMember = onCall(
         tx.update(taskDoc.ref, { assigneeId: null });
       }
 
-      const notifRef = db.collection(`teams/${teamId}/notifications`).doc();
-      tx.set(notifRef, {
-        recipientId: ctx.uid,
-        category: 'system',
-        type: 'member_removed',
-        title: 'メンバーを削除しました',
-        body: `${targetUserData.displayName} をチームから削除しました`,
-        refType: 'team',
-        refId: teamId,
-        isRead: false,
-        createdAt: now,
-      });
-
       tx.set(soloTeamRef, {
         name: `${targetUserData.displayName}のチーム`,
         operatorUids: [targetUserId],

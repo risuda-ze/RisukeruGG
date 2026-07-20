@@ -422,16 +422,6 @@ input[type='time']::-webkit-calendar-picker-indicator {
 .ds-progress__bar--success { background: linear-gradient(90deg, #2fae72, var(--success)); box-shadow: var(--glow-success); }
 .ds-progress__bar--warning { background: linear-gradient(90deg, #cf8a1e, var(--warning)); box-shadow: var(--glow-warning); }
 
-/* ── Notification dot ───────────────────────────────────────── */
-.ds-notif {
-  position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px;
-  padding: 0 5px; border-radius: var(--radius-full); background: var(--danger);
-  color: #fff; font-family: var(--font-head); font-weight: 700; font-size: 0.66rem;
-  display: flex; align-items: center; justify-content: center;
-  border: 2px solid var(--bg);
-  animation: glow-pulse 2s var(--ease-linear) infinite;
-}
-
 /* ── Sidebar navlink ────────────────────────────────────────── */
 .navlink {
   display: flex; align-items: center; gap: 12px;

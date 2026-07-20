@@ -3,6 +3,7 @@ import { logger } from 'firebase-functions/v2';
 import { Timestamp } from 'firebase-admin/firestore';
 import { db } from '../lib/admin';
 import { notifyDiscord } from '../discord/notifyDiscord';
+import { discordBotToken } from '../discord/botToken';
 import type { DiscordEmbedField } from '../discord/sendWebhook';
 
 const REGION = 'asia-northeast1';
@@ -50,7 +51,7 @@ function formatDue(due: unknown): string {
  * チャンネルへ返信するため二重通知になる。その分をスキップする。
  */
 export const notifyTaskCreated = onDocumentCreated(
-  { document: TASK_DOCUMENT, region: REGION },
+  { document: TASK_DOCUMENT, region: REGION, secrets: [discordBotToken] },
   async (event) => {
     const snap = event.data;
     if (!snap) return;
@@ -87,7 +88,7 @@ export const notifyTaskCreated = onDocumentCreated(
  * 変化した場合のみ送信する。説明・カテゴリ・コメント等の変更では通知しない。
  */
 export const notifyTaskUpdated = onDocumentUpdated(
-  { document: TASK_DOCUMENT, region: REGION },
+  { document: TASK_DOCUMENT, region: REGION, secrets: [discordBotToken] },
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();

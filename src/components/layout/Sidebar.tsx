@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSidebarStore } from '@/stores/sidebar';
-import { useNotificationsStore } from '@/stores/notifications';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { TeamSwitcher } from '@/components/layout/TeamSwitcher';
 
@@ -39,7 +38,6 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: '/team',              label: 'チーム管理',   icon: 'groups' },
       { href: '/settings/categories', label: 'カテゴリ設定', icon: 'task_alt' },
-      { href: '/notifications',     label: '通知管理',     icon: 'notifications' },
       { href: '/settings/profile',  label: '個人設定',     icon: 'manage_accounts' },
     ],
   },
@@ -65,7 +63,6 @@ export function Sidebar() {
   const openSections = useSidebarStore((s) => s.openSections);
   const toggleCollapsed = useSidebarStore((s) => s.toggleCollapsed);
   const toggleSection = useSidebarStore((s) => s.toggleSection);
-  const unreadCount = useNotificationsStore((s) => s.unreadCount);
 
   return (
     <aside
@@ -155,7 +152,6 @@ export function Sidebar() {
                 <ul className="mt-0.5 space-y-0.5">
                   {section.items.map((item) => {
                     const active = item.href === activeHref;
-                    const showBadge = item.href === '/collabs' && unreadCount > 0;
                     return (
                       <li key={item.label}>
                         {item.disabled ? (
@@ -170,14 +166,6 @@ export function Sidebar() {
                           <Link href={item.href} className={`navlink${active ? ' navlink--active' : ''}`}>
                             <Icon name={item.icon} size={18} />
                             <span className="flex-1 whitespace-nowrap">{item.label}</span>
-                            {showBadge && (
-                              <span
-                                className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
-                                style={{ background: active ? 'rgba(255,255,255,0.22)' : 'var(--danger)' }}
-                              >
-                                {unreadCount > 9 ? '9+' : unreadCount}
-                              </span>
-                            )}
                           </Link>
                         )}
                       </li>

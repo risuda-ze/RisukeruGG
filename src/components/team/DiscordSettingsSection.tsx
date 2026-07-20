@@ -50,6 +50,8 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
   const [notifyOnTaskUpdate, setNotifyOnTaskUpdate] = useState(true);
   const [notifyOnCollabCreate, setNotifyOnCollabCreate] = useState(true);
   const [notifyOnCollabResponse, setNotifyOnCollabResponse] = useState(true);
+  const [notifyBefore1h, setNotifyBefore1h] = useState(true);
+  const [notifyBefore15min, setNotifyBefore15min] = useState(true);
   const [savingWebhook, setSavingWebhook] = useState(false);
 
   const loading = isOperator && loadedTeamId !== teamId;
@@ -82,12 +84,16 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
           setNotifyOnTaskUpdate(cfg.notifyOnTaskUpdate);
           setNotifyOnCollabCreate(cfg.notifyOnCollabCreate);
           setNotifyOnCollabResponse(cfg.notifyOnCollabResponse);
+          setNotifyBefore1h(cfg.notifyBefore1h);
+          setNotifyBefore15min(cfg.notifyBefore15min);
         } else {
           setWebhookUrl('');
           setNotifyOnTaskCreate(true);
           setNotifyOnTaskUpdate(true);
           setNotifyOnCollabCreate(true);
           setNotifyOnCollabResponse(true);
+          setNotifyBefore1h(true);
+          setNotifyBefore15min(true);
         }
       })
       .catch(() => {
@@ -252,6 +258,8 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
       setNotifyOnTaskUpdate(true);
       setNotifyOnCollabCreate(true);
       setNotifyOnCollabResponse(true);
+      setNotifyBefore1h(true);
+      setNotifyBefore15min(true);
       showToast('success', 'Discord の登録を解除しました');
     } catch {
       setError('解除に失敗しました');
@@ -270,6 +278,8 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
         notifyOnTaskUpdate,
         notifyOnCollabCreate,
         notifyOnCollabResponse,
+        notifyBefore1h,
+        notifyBefore15min,
       });
       showToast('success', 'Discord 通知設定を保存しました');
     } catch {
@@ -285,6 +295,8 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
     notifyOnTaskUpdate: boolean;
     notifyOnCollabCreate: boolean;
     notifyOnCollabResponse: boolean;
+    notifyBefore1h: boolean;
+    notifyBefore15min: boolean;
   }) {
     void updateDiscordSettings({
       teamId,
@@ -467,6 +479,16 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
                     checked={notifyOnCollabResponse}
                     onChange={setNotifyOnCollabResponse}
                   />
+                  <ToggleRow
+                    label="スケジュール開始1時間前に通知"
+                    checked={notifyBefore1h}
+                    onChange={setNotifyBefore1h}
+                  />
+                  <ToggleRow
+                    label="スケジュール開始15分前に通知"
+                    checked={notifyBefore15min}
+                    onChange={setNotifyBefore15min}
+                  />
                 </div>
                 <Button type="submit" size="sm" loading={savingWebhook}>
                   保存する
@@ -490,6 +512,8 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
                   notifyOnTaskUpdate,
                   notifyOnCollabCreate,
                   notifyOnCollabResponse,
+                  notifyBefore1h,
+                  notifyBefore15min,
                 });
               }}
             />
@@ -503,6 +527,8 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
                   notifyOnTaskUpdate: v,
                   notifyOnCollabCreate,
                   notifyOnCollabResponse,
+                  notifyBefore1h,
+                  notifyBefore15min,
                 });
               }}
             />
@@ -516,6 +542,8 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
                   notifyOnTaskUpdate,
                   notifyOnCollabCreate: v,
                   notifyOnCollabResponse,
+                  notifyBefore1h,
+                  notifyBefore15min,
                 });
               }}
             />
@@ -529,6 +557,38 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
                   notifyOnTaskUpdate,
                   notifyOnCollabCreate,
                   notifyOnCollabResponse: v,
+                  notifyBefore1h,
+                  notifyBefore15min,
+                });
+              }}
+            />
+            <ToggleRow
+              label="スケジュール開始1時間前に通知"
+              checked={notifyBefore1h}
+              onChange={(v) => {
+                setNotifyBefore1h(v);
+                persistNotify({
+                  notifyOnTaskCreate,
+                  notifyOnTaskUpdate,
+                  notifyOnCollabCreate,
+                  notifyOnCollabResponse,
+                  notifyBefore1h: v,
+                  notifyBefore15min,
+                });
+              }}
+            />
+            <ToggleRow
+              label="スケジュール開始15分前に通知"
+              checked={notifyBefore15min}
+              onChange={(v) => {
+                setNotifyBefore15min(v);
+                persistNotify({
+                  notifyOnTaskCreate,
+                  notifyOnTaskUpdate,
+                  notifyOnCollabCreate,
+                  notifyOnCollabResponse,
+                  notifyBefore1h,
+                  notifyBefore15min: v,
                 });
               }}
             />

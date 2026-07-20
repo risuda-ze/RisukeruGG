@@ -34,8 +34,7 @@ export * from './collab/cancelCollabSession';
 export * from './collab/reopenCollabSession';
 export * from './collab/expireCollabSessions';
 
-// Phase 8: US6 — 通知
-export * from './notifications/markNotificationRead';
+// Phase 8: US6 — Discord 通知
 export * from './notifications/scheduleReminders';
 export * from './notifications/taskDiscordNotifications';
 

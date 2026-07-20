@@ -5,6 +5,7 @@ import { logger } from 'firebase-functions/v2';
 import { db, getAuthContext, requireOwnerOrEditor, getUserDoc } from '../lib/validateAuth';
 import { withErrorBoundary } from '../lib/withErrorBoundary';
 import { notifyDiscord } from '../discord/notifyDiscord';
+import { discordBotToken } from '../discord/botToken';
 import { assertActiveCollabLimit, assertCollabQuota, incrementCollabCount } from './lib';
 import { parseProposedDates, normalizeParticipants } from './draftValidation';
 
@@ -37,7 +38,7 @@ const EXPIRES_IN_DAYS = 30;
  * 渡る事態でもサーバーログに真因（teamId/uid/件数/スタック）が残るようにしている。
  */
 export const createCollabSessionDraft = onCall(
-  { region: 'asia-northeast1' },
+  { region: 'asia-northeast1', secrets: [discordBotToken] },
   async (request: CallableRequest<CreateCollabSessionDraftData>) => {
     const { teamId, title, content, participants, proposedDates, icon } = request.data;
 

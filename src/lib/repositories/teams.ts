@@ -123,6 +123,8 @@ export const updateDiscordSettings = httpsCallable<
     notifyOnTaskUpdate: boolean;
     notifyOnCollabCreate: boolean;
     notifyOnCollabResponse: boolean;
+    notifyBefore1h: boolean;
+    notifyBefore15min: boolean;
   },
   { success: boolean }
 >(functions, 'updateDiscordSettings');

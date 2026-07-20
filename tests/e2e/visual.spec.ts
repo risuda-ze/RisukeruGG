@@ -128,14 +128,6 @@ test.describe('各ページ表示確認 (シードデータ)', () => {
     await page.screenshot({ path: 'screenshots/collabs.png', fullPage: true });
   });
 
-  // ── 通知 ──────────────────────────────────────────────────
-  test('通知が表示される', async ({ page }) => {
-    await page.goto('/notifications');
-    await page.waitForTimeout(3000);
-    expect(page.url()).not.toContain('/login');
-    await page.screenshot({ path: 'screenshots/notifications.png', fullPage: true });
-  });
-
   // ── 設定（カテゴリ設定） ──────────────────────────────────
   test('設定が表示される', async ({ page }) => {
     await page.goto('/settings/categories');

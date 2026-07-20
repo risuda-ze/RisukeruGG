@@ -3,7 +3,6 @@ export type PlanType = 'light' | 'party';
 /** @deprecated 新規コードでは Category インターフェースと categoryId を使用すること */
 export type TaskCategoryKey = 'shooting' | 'editing' | 'thumbnail' | 'announcement' | 'other';
 export type CollabStatus = 'open' | 'confirmed' | 'expired' | 'cancelled';
-export type NotificationCategory = 'collab' | 'tasks' | 'reminders' | 'system';
 
 export const LIGHT_PLAN_LIMITS = {
   maxTeamMembers: 2,
@@ -21,13 +20,6 @@ export const COLLAB_STATUS_LABELS: Record<CollabStatus, string> = {
   cancelled: '終了',
 } as const;
 
-export interface NotificationPreferences {
-  collab: { inApp: boolean; push: boolean };
-  tasks: { inApp: boolean; push: boolean };
-  reminders: { inApp: boolean; push: boolean };
-  system: { inApp: boolean; push: boolean };
-}
-
 export interface User {
   uid: string;
   displayName: string;
@@ -44,8 +36,6 @@ export interface User {
   monthlyCollabCount: number;
   countResetAt: Date;
   createdAt: Date;
-  notificationPreferences: NotificationPreferences;
-  fcmTokens: string[];
   googleCalendar: {
     connected: boolean;
     syncError: string | null;
@@ -211,6 +201,8 @@ export interface DiscordTeamConfig {
   notifyOnTaskUpdate: boolean;    // タスク変更時に通知（主要フィールドの変更のみ）
   notifyOnCollabCreate: boolean;  // コラボ調整作成時に通知
   notifyOnCollabResponse: boolean; // コラボ調整への回答時に通知
+  notifyBefore1h: boolean;        // スケジュール開始1時間前にリマインダー通知
+  notifyBefore15min: boolean;     // スケジュール開始15分前にリマインダー通知
 }
 
 // discord_sessions/{guildId} の型（Sprint 3 AI ボット用）
@@ -228,18 +220,4 @@ export interface DiscordSession {
   initiatorDiscordUserId?: string;
   updatedAt: Date;  // 30分無操作でセッション自動リセット（sessionManager 側で判定）
 }
-
-export interface Notification {
-  id: string;
-  recipientId: string;
-  category: NotificationCategory;
-  type: string;
-  title: string;
-  body: string;
-  refType: 'schedule' | 'task' | 'collab' | 'team' | null;
-  refId: string | null;
-  isRead: boolean;
-  createdAt: Date;
-}
-
 

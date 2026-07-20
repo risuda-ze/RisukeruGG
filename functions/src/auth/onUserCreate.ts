@@ -34,13 +34,6 @@ export const onUserCreate = v1.auth.user().onCreate(async (user) => {
     monthlyCollabCount: 0,
     countResetAt: now,
     createdAt: now,
-    notificationPreferences: {
-      collab: { inApp: true, push: false },
-      tasks: { inApp: true, push: false },
-      reminders: { inApp: true, push: false },
-      system: { inApp: true, push: false },
-    },
-    fcmTokens: [],
     googleCalendar: null,
   });
 

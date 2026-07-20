@@ -296,6 +296,25 @@ Webhook イベントとプラン遷移:
 | `STRIPE_WEBHOOK_SECRET` | Secret | Webhook 署名シークレット（`whsec_...`） | 同上（未設定時は署名検証に失敗し 400 を返す） |
 | `NEXT_PUBLIC_APP_URL` | 環境変数 | Checkout 成功/キャンセル・Portal 戻り先 URL のベース | `https://risukeru.gg` にフォールバック |
 
+> ⚠️ **備忘（2026-07-20）**: 初回デプロイ時に `STRIPE_SECRET_KEY` / `STRIPE_PRICE_ID` / `STRIPE_WEBHOOK_SECRET` へ**仮のダミー値**を登録した。現状のままでは Checkout / Portal / Webhook はすべて失敗する（課金機能は動作しない）。**課金を開始する前に、下記の手順で必ず正式な値に差し替えること。**
+>
+> 差し替え方法:
+>
+> ```bash
+> # 1. 各シークレットを正式な値で上書き（実行するとマスク付きの入力プロンプトが出る）
+> firebase functions:secrets:set STRIPE_SECRET_KEY      # sk_live_...（テスト検証時は sk_test_...）
+> firebase functions:secrets:set STRIPE_PRICE_ID        # price_...
+> firebase functions:secrets:set STRIPE_WEBHOOK_SECRET  # whsec_...
+>
+> # 2. 再デプロイ（シークレットは関数がバージョン固定で参照するため、set しただけでは反映されない）
+> firebase deploy --only functions
+>
+> # 確認: 現在の値を参照する場合
+> firebase functions:secrets:access STRIPE_SECRET_KEY
+> ```
+>
+> 正式な値の取得元は下記「本番セットアップ手順」1〜2 を参照（Price ID は Stripe ダッシュボードの Product、`whsec_...` は Webhook エンドポイント登録時に発行される）。
+
 **本番セットアップ手順**（実 Stripe アカウントで一度だけ実施）:
 
 1. Stripe ダッシュボードで **Product** を作成し、**Price** を「月額500円（税込・JPY）／継続」で登録して Price ID（`price_...`）を控える。
