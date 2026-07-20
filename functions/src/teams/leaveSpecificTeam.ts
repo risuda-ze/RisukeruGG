@@ -58,8 +58,6 @@ export const leaveSpecificTeam = onCall(
         const newOperatorUids = currentOperatorUids.filter((id) => id !== uid);
 
         return await db.runTransaction(async (tx) => {
-          const now = FieldValue.serverTimestamp();
-
           tx.delete(db.doc(`teams/${teamId}/members/${uid}`));
           tx.update(db.doc(`teams/${teamId}`), { operatorUids: newOperatorUids });
 
@@ -68,22 +66,6 @@ export const leaveSpecificTeam = onCall(
           );
           for (const taskDoc of tasksSnap.docs) {
             tx.update(taskDoc.ref, { assigneeId: null });
-          }
-
-          /* 残オペレーター全員に通知 */
-          for (const recipientId of newOperatorUids) {
-            const notifRef = db.collection(`teams/${teamId}/notifications`).doc();
-            tx.set(notifRef, {
-              recipientId,
-              category: 'system',
-              type: 'member_left',
-              title: 'メンバーが脱退しました',
-              body: `${userData.displayName} がチームを脱退しました`,
-              refType: 'team',
-              refId: teamId,
-              isRead: false,
-              createdAt: now,
-            });
           }
 
           const newActiveTeamId =
@@ -167,28 +149,6 @@ export const leaveSpecificTeam = onCall(
       );
       for (const taskDoc of tasksSnap.docs) {
         tx.update(taskDoc.ref, { assigneeId: null });
-      }
-
-      /* オペレーター全員に通知 */
-      const teamSnap = await tx.get(db.doc(`teams/${teamId}`));
-      const operatorUids: string[] = Array.isArray(teamSnap.data()?.operatorUids)
-        ? (teamSnap.data()!.operatorUids as string[])
-        : teamSnap.data()?.ownerId
-          ? [teamSnap.data()!.ownerId as string]
-          : [];
-      for (const recipientId of operatorUids) {
-        const notifRef = db.collection(`teams/${teamId}/notifications`).doc();
-        tx.set(notifRef, {
-          recipientId,
-          category: 'system',
-          type: 'member_left',
-          title: 'メンバーが脱退しました',
-          body: `${userData.displayName} がチームを脱退しました`,
-          refType: 'team',
-          refId: teamId,
-          isRead: false,
-          createdAt: now,
-        });
       }
 
       let newActiveTeamId: string;

@@ -167,13 +167,6 @@ async function main() {
   const TEAM_BETA_ID = 'teamBeta';
   const TEAM_BETA_CODE = 'BETA002';
 
-  const defaultNotifPrefs = {
-    collab: { inApp: true, push: false },
-    tasks: { inApp: true, push: false },
-    reminders: { inApp: true, push: false },
-    system: { inApp: true, push: false },
-  };
-
   // ── ユーザードキュメント (6人) ───────────────────────────
   const users = [
     {
@@ -257,8 +250,6 @@ async function main() {
       monthlyCollabCount: user.monthlyCollabCount,
       countResetAt: d(2026, 5, 1),
       createdAt: user.createdAt,
-      notificationPreferences: defaultNotifPrefs,
-      fcmTokens: [],
       googleCalendar: null,
     });
   }
@@ -1122,135 +1113,6 @@ async function main() {
   });
   console.log('  ✓ memberCalendars/events (2件)');
 
-  // ── 通知 (10件・すべて未読・UID1=配信太郎 宛) ───────────
-  const notifications = [
-    {
-      id: 'notif001',
-      recipientId: UID1,
-      category: 'collab',
-      type: 'collab_request',
-      title: 'コラボ打診が届きました',
-      body: 'ゲーム実況者B からコラボ打診が届きました。候補日程を確認してください。',
-      refType: 'collab',
-      refId: 'collab001',
-      createdAt: d(2026, 5, 10, 12, 0),
-    },
-    {
-      id: 'notif002',
-      recipientId: UID2,
-      category: 'tasks',
-      type: 'task_updated',
-      title: 'タスクが更新されました',
-      body: '「5月週次配信 動画編集（第4回）」のステータスが「進行中」に変わりました。',
-      refType: 'task',
-      refId: 'task005',
-      createdAt: d(2026, 5, 14, 9, 30),
-    },
-    {
-      id: 'notif003',
-      recipientId: UID1,
-      category: 'reminders',
-      type: 'live_reminder',
-      title: 'まもなくLIVE開始',
-      body: '「週次配信 #18 〜視聴者参加回〜」まであと30分です。',
-      refType: 'schedule',
-      refId: 'sched_may_w2',
-      createdAt: d(2026, 5, 14, 19, 30),
-    },
-    {
-      id: 'notif004',
-      recipientId: UID1,
-      category: 'collab',
-      type: 'collab_request',
-      title: '新しいコラボ打診',
-      body: 'アニメ感想チャンネルC からコラボ動画の打診が届きました。',
-      refType: 'collab',
-      refId: 'collab002',
-      createdAt: d(2026, 5, 13, 15, 0),
-    },
-    {
-      id: 'notif005',
-      recipientId: UID1,
-      category: 'tasks',
-      type: 'task_assigned',
-      title: 'タスクが割り当てられました',
-      body: '「コラボ企画 台本作成」があなたに割り当てられました。',
-      refType: 'task',
-      refId: 'task006',
-      createdAt: d(2026, 5, 12, 10, 0),
-    },
-    {
-      id: 'notif006',
-      recipientId: UID2,
-      category: 'system',
-      type: 'member_joined',
-      title: 'メンバーが参加しました',
-      body: 'マネージャー健太 がチームに参加しました。',
-      refType: 'team',
-      refId: TEAM_ID,
-      createdAt: d(2026, 4, 5, 11, 0),
-    },
-    {
-      id: 'notif007',
-      recipientId: UID3,
-      category: 'tasks',
-      type: 'task_due_soon',
-      title: 'タスクの期限が近づいています',
-      body: '「コラボ企画 台本作成」の期限まであと2日です。',
-      refType: 'task',
-      refId: 'task006',
-      createdAt: d(2026, 5, 16, 8, 0),
-    },
-    {
-      id: 'notif008',
-      recipientId: UID4,
-      category: 'reminders',
-      type: 'schedule_reminder',
-      title: 'スケジュールのリマインダー',
-      body: '「週次配信 #19 〜新MAP攻略〜」まで残り5日です。',
-      refType: 'schedule',
-      refId: 'sched_may_w3',
-      createdAt: d(2026, 5, 16, 9, 0),
-    },
-    {
-      id: 'notif009',
-      recipientId: UID5,
-      category: 'collab',
-      type: 'collab_date_confirmed',
-      title: 'コラボ日程が確定しました',
-      body: 'ゲーム実況者B とのコラボ日程が 6月10日 20:00 に確定しました。',
-      refType: 'collab',
-      refId: 'collab001',
-      createdAt: d(2026, 5, 15, 14, 0),
-    },
-    {
-      id: 'notif010',
-      recipientId: UID6,
-      category: 'tasks',
-      type: 'task_updated',
-      title: 'タスクが完了しました',
-      body: '「コラボ打診メッセージ送付」が完了済みにマークされました。',
-      refType: 'task',
-      refId: 'task010',
-      createdAt: d(2026, 5, 11, 16, 30),
-    },
-  ];
-
-  for (const n of notifications) {
-    await setDoc(`teams/${TEAM_ID}/notifications/${n.id}`, {
-      recipientId: n.recipientId,
-      category: n.category,
-      type: n.type,
-      title: n.title,
-      body: n.body,
-      refType: n.refType,
-      refId: n.refId,
-      isRead: false,
-      createdAt: n.createdAt,
-    });
-  }
-  console.log(`  ✓ notifications (${notifications.length}件 — すべて未読)`);
-
   // ── 完了サマリー ─────────────────────────────────────────
   console.log('\n=== シード完了 ===\n');
   console.log('テストアカウント (パスワード共通: password123):');
@@ -1278,7 +1140,6 @@ async function main() {
   console.log('    6/24 (水) — 複数日バー 3件（+1件 表示）');
   console.log('    6/25 (木) — 複数日バー 4件（+2件 表示）');
   console.log(`  タスク       : ${tasks.length}件 (未着手6・進行中4・完了4)`);
-  console.log(`  通知         : ${notifications.length}件 (すべて未読)`);
   console.log('  memberCalendars/events: 2件');
   console.log('  コラボ       : 5件 (open/confirmed/expired/cancelled を含む)');
   console.log('\nFirebase Emulator UI: http://localhost:4000\n');

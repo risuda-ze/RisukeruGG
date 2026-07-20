@@ -3,7 +3,6 @@ import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
-import { getMessaging, isSupported } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -42,12 +41,5 @@ if (
   connectStorageEmulator(storage, emulatorHost, 9199);
   connectFunctionsEmulator(functions, emulatorHost, 5001);
 }
-
-// FCMはブラウザ環境かつServiceWorker対応時のみ利用可能
-export const getMessagingIfSupported = async () => {
-  const supported = await isSupported();
-  if (!supported) return null;
-  return getMessaging(app);
-};
 
 export default app;

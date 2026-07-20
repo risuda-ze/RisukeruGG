@@ -62,22 +62,6 @@ export const createTask = onCall(
         });
       }
 
-      // 担当者に通知
-      if (assigneeId && assigneeId !== ctx.uid) {
-        const notifRef = db.collection(`teams/${teamId}/notifications`).doc();
-        tx.set(notifRef, {
-          recipientId: assigneeId,
-          category: 'tasks',
-          type: 'task_assigned',
-          title: 'タスクが割り当てられました',
-          body: `「${title}」があなたに割り当てられました`,
-          refType: 'task',
-          refId: taskRef.id,
-          isRead: false,
-          createdAt: now,
-        });
-      }
-
       return { taskId: taskRef.id };
     });
   }

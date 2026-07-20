@@ -20,34 +20,15 @@ import { Dropdown } from '@/components/ui/Dropdown';
 import { isPartyPlan, isFreePartyMode } from '@/lib/plan';
 import { createStripeCheckoutSession, createStripePortalSession } from '@/lib/repositories/billing';
 import { trackEvent } from '@/lib/analytics';
-import type { NotificationPreferences } from '@/types/entities';
 
-// アプリ情報タブを含む5タブ構成
-type Tab = 'profile' | 'notifications' | 'plan' | 'account' | 'app-info';
+// アプリ情報タブを含む4タブ構成
+type Tab = 'profile' | 'plan' | 'account' | 'app-info';
 
 const TAB_LABELS: Record<Tab, string> = {
   profile: 'プロフィール',
-  notifications: '通知設定',
   plan: 'プラン',
   account: 'アカウント',
   'app-info': 'アプリ情報',
-};
-
-type NotifCategory = keyof NotificationPreferences;
-type NotifChannel = 'inApp' | 'push';
-
-const NOTIF_CATEGORY_LABELS: Record<NotifCategory, string> = {
-  collab: 'コラボ',
-  tasks: 'タスク',
-  reminders: 'リマインダー',
-  system: 'システム',
-};
-
-const DEFAULT_PREFS: NotificationPreferences = {
-  collab: { inApp: true, push: true },
-  tasks: { inApp: true, push: true },
-  reminders: { inApp: true, push: true },
-  system: { inApp: true, push: false },
 };
 
 export default function ProfileSettingsPage() {
@@ -135,27 +116,6 @@ export default function ProfileSettingsPage() {
     }
   }
 
-  /* ── 通知設定 ─────────────────────────────────────────────── */
-  const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_PREFS);
-  const [savingPrefs, setSavingPrefs] = useState(false);
-
-  async function togglePref(category: NotifCategory, channel: NotifChannel) {
-    if (!currentUser) return;
-    const newPrefs = {
-      ...prefs,
-      [category]: { ...prefs[category], [channel]: !prefs[category][channel] },
-    };
-    setPrefs(newPrefs);
-    setSavingPrefs(true);
-    try {
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        notificationPreferences: newPrefs,
-      });
-    } finally {
-      setSavingPrefs(false);
-    }
-  }
-
   /* ── プラン（Stripe 課金導線・T4） ─────────────────────────── */
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError] = useState<string | null>(null);
@@ -234,7 +194,6 @@ export default function ProfileSettingsPage() {
   }
 
   const initials = (currentUser?.displayName ?? 'U').slice(0, 2).toUpperCase();
-  const notifCategories: NotifCategory[] = ['collab', 'tasks', 'reminders', 'system'];
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -339,69 +298,6 @@ export default function ProfileSettingsPage() {
                   )}
                 </div>
               </form>
-            </Card>
-          </div>
-        )}
-
-        {/* ── 通知設定 ─────────────────────────────────────── */}
-        {activeTab === 'notifications' && (
-          <div className="space-y-5">
-            <h3 className="text-sm font-semibold text-text">通知設定</h3>
-
-            {!isParty && (
-              <Card className="border-amber/20">
-                <p className="text-sm font-medium text-amber-l mb-1">
-                  LIGHTプランではシステム通知のみ利用可能です
-                </p>
-                <p className="text-[12px] text-muted">
-                  PARTYプランにアップグレードすると全4カテゴリの通知を設定できます。
-                </p>
-              </Card>
-            )}
-
-            <Card noPadding>
-              <div className="grid grid-cols-3 border-b border-border px-[18px] py-2 bg-surface/50">
-                <span className="text-[11px] font-medium text-muted">カテゴリ</span>
-                <span className="text-[11px] font-medium text-muted text-center">アプリ内</span>
-                <span className="text-[11px] font-medium text-muted text-center">プッシュ</span>
-              </div>
-              {notifCategories.map((category) => {
-                const isLocked = !isParty && category !== 'system';
-                return (
-                  <div
-                    key={category}
-                    className={`grid grid-cols-3 px-[18px] py-3 border-b border-border last:border-0 ${
-                      isLocked ? 'opacity-40' : ''
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <span className="text-sm text-text">{NOTIF_CATEGORY_LABELS[category]}</span>
-                    </div>
-                    {(['inApp', 'push'] as NotifChannel[]).map((channel) => (
-                      <div key={channel} className="flex justify-center items-center">
-                        <button
-                          type="button"
-                          onClick={() => !isLocked && togglePref(category, channel)}
-                          disabled={isLocked || savingPrefs}
-                          role="switch"
-                          aria-checked={prefs[category][channel]}
-                          className={`relative w-10 h-6 rounded-full transition-colors ${
-                            !isLocked && prefs[category][channel] ? 'bg-purple' : 'bg-border'
-                          } ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                        >
-                          <span
-                            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-text rounded-full shadow transition-transform ${
-                              !isLocked && prefs[category][channel]
-                                ? 'translate-x-4'
-                                : 'translate-x-0'
-                            }`}
-                          />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
             </Card>
           </div>
         )}
@@ -686,7 +582,7 @@ export default function ProfileSettingsPage() {
             </li>
             <li className="flex items-center gap-2">
               <Icon name="close" size={14} className="text-live" />
-              タスク・通知などのアプリデータ
+              タスクなどのアプリデータ
             </li>
           </ul>
           <p className="text-[12px] text-live font-semibold pt-1">この操作は取り消せません。</p>

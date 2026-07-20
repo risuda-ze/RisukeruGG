@@ -124,7 +124,7 @@ export default function PrivacyPolicyPage() {
             <li>本サービスの提供・維持・改善</li>
             <li>ユーザー認証および本人確認</li>
             <li>チーム機能・コラボ機能の提供</li>
-            <li>プッシュ通知・アプリ内通知の配信</li>
+            <li>通知（Discord 連携経由）の配信</li>
             <li>利用状況の集計・分析によるサービス改善</li>
             <li>お問い合わせへの対応</li>
             <li>不正アクセスの検知・防止</li>
@@ -162,7 +162,7 @@ export default function PrivacyPolicyPage() {
               <tbody className="text-muted">
                 <tr className="border-b border-border">
                   <td className="py-3 pr-4 align-top whitespace-nowrap">Google LLC（Firebase）</td>
-                  <td className="py-3">ユーザー認証・データベース・ファイルストレージ・サーバーサイド処理・プッシュ通知（FCM）</td>
+                  <td className="py-3">ユーザー認証・データベース・ファイルストレージ・サーバーサイド処理</td>
                 </tr>
                 <tr>
                   <td className="py-3 pr-4 align-top whitespace-nowrap">Vercel Inc.</td>
@@ -279,7 +279,7 @@ export default function PrivacyPolicyPage() {
         {/* ─── セクション 11: プライバシーポリシーの変更 ── */}
         <Section title="11. プライバシーポリシーの変更">
           <p className="text-sm text-muted leading-relaxed">
-            当方は、法令の変更またはサービスの変更に伴い、本ポリシーを改定することがあります。重要な変更はアプリ内通知またはサービス上での告知により周知いたします。改定後のポリシーは、本ページへの掲載をもって効力を生じるものとします。
+            当方は、法令の変更またはサービスの変更に伴い、本ポリシーを改定することがあります。重要な変更はサービス上での告知により周知いたします。改定後のポリシーは、本ページへの掲載をもって効力を生じるものとします。
           </p>
         </Section>
 

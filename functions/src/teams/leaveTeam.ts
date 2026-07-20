@@ -67,34 +67,6 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
       tx.update(taskDoc.ref, { assigneeId: null });
     }
 
-    if (!isSoloTeam) {
-      let notifyUids: string[];
-      if (ctx.role === 'operator') {
-        notifyUids = remainingOperatorUids;
-      } else {
-        const teamSnap = await tx.get(db.doc(`teams/${teamId}`));
-        notifyUids = Array.isArray(teamSnap.data()?.operatorUids)
-          ? (teamSnap.data()!.operatorUids as string[])
-          : teamSnap.data()?.ownerId
-            ? [teamSnap.data()!.ownerId as string]
-            : [];
-      }
-      for (const recipientId of notifyUids) {
-        const notifRef = db.collection(`teams/${teamId}/notifications`).doc();
-        tx.set(notifRef, {
-          recipientId,
-          category: 'system',
-          type: 'member_left',
-          title: 'メンバーが脱退しました',
-          body: `${userData.displayName} がチームを脱退しました`,
-          refType: 'team',
-          refId: teamId,
-          isRead: false,
-          createdAt: now,
-        });
-      }
-    }
-
     const soloTeamCode = randomBytes(6)
       .toString('base64url')
       .replace(/[^a-zA-Z0-9]/g, '')
