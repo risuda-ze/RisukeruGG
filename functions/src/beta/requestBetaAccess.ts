@@ -1,4 +1,4 @@
-import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, CallableRequest } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
@@ -17,7 +17,8 @@ const gmailAppPassword = defineSecret('GMAIL_APP_PASSWORD');
  *
  * - `beta_requests/{uid}` に申請内容を記録する（ドキュメント ID = uid のため
  *   同一ユーザーの多重申請は上書きで抑止される）。
- * - 記録後、管理者（GMAIL_USER 宛）へ通知メールを送信する。
+ * - 記録後、管理者（GMAIL_USER 宛）へ通知メールを送信する。メールは補助手段で、
+ *   SMTP 失敗でも申請自体は成立させる（`mailNotified: false` を記録するのみ）。
  * - allowlist への昇格は管理者が `scripts/beta-allowlist.mjs` 等で手動実施する。
  */
 export const requestBetaAccess = onCall(
@@ -69,6 +70,7 @@ export const requestBetaAccess = onCall(
       },
     });
 
+    let mailNotified = true;
     try {
       await transporter.sendMail({
         from: `"リスケるGG ベータ申請" <${gmailUser.value()}>`,
@@ -78,10 +80,17 @@ export const requestBetaAccess = onCall(
         text: emailText,
       });
     } catch (err) {
+      // 申請は Firestore 記録済みのため、通知メールの失敗で申請自体を失敗させない。
+      // 管理者は beta_requests コレクション（mailNotified: false）で検知できる。
       console.error('Gmail SMTP error:', err);
-      throw new HttpsError('internal', '申請の送信に失敗しました。しばらくしてからお試しください');
+      mailNotified = false;
     }
 
-    return { success: true };
+    await db
+      .doc(`beta_requests/${uid}`)
+      .set({ mailNotified }, { merge: true })
+      .catch(() => {});
+
+    return { success: true, mailNotified };
   }
 );
