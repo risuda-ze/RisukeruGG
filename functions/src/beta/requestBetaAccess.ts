@@ -17,7 +17,10 @@ const gmailAppPassword = defineSecret('GMAIL_APP_PASSWORD');
  *
  * - `beta_requests/{uid}` に申請内容を記録する（ドキュメント ID = uid のため
  *   同一ユーザーの多重申請は上書きで抑止される）。
- * - 記録後、管理者（GMAIL_USER 宛）へ通知メールを送信する。
+ * - 記録後、管理者（GMAIL_USER 宛）へ通知メールを送信する。管理者は主にメールで
+ *   申請に気づくため、送信失敗を握りつぶすと申請が放置される。失敗時は
+ *   `mailNotified: false` を記録した上でエラーを返し、失敗を可視化する
+ *   （申請の記録自体は完了していることをメッセージで伝える）。
  * - allowlist への昇格は管理者が `scripts/beta-allowlist.mjs` 等で手動実施する。
  */
 export const requestBetaAccess = onCall(
@@ -78,9 +81,23 @@ export const requestBetaAccess = onCall(
         text: emailText,
       });
     } catch (err) {
+      // 通知メールが届かないと管理者が申請に気づけないため、失敗は隠さずエラーで返す。
+      // 申請の記録は完了しているので、その旨をメッセージで申請者へ伝える。
       console.error('Gmail SMTP error:', err);
-      throw new HttpsError('internal', '申請の送信に失敗しました。しばらくしてからお試しください');
+      await db
+        .doc(`beta_requests/${uid}`)
+        .set({ mailNotified: false }, { merge: true })
+        .catch(() => {});
+      throw new HttpsError(
+        'internal',
+        '申請は記録されましたが、運営への通知メールの送信に失敗しました。時間をおいて再度お試しください'
+      );
     }
+
+    await db
+      .doc(`beta_requests/${uid}`)
+      .set({ mailNotified: true }, { merge: true })
+      .catch(() => {});
 
     return { success: true };
   }
