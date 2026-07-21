@@ -43,6 +43,13 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
   const [selectedChannelId, setSelectedChannelId] = useState('');
   const [savingChannel, setSavingChannel] = useState(false);
 
+  // 接続済み状態からの通知チャンネル変更用の state
+  const [channelEditOpen, setChannelEditOpen] = useState(false);
+  const [loadingGuildChannels, setLoadingGuildChannels] = useState(false);
+  const [guildChannels, setGuildChannels] = useState<Array<{ id: string; name: string }>>([]);
+  const [editChannelId, setEditChannelId] = useState('');
+  const [savingChannelChange, setSavingChannelChange] = useState(false);
+
   // Sprint 1 Webhook 設定用の state（guildId 未設定時のみ表示）
   const [webhookUrl, setWebhookUrl] = useState('');
   // 通知トグル（未設定はデフォルト有効）
@@ -227,6 +234,64 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
     }
   }
 
+  /** 接続済みサーバーのチャンネル一覧を取得して変更フォームを開く */
+  async function handleOpenChannelEdit() {
+    if (!idToken) {
+      setError('ログイン状態を確認できません。再度ログインしてください。');
+      return;
+    }
+    setError(null);
+    setLoadingGuildChannels(true);
+    try {
+      const res = await fetch(`/api/discord/guild-channels?teamId=${teamId}`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        throw new Error(data.error ?? 'チャンネル一覧の取得に失敗しました');
+      }
+      const data = (await res.json()) as { channels: Array<{ id: string; name: string }> };
+      setGuildChannels(data.channels);
+      // 現在の通知チャンネルを初期選択（削除済みの場合は先頭）
+      const current = data.channels.find((c) => c.id === config?.channelId);
+      setEditChannelId(current?.id ?? data.channels[0]?.id ?? '');
+      setChannelEditOpen(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'チャンネル一覧の取得に失敗しました');
+    } finally {
+      setLoadingGuildChannels(false);
+    }
+  }
+
+  /** 変更後の通知チャンネルを保存する */
+  async function handleChannelChangeSave() {
+    if (!idToken || !editChannelId) return;
+    setSavingChannelChange(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/discord/update-channel', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ teamId, channelId: editChannelId }),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        throw new Error(data.error ?? '通知チャンネルの変更に失敗しました');
+      }
+      setChannelEditOpen(false);
+      showToast('success', '通知チャンネルを変更しました');
+      const updated = await fetchConfig();
+      setConfig(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '通知チャンネルの変更に失敗しました');
+    } finally {
+      setSavingChannelChange(false);
+    }
+  }
+
   async function handleDisconnect() {
     if (!idToken) return;
     // 登録解除は Bot のサーバー退出・コマンド削除を伴い、再連携には再招待が必要
@@ -253,6 +318,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
 
       // config ドキュメントごと削除されるため、UI 状態も未連携・初期値へ戻す
       setConfig(null);
+      setChannelEditOpen(false);
       setWebhookUrl('');
       setNotifyOnTaskCreate(true);
       setNotifyOnTaskUpdate(true);
@@ -369,7 +435,8 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
               <div className="flex-1">
                 <p className="text-[13px] font-semibold text-text">Discord Bot 接続済み</p>
                 <p className="text-[11px] text-muted">
-                  サーバーID: {config.guildId} ／ チャンネルID: {config.channelId}
+                  通知チャンネル:{' '}
+                  {config.channelName ? `#${config.channelName}` : `ID: ${config.channelId}`}
                 </p>
               </div>
               <span
@@ -379,12 +446,56 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
                 接続済み
               </span>
             </div>
-            <button
-              onClick={handleDisconnect}
-              className="text-[12px] text-muted hover:text-live transition-colors"
-            >
-              登録を解除する
-            </button>
+
+            {/* ── 通知チャンネル変更フォーム ── */}
+            {channelEditOpen ? (
+              <div className="space-y-3 p-3 rounded-[10px] border border-border bg-surface">
+                <p className="text-[12px] font-semibold text-text">通知チャンネルを変更</p>
+                <select
+                  value={editChannelId}
+                  onChange={(e) => setEditChannelId(e.target.value)}
+                  className="w-full bg-surface border border-border rounded-[8px] px-3 py-2 text-[13px] text-text focus:outline-none focus:border-purple"
+                >
+                  {guildChannels.map((ch) => (
+                    <option key={ch.id} value={ch.id}>
+                      #{ch.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={handleChannelChangeSave}
+                    loading={savingChannelChange}
+                    disabled={!editChannelId}
+                    size="sm"
+                  >
+                    保存する
+                  </Button>
+                  <button
+                    onClick={() => setChannelEditOpen(false)}
+                    className="text-[12px] text-muted hover:text-text transition-colors"
+                  >
+                    キャンセル
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleOpenChannelEdit}
+                  disabled={loadingGuildChannels}
+                  className="text-[12px] text-muted hover:text-text transition-colors disabled:opacity-50"
+                >
+                  {loadingGuildChannels ? 'チャンネル取得中...' : '通知チャンネルを変更する'}
+                </button>
+                <button
+                  onClick={handleDisconnect}
+                  className="text-[12px] text-muted hover:text-live transition-colors"
+                >
+                  登録を解除する
+                </button>
+              </div>
+            )}
           </div>
         )}
 

@@ -197,6 +197,7 @@ export interface DiscordTeamConfig {
   webhookUrl: string;             // Sprint 1 のみ使用。guildId 設定後は Bot 通知が優先される
   guildId?: string;               // DiscordサーバーID（Bot 招待完了後に書き込む）
   channelId?: string;             // Bot 通知先チャンネルID（Bot 招待完了後に書き込む）
+  channelName?: string;           // 通知先チャンネル名（表示用。旧データには存在しない場合がある）
   notifyOnTaskCreate: boolean;    // タスク作成時に通知（Discord 経由の作成は除く）
   notifyOnTaskUpdate: boolean;    // タスク変更時に通知（主要フィールドの変更のみ）
   notifyOnCollabCreate: boolean;  // コラボ調整作成時に通知
