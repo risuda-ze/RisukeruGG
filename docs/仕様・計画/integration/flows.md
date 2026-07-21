@@ -8,8 +8,16 @@
 4. `GET /api/discord/bot-invite-callback` が `state`（nonce）を検証して teamId を解決し、guildId の重複（他チーム使用中）をチェックする。使用中なら `?discord=error&reason=already-linked` で設定画面へ戻す
 5. Bot トークンでチャンネル一覧を取得して `discord_bot_invite_pending/{nonce}` に一時保存し、`?discord=channel-select&nonce=...` で設定画面へリダイレクトする
 6. 設定画面がチャンネル選択ドロップダウンを表示し、`operator` が通知チャンネルを選んで保存する
-7. `POST /api/discord/save-guild-config`（operator 認証）が `guildId` / `channelId` を `teams/{teamId}/discord/config` へ保存し、`/risukerugg` をギルドコマンドとして登録する
-8. 設定画面は「接続済み」表示（サーバー ID・チャンネル ID）に切り替わる
+7. `POST /api/discord/save-guild-config`（operator 認証）が `guildId` / `channelId` / `channelName` を `teams/{teamId}/discord/config` へ保存し、`/risukerugg` をギルドコマンドとして登録する
+8. 設定画面は「接続済み」表示（通知チャンネル名。旧データはチャンネル ID）に切り替わる
+
+## 通知チャンネル変更フロー（接続済み）
+
+1. `operator` が設定画面の接続済み表示で「通知チャンネルを変更する」を押す
+2. `GET /api/discord/guild-channels`（operator 認証）が config の `guildId` を読み、Bot トークンで現在のテキストチャンネル一覧を取得して返す（Bot がサーバーから削除されている等で取得できない場合はエラー）
+3. 設定画面がチャンネル選択ドロップダウン（現在の通知チャンネルを初期選択）を表示し、`operator` が新しいチャンネルを選んで保存する
+4. `POST /api/discord/update-channel`（operator 認証）が指定 `channelId` を Bot トークンで取得した実チャンネル一覧と照合し、有効なら `channelId` / `channelName` を更新する
+5. 設定画面の接続済み表示が新しいチャンネル名に切り替わる（Bot 招待のやり直しは不要）
 
 ## 通知配送フロー
 

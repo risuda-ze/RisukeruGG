@@ -14,22 +14,27 @@ const usecasesSection =
   landingPageSource.match(/<section class="usecases" id="usecases">[\s\S]*?<\/section>/)?.[0] ?? '';
 
 describe('LandingPage LP content', () => {
-  test('活用シーン重視の訴求文言と画面イメージを含む', () => {
+  test('ヒーローに訴求文言とスケジュールボードのモックを含む', () => {
     expect(heroSection).toContain('<h1 class="hero-title">');
-    expect(heroSection).toContain('配信前の連絡と調整を');
+    // 助詞は span 分割されるため、意味を持つ本文のみを検証する
+    expect(heroSection).toContain('配信前の連絡と調整');
     expect(heroSection).toContain('ひとつにまとめて');
-    expect(heroSection).toContain('配信に集中できる毎日へ');
-    expect(landingPageSource).toContain("url('/lp-settings.png')");
+    expect(heroSection).toContain('配信に集中');
+    // 旧LPのスクリーンショット画像に代わり、インラインのスケジュールボードを表示する
+    expect(heroSection).toContain('hero-board');
+    expect(heroSection).toContain('今週のスケジュール');
   });
 
-  test('活用例セクションと料金表示を更新している', () => {
-    expect(heroSection).not.toContain('ユースケース');
-    expect(landingPageSource).toContain('想像しやすい活用シーン');
-    expect(landingPageSource).toContain('活用シーン 01');
+  test('活用シーン・活用例セクションと料金表示を含む', () => {
+    expect(landingPageSource).toContain('SCENE 01');
+    expect(landingPageSource).toContain('活用シーン');
     expect(usecasesSection).toContain('個人配信者');
+    expect(usecasesSection).toContain('配信者 + 編集者');
     expect(usecasesSection).toContain('コラボ多めの配信者');
     expect(usecasesSection).toContain('マネージャー同席チーム');
+    expect(landingPageSource).toContain('¥0 <span>/ 月</span>');
     expect(landingPageSource).toContain('¥500 <span>/ 人・月</span>');
-    expect(landingPageSource).toContain('例）3人チームで ¥1,500 / 月');
+    // PARTYはメンバー個別払い（まとめ払いなし）の注記を維持する
+    expect(landingPageSource).toContain('¥500/月');
   });
 });

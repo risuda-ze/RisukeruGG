@@ -54,14 +54,14 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   // channelId が pending のチャンネル一覧に含まれるか検証
   const validChannels = (pendingData.channels as Array<{ id: string; name: string }>) ?? [];
-  const isValidChannel = validChannels.some((c) => c.id === channelId);
-  if (!isValidChannel) {
+  const selectedChannel = validChannels.find((c) => c.id === channelId);
+  if (!selectedChannel) {
     return Response.json({ error: '無効なチャンネル ID です' }, { status: 400 });
   }
 
-  // teams/{teamId}/discord/config に guildId と channelId を保存
+  // teams/{teamId}/discord/config に guildId / channelId / 表示用チャンネル名を保存
   await db.doc(`teams/${teamId}/discord/config`).set(
-    { guildId, channelId },
+    { guildId, channelId, channelName: selectedChannel.name },
     { merge: true }
   );
 

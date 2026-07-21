@@ -37,6 +37,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     webhookUrl: (data.webhookUrl as string) ?? '',
     guildId: (data.guildId as string | undefined) ?? undefined,
     channelId: (data.channelId as string | undefined) ?? undefined,
+    channelName: (data.channelName as string | undefined) ?? undefined,
     notifyOnTaskCreate: (data.notifyOnTaskCreate as boolean) ?? true,
     notifyOnTaskUpdate: (data.notifyOnTaskUpdate as boolean) ?? true,
     notifyOnCollabCreate: (data.notifyOnCollabCreate as boolean) ?? true,
