@@ -2,7 +2,7 @@
 
 ## 権限・設定画面
 
-- **IN-001**: Discord 連携の設定 UI は `/integrations/discord` に配置し、`operator` のみ設定セクションを表示・操作できる。関連 API（設定取得・保存・招待開始・解除・チャンネル一覧取得）はすべて Firebase ID トークンで認証し、対象チームの `operator` であることをサーバーサイドで検証する
+- **IN-001**: Discord 連携の設定 UI は `/integrations/discord` に配置し、`operator` のみ設定セクションを表示・操作できる。関連 API（設定取得・保存・招待開始・解除・チャンネル一覧取得・通知チャンネル変更）はすべて Firebase ID トークンで認証し、対象チームの `operator` であることをサーバーサイドで検証する
 - **IN-002**: Discord 通知設定はチームのメインドキュメントではなくサブコレクション `teams/{teamId}/discord/config` に保存し、Firestore ルールで `operator` のみ読み書き可能に制限する（Webhook URL を一般メンバーから隠すため）
 
 ## 通知配送
@@ -19,7 +19,8 @@
 - **IN-006**: `operator` は設定画面の「Botをサーバーに追加」から Discord OAuth2（scope: `bot applications.commands`）で Bot をサーバーへ招待できる
 - **IN-007**: 招待フローは CSRF 保護として nonce（`crypto.randomUUID()`）を発行し、`discord_bot_invite_requests/{nonce}` に有効期限 10 分で保存して OAuth の `state` と照合する
 - **IN-008**: 1 つの Discord サーバー（guildId）は 1 チームにのみリンクできる。既に他チームが使用中のサーバーへの招待はエラー（`already-linked`）としてブロックする
-- **IN-009**: 招待完了後、Bot トークンで取得したチャンネル一覧を `discord_bot_invite_pending/{nonce}` に一時保存し、設定画面で通知チャンネルを選択・保存させる。保存時に `guildId` / `channelId` を `teams/{teamId}/discord/config` へ書き込む
+- **IN-009**: 招待完了後、Bot トークンで取得したチャンネル一覧を `discord_bot_invite_pending/{nonce}` に一時保存し、設定画面で通知チャンネルを選択・保存させる。保存時に `guildId` / `channelId` / 表示用の `channelName` を `teams/{teamId}/discord/config` へ書き込む
+- **IN-009-1**: 接続済みチームの `operator` は、Bot 招待フローをやり直さずに設定画面から通知チャンネルを変更できる。チャンネル一覧は Bot トークンで都度取得（`GET /api/discord/guild-channels`）し、変更（`POST /api/discord/update-channel`）時は指定 `channelId` が実在するテキストチャンネルであることをサーバーサイドで照合してから `channelId` / `channelName` を更新する。`channelName` が未保存の旧データは接続済み表示で `channelId` にフォールバックする
 - **IN-010**: チャンネル保存時に `/risukerugg` をそのサーバー専用のギルドコマンドとして登録する。グローバルコマンドは使用しない（無関係サーバーへの表示防止）
 - **IN-011**: Bot の kick は自動検知しない。接続解除は設定画面の「登録を解除する」による手動操作のみとし、破壊的操作のため実行前に確認を挟む。解除時は Discord 側も一括クリーンアップする: ギルドコマンド削除 → Bot 退出 → AI セッション（`discord_sessions/{guildId}`）削除 → `teams/{teamId}/discord/config` 削除。Discord API 呼び出しは best-effort とし、失敗しても解除処理本体は完了させる（Bot が手動削除済みのサーバーでも解除できる）
 
