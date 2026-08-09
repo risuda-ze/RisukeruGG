@@ -11,6 +11,7 @@ import { MarkdownView } from '@/components/ui/MarkdownEditor';
 import { DateField } from '@/components/ui/DateField';
 import { Icon } from '@/components/ui/Icon';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
+import { useModalDrag } from '@/hooks/useModalDrag';
 import { Dropdown } from '@/components/ui/Dropdown';
 import type { Task, TeamMember, Category, TaskStatus, CollabComment } from '@/types/entities';
 
@@ -84,33 +85,7 @@ export function TaskDetailModal({
   const mouseDownOnOverlay = useRef<boolean>(false);
 
   /* ドラッグ移動（PC のみ） */
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const isDraggingModal = useRef(false);
-  const dragStart = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 });
-
-  useEffect(() => {
-    function onMove(e: MouseEvent) {
-      if (!isDraggingModal.current) return;
-      setPosition({
-        x: dragStart.current.posX + e.clientX - dragStart.current.mouseX,
-        y: dragStart.current.posY + e.clientY - dragStart.current.mouseY,
-      });
-    }
-    function onUp() { isDraggingModal.current = false; }
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-    return () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-    };
-  }, []);
-
-  function handleDragStart(e: React.MouseEvent) {
-    if ((e.target as HTMLElement).closest('button, input, select, a, textarea')) return;
-    isDraggingModal.current = true;
-    dragStart.current = { mouseX: e.clientX, mouseY: e.clientY, posX: position.x, posY: position.y };
-    e.preventDefault();
-  }
+  const { position, handleDragStart } = useModalDrag();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -121,26 +96,16 @@ export function TaskDetailModal({
   const currentColumn = columns.find((c) => c.id === columnId);
   const currentAssignee = members.find((m) => m.userId === assigneeId);
 
-  /* タイトル編集確定（ローカルのみ。Firestore 保存はフッターの保存ボタンで一括実行） */
+  /* タイトル編集確定（編集モードのみ。ローカル反映のみで Firestore 保存はフッターの保存ボタンで一括実行） */
   function handleTitleConfirm() {
-    if (isNew) { setEditingTitle(false); return; }
-    if (!titleValue.trim()) { setTitleValue(task!.title); setEditingTitle(false); return; }
+    if (!titleValue.trim()) setTitleValue(task!.title);
     setEditingTitle(false);
   }
 
-  /* フィールド変更ハンドラ（すべてローカル state 更新のみ） */
-  function handleColumnChange(val: string) {
-    setColumnId(val);
-  }
-  function handleCategoryChange(val: string) {
-    setCategoryId(val);
-  }
+  /* 担当者変更（ローカル反映のみ・ピッカーを閉じる） */
   function handleAssigneeChange(val: string) {
     setAssigneeId(val);
     setShowAssigneePicker(false);
-  }
-  function handleDueDateChange(date: Date) {
-    setDueDate(date);
   }
 
   /** 終日トグル: ON→OFF 時は 21:00 をデフォルト時刻に設定 */
@@ -204,6 +169,8 @@ export function TaskDetailModal({
 
   /* 編集保存: 変更されたフィールドのみを一括で Firestore へ保存する */
   async function handleSaveEdit() {
+    // 閲覧のみ権限では編集 UI が出ないため差分は生じないが、念のため書き込みさせない
+    if (!canEdit) { onClose(); return; }
     const changes: Partial<Task> = {};
     const trimmedTitle = titleValue.trim();
     if (trimmedTitle && trimmedTitle !== task!.title) changes.title = trimmedTitle;
@@ -348,7 +315,7 @@ export function TaskDetailModal({
                         {currentColumn.icon}
                       </span>
                     )}
-                    <Dropdown value={columnId} options={columns.map((c) => ({ value: c.id, label: c.name }))} onChange={handleColumnChange} scroll className="flex-1" />
+                    <Dropdown value={columnId} options={columns.map((c) => ({ value: c.id, label: c.name }))} onChange={setColumnId} scroll className="flex-1" />
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 py-2">
@@ -381,7 +348,7 @@ export function TaskDetailModal({
                         {currentCategory.icon}
                       </span>
                     )}
-                    <Dropdown value={categoryId} options={categories.map((c) => ({ value: c.id, label: c.name }))} placeholder="なし" onChange={handleCategoryChange} scroll className="flex-1" />
+                    <Dropdown value={categoryId} options={categories.map((c) => ({ value: c.id, label: c.name }))} placeholder="なし" onChange={setCategoryId} scroll className="flex-1" />
                   </div>
                 ) : (
                   <span className="text-[13px] py-2 block">
@@ -441,7 +408,7 @@ export function TaskDetailModal({
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <DateField
                           value={dueDate}
-                          onChange={handleDueDateChange}
+                          onChange={setDueDate}
                           hideTime={dueDateAllDay}
                           placeholder="日付を選択"
                         />
