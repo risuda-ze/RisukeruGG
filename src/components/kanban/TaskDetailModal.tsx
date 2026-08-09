@@ -11,6 +11,7 @@ import { MarkdownView } from '@/components/ui/MarkdownEditor';
 import { DateField } from '@/components/ui/DateField';
 import { Icon } from '@/components/ui/Icon';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
+import { useModalDrag } from '@/hooks/useModalDrag';
 import { Dropdown } from '@/components/ui/Dropdown';
 import type { Task, TeamMember, Category, TaskStatus, CollabComment } from '@/types/entities';
 
@@ -56,7 +57,6 @@ export function TaskDetailModal({
   /* タイトル */
   const [titleValue, setTitleValue] = useState(task?.title ?? '');
   const [editingTitle, setEditingTitle] = useState(isNew);
-  const [savingTitle, setSavingTitle] = useState(false);
   const [titleError, setTitleError] = useState('');
 
   /* フィールド */
@@ -70,7 +70,6 @@ export function TaskDetailModal({
   /* 説明 */
   const [editingDesc, setEditingDesc] = useState(savedDraft?.editingDesc ?? false);
   const [description, setDescription] = useState(savedDraft?.description ?? task?.description ?? '');
-  const [savingDesc, setSavingDesc] = useState(false);
 
   /* コメント */
   const [comments, setComments] = useState<CollabComment[]>(task?.comments ?? []);
@@ -78,40 +77,15 @@ export function TaskDetailModal({
   const [sendingComment, setSendingComment] = useState(false);
   const commentFieldRef = useRef<HTMLDivElement>(null);
 
-  /* 新規保存中 */
-  const [savingNew, setSavingNew] = useState(false);
+  /* 保存中（新規・編集共通）とフッターのエラー表示 */
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const myName = currentUser?.displayName ?? 'あなた';
   const mouseDownOnOverlay = useRef<boolean>(false);
 
   /* ドラッグ移動（PC のみ） */
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const isDraggingModal = useRef(false);
-  const dragStart = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 });
-
-  useEffect(() => {
-    function onMove(e: MouseEvent) {
-      if (!isDraggingModal.current) return;
-      setPosition({
-        x: dragStart.current.posX + e.clientX - dragStart.current.mouseX,
-        y: dragStart.current.posY + e.clientY - dragStart.current.mouseY,
-      });
-    }
-    function onUp() { isDraggingModal.current = false; }
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-    return () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-    };
-  }, []);
-
-  function handleDragStart(e: React.MouseEvent) {
-    if ((e.target as HTMLElement).closest('button, input, select, a, textarea')) return;
-    isDraggingModal.current = true;
-    dragStart.current = { mouseX: e.clientX, mouseY: e.clientY, posX: position.x, posY: position.y };
-    e.preventDefault();
-  }
+  const { position, handleDragStart } = useModalDrag();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -122,46 +96,20 @@ export function TaskDetailModal({
   const currentColumn = columns.find((c) => c.id === columnId);
   const currentAssignee = members.find((m) => m.userId === assigneeId);
 
-  /* タイトル保存（編集モード） */
-  async function handleSaveTitle() {
-    if (!titleValue.trim()) { setTitleValue(task?.title ?? ''); setEditingTitle(false); return; }
-    if (isNew) { setEditingTitle(false); return; }
-    if (titleValue.trim() === task!.title) { setEditingTitle(false); return; }
-    setSavingTitle(true);
-    try {
-      await updateTask(teamId, task!.id, { title: titleValue.trim() });
-      setEditingTitle(false);
-    } catch {
-      setTitleValue(task!.title);
-      setEditingTitle(false);
-    } finally { setSavingTitle(false); }
+  /* タイトル編集確定（編集モードのみ。ローカル反映のみで Firestore 保存はフッターの保存ボタンで一括実行） */
+  function handleTitleConfirm() {
+    if (!titleValue.trim()) setTitleValue(task!.title);
+    setEditingTitle(false);
   }
 
-  /* 即時保存ハンドラ */
-  async function handleColumnChange(val: string) {
-    setColumnId(val);
-    if (!isNew) { try { await updateTask(teamId, task!.id, { columnId: val }); } catch { setColumnId(task!.columnId); } }
-  }
-  async function handleCategoryChange(val: string) {
-    setCategoryId(val);
-    if (!isNew) { const p = categoryId; try { await updateTask(teamId, task!.id, { categoryId: val || null }); } catch { setCategoryId(p); } }
-  }
-  async function handleAssigneeChange(val: string) {
+  /* 担当者変更（ローカル反映のみ・ピッカーを閉じる） */
+  function handleAssigneeChange(val: string) {
     setAssigneeId(val);
     setShowAssigneePicker(false);
-    if (!isNew) { const p = assigneeId; try { await updateTask(teamId, task!.id, { assigneeId: val || null }); } catch { setAssigneeId(p); } }
-  }
-  async function handleDueDateChange(date: Date) {
-    setDueDate(date);
-    if (!isNew) {
-      const prev = dueDate;
-      try { await updateTask(teamId, task!.id, { dueDate: date, dueDateAllDay }); }
-      catch { setDueDate(prev); }
-    }
   }
 
   /** 終日トグル: ON→OFF 時は 21:00 をデフォルト時刻に設定 */
-  async function handleDueDateAllDayToggle() {
+  function handleDueDateAllDayToggle() {
     const newAllDay = !dueDateAllDay;
     const newDate = dueDate ? new Date(dueDate) : null;
     if (newDate) {
@@ -169,24 +117,6 @@ export function TaskDetailModal({
     }
     setDueDateAllDay(newAllDay);
     if (newDate) setDueDate(newDate);
-    if (!isNew) {
-      const prevAllDay = dueDateAllDay;
-      const prevDate = dueDate;
-      try { await updateTask(teamId, task!.id, { dueDateAllDay: newAllDay, dueDate: newDate }); }
-      catch { setDueDateAllDay(prevAllDay); setDueDate(prevDate); }
-    }
-  }
-
-  /* 説明保存（編集モード） */
-  async function handleSaveDesc() {
-    if (isNew) { setEditingDesc(false); return; }
-    setSavingDesc(true);
-    try {
-      await updateTask(teamId, task!.id, { description: description || null });
-      if (draftKey) clearDraft(draftKey);
-      setEditingDesc(false);
-    } catch { /* 状態維持 */ }
-    finally { setSavingDesc(false); }
   }
 
   /* コメント追加 */
@@ -217,8 +147,8 @@ export function TaskDetailModal({
 
   /* 新規保存 */
   async function handleSaveNew() {
-    if (!titleValue.trim()) { setTitleError('タイトルを入力してください'); return; }
-    setSavingNew(true);
+    if (!titleValue.trim()) { setTitleError('タイトルを入力してください'); setEditingTitle(true); return; }
+    setSaving(true);
     try {
       await createTask({
         teamId,
@@ -233,7 +163,48 @@ export function TaskDetailModal({
       onClose();
     } catch (err) {
       setTitleError(err instanceof Error ? err.message : 'エラーが発生しました');
-    } finally { setSavingNew(false); }
+      setEditingTitle(true);
+    } finally { setSaving(false); }
+  }
+
+  /* 編集保存: 変更されたフィールドのみを一括で Firestore へ保存する */
+  async function handleSaveEdit() {
+    // 閲覧のみ権限では編集 UI が出ないため差分は生じないが、念のため書き込みさせない
+    if (!canEdit) { onClose(); return; }
+    const changes: Partial<Task> = {};
+    const trimmedTitle = titleValue.trim();
+    if (trimmedTitle && trimmedTitle !== task!.title) changes.title = trimmedTitle;
+    if (columnId !== task!.columnId) changes.columnId = columnId;
+    if ((categoryId || null) !== task!.categoryId) changes.categoryId = categoryId || null;
+    if ((assigneeId || null) !== task!.assigneeId) changes.assigneeId = assigneeId || null;
+    const dueChanged =
+      (dueDate?.getTime() ?? null) !== (task!.dueDate?.getTime() ?? null) ||
+      dueDateAllDay !== (task!.dueDateAllDay ?? true);
+    if (dueChanged) {
+      changes.dueDate = dueDate;
+      changes.dueDateAllDay = dueDateAllDay;
+    }
+    if ((description || null) !== task!.description) changes.description = description || null;
+
+    if (Object.keys(changes).length === 0) {
+      if (draftKey) clearDraft(draftKey);
+      onClose();
+      return;
+    }
+
+    setSaving(true);
+    setSaveError('');
+    try {
+      await updateTask(teamId, task!.id, changes, task!.updatedAt);
+      if (draftKey) clearDraft(draftKey);
+      onClose();
+    } catch (err) {
+      setSaveError(
+        err instanceof Error && err.message === 'CONFLICT'
+          ? '他のメンバーがこのタスクを更新しました。モーダルを開き直して再度編集してください。'
+          : '保存に失敗しました。時間をおいて再度お試しください。'
+      );
+    } finally { setSaving(false); }
   }
 
   function handleCancel() {
@@ -243,8 +214,7 @@ export function TaskDetailModal({
 
   function handleSave() {
     if (isNew) { handleSaveNew(); return; }
-    if (draftKey) clearDraft(draftKey);
-    onClose();
+    handleSaveEdit();
   }
 
   /* アバタースタイル */
@@ -292,12 +262,11 @@ export function TaskDetailModal({
                   <input
                     value={titleValue}
                     onChange={(e) => { setTitleValue(e.target.value); setTitleError(''); }}
-                    onBlur={isNew ? undefined : handleSaveTitle}
+                    onBlur={isNew ? undefined : handleTitleConfirm}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !isNew) handleSaveTitle();
+                      if (e.key === 'Enter' && !isNew) handleTitleConfirm();
                       if (e.key === 'Escape' && !isNew) { setTitleValue(task!.title); setEditingTitle(false); }
                     }}
-                    disabled={savingTitle}
                     placeholder="タスクのタイトルを入力..."
                     className="w-full text-[18px] font-bold bg-bg border border-purple rounded-[8px] px-2 py-1 text-text outline-none"
                     autoFocus
@@ -346,7 +315,7 @@ export function TaskDetailModal({
                         {currentColumn.icon}
                       </span>
                     )}
-                    <Dropdown value={columnId} options={columns.map((c) => ({ value: c.id, label: c.name }))} onChange={handleColumnChange} scroll className="flex-1" />
+                    <Dropdown value={columnId} options={columns.map((c) => ({ value: c.id, label: c.name }))} onChange={setColumnId} scroll className="flex-1" />
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 py-2">
@@ -379,7 +348,7 @@ export function TaskDetailModal({
                         {currentCategory.icon}
                       </span>
                     )}
-                    <Dropdown value={categoryId} options={categories.map((c) => ({ value: c.id, label: c.name }))} placeholder="なし" onChange={handleCategoryChange} scroll className="flex-1" />
+                    <Dropdown value={categoryId} options={categories.map((c) => ({ value: c.id, label: c.name }))} placeholder="なし" onChange={setCategoryId} scroll className="flex-1" />
                   </div>
                 ) : (
                   <span className="text-[13px] py-2 block">
@@ -439,7 +408,7 @@ export function TaskDetailModal({
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <DateField
                           value={dueDate}
-                          onChange={handleDueDateChange}
+                          onChange={setDueDate}
                           hideTime={dueDateAllDay}
                           placeholder="日付を選択"
                         />
@@ -492,10 +461,10 @@ export function TaskDetailModal({
                       キャンセル
                     </button>
                     {!isNew && (
-                      <button onClick={handleSaveDesc} disabled={savingDesc}
-                        className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold disabled:opacity-40"
+                      <button onClick={() => setEditingDesc(false)}
+                        className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold"
                         style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}>
-                        {savingDesc ? '保存中...' : '保存'}
+                        完了
                       </button>
                     )}
                   </div>
@@ -607,14 +576,15 @@ export function TaskDetailModal({
           )}
           {/* キャンセル + 保存 */}
           <div className="ml-auto flex items-center gap-2">
+            {saveError && <p className="text-[11px] text-live">{saveError}</p>}
             <button onClick={handleCancel}
               className="px-4 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-muted hover:text-text transition-colors">
               キャンセル
             </button>
-            <button onClick={handleSave} disabled={savingNew}
+            <button onClick={handleSave} disabled={saving}
               className="px-5 py-2 rounded-[10px] text-[13px] font-semibold disabled:opacity-40 transition-opacity"
               style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}>
-              {savingNew ? '作成中...' : '保存'}
+              {saving ? (isNew ? '作成中...' : '保存中...') : '保存'}
             </button>
           </div>
         </div>

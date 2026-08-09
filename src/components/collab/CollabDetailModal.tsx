@@ -20,6 +20,7 @@ import { Timestamp, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
 import { firebaseFunctionsErrorMessage } from '@/lib/firebase/errors';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useModalDrag } from '@/hooks/useModalDrag';
 import { DateField } from '@/components/ui/DateField';
 
 interface CollabDetailModalProps {
@@ -518,30 +519,7 @@ export function CollabDetailModal({
   const mouseDownOnOverlay = useRef<boolean>(false);
 
   /* ── ドラッグ移動 ─────────────────────────────── */
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const isDragging = useRef(false);
-  const dragStart = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 });
-
-  useEffect(() => {
-    function onMove(e: MouseEvent) {
-      if (!isDragging.current) return;
-      setPosition({
-        x: dragStart.current.posX + e.clientX - dragStart.current.mouseX,
-        y: dragStart.current.posY + e.clientY - dragStart.current.mouseY,
-      });
-    }
-    function onUp() { isDragging.current = false; }
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-    return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
-  }, []);
-
-  function handleDragStart(e: React.MouseEvent) {
-    if ((e.target as HTMLElement).closest('button, input, select, a')) return;
-    isDragging.current = true;
-    dragStart.current = { mouseX: e.clientX, mouseY: e.clientY, posX: position.x, posY: position.y };
-    e.preventDefault();
-  }
+  const { position, handleDragStart } = useModalDrag();
 
   return (
     /* オーバーレイ */
