@@ -13,9 +13,9 @@ import { useTasksStore } from '@/stores/tasks';
 import { useScheduleStore } from '@/stores/schedule';
 import { subscribeMemberCalendarEvents } from '@/lib/repositories/memberCalendars';
 import { createSchedule } from '@/lib/repositories/schedules';
-import { createTask } from '@/lib/repositories/tasks';
+import { createTask, updateTask } from '@/lib/repositories/tasks';
 import { createCollabSession } from '@/lib/repositories/collabs';
-import type { MemberCalendarEvent } from '@/types/entities';
+import type { MemberCalendarEvent, Task } from '@/types/entities';
 import { Icon } from '@/components/ui/Icon';
 
 // ── 定数 ───────────────────────────────────────────────────────
@@ -30,17 +30,38 @@ const TYPE_LABELS: Record<string, string> = {
   schedule: 'スケジュール',
   task: 'タスク',
   collab: 'コラボ調整',
+  task_update: 'タスク更新',
 };
 const TYPE_ICONS: Record<string, string> = {
   schedule: 'event',
   task: 'task_alt',
   collab: 'handshake',
+  task_update: 'edit_note',
 };
 const TYPE_ROUTES: Record<string, string> = {
   schedule: '/schedule',
   task: '/tasks',
   collab: '/collabs',
+  task_update: '/tasks',
 };
+
+/** task_update の changes フィールドの表示ラベル */
+const CHANGE_FIELD_LABELS: Record<string, string> = {
+  title: 'タイトル',
+  description: '詳細',
+  dueDate: '期限',
+  assigneeName: '担当',
+  columnName: 'ステータス',
+};
+
+/** task_update の差分表示用: 対象タスクの現在値 */
+export interface TaskCurrentSummary {
+  title: string;
+  description: string | null;
+  dueDate: string | null;
+  assigneeName: string | null;
+  columnName: string | null;
+}
 
 /** 入力欄の例示チップ */
 const EXAMPLE_CHIPS = [
@@ -84,9 +105,69 @@ interface ProposalCardProps {
   status: ProposalStatus;
   onConfirm: () => void;
   onReject: () => void;
+  /** task_update の差分表示用: taskId から現在値を引く（見つからなければ null） */
+  resolveTask: (taskId: string) => TaskCurrentSummary | null;
 }
 
-function ProposalItemDetail({ proposal }: { proposal: Proposal }) {
+/** task_update 提案の変更前 → 変更後の差分表示 */
+function TaskUpdateDiff({
+  proposal,
+  current,
+}: {
+  proposal: Proposal;
+  current: TaskCurrentSummary | null;
+}) {
+  const changes = proposal.changes ?? {};
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-[14px] font-medium text-text">
+        {current?.title ?? '（タスクが見つかりません）'}
+      </p>
+      {(Object.entries(changes) as Array<[string, string | undefined]>)
+        .filter(([, v]) => v !== undefined)
+        .map(([field, newValue]) => {
+          const oldValue = current?.[field as keyof TaskCurrentSummary] ?? null;
+          // 詳細（長文）はブロック表示、それ以外は「旧 → 新」の1行表示
+          if (field === 'description') {
+            return (
+              <div key={field} className="flex flex-col gap-1">
+                <span className="text-[11px] font-semibold text-muted">
+                  {CHANGE_FIELD_LABELS[field]}（変更後）
+                </span>
+                <p className="text-[12px] text-text whitespace-pre-wrap bg-surface border border-border rounded-[10px] px-3 py-2 max-h-[160px] overflow-y-auto">
+                  {newValue}
+                </p>
+              </div>
+            );
+          }
+          return (
+            <p key={field} className="text-[12px] text-muted">
+              {CHANGE_FIELD_LABELS[field] ?? field}:{' '}
+              <span className="line-through opacity-60">{oldValue ?? 'なし'}</span>
+              {' → '}
+              <span className="text-text font-medium">{newValue}</span>
+            </p>
+          );
+        })}
+    </div>
+  );
+}
+
+function ProposalItemDetail({
+  proposal,
+  resolveTask,
+}: {
+  proposal: Proposal;
+  resolveTask: (taskId: string) => TaskCurrentSummary | null;
+}) {
+  if (proposal.type === 'task_update') {
+    return (
+      <TaskUpdateDiff
+        proposal={proposal}
+        current={proposal.taskId ? resolveTask(proposal.taskId) : null}
+      />
+    );
+  }
   return (
     <div className="flex flex-col gap-0.5">
       <p className="text-[14px] font-medium text-text">{proposal.title}</p>
@@ -110,11 +191,15 @@ function ProposalItemDetail({ proposal }: { proposal: Proposal }) {
   );
 }
 
-function ProposalCard({ proposals, status, onConfirm, onReject }: ProposalCardProps) {
+function ProposalCard({ proposals, status, onConfirm, onReject, resolveTask }: ProposalCardProps) {
   const first = proposals[0];
   if (!first) return null;
   const isMultiple = proposals.length > 1;
-  const confirmLabel = isMultiple ? `まとめて登録する（${proposals.length}件）` : '登録する';
+  const confirmLabel = isMultiple
+    ? `まとめて登録する（${proposals.length}件）`
+    : first.type === 'task_update'
+      ? '更新する'
+      : '登録する';
 
   return (
     <div className="mt-3 rounded-[14px] border border-purple/20 bg-purple/5 p-4 flex flex-col gap-2.5">
@@ -130,7 +215,7 @@ function ProposalCard({ proposals, status, onConfirm, onReject }: ProposalCardPr
       {/* 提案リスト */}
       <div className="flex flex-col gap-2">
         {proposals.map((p, i) => (
-          <ProposalItemDetail key={i} proposal={p} />
+          <ProposalItemDetail key={i} proposal={p} resolveTask={resolveTask} />
         ))}
       </div>
 
@@ -197,6 +282,8 @@ export function AIChatPage() {
     setPendingProposals,
     setProposalStatus,
     setProposalMessageId,
+    pinnedTaskId,
+    setPinnedTaskId,
     clearMessages,
   } = useAIChatStore();
 
@@ -228,6 +315,25 @@ export function AIChatPage() {
   useEffect(() => {
     proposalMessageIdRef.current = proposalMessageId;
   }, [proposalMessageId]);
+
+  // ピン留めタスク（タスク詳細画面から「AIに相談」で遷移した場合）
+  const pinnedTask = pinnedTaskId ? (tasks.find((t) => t.id === pinnedTaskId) ?? null) : null;
+
+  // task_update の差分表示・更新実行用: taskId から現在値を解決する
+  const resolveTaskSummary = useCallback(
+    (taskId: string): TaskCurrentSummary | null => {
+      const task = tasks.find((t) => t.id === taskId);
+      if (!task) return null;
+      return {
+        title: task.title,
+        description: task.description,
+        dueDate: task.dueDate ? format(task.dueDate, 'yyyy-MM-dd') : null,
+        assigneeName: members.find((m) => m.userId === task.assigneeId)?.displayName ?? null,
+        columnName: columns.find((c) => c.id === task.columnId)?.name ?? null,
+      };
+    },
+    [tasks, members, columns]
+  );
 
   // メッセージ一覧の末尾に自動スクロール
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -268,10 +374,12 @@ export function AIChatPage() {
 
     return {
       tasks: tasks.map((t) => ({
+        id: t.id,
         title: t.title,
         columnName: columns.find((c) => c.id === t.columnId)?.name ?? null,
         assigneeName: members.find((m) => m.userId === t.assigneeId)?.displayName ?? null,
         dueDate: t.dueDate ? format(t.dueDate, 'yyyy/MM/dd') : null,
+        description: t.description,
       })),
       schedules: schedules
         .filter((s) => s.startAt >= sevenDaysAgo)
@@ -297,8 +405,20 @@ export function AIChatPage() {
           endAt: format(e.endAt, 'HH:mm'),
           allDay: e.allDay,
         })),
+      // ピン留めタスクは description を切り詰めず全文渡す
+      pinnedTask: pinnedTask
+        ? {
+            id: pinnedTask.id,
+            title: pinnedTask.title,
+            columnName: columns.find((c) => c.id === pinnedTask.columnId)?.name ?? null,
+            assigneeName:
+              members.find((m) => m.userId === pinnedTask.assigneeId)?.displayName ?? null,
+            dueDate: pinnedTask.dueDate ? format(pinnedTask.dueDate, 'yyyy-MM-dd') : null,
+            description: pinnedTask.description,
+          }
+        : undefined,
     };
-  }, [tasks, columns, schedules, members, memberCalendarEvents, currentUser?.uid]);
+  }, [tasks, columns, schedules, members, memberCalendarEvents, currentUser?.uid, pinnedTask]);
 
   // ── ストリーミング完了後: アシスタントメッセージから提案を解析 ───────
   useEffect(() => {
@@ -371,7 +491,7 @@ export function AIChatPage() {
               .filter((id): id is string => !!id);
 
             await createSchedule(currentTeamId, {
-              title: p.title,
+              title: p.title ?? '',
               categoryId: null,
               startAt: new Date(p.startAt ?? ''),
               endAt: new Date(p.endAt ?? ''),
@@ -394,7 +514,7 @@ export function AIChatPage() {
 
             await createTask({
               teamId: currentTeamId,
-              title: p.title,
+              title: p.title ?? '',
               columnId: targetColumn.id,
               categoryId: null,
               description: p.description ?? null,
@@ -405,24 +525,56 @@ export function AIChatPage() {
           } else if (p.type === 'collab') {
             await createCollabSession({
               teamId: currentTeamId,
-              title: p.title,
+              title: p.title ?? '',
               partnerName: p.partnerName ?? '',
               proposedDates: (p.proposedDates ?? []).map((d) => new Date(d).toISOString()),
               expiresInDays: 7,
             });
+          } else if (p.type === 'task_update') {
+            // 既存タスクの部分更新。changes に含まれるフィールドのみ書き換える
+            if (!p.taskId || !tasks.some((t) => t.id === p.taskId)) {
+              throw new Error('更新対象のタスクが見つかりません');
+            }
+            const c = p.changes ?? {};
+            const data: Partial<Task> = {};
+            if (c.title !== undefined) data.title = c.title;
+            if (c.description !== undefined) data.description = c.description;
+            if (c.dueDate !== undefined) data.dueDate = new Date(c.dueDate);
+            if (c.assigneeName !== undefined) {
+              // 表示名 → UID 解決。見つからなければそのフィールドは変更しない
+              const assigneeId = members.find((m) => m.displayName === c.assigneeName)?.userId;
+              if (assigneeId) data.assigneeId = assigneeId;
+            }
+            if (c.columnName !== undefined) {
+              const column = columns.find(
+                (col) => col.name === c.columnName || col.name.includes(c.columnName ?? '')
+              );
+              if (column) data.columnId = column.id;
+            }
+            if (Object.keys(data).length === 0) {
+              throw new Error('更新できる変更内容がありません');
+            }
+            await updateTask(currentTeamId, p.taskId, data);
           }
         })
       );
 
       // 全件のタイトル・種別を列挙して完了メッセージにする
       const summary = pendingProposals
-        .map((p) => `「${p.title}」を${TYPE_LABELS[p.type]}に`)
+        .map((p) => {
+          if (p.type === 'task_update') {
+            const name =
+              p.changes?.title ?? resolveTaskSummary(p.taskId ?? '')?.title ?? 'タスク';
+            return `「${name}」を更新`;
+          }
+          return `「${p.title}」を${TYPE_LABELS[p.type]}に追加`;
+        })
         .join('、');
       setProposalStatus('done');
       addMessage({
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: `登録したよ！${summary}追加したよ 🎉 他にも何かあれば気軽に話しかけてね！`,
+        content: `完了したよ！${summary}したよ 🎉 他にも何かあれば気軽に話しかけてね！`,
       });
     } catch {
       setProposalStatus('error');
@@ -487,6 +639,7 @@ export function AIChatPage() {
             status={proposalStatus}
             onConfirm={handleRegister}
             onReject={handleReject}
+            resolveTask={resolveTaskSummary}
           />
         )}
       </>
@@ -494,6 +647,23 @@ export function AIChatPage() {
   }
 
   const hasMessages = messages.length > 0;
+
+  // ピン留めタスクのチップ（入力欄の上に表示。✕ で解除）
+  const pinnedChip = pinnedTask ? (
+    <div className="flex items-center gap-1.5 self-start bg-purple/5 border border-purple/20 rounded-full pl-3 pr-1.5 py-1">
+      <Icon name="push_pin" size={13} className="text-purple" />
+      <span className="text-[12px] text-purple font-medium max-w-[240px] truncate">
+        {pinnedTask.title}
+      </span>
+      <button
+        onClick={() => setPinnedTaskId(null)}
+        className="w-5 h-5 rounded-full flex items-center justify-center text-purple/60 hover:text-purple hover:bg-purple/10 transition-colors"
+        aria-label="タスクのピン留めを解除"
+      >
+        <Icon name="close" size={13} />
+      </button>
+    </div>
+  ) : null;
 
   // ── レンダリング ──────────────────────────────────────────────
   return (
@@ -576,7 +746,8 @@ export function AIChatPage() {
           </div>
 
           {/* 下部固定入力欄 */}
-          <div className="shrink-0 border-t border-border bg-surface px-4 py-3">
+          <div className="shrink-0 border-t border-border bg-surface px-4 py-3 flex flex-col gap-2">
+            {pinnedChip}
             <form onSubmit={handleSubmit} className="flex items-end gap-2">
               <textarea
                 ref={textareaRef}
@@ -621,6 +792,7 @@ export function AIChatPage() {
 
           {/* 入力エリア */}
           <div className="w-full max-w-[600px] flex flex-col gap-3">
+            {pinnedChip}
             <form onSubmit={handleSubmit} className="flex items-end gap-2">
               <textarea
                 ref={textareaRef}

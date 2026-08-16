@@ -3,6 +3,7 @@ import { sendFollowUp } from '../discordFollowUp';
 import { getSession, deleteSession, clearPendingProposals } from '../sessionManager';
 import { registerSchedule } from '../register/registerSchedule';
 import { registerTask } from '../register/registerTask';
+import { registerTaskUpdate } from '../register/registerTaskUpdate';
 import { registerCollab } from '../register/registerCollab';
 import { ProposalDataSchema } from '@/lib/ai/parseProposal';
 
@@ -93,9 +94,9 @@ export async function handleButtonClick({
     displayName: d.data().displayName as string,
   }));
 
-  // タスク提案が含まれる場合のみカラム一覧を取得する
+  // タスク提案・タスク更新が含まれる場合のみカラム一覧を取得する
   let columns: Array<{ id: string; name: string }> = [];
-  if (proposals.some((p) => p.type === 'task')) {
+  if (proposals.some((p) => p.type === 'task' || p.type === 'task_update')) {
     const columnsSnap = await db.collection(`teams/${session.teamId}/taskStatuses`).get();
     columns = columnsSnap.docs.map((d) => ({
       id: d.id,
@@ -113,6 +114,9 @@ export async function handleButtonClick({
       } else if (proposal.type === 'task') {
         const id = await registerTask(session.teamId, proposal, members, columns);
         completionLines.push(`✅ タスク「${proposal.title}」を登録したよ！（ID: ${id}）`);
+      } else if (proposal.type === 'task_update') {
+        const title = await registerTaskUpdate(session.teamId, proposal, members, columns);
+        completionLines.push(`✏️ タスク「${title}」を更新したよ！`);
       } else {
         const id = await registerCollab(session.teamId, proposal);
         completionLines.push(`✅ コラボ調整「${proposal.title}」を登録したよ！（ID: ${id}）`);

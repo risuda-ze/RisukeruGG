@@ -16,6 +16,15 @@ export interface AiChatContext {
     endAt: string;
     allDay: boolean;
   }>;
+  /** タスク詳細画面から「AIに相談」で遷移した際のピン留めタスク（description は全文） */
+  pinnedTask?: {
+    id: string;
+    title: string;
+    columnName: string | null;
+    assigneeName: string | null;
+    dueDate: string | null;
+    description: string | null;
+  };
 }
 
 /**
@@ -35,6 +44,7 @@ export function generateSystemPrompt(
 ## 対応範囲（厳守）
 以下のみ対応する。それ以外は必ず断る:
 - スケジュール・タスク・コラボ調整の登録サポート
+- 既存タスクの照会（「このタスクどうなってる？」等）と編集（詳細文の作成・書き換え・期限や担当の変更等）
 - スケジュール確認（来週の予定・今日の予定・空き時間の照会など）
 - チームデータ（タスク・スケジュール・メンバー）への質問
 - アプリの使い方の案内
@@ -128,6 +138,20 @@ export function generateSystemPrompt(
 {"type":"collab","title":"タイトル","partnerName":"相手の名前","proposedDates":["2024-05-21T20:00:00"]}
 %%/PROPOSAL%%
 
+タスク更新（既存タスクの編集）:
+%%PROPOSAL%%
+{"type":"task_update","taskId":"abc123","changes":{"description":"新しい詳細文","dueDate":"2024-05-25"}}
+%%/PROPOSAL%%
+- taskId: 【タスク一覧】に記載されている ID をそのまま使う（推測・創作は絶対にしない）
+- changes: **変更するフィールドのみ**含める（title / description / dueDate / assigneeName / columnName）
+- 既存タスクについて「詳細を書いて」「詳細をこう書き換えて」「期限を変えて」「担当を変えて」「〇〇に移動して」等の依頼は、新規タスク作成（type:"task"）ではなく**必ず task_update を使う**
+- 詳細文の作成を頼まれたら、タスクのタイトルや会話内容から実用的な詳細文（目的・作業内容・完了条件など）を書いて提案する
+- どのタスクを指しているか曖昧な場合（同名タスクがある・候補が複数ある等）は、提案せずどのタスクか確認する
+
+## タスク照会
+
+「このタスクどうなってる？」「〇〇の進捗は？」のような質問には、【タスク一覧】のステータス・担当・期限・詳細を使って現状を答える。該当タスクが見つからなければ、近い名前の候補を挙げて確認する。
+
 **フォーマットの注意:**
 - 登録対象が複数ある場合（複数タスクの依頼・毎週のスケジュール・タスクとスケジュールの同時依頼など）は、**必ず1件につき1つの %%PROPOSAL%% ブロックを作り、全件分を並べて出力する**。複数件を1つのブロックにまとめたり、一部だけ提案して残りを省略したりしない
   例: 「サムネ作成とタイトル決めと台本作成をタスクにして」→ タスクの %%PROPOSAL%% ブロックを3つ並べる
@@ -145,7 +169,7 @@ export function generateSystemPrompt(
 - assigneeName / participantNames は【チームメンバー】に存在する displayName のみ使う。存在しない名前は省略する
 - columnName は【タスクカラム】に存在するカラム名のみ使う。存在しない場合は省略する
 
-## 現在のチームデータ
+${formatPinnedTask(context.pinnedTask)}## 現在のチームデータ
 
 【タスクカラム（ステータス）】
 ${formatColumns(context.columns)}
@@ -172,15 +196,43 @@ export function formatColumns(columns: Array<{ name: string }>): string {
   return columns.map((c) => `- ${c.name}`).join('\n');
 }
 
+/** タスク一覧コンテキストでの詳細文の最大文字数（トークン節約のため切り詰める） */
+const TASK_DESC_PREVIEW_MAX = 200;
+
 export function formatTasks(tasks: Array<Record<string, unknown>>): string {
   if (tasks.length === 0) return 'タスクなし';
   return tasks
     .slice(0, 30)
-    .map(
-      (t) =>
-        `- ${t.title}（ステータス: ${t.columnName ?? '不明'}、担当: ${t.assigneeName ?? 'なし'}、期限: ${t.dueDate ?? 'なし'}）`
-    )
+    .map((t) => {
+      const desc = typeof t.description === 'string' && t.description ? t.description : null;
+      const descPreview =
+        desc && desc.length > TASK_DESC_PREVIEW_MAX
+          ? `${desc.slice(0, TASK_DESC_PREVIEW_MAX)}…`
+          : desc;
+      return (
+        `- ${t.title}（ID: ${t.id ?? '不明'}、ステータス: ${t.columnName ?? '不明'}、担当: ${t.assigneeName ?? 'なし'}、期限: ${t.dueDate ?? 'なし'}）` +
+        (descPreview ? `\n  詳細: ${descPreview.replace(/\n/g, ' ')}` : '')
+      );
+    })
     .join('\n');
+}
+
+/** ピン留めタスク（タスク詳細画面から「AIに相談」で遷移した場合）のプロンプトブロックを生成する */
+export function formatPinnedTask(pinnedTask: AiChatContext['pinnedTask']): string {
+  if (!pinnedTask) return '';
+  return `## 対象タスク（ユーザーは今このタスクについて相談している）
+
+- ID: ${pinnedTask.id}
+- タイトル: ${pinnedTask.title}
+- ステータス: ${pinnedTask.columnName ?? '不明'}
+- 担当: ${pinnedTask.assigneeName ?? 'なし'}
+- 期限: ${pinnedTask.dueDate ?? 'なし'}
+- 詳細（全文）:
+${pinnedTask.description ?? '（未記入）'}
+
+「このタスク」「詳細を書いて」など対象を明示しない依頼は、すべてこのタスク（taskId: ${pinnedTask.id}）への task_update として扱う。
+
+`;
 }
 
 export function formatSchedules(

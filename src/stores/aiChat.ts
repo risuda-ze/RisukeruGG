@@ -8,9 +8,22 @@ export interface ChatMessage {
   content: string;
 }
 
+/** task_update 提案の部分更新フィールド */
+export interface TaskUpdateChanges {
+  title?: string;
+  description?: string;
+  dueDate?: string;
+  assigneeName?: string;
+  columnName?: string;
+}
+
 export interface Proposal {
-  type: 'schedule' | 'task' | 'collab';
-  title: string;
+  type: 'schedule' | 'task' | 'collab' | 'task_update';
+  /** task_update ではタイトルは changes 側にあるため省略可 */
+  title?: string;
+  // タスク更新用
+  taskId?: string;
+  changes?: TaskUpdateChanges;
   // スケジュール用
   startAt?: string;
   endAt?: string;
@@ -38,6 +51,8 @@ interface AIChatStore {
   pendingProposals: Proposal[];
   proposalStatus: ProposalStatus;
   proposalMessageId: string | null;
+  /** タスク詳細画面から「AIに相談」で遷移した際のピン留めタスクID */
+  pinnedTaskId: string | null;
 
   // アクション
   addMessage: (msg: ChatMessage) => void;
@@ -46,6 +61,7 @@ interface AIChatStore {
   setPendingProposals: (p: Proposal[]) => void;
   setProposalStatus: (s: ProposalStatus) => void;
   setProposalMessageId: (id: string | null) => void;
+  setPinnedTaskId: (id: string | null) => void;
   clearMessages: () => void;
 }
 
@@ -55,6 +71,7 @@ export const useAIChatStore = create<AIChatStore>((set) => ({
   pendingProposals: [],
   proposalStatus: 'pending',
   proposalMessageId: null,
+  pinnedTaskId: null,
 
   addMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
 
@@ -70,6 +87,7 @@ export const useAIChatStore = create<AIChatStore>((set) => ({
   setPendingProposals: (p) => set({ pendingProposals: p }),
   setProposalStatus: (s) => set({ proposalStatus: s }),
   setProposalMessageId: (id) => set({ proposalMessageId: id }),
+  setPinnedTaskId: (id) => set({ pinnedTaskId: id }),
 
   // 「会話をリセット」ボタン用: 全状態を初期化
   clearMessages: () =>
@@ -79,5 +97,6 @@ export const useAIChatStore = create<AIChatStore>((set) => ({
       pendingProposals: [],
       proposalStatus: 'pending',
       proposalMessageId: null,
+      pinnedTaskId: null,
     }),
 }));

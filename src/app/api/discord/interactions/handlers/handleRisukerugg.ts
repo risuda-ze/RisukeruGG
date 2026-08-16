@@ -152,12 +152,14 @@ async function runAiConversation(
     const col = columnsSnap.docs.find((c) => c.id === data.columnId);
     const assignee = members.find((m) => m.userId === data.assigneeId);
     return {
+      id: d.id,
       title: data.title as string,
       columnName: col?.data().name as string | undefined,
       assigneeName: assignee?.displayName,
       dueDate: data.dueDate
         ? (data.dueDate as { toDate: () => Date }).toDate().toISOString().split('T')[0]
         : undefined,
+      description: (data.description as string | null | undefined) ?? undefined,
     };
   });
 
@@ -221,7 +223,8 @@ async function runAiConversation(
     if (replyText) {
       await sendFollowUp(appId, token, replyText);
     }
-    await sendProposalMessage(appId, token, proposals, guildId);
+    // task_update の差分表示用に現在のタスク一覧を渡す
+    await sendProposalMessage(appId, token, proposals, guildId, tasksList);
   } else {
     // 通常の会話: セッション更新してテキスト返信
     await upsertSession(guildId, {

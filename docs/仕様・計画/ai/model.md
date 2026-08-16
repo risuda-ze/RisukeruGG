@@ -20,8 +20,8 @@ AI 応答の `%%PROPOSAL%%`〜`%%/PROPOSAL%%` ブロック（JSON）を解析し
 
 | フィールド         | 型 / 例                              | 意味 |
 | ------------------ | ------------------------------------ | ---- |
-| `type`             | `schedule` \| `task` \| `collab`     | 登録対象の種別 |
-| `title`            | string                               | タイトル |
+| `type`             | `schedule` \| `task` \| `collab` \| `task_update` | 登録対象の種別 |
+| `title`            | string（`task_update` では省略）     | タイトル |
 | `startAt` / `endAt`| string（ISO 8601）                   | スケジュール用の開始・終了日時 |
 | `description`      | string（任意）                       | 説明 |
 | `participantNames` | string[]（任意）                     | スケジュール参加者の表示名。登録時に UID へ解決 |
@@ -30,6 +30,8 @@ AI 応答の `%%PROPOSAL%%`〜`%%/PROPOSAL%%` ブロック（JSON）を解析し
 | `columnName`       | string（任意）                       | タスクを追加する列名。登録時に列 ID へ解決 |
 | `partnerName`      | string（任意）                       | コラボ相手名 |
 | `proposedDates`    | string[]（ISO 8601、任意）           | コラボ候補日程 |
+| `taskId`           | string（`task_update` のみ必須）     | 更新対象の既存タスク ID |
+| `changes`          | object（`task_update` のみ必須）     | 部分更新フィールド（title / description / dueDate / assigneeName / columnName のうち最低 1 つ） |
 
 ## ストア状態（`useAIChatStore`）
 
@@ -40,6 +42,7 @@ AI 応答の `%%PROPOSAL%%`〜`%%/PROPOSAL%%` ブロック（JSON）を解析し
 | `pendingProposals`  | Proposal[]                                  | 確認待ちの提案（複数可） |
 | `proposalStatus`    | `pending` \| `loading` \| `done` \| `error` | 提案カードの UI 状態 |
 | `proposalMessageId` | string \| null                              | 提案を含むメッセージの ID |
+| `pinnedTaskId`      | string \| null                              | タスク詳細画面から「AIに相談」で遷移した際のピン留めタスク ID |
 
 ## 制約
 
