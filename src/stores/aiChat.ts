@@ -8,13 +8,14 @@ export interface ChatMessage {
   content: string;
 }
 
-/** task_update 提案の部分更新フィールド */
+/** task_update 提案の部分更新フィールド（null は「値を外す」操作を表す） */
 export interface TaskUpdateChanges {
   title?: string;
-  description?: string;
-  dueDate?: string;
-  assigneeName?: string;
+  description?: string | null;
+  dueDate?: string | null;
+  assigneeName?: string | null;
   columnName?: string;
+  categoryName?: string | null;
 }
 
 export interface Proposal {

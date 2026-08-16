@@ -10,6 +10,7 @@ import { useAIChatStore } from '@/stores/aiChat';
 import type { ChatMessage, Proposal, ProposalStatus } from '@/stores/aiChat';
 import { useAuthStore } from '@/stores/auth';
 import { useTasksStore } from '@/stores/tasks';
+import { useCategoryStore } from '@/stores/categories';
 import { useScheduleStore } from '@/stores/schedule';
 import { subscribeMemberCalendarEvents } from '@/lib/repositories/memberCalendars';
 import { createSchedule } from '@/lib/repositories/schedules';
@@ -52,6 +53,7 @@ const CHANGE_FIELD_LABELS: Record<string, string> = {
   dueDate: '期限',
   assigneeName: '担当',
   columnName: 'ステータス',
+  categoryName: 'カテゴリ',
 };
 
 /** task_update の差分表示用: 対象タスクの現在値 */
@@ -61,6 +63,7 @@ export interface TaskCurrentSummary {
   dueDate: string | null;
   assigneeName: string | null;
   columnName: string | null;
+  categoryName: string | null;
 }
 
 /** 入力欄の例示チップ */
@@ -123,12 +126,12 @@ function TaskUpdateDiff({
       <p className="text-[14px] font-medium text-text">
         {current?.title ?? '（タスクが見つかりません）'}
       </p>
-      {(Object.entries(changes) as Array<[string, string | undefined]>)
+      {(Object.entries(changes) as Array<[string, string | null | undefined]>)
         .filter(([, v]) => v !== undefined)
         .map(([field, newValue]) => {
           const oldValue = current?.[field as keyof TaskCurrentSummary] ?? null;
           // 詳細（長文）はブロック表示、それ以外は「旧 → 新」の1行表示
-          if (field === 'description') {
+          if (field === 'description' && newValue !== null) {
             return (
               <div key={field} className="flex flex-col gap-1">
                 <span className="text-[11px] font-semibold text-muted">
@@ -140,12 +143,16 @@ function TaskUpdateDiff({
               </div>
             );
           }
+          // 旧値が長文（詳細の削除等）の場合は切り詰めて表示
+          const oldDisplay =
+            oldValue && oldValue.length > 60 ? `${oldValue.slice(0, 60)}…` : oldValue;
           return (
             <p key={field} className="text-[12px] text-muted">
               {CHANGE_FIELD_LABELS[field] ?? field}:{' '}
-              <span className="line-through opacity-60">{oldValue ?? 'なし'}</span>
+              <span className="line-through opacity-60">{oldDisplay ?? 'なし'}</span>
               {' → '}
-              <span className="text-text font-medium">{newValue}</span>
+              {/* null は「値を外す」操作 */}
+              <span className="text-text font-medium">{newValue ?? 'なし'}</span>
             </p>
           );
         })}
@@ -293,6 +300,7 @@ export function AIChatPage() {
   const currentTeamId = useAuthStore((s) => s.currentTeamId);
   const tasks = useTasksStore((s) => s.tasks);
   const columns = useTasksStore((s) => s.columns);
+  const categories = useCategoryStore((s) => s.categories);
   const schedules = useScheduleStore((s) => s.schedules);
   const [memberCalendarEvents, setMemberCalendarEvents] = useState<MemberCalendarEvent[]>([]);
 
@@ -330,9 +338,10 @@ export function AIChatPage() {
         dueDate: task.dueDate ? format(task.dueDate, 'yyyy-MM-dd') : null,
         assigneeName: members.find((m) => m.userId === task.assigneeId)?.displayName ?? null,
         columnName: columns.find((c) => c.id === task.columnId)?.name ?? null,
+        categoryName: categories.find((c) => c.id === task.categoryId)?.name ?? null,
       };
     },
-    [tasks, members, columns]
+    [tasks, members, columns, categories]
   );
 
   // メッセージ一覧の末尾に自動スクロール
@@ -380,6 +389,8 @@ export function AIChatPage() {
         assigneeName: members.find((m) => m.userId === t.assigneeId)?.displayName ?? null,
         dueDate: t.dueDate ? format(t.dueDate, 'yyyy/MM/dd') : null,
         description: t.description,
+        categoryName: categories.find((c) => c.id === t.categoryId)?.name ?? null,
+        comments: (t.comments ?? []).map((c) => ({ authorName: c.authorName, text: c.text })),
       })),
       schedules: schedules
         .filter((s) => s.startAt >= sevenDaysAgo)
@@ -396,6 +407,8 @@ export function AIChatPage() {
       members: members.map((m) => ({ displayName: m.displayName, role: m.role })),
       // タスクのカラム一覧（AIがステータスを指定するために使う）
       columns: columns.map((c) => ({ name: c.name })),
+      // カテゴリ一覧（task_update の categoryName 解決用）
+      categories: categories.map((c) => ({ name: c.name })),
       memberCalendars: Object.values(memberCalendarsForAI)
         .flat()
         .map((e) => ({
@@ -415,10 +428,15 @@ export function AIChatPage() {
               members.find((m) => m.userId === pinnedTask.assigneeId)?.displayName ?? null,
             dueDate: pinnedTask.dueDate ? format(pinnedTask.dueDate, 'yyyy-MM-dd') : null,
             description: pinnedTask.description,
+            categoryName: categories.find((c) => c.id === pinnedTask.categoryId)?.name ?? null,
+            comments: (pinnedTask.comments ?? []).map((c) => ({
+              authorName: c.authorName,
+              text: c.text,
+            })),
           }
         : undefined,
     };
-  }, [tasks, columns, schedules, members, memberCalendarEvents, currentUser?.uid, pinnedTask]);
+  }, [tasks, columns, categories, schedules, members, memberCalendarEvents, currentUser?.uid, pinnedTask]);
 
   // ── ストリーミング完了後: アシスタントメッセージから提案を解析 ───────
   useEffect(() => {
@@ -538,18 +556,33 @@ export function AIChatPage() {
             const c = p.changes ?? {};
             const data: Partial<Task> = {};
             if (c.title !== undefined) data.title = c.title;
+            // null は「値を外す」操作（詳細削除・期限解除・担当解除・カテゴリ解除）
             if (c.description !== undefined) data.description = c.description;
-            if (c.dueDate !== undefined) data.dueDate = new Date(c.dueDate);
+            if (c.dueDate !== undefined) {
+              data.dueDate = c.dueDate === null ? null : new Date(c.dueDate);
+            }
             if (c.assigneeName !== undefined) {
-              // 表示名 → UID 解決。見つからなければそのフィールドは変更しない
-              const assigneeId = members.find((m) => m.displayName === c.assigneeName)?.userId;
-              if (assigneeId) data.assigneeId = assigneeId;
+              if (c.assigneeName === null) {
+                data.assigneeId = null;
+              } else {
+                // 表示名 → UID 解決。見つからなければそのフィールドは変更しない
+                const assigneeId = members.find((m) => m.displayName === c.assigneeName)?.userId;
+                if (assigneeId) data.assigneeId = assigneeId;
+              }
             }
             if (c.columnName !== undefined) {
               const column = columns.find(
                 (col) => col.name === c.columnName || col.name.includes(c.columnName ?? '')
               );
               if (column) data.columnId = column.id;
+            }
+            if (c.categoryName !== undefined) {
+              if (c.categoryName === null) {
+                data.categoryId = null;
+              } else {
+                const category = categories.find((cat) => cat.name === c.categoryName);
+                if (category) data.categoryId = category.id;
+              }
             }
             if (Object.keys(data).length === 0) {
               throw new Error('更新できる変更内容がありません');

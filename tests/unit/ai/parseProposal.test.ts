@@ -73,6 +73,34 @@ describe('extractProposals - タスク更新（task_update）', () => {
     expect(p.changes.title).toBeUndefined();
   });
 
+  it('null による「値を外す」操作（期限・担当・カテゴリ・詳細）を受け付ける', () => {
+    const proposals = extractProposals(
+      wrap(
+        '{"type":"task_update","taskId":"abc123","changes":{"dueDate":null,"assigneeName":null,"categoryName":null,"description":null}}'
+      )
+    );
+    expect(proposals).toHaveLength(1);
+    const p = proposals[0] as TaskUpdateProposal;
+    expect(p.changes.dueDate).toBeNull();
+    expect(p.changes.assigneeName).toBeNull();
+    expect(p.changes.categoryName).toBeNull();
+    expect(p.changes.description).toBeNull();
+  });
+
+  it('categoryName の変更を受け付ける', () => {
+    const proposals = extractProposals(
+      wrap('{"type":"task_update","taskId":"abc123","changes":{"categoryName":"配信準備"}}')
+    );
+    expect(proposals).toHaveLength(1);
+    expect((proposals[0] as TaskUpdateProposal).changes.categoryName).toBe('配信準備');
+  });
+
+  it('title の null（タイトル削除）は検証失敗としてスキップする', () => {
+    expect(
+      extractProposals(wrap('{"type":"task_update","taskId":"abc123","changes":{"title":null}}'))
+    ).toHaveLength(0);
+  });
+
   it('changes が空の場合は検証失敗としてスキップする', () => {
     expect(
       extractProposals(wrap('{"type":"task_update","taskId":"abc123","changes":{}}'))

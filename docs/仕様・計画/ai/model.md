@@ -31,7 +31,7 @@ AI 応答の `%%PROPOSAL%%`〜`%%/PROPOSAL%%` ブロック（JSON）を解析し
 | `partnerName`      | string（任意）                       | コラボ相手名 |
 | `proposedDates`    | string[]（ISO 8601、任意）           | コラボ候補日程 |
 | `taskId`           | string（`task_update` のみ必須）     | 更新対象の既存タスク ID |
-| `changes`          | object（`task_update` のみ必須）     | 部分更新フィールド（title / description / dueDate / assigneeName / columnName のうち最低 1 つ） |
+| `changes`          | object（`task_update` のみ必須）     | 部分更新フィールド（title / description / dueDate / assigneeName / columnName / categoryName のうち最低 1 つ。description・dueDate・assigneeName・categoryName は `null` で「値を外す」） |
 
 ## ストア状態（`useAIChatStore`）
 

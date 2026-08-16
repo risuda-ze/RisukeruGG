@@ -104,6 +104,16 @@ export async function handleButtonClick({
     }));
   }
 
+  // タスク更新が含まれる場合のみカテゴリ一覧を取得する（categoryName 解決用）
+  let categories: Array<{ id: string; name: string }> = [];
+  if (proposals.some((p) => p.type === 'task_update')) {
+    const categoriesSnap = await db.collection(`teams/${session.teamId}/categories`).get();
+    categories = categoriesSnap.docs.map((d) => ({
+      id: d.id,
+      name: d.data().name as string,
+    }));
+  }
+
   try {
     // 全件を順に登録し、完了メッセージを積み上げる
     const completionLines: string[] = [];
@@ -115,7 +125,13 @@ export async function handleButtonClick({
         const id = await registerTask(session.teamId, proposal, members, columns);
         completionLines.push(`✅ タスク「${proposal.title}」を登録したよ！（ID: ${id}）`);
       } else if (proposal.type === 'task_update') {
-        const title = await registerTaskUpdate(session.teamId, proposal, members, columns);
+        const title = await registerTaskUpdate(
+          session.teamId,
+          proposal,
+          members,
+          columns,
+          categories
+        );
         completionLines.push(`✏️ タスク「${title}」を更新したよ！`);
       } else {
         const id = await registerCollab(session.teamId, proposal);

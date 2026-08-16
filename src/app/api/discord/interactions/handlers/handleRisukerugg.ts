@@ -118,13 +118,15 @@ async function runAiConversation(
   ];
 
   // ─── チームデータ取得（AI コンテキスト生成用） ───────────────
-  const [membersSnap, schedulesSnap, tasksSnap, collabsSnap, columnsSnap] = await Promise.all([
-    db.collection(`teams/${teamId}/members`).get(),
-    db.collection(`teams/${teamId}/schedules`).orderBy('startAt').limit(50).get(),
-    db.collection(`teams/${teamId}/tasks`).limit(50).get(),
-    db.collection(`teams/${teamId}/collabSessions`).limit(20).get(),
-    db.collection(`teams/${teamId}/taskStatuses`).orderBy('order').get(),
-  ]);
+  const [membersSnap, schedulesSnap, tasksSnap, collabsSnap, columnsSnap, categoriesSnap] =
+    await Promise.all([
+      db.collection(`teams/${teamId}/members`).get(),
+      db.collection(`teams/${teamId}/schedules`).orderBy('startAt').limit(50).get(),
+      db.collection(`teams/${teamId}/tasks`).limit(50).get(),
+      db.collection(`teams/${teamId}/collabSessions`).limit(20).get(),
+      db.collection(`teams/${teamId}/taskStatuses`).orderBy('order').get(),
+      db.collection(`teams/${teamId}/categories`).get(),
+    ]);
 
   const members = membersSnap.docs.map((d) => ({
     userId: d.id,
@@ -147,10 +149,16 @@ async function runAiConversation(
     };
   });
 
+  const categoriesList = categoriesSnap.docs.map((d) => ({
+    id: d.id,
+    name: d.data().name as string,
+  }));
+
   const tasksList = tasksSnap.docs.map((d) => {
     const data = d.data();
     const col = columnsSnap.docs.find((c) => c.id === data.columnId);
     const assignee = members.find((m) => m.userId === data.assigneeId);
+    const rawComments = (data.comments as Array<{ authorName?: string; text?: string }> | undefined) ?? [];
     return {
       id: d.id,
       title: data.title as string,
@@ -160,6 +168,11 @@ async function runAiConversation(
         ? (data.dueDate as { toDate: () => Date }).toDate().toISOString().split('T')[0]
         : undefined,
       description: (data.description as string | null | undefined) ?? undefined,
+      categoryName: categoriesList.find((c) => c.id === data.categoryId)?.name,
+      comments: rawComments.map((c) => ({
+        authorName: c.authorName ?? '不明',
+        text: c.text ?? '',
+      })),
     };
   });
 
@@ -184,7 +197,14 @@ async function runAiConversation(
   const todayISO = todayDate.toISOString().split('T')[0]!;
 
   const systemPrompt = generateSystemPrompt(
-    { tasks: tasksList, schedules, collabs, members, columns },
+    {
+      tasks: tasksList,
+      schedules,
+      collabs,
+      members,
+      columns,
+      categories: categoriesList.map((c) => ({ name: c.name })),
+    },
     today,
     todayISO
   );
