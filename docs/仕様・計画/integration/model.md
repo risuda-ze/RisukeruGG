@@ -34,7 +34,7 @@ Firestore コレクション配置: `discord_sessions/{guildId}`（ルートコ�
 | `guildId`                 | string                                         | Discord サーバー ID（セッションキー） |
 | `teamId`                  | string                                         | 対応する RisukeruGG チーム ID |
 | `messages`                | Array<{ role: 'user' \| 'assistant'; content: string }> | Claude へ渡す会話履歴（最大 20 件） |
-| `pendingProposal`         | object（任意）                                 | 確認待ちの `%%PROPOSAL%%` データ |
+| `pendingProposals`        | Array\<object\>（任意）                        | 確認待ちの `%%PROPOSAL%%` データ。1 応答に複数ブロックがある場合は全件保持する |
 | `initiatorDiscordUserId`  | string（任意）                                 | 提案を発行させた Discord ユーザー ID。登録・修正操作を本人に限定するためのバインドキー |
 | `updatedAt`               | timestamp                                      | 最終更新日時。30 分無操作で自動リセット判定に使用 |
 

@@ -208,13 +208,13 @@ async function runAiConversation(
   const trimmedMessages = updatedMessages.slice(-20);
 
   if (proposals.length > 0) {
-    // %%PROPOSAL%% あり: pendingProposal にマージして保存
+    // %%PROPOSAL%% あり: 全件を pendingProposals に保存（複数提案は全件登録対象）
     // initiatorDiscordUserId を記録し、confirm/revise/cancel を発行者本人のみに制限する
     await upsertSession(guildId, {
       guildId,
       teamId,
       messages: trimmedMessages,
-      pendingProposal: proposals[0] as unknown as Record<string, unknown>,
+      pendingProposals: proposals as unknown as Array<Record<string, unknown>>,
       initiatorDiscordUserId: discordUserId,
     });
     // テキスト部分があれば先に送信

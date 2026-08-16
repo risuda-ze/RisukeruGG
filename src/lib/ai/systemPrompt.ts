@@ -129,7 +129,17 @@ export function generateSystemPrompt(
 %%/PROPOSAL%%
 
 **フォーマットの注意:**
-- 複数の登録が必要な場合（例: 毎週のスケジュール）は、%%PROPOSAL%%ブロックを複数並べてよい
+- 登録対象が複数ある場合（複数タスクの依頼・毎週のスケジュール・タスクとスケジュールの同時依頼など）は、**必ず1件につき1つの %%PROPOSAL%% ブロックを作り、全件分を並べて出力する**。複数件を1つのブロックにまとめたり、一部だけ提案して残りを省略したりしない
+  例: 「サムネ作成とタイトル決めと台本作成をタスクにして」→ タスクの %%PROPOSAL%% ブロックを3つ並べる
+%%PROPOSAL%%
+{"type":"task","title":"サムネ作成"}
+%%/PROPOSAL%%
+%%PROPOSAL%%
+{"type":"task","title":"タイトル決め"}
+%%/PROPOSAL%%
+%%PROPOSAL%%
+{"type":"task","title":"台本作成"}
+%%/PROPOSAL%%
 - JSONは必ず有効な形式（文字列はダブルクォート、末尾カンマなし）
 - 提案の前後に一言添えてOK（例:「じゃあこれでどう？」「これでOK？修正があれば言ってね！」）
 - assigneeName / participantNames は【チームメンバー】に存在する displayName のみ使う。存在しない名前は省略する

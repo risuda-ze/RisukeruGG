@@ -215,7 +215,8 @@ export interface DiscordSession {
     role: 'user' | 'assistant';
     content: string;
   }>;
-  pendingProposal?: Record<string, unknown>;  // 確認待ちの %%PROPOSAL%% データ
+  // 確認待ちの %%PROPOSAL%% データ（1応答に複数ブロックがある場合は全件保持する）
+  pendingProposals?: Array<Record<string, unknown>>;
   // プロポーザルを発行した Discord ユーザーの ID。confirm/revise/cancel を本人以外が
   // 操作できないようにするためのバインドキー。
   initiatorDiscordUserId?: string;

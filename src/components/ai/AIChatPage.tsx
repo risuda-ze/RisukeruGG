@@ -414,13 +414,15 @@ export function AIChatPage() {
         })
       );
 
-      const first = pendingProposals[0];
-      const countLabel = pendingProposals.length > 1 ? `${pendingProposals.length}件の` : '';
+      // 全件のタイトル・種別を列挙して完了メッセージにする
+      const summary = pendingProposals
+        .map((p) => `「${p.title}」を${TYPE_LABELS[p.type]}に`)
+        .join('、');
       setProposalStatus('done');
       addMessage({
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: `登録したよ！${countLabel}「${first.title}」を${TYPE_LABELS[first.type]}に追加したよ 🎉 他にも何かあれば気軽に話しかけてね！`,
+        content: `登録したよ！${summary}追加したよ 🎉 他にも何かあれば気軽に話しかけてね！`,
       });
     } catch {
       setProposalStatus('error');

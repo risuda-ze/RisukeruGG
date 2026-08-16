@@ -1,6 +1,6 @@
 import { getAdminFirestore } from '@/lib/firebase/admin';
 import { sendFollowUp } from '../discordFollowUp';
-import { getSession, deleteSession, upsertSession } from '../sessionManager';
+import { getSession, deleteSession, clearPendingProposals } from '../sessionManager';
 import { registerSchedule } from '../register/registerSchedule';
 import { registerTask } from '../register/registerTask';
 import { registerCollab } from '../register/registerCollab';
@@ -54,14 +54,9 @@ export async function handleButtonClick({
   }
 
   if (action === 'revise') {
-    // pendingProposal のみ削除して会話履歴は保持
+    // 確認待ちプロポーザルのみ削除して会話履歴は保持
     // 次の /risukerugg で修正指示を送れる状態にする
-    await upsertSession(guildId, {
-      guildId: session.guildId,
-      teamId: session.teamId,
-      messages: session.messages,
-      pendingProposal: undefined,
-    });
+    await clearPendingProposals(guildId);
     await sendFollowUp(
       appId,
       token,
@@ -70,20 +65,24 @@ export async function handleButtonClick({
     return;
   }
 
-  // confirm: pendingProposal を取得して登録処理
-  if (!session.pendingProposal) {
+  // confirm: pendingProposals を取得して全件登録処理
+  if (!session.pendingProposals || session.pendingProposals.length === 0) {
     await sendFollowUp(appId, token, '登録する内容が見つかりませんでした。もう一度 AI に依頼してみてください。');
     return;
   }
 
-  // Zod で再検証（セッション保存後に型が変化した場合やプロンプトインジェクション経由のデータを拒否）
-  const validationResult = ProposalDataSchema.safeParse(session.pendingProposal);
-  if (!validationResult.success) {
-    await sendFollowUp(appId, token, '登録データが無効です。もう一度 AI に依頼してみてください。');
-    await deleteSession(guildId);
-    return;
+  // Zod で全件再検証（セッション保存後に型が変化した場合やプロンプトインジェクション経由のデータを拒否）
+  // 1件でも無効ならセッションごと破棄する（部分登録による意図しない状態を避ける）
+  const proposals = [];
+  for (const raw of session.pendingProposals) {
+    const validationResult = ProposalDataSchema.safeParse(raw);
+    if (!validationResult.success) {
+      await sendFollowUp(appId, token, '登録データが無効です。もう一度 AI に依頼してみてください。');
+      await deleteSession(guildId);
+      return;
+    }
+    proposals.push(validationResult.data);
   }
-  const proposal = validationResult.data;
 
   const db = getAdminFirestore();
 
@@ -94,30 +93,35 @@ export async function handleButtonClick({
     displayName: d.data().displayName as string,
   }));
 
-  try {
-    let completionMessage = '';
+  // タスク提案が含まれる場合のみカラム一覧を取得する
+  let columns: Array<{ id: string; name: string }> = [];
+  if (proposals.some((p) => p.type === 'task')) {
+    const columnsSnap = await db.collection(`teams/${session.teamId}/taskStatuses`).get();
+    columns = columnsSnap.docs.map((d) => ({
+      id: d.id,
+      name: d.data().name as string,
+    }));
+  }
 
-    if (proposal.type === 'schedule') {
-      const id = await registerSchedule(session.teamId, proposal, members);
-      completionMessage = `✅ スケジュール「${proposal.title}」を登録したよ！（ID: ${id}）`;
-    } else if (proposal.type === 'task') {
-      const columnsSnap = await db.collection(`teams/${session.teamId}/taskStatuses`).get();
-      const columns = columnsSnap.docs.map((d) => ({
-        id: d.id,
-        name: d.data().name as string,
-      }));
-      const id = await registerTask(session.teamId, proposal, members, columns);
-      completionMessage = `✅ タスク「${proposal.title}」を登録したよ！（ID: ${id}）`;
-    } else if (proposal.type === 'collab') {
-      const id = await registerCollab(session.teamId, proposal);
-      completionMessage = `✅ コラボ調整「${proposal.title}」を登録したよ！（ID: ${id}）`;
-    } else {
-      completionMessage = '不明な登録タイプです。';
+  try {
+    // 全件を順に登録し、完了メッセージを積み上げる
+    const completionLines: string[] = [];
+    for (const proposal of proposals) {
+      if (proposal.type === 'schedule') {
+        const id = await registerSchedule(session.teamId, proposal, members);
+        completionLines.push(`✅ スケジュール「${proposal.title}」を登録したよ！（ID: ${id}）`);
+      } else if (proposal.type === 'task') {
+        const id = await registerTask(session.teamId, proposal, members, columns);
+        completionLines.push(`✅ タスク「${proposal.title}」を登録したよ！（ID: ${id}）`);
+      } else {
+        const id = await registerCollab(session.teamId, proposal);
+        completionLines.push(`✅ コラボ調整「${proposal.title}」を登録したよ！（ID: ${id}）`);
+      }
     }
 
     // 登録完了後にセッションを削除（新しい会話として再スタート）
     await deleteSession(guildId);
-    await sendFollowUp(appId, token, completionMessage);
+    await sendFollowUp(appId, token, completionLines.join('\n'));
   } catch (err) {
     console.error('Discord Bot 登録エラー:', err);
     await sendFollowUp(appId, token, '登録中にエラーが発生しました。もう一度試してみてください。');
