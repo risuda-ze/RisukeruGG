@@ -590,7 +590,7 @@ export function AIChatPage() {
                     : 'メッセージを入力...'
                 }
                 disabled={isLoading || proposalStatus === 'loading'}
-                className="flex-1 bg-bg border border-border text-text text-[14px] px-4 py-2.5 rounded-[14px] outline-none transition-colors focus:border-purple placeholder:text-muted/50 disabled:opacity-50 resize-none overflow-hidden max-h-[120px]"
+                className="flex-1 bg-bg border border-border text-text text-[14px] px-4 py-2.5 rounded-[14px] outline-none transition-colors focus:border-purple placeholder:text-muted/50 disabled:opacity-50 resize-none overflow-y-auto max-h-[40vh]"
               />
               <button
                 type="submit"
@@ -630,7 +630,7 @@ export function AIChatPage() {
                 rows={1}
                 placeholder="メッセージを入力..."
                 disabled={isLoading}
-                className="flex-1 bg-surface border border-border text-text text-[14px] px-4 py-3 rounded-[14px] outline-none transition-colors focus:border-purple placeholder:text-muted/50 disabled:opacity-50 resize-none overflow-hidden max-h-[120px] shadow-sm"
+                className="flex-1 bg-surface border border-border text-text text-[14px] px-4 py-3 rounded-[14px] outline-none transition-colors focus:border-purple placeholder:text-muted/50 disabled:opacity-50 resize-none overflow-y-auto max-h-[40vh] shadow-sm"
               />
               <button
                 type="submit"
