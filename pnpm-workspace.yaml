@@ -22,6 +22,7 @@ overrides:
   js-yaml: '>=4.3.0 <5'
   websocket-driver: '>=0.7.5'
   fast-uri: '>=3.1.6 <4'
+  browserslist: '>=4.28.7 <5'
   body-parser: '>=1.20.6 <2'
   'brace-expansion@<2': '>=1.1.16 <2'
   'brace-expansion@>=3': '>=5.0.9'
