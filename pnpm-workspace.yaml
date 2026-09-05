@@ -5,7 +5,9 @@ packages:
 overrides:
   postcss: '>=8.5.18 <9'
   serialize-javascript: 7.0.5
-  qs: 6.15.2
+  # qs: express4/body-parser が ~6.15.1、stripe が ^6.11.0 のため 6.16.0 へ自然到達できず範囲で強制。
+  # 固定値ではなく下限付き範囲にして、次回以降のパッチ版へ追従できるようにする。
+  qs: '>=6.16.0 <7'
   uuid: 11.1.1
   # @grpc/grpc-js <1.14.4 の脆弱性対応。firestore は ~1.9.0 固定のためバックポート版 1.9.16 を、
   # google-gax は ^1.10.9 のため 1.14.4 をそれぞれパッチ範囲内で強制適用する。
@@ -19,7 +21,7 @@ overrides:
   '@babel/core': '>=7.29.6'
   js-yaml: '>=4.3.0 <5'
   websocket-driver: '>=0.7.5'
-  fast-uri: '>=3.1.5 <4'
+  fast-uri: '>=3.1.6 <4'
   body-parser: '>=1.20.6 <2'
   'brace-expansion@<2': '>=1.1.16 <2'
   'brace-expansion@>=3': '>=5.0.9'
