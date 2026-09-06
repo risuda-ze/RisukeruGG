@@ -118,13 +118,15 @@ async function runAiConversation(
   ];
 
   // ─── チームデータ取得（AI コンテキスト生成用） ───────────────
-  const [membersSnap, schedulesSnap, tasksSnap, collabsSnap, columnsSnap] = await Promise.all([
-    db.collection(`teams/${teamId}/members`).get(),
-    db.collection(`teams/${teamId}/schedules`).orderBy('startAt').limit(50).get(),
-    db.collection(`teams/${teamId}/tasks`).limit(50).get(),
-    db.collection(`teams/${teamId}/collabSessions`).limit(20).get(),
-    db.collection(`teams/${teamId}/taskStatuses`).orderBy('order').get(),
-  ]);
+  const [membersSnap, schedulesSnap, tasksSnap, collabsSnap, columnsSnap, categoriesSnap] =
+    await Promise.all([
+      db.collection(`teams/${teamId}/members`).get(),
+      db.collection(`teams/${teamId}/schedules`).orderBy('startAt').limit(50).get(),
+      db.collection(`teams/${teamId}/tasks`).limit(50).get(),
+      db.collection(`teams/${teamId}/collabSessions`).limit(20).get(),
+      db.collection(`teams/${teamId}/taskStatuses`).orderBy('order').get(),
+      db.collection(`teams/${teamId}/categories`).get(),
+    ]);
 
   const members = membersSnap.docs.map((d) => ({
     userId: d.id,
@@ -147,17 +149,30 @@ async function runAiConversation(
     };
   });
 
+  const categoriesList = categoriesSnap.docs.map((d) => ({
+    id: d.id,
+    name: d.data().name as string,
+  }));
+
   const tasksList = tasksSnap.docs.map((d) => {
     const data = d.data();
     const col = columnsSnap.docs.find((c) => c.id === data.columnId);
     const assignee = members.find((m) => m.userId === data.assigneeId);
+    const rawComments = (data.comments as Array<{ authorName?: string; text?: string }> | undefined) ?? [];
     return {
+      id: d.id,
       title: data.title as string,
       columnName: col?.data().name as string | undefined,
       assigneeName: assignee?.displayName,
       dueDate: data.dueDate
         ? (data.dueDate as { toDate: () => Date }).toDate().toISOString().split('T')[0]
         : undefined,
+      description: (data.description as string | null | undefined) ?? undefined,
+      categoryName: categoriesList.find((c) => c.id === data.categoryId)?.name,
+      comments: rawComments.map((c) => ({
+        authorName: c.authorName ?? '不明',
+        text: c.text ?? '',
+      })),
     };
   });
 
@@ -182,7 +197,14 @@ async function runAiConversation(
   const todayISO = todayDate.toISOString().split('T')[0]!;
 
   const systemPrompt = generateSystemPrompt(
-    { tasks: tasksList, schedules, collabs, members, columns },
+    {
+      tasks: tasksList,
+      schedules,
+      collabs,
+      members,
+      columns,
+      categories: categoriesList.map((c) => ({ name: c.name })),
+    },
     today,
     todayISO
   );
@@ -208,20 +230,21 @@ async function runAiConversation(
   const trimmedMessages = updatedMessages.slice(-20);
 
   if (proposals.length > 0) {
-    // %%PROPOSAL%% あり: pendingProposal にマージして保存
+    // %%PROPOSAL%% あり: 全件を pendingProposals に保存（複数提案は全件登録対象）
     // initiatorDiscordUserId を記録し、confirm/revise/cancel を発行者本人のみに制限する
     await upsertSession(guildId, {
       guildId,
       teamId,
       messages: trimmedMessages,
-      pendingProposal: proposals[0] as unknown as Record<string, unknown>,
+      pendingProposals: proposals as unknown as Array<Record<string, unknown>>,
       initiatorDiscordUserId: discordUserId,
     });
     // テキスト部分があれば先に送信
     if (replyText) {
       await sendFollowUp(appId, token, replyText);
     }
-    await sendProposalMessage(appId, token, proposals, guildId);
+    // task_update の差分表示用に現在のタスク一覧を渡す
+    await sendProposalMessage(appId, token, proposals, guildId, tasksList);
   } else {
     // 通常の会話: セッション更新してテキスト返信
     await upsertSession(guildId, {

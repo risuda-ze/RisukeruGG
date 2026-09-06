@@ -2,6 +2,31 @@ import type { ProposalData } from '@/lib/ai/parseProposal';
 
 const DISCORD_API = 'https://discord.com/api/v10';
 
+/** task_update の差分表示用: 対象タスクの現在値（handleRisukerugg で取得済みのタスク一覧を渡す） */
+export interface TaskSummaryForDiff {
+  id: string;
+  title: string;
+  columnName?: string;
+  assigneeName?: string;
+  dueDate?: string;
+  description?: string;
+  categoryName?: string;
+}
+
+/** task_update の changes フィールドの表示ラベル */
+const CHANGE_FIELD_LABELS: Record<string, string> = {
+  title: 'タイトル',
+  dueDate: '期限',
+  assigneeName: '担当',
+  columnName: 'ステータス',
+  categoryName: 'カテゴリ',
+};
+
+/** Embed フィールド上限（1024字）に収めるための切り詰め */
+function truncate(text: string, max: number): string {
+  return text.length > max ? `${text.slice(0, max)}…` : text;
+}
+
 /**
  * Discord Follow-up メッセージを送信する（テキストのみ）。
  * Deferred Response 後のバックグラウンド処理から呼び出す。
@@ -35,10 +60,36 @@ export async function sendProposalMessage(
   appId: string,
   token: string,
   proposals: ProposalData[],
-  guildId: string
+  guildId: string,
+  tasksForDiff: TaskSummaryForDiff[] = []
 ): Promise<void> {
   // プロポーザル内容を Embed フィールドに変換
   const fields = proposals.map((p, i) => {
+    if (p.type === 'task_update') {
+      // 既存タスクの更新: 変更前 → 変更後の差分を表示
+      const current = tasksForDiff.find((t) => t.id === p.taskId);
+      const lines: string[] = [];
+      const c = p.changes;
+      for (const [field, label] of Object.entries(CHANGE_FIELD_LABELS)) {
+        const newValue = c[field as keyof typeof c];
+        if (newValue === undefined) continue;
+        const oldValue = current?.[field as keyof TaskSummaryForDiff] ?? 'なし';
+        // null は「値を外す」操作
+        lines.push(`${label}: ${oldValue} → **${newValue ?? 'なし'}**`);
+      }
+      if (c.description !== undefined) {
+        lines.push(
+          c.description === null
+            ? '詳細: （削除する）'
+            : `詳細（変更後）:\n${truncate(c.description, 600)}`
+        );
+      }
+      return {
+        name: proposals.length > 1 ? `✏️ タスク更新 (${i + 1})` : '✏️ タスク更新',
+        value: truncate(`**${current?.title ?? `ID: ${p.taskId}`}**\n${lines.join('\n')}`, 1024),
+        inline: false,
+      };
+    }
     if (p.type === 'schedule') {
       const start = new Date(p.startAt);
       const end = new Date(p.endAt);

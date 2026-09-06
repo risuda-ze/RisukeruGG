@@ -4,6 +4,7 @@ import {
   hasProposal,
   parseProposalDateTime,
   type ScheduleProposal,
+  type TaskUpdateProposal,
 } from '@/lib/ai/parseProposal';
 
 /** %%PROPOSAL%% ブロックを組み立てるヘルパー */
@@ -53,6 +54,86 @@ describe('extractProposals - スケジュール', () => {
       wrap('{"type":"schedule","title":"X","startAt":"2026-07-11","endAt":"2026-07-12"}')
     );
     expect(proposals).toHaveLength(0);
+  });
+});
+
+describe('extractProposals - タスク更新（task_update）', () => {
+  it('taskId と changes を持つ更新提案を抽出する', () => {
+    const proposals = extractProposals(
+      wrap(
+        '{"type":"task_update","taskId":"abc123","changes":{"description":"新しい詳細文","dueDate":"2026-08-25"}}'
+      )
+    );
+    expect(proposals).toHaveLength(1);
+    const p = proposals[0] as TaskUpdateProposal;
+    expect(p.type).toBe('task_update');
+    expect(p.taskId).toBe('abc123');
+    expect(p.changes.description).toBe('新しい詳細文');
+    expect(p.changes.dueDate).toBe('2026-08-25');
+    expect(p.changes.title).toBeUndefined();
+  });
+
+  it('null による「値を外す」操作（期限・担当・カテゴリ・詳細）を受け付ける', () => {
+    const proposals = extractProposals(
+      wrap(
+        '{"type":"task_update","taskId":"abc123","changes":{"dueDate":null,"assigneeName":null,"categoryName":null,"description":null}}'
+      )
+    );
+    expect(proposals).toHaveLength(1);
+    const p = proposals[0] as TaskUpdateProposal;
+    expect(p.changes.dueDate).toBeNull();
+    expect(p.changes.assigneeName).toBeNull();
+    expect(p.changes.categoryName).toBeNull();
+    expect(p.changes.description).toBeNull();
+  });
+
+  it('categoryName の変更を受け付ける', () => {
+    const proposals = extractProposals(
+      wrap('{"type":"task_update","taskId":"abc123","changes":{"categoryName":"配信準備"}}')
+    );
+    expect(proposals).toHaveLength(1);
+    expect((proposals[0] as TaskUpdateProposal).changes.categoryName).toBe('配信準備');
+  });
+
+  it('title の null（タイトル削除）は検証失敗としてスキップする', () => {
+    expect(
+      extractProposals(wrap('{"type":"task_update","taskId":"abc123","changes":{"title":null}}'))
+    ).toHaveLength(0);
+  });
+
+  it('changes が空の場合は検証失敗としてスキップする', () => {
+    expect(
+      extractProposals(wrap('{"type":"task_update","taskId":"abc123","changes":{}}'))
+    ).toHaveLength(0);
+  });
+
+  it('taskId が無い場合は検証失敗としてスキップする', () => {
+    expect(
+      extractProposals(wrap('{"type":"task_update","changes":{"title":"X"}}'))
+    ).toHaveLength(0);
+  });
+
+  it('dueDate が日付形式でない場合は検証失敗としてスキップする', () => {
+    expect(
+      extractProposals(
+        wrap('{"type":"task_update","taskId":"abc123","changes":{"dueDate":"来週"}}')
+      )
+    ).toHaveLength(0);
+  });
+
+  it('新規タスクと更新提案が混在するブロックを両方抽出する', () => {
+    const text = [
+      '%%PROPOSAL%%',
+      '{"type":"task","title":"サムネ作成"}',
+      '%%/PROPOSAL%%',
+      '%%PROPOSAL%%',
+      '{"type":"task_update","taskId":"abc123","changes":{"columnName":"完了"}}',
+      '%%/PROPOSAL%%',
+    ].join('\n');
+    const proposals = extractProposals(text);
+    expect(proposals).toHaveLength(2);
+    expect(proposals[0]!.type).toBe('task');
+    expect(proposals[1]!.type).toBe('task_update');
   });
 });
 

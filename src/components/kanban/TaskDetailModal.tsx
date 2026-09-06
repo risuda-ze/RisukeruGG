@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Avatar } from '@/components/ui/Avatar';
+import { useAIChatStore } from '@/stores/aiChat';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Timestamp } from 'firebase/firestore';
@@ -47,6 +49,14 @@ export function TaskDetailModal({
 }: TaskDetailModalProps) {
   const currentUser = useAuthStore((s) => s.currentUser);
   const isNew = task === null;
+  const router = useRouter();
+
+  /* 「AIに相談」: このタスクをピン留めして AI チャットへ遷移する */
+  function handleConsultAI() {
+    if (!task) return;
+    useAIChatStore.getState().setPinnedTaskId(task.id);
+    router.push('/chat');
+  }
 
   /* ドラフト（編集モードのみ） */
   const draftKey = isNew ? null : DRAFT_KEYS.taskEdit(task.id);
@@ -566,12 +576,20 @@ export function TaskDetailModal({
           {/* 削除ボタン（編集モード・canEdit のみ） */}
           {!isNew && canEdit && (
             <button onClick={handleDelete}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] text-[13px] font-semibold border transition-colors mr-auto"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] text-[13px] font-semibold border transition-colors"
               style={{ background: 'var(--danger-dim)', color: 'var(--danger)', borderColor: 'color-mix(in oklab, var(--danger) 30%, transparent)' }}>
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2 4h12M5 4V2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5V4m2 0-1 9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1L3 4" />
               </svg>
               削除
+            </button>
+          )}
+          {/* AIに相談（編集モード・canEdit のみ）: タスクをピン留めして AI チャットへ */}
+          {!isNew && canEdit && (
+            <button onClick={handleConsultAI}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] text-[13px] font-semibold border border-purple/20 text-purple bg-purple/5 hover:bg-purple/10 transition-colors mr-auto">
+              <Icon name="auto_awesome" size={14} />
+              AIに相談
             </button>
           )}
           {/* キャンセル + 保存 */}
