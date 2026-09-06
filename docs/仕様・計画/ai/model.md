@@ -44,6 +44,25 @@ AI 応答の `%%PROPOSAL%%`〜`%%/PROPOSAL%%` ブロック（JSON）を解析し
 | `proposalMessageId` | string \| null                              | 提案を含むメッセージの ID |
 | `pinnedTaskId`      | string \| null                              | タスク詳細画面から「AIに相談」で遷移した際のピン留めタスク ID |
 
+## TeamAiSettings（AI 設定。AI-022 / AI-023）
+
+Firestore コレクション配置: `teams/{teamId}/ai/settings`（サブコレクション・単一ドキュメント）
+
+| フィールド | 型 / 例 | 意味 |
+| --- | --- | --- |
+| `teamInstructions` | string | チームからの追加指示（1,000 文字以内）。全能力のプロンプトに共通で注入 |
+| `presets` | `Array<{ id: string; name: string; body: string }>` | 定型指示（最大 10 件。名前 30 文字・本文 500 文字以内） |
+| `updatedAt` | timestamp | 最終更新日時 |
+
+閲覧はチームメンバー、編集はオペレーター（Firestore ルール）。未作成時はクライアントが既定値（空）として扱う。
+
+## 能力レジストリ・プロンプトマニフェスト（コード管理。AI-020 / AI-021）
+
+| 定義 | 場所 | 内容 |
+| --- | --- | --- |
+| `AiCapability` | `src/lib/ai/capabilities/registry.ts` | `id` / `name` / `description` / `surfaces` / `stage` / `promptId` / `plannedIn` / `note` |
+| `PromptTemplateInfo` | `src/lib/ai/prompts/manifest.ts` | `id` / `name` / `usedBy` / `version` / `changelog` |
+
 ## 制約
 
 - チャット履歴を Firestore へ永続化しない（揮発性。リロードで消える）

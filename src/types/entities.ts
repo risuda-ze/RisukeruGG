@@ -206,6 +206,22 @@ export interface DiscordTeamConfig {
   notifyBefore15min: boolean;     // スケジュール開始15分前にリマインダー通知
 }
 
+/** チームの定型指示（AI 設定。AI-023）。Web ではチップ、Discord では /risukerugg の preset 候補になる */
+export interface AiPreset {
+  id: string;
+  name: string;
+  body: string;
+}
+
+/** teams/{teamId}/ai/settings（AI-022 / AI-023）。閲覧はメンバー、編集はオペレーター */
+export interface TeamAiSettings {
+  /** 全能力のプロンプトに共通で注入する追加指示（1,000 文字以内） */
+  teamInstructions: string;
+  /** 定型指示（最大 10 件） */
+  presets: AiPreset[];
+  updatedAt: Date | null;
+}
+
 // discord_sessions/{guildId} の型（Sprint 3 AI ボット用）
 // セッションはサーバー単位で管理する。
 export interface DiscordSession {

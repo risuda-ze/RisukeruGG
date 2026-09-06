@@ -198,6 +198,12 @@ service cloud.firestore {
         allow read, write: if isTeamOwner(teamId);
       }
 
+      // AI 設定（追加指示・定型指示）— 閲覧はメンバー、編集は operator（AI-022 / AI-023）
+      match /ai/{doc} {
+        allow read: if isTeamMember(teamId);
+        allow write: if isTeamOwner(teamId);
+      }
+
     }
   }
 }
