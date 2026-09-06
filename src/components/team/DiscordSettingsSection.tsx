@@ -7,6 +7,7 @@ import { Card, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { updateDiscordSettings } from '@/lib/repositories/teams';
+import { DiscordBriefSettings } from '@/components/team/DiscordBriefSettings';
 import type { DiscordTeamConfig } from '@/types/entities';
 
 interface DiscordSettingsSectionProps {
@@ -607,6 +608,21 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
               </form>
             </details>
           </div>
+        )}
+
+        {/* ── タスク管理 v2（ブリーフ）連携: スレッド・ダイジェスト（IN-023 / IN-027） ── */}
+        {isConnected && idToken && config && (
+          <DiscordBriefSettings
+            key={`${config.briefChannelId ?? ''}:${config.digestChannelId ?? ''}:${config.digestTime ?? ''}`}
+            teamId={teamId}
+            idToken={idToken}
+            config={config}
+            onSaved={() => {
+              void fetchConfig().then((cfg) => {
+                if (cfg) setConfig(cfg);
+              });
+            }}
+          />
         )}
 
         {/* ── 接続済みの場合の通知設定トグル ── */}

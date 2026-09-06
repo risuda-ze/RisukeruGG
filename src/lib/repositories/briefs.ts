@@ -7,7 +7,6 @@ import {
   orderBy,
   query,
   serverTimestamp,
-  Timestamp,
   where,
   writeBatch,
   getDocs,
@@ -15,120 +14,9 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
-import type {
-  Brief,
-  BriefEvent,
-  BriefEventType,
-  BriefStatus,
-  EventSource,
-  FieldDef,
-  Step,
-  StepComment,
-  StepStatus,
-} from '@/types/briefs';
+import type { Brief, BriefEvent, Step, StepComment } from '@/types/briefs';
 import type { BriefsPort, BriefTransaction } from '@/lib/briefs/operations/port';
-
-/* ── 変換 ─────────────────────────────────────────────── */
-
-function toDate(v: unknown): Date | null {
-  return v instanceof Timestamp ? v.toDate() : null;
-}
-
-function toFieldDefs(v: unknown): FieldDef[] {
-  if (!Array.isArray(v)) return [];
-  return v.map((f) => ({
-    key: String(f.key),
-    label: String(f.label ?? f.key),
-    type: (f.type as FieldDef['type']) ?? 'text',
-    options: Array.isArray(f.options) ? (f.options as string[]) : undefined,
-    required: Boolean(f.required),
-    ownerRoleLabel: (f.ownerRoleLabel as string | null | undefined) ?? null,
-  }));
-}
-
-function toBrief(teamId: string, id: string, data: Record<string, unknown>): Brief {
-  const discord = data.discord as Record<string, string> | null | undefined;
-  return {
-    id,
-    teamId,
-    title: data.title as string,
-    playbookId: (data.playbookId as string | null | undefined) ?? null,
-    playbookVersion: (data.playbookVersion as number | null | undefined) ?? null,
-    publishAt: toDate(data.publishAt),
-    status: (data.status as BriefStatus) ?? 'planning',
-    performerIds: (data.performerIds as string[] | undefined) ?? [],
-    headerFields: toFieldDefs(data.headerFields),
-    fields: (data.fields as Record<string, unknown> | undefined) ?? {},
-    linkedScheduleId: (data.linkedScheduleId as string | null | undefined) ?? null,
-    discord: discord
-      ? { threadId: discord.threadId!, summaryMessageId: discord.summaryMessageId!, channelId: discord.channelId! }
-      : null,
-    createdBy: data.createdBy as string,
-    createdAt: toDate(data.createdAt) ?? new Date(0),
-    updatedAt: toDate(data.updatedAt) ?? new Date(0),
-  };
-}
-
-function toStep(id: string, data: Record<string, unknown>): Step {
-  return {
-    id,
-    briefId: data.briefId as string,
-    teamId: data.teamId as string,
-    key: data.key as string,
-    title: data.title as string,
-    order: (data.order as number) ?? 0,
-    status: (data.status as StepStatus) ?? 'waiting',
-    assigneeId: (data.assigneeId as string | null | undefined) ?? null,
-    dueDate: toDate(data.dueDate),
-    dueDateOverridden: Boolean(data.dueDateOverridden),
-    leadDays: (data.leadDays as number) ?? 0,
-    dependsOn: (data.dependsOn as string[] | undefined) ?? [],
-    requiredFields: toFieldDefs(data.requiredFields),
-    fields: (data.fields as Record<string, unknown> | undefined) ?? {},
-    reminderDaysBefore: (data.reminderDaysBefore as number | undefined) ?? 1,
-    optional: Boolean(data.optional),
-    completedAt: toDate(data.completedAt),
-    completedBy: (data.completedBy as string | null | undefined) ?? null,
-    discordMessageId: (data.discordMessageId as string | null | undefined) ?? null,
-    createdAt: toDate(data.createdAt) ?? new Date(0),
-    updatedAt: toDate(data.updatedAt) ?? new Date(0),
-  };
-}
-
-function toComment(id: string, data: Record<string, unknown>): StepComment {
-  return {
-    id,
-    authorId: (data.authorId as string | null | undefined) ?? null,
-    authorName: (data.authorName as string) ?? '',
-    body: (data.body as string) ?? '',
-    source: (data.source as StepComment['source']) ?? 'web',
-    discordMessageId: (data.discordMessageId as string | null | undefined) ?? null,
-    createdAt: toDate(data.createdAt) ?? new Date(0),
-  };
-}
-
-function toEvent(id: string, data: Record<string, unknown>): BriefEvent {
-  return {
-    id,
-    type: data.type as BriefEventType,
-    stepId: (data.stepId as string | null | undefined) ?? null,
-    stepKey: (data.stepKey as string | null | undefined) ?? null,
-    before: unwrapDate(data.before),
-    after: unwrapDate(data.after),
-    actorId: (data.actorId as string | null | undefined) ?? null,
-    source: (data.source as EventSource) ?? 'web',
-    createdAt: toDate(data.createdAt) ?? new Date(0),
-  };
-}
-
-function unwrapDate(v: unknown): unknown {
-  return v instanceof Timestamp ? v.toDate() : v;
-}
-
-/** undefined を含むと Firestore が拒否するため除去する */
-function stripUndefined<T extends Record<string, unknown>>(obj: T): T {
-  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
-}
+import { stripUndefined, toBrief, toBriefEvent, toStep, toStepComment } from '@/lib/briefs/convert';
 
 /* ── 参照パス ─────────────────────────────────────────── */
 
@@ -165,7 +53,7 @@ export function subscribeStepComments(
 ): Unsubscribe {
   const q = query(commentsCol(teamId, briefId, stepId), orderBy('createdAt', 'asc'));
   return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => toComment(d.id, d.data() as Record<string, unknown>)));
+    callback(snap.docs.map((d) => toStepComment(d.id, d.data() as Record<string, unknown>)));
   });
 }
 
@@ -177,7 +65,7 @@ export function subscribeBriefEvents(
 ): Unsubscribe {
   const q = query(eventsCol(teamId, briefId), orderBy('createdAt', 'desc'), limit(max));
   return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => toEvent(d.id, d.data() as Record<string, unknown>)));
+    callback(snap.docs.map((d) => toBriefEvent(d.id, d.data() as Record<string, unknown>)));
   });
 }
 
