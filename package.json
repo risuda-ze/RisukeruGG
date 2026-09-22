@@ -30,17 +30,17 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.78",
+    "@ai-sdk/anthropic": "^3.0.120",
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.2.2",
     "@sentry/nextjs": "^10.65.0",
     "@vercel/functions": "^3.6.1",
-    "ai": "^6.0.188",
+    "ai": "^6.0.288",
     "date-fns": "^4.1.0",
     "discord-interactions": "^4.4.0",
     "firebase": "^12.13.0",
     "firebase-admin": "^13.10.0",
-    "next": "16.2.11",
+    "next": "16.3.5",
     "react": "19.2.4",
     "react-big-calendar": "^1.19.4",
     "react-dom": "19.2.4",
@@ -59,16 +59,16 @@
     "@types/react-big-calendar": "^1.16.3",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.1",
-    "@vitest/coverage-v8": "^4.1.6",
+    "@vitest/coverage-v8": "^4.1.11",
     "eslint": "^9",
-    "eslint-config-next": "16.2.11",
+    "eslint-config-next": "16.3.5",
     "jsdom": "^29.1.1",
     "prettier": "^3.8.3",
     "react-big-calendar": "^1.19.4",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.4",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite": "^8.1.0",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.11"
   }
 }
