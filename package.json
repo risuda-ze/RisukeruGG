@@ -30,12 +30,12 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.120",
+    "@ai-sdk/anthropic": "^3.0.119",
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.2.2",
     "@sentry/nextjs": "^10.65.0",
     "@vercel/functions": "^3.6.1",
-    "ai": "^6.0.288",
+    "ai": "^6.0.287",
     "date-fns": "^4.1.0",
     "discord-interactions": "^4.4.0",
     "firebase": "^12.13.0",
