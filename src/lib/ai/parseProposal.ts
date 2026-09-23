@@ -39,6 +39,26 @@ const TaskProposalSchema = z.object({
   columnName: z.string().max(100).optional(),
 });
 
+// 既存タスクの部分更新提案。changes に含まれるフィールドのみ書き換える。
+// nullable フィールドは null 指定で「値を外す」操作を表す（期限を消す・担当を外す等）。
+const TaskUpdateProposalSchema = z.object({
+  type: z.literal('task_update'),
+  // 対象タスクの ID（システムプロンプトの【タスク一覧】に記載された ID をそのまま使う）
+  taskId: z.string().min(1).max(100),
+  changes: z
+    .object({
+      title: z.string().min(1).max(STR_MAX).optional(),
+      description: z.string().max(LONG_STR_MAX).nullable().optional(),
+      dueDate: z.string().date().nullable().optional(),
+      assigneeName: z.string().max(100).nullable().optional(),
+      columnName: z.string().max(100).optional(),
+      categoryName: z.string().max(100).nullable().optional(),
+    })
+    .refine((c) => Object.values(c).some((v) => v !== undefined), {
+      message: 'changes には少なくとも1つのフィールドが必要です',
+    }),
+});
+
 const CollabProposalSchema = z.object({
   type: z.literal('collab'),
   title: z.string().min(1).max(STR_MAX),
@@ -56,6 +76,7 @@ const CollabProposalSchema = z.object({
 export const ProposalDataSchema = z.discriminatedUnion('type', [
   ScheduleProposalSchema,
   TaskProposalSchema,
+  TaskUpdateProposalSchema,
   CollabProposalSchema,
 ]);
 
@@ -63,6 +84,7 @@ export const ProposalDataSchema = z.discriminatedUnion('type', [
 
 export type ScheduleProposal = z.infer<typeof ScheduleProposalSchema>;
 export type TaskProposal = z.infer<typeof TaskProposalSchema>;
+export type TaskUpdateProposal = z.infer<typeof TaskUpdateProposalSchema>;
 export type CollabProposal = z.infer<typeof CollabProposalSchema>;
 export type ProposalData = z.infer<typeof ProposalDataSchema>;
 

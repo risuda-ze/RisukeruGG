@@ -10,6 +10,7 @@ import packageJson from '../../../../../package.json';
 import { auth, db, storage } from '@/lib/firebase/client';
 import { useAuthStore } from '@/stores/auth';
 import { deleteAccount } from '@/lib/repositories/teams';
+import { DiscordUsernameDialog } from '@/components/team/DiscordUsernameDialog';
 import { TopBar } from '@/components/layout/TopBar';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -45,6 +46,7 @@ export default function ProfileSettingsPage() {
   const isParty = isPartyPlan(myMember?.plan);
 
   /* ── プロフィール ──────────────────────────────────────────── */
+  const [discordDialogOpen, setDiscordDialogOpen] = useState(false);
   const [displayNameDraft, setDisplayNameDraft] = useState<string | null>(null);
   const [savingName, setSavingName] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
@@ -299,6 +301,32 @@ export default function ProfileSettingsPage() {
                 </div>
               </form>
             </Card>
+
+            {/* Discord ユーザー名（TE-012）。アクティブチームのメンバー情報に保存する */}
+            {currentTeam && myMember && (
+              <Card>
+                <h3 className="text-sm font-semibold text-text mb-1">Discord ユーザー名</h3>
+                <p className="text-[12px] text-muted mb-4 leading-relaxed">
+                  登録すると、Discord 連携の通知であなた宛てにメンションされます。ログイン連携ではなく、ユーザー名だけを保持します。チームごとの設定です（現在: {currentTeam.name}）。
+                </p>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-text flex items-center gap-1.5">
+                    <Icon name="discord" size={16} className="text-muted" />
+                    {myMember.discordUsername ? `@${myMember.discordUsername}` : '未設定'}
+                  </span>
+                  <Button size="sm" variant="secondary" onClick={() => setDiscordDialogOpen(true)}>
+                    {myMember.discordUsername ? '変更する' : '登録する'}
+                  </Button>
+                </div>
+                {discordDialogOpen && (
+                  <DiscordUsernameDialog
+                    teamId={currentTeam.id}
+                    member={myMember}
+                    onClose={() => setDiscordDialogOpen(false)}
+                  />
+                )}
+              </Card>
+            )}
           </div>
         )}
 

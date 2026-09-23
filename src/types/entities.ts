@@ -52,6 +52,13 @@ export interface TeamMember {
   avatarUrl: string | null;
   plan: PlanType;
   joinedAt: Date;
+  /**
+   * Discord のユーザー名（`@` の後ろの一意な名前）。メンション用に本人またはオペレーターが任意で登録する。
+   * 未登録は null。ログイン連携ではなく、送信時に Bot がサーバー内検索で ID に解決する（TE-012）
+   */
+  discordUsername: string | null;
+  /** `discordUsername` をサーバー内検索で解決した Discord ユーザー ID のキャッシュ。ユーザー名変更時は null に戻す */
+  discordUserId: string | null;
 }
 
 export interface Team {
@@ -215,7 +222,8 @@ export interface DiscordSession {
     role: 'user' | 'assistant';
     content: string;
   }>;
-  pendingProposal?: Record<string, unknown>;  // 確認待ちの %%PROPOSAL%% データ
+  // 確認待ちの %%PROPOSAL%% データ（1応答に複数ブロックがある場合は全件保持する）
+  pendingProposals?: Array<Record<string, unknown>>;
   // プロポーザルを発行した Discord ユーザーの ID。confirm/revise/cancel を本人以外が
   // 操作できないようにするためのバインドキー。
   initiatorDiscordUserId?: string;

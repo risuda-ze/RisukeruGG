@@ -3,12 +3,20 @@
  * Web の chat/route.ts と Discord ボットの handleRisukerugg.ts の両方で共有する。
  */
 
+/** コンテキストに載せるタスクコメント（読み取り専用） */
+export interface TaskCommentContext {
+  authorName: string;
+  text: string;
+}
+
 export interface AiChatContext {
   tasks: Array<Record<string, unknown>>;
   schedules: Array<{ title: string; startAt: string; endAt: string; allDay: boolean }>;
   collabs: Array<Record<string, unknown>>;
   members: Array<Record<string, unknown>>;
   columns: Array<{ name: string }>;
+  /** タスクカテゴリ一覧（task_update の categoryName 解決用） */
+  categories?: Array<{ name: string }>;
   memberCalendars?: Array<{
     userId: string;
     displayName: string;
@@ -16,6 +24,17 @@ export interface AiChatContext {
     endAt: string;
     allDay: boolean;
   }>;
+  /** タスク詳細画面から「AIに相談」で遷移した際のピン留めタスク（description は全文） */
+  pinnedTask?: {
+    id: string;
+    title: string;
+    columnName: string | null;
+    assigneeName: string | null;
+    dueDate: string | null;
+    description: string | null;
+    categoryName?: string | null;
+    comments?: TaskCommentContext[];
+  };
 }
 
 /**
@@ -35,6 +54,7 @@ export function generateSystemPrompt(
 ## 対応範囲（厳守）
 以下のみ対応する。それ以外は必ず断る:
 - スケジュール・タスク・コラボ調整の登録サポート
+- 既存タスクの照会（「このタスクどうなってる？」等）と編集（詳細文の作成・書き換え・期限や担当の変更等）
 - スケジュール確認（来週の予定・今日の予定・空き時間の照会など）
 - チームデータ（タスク・スケジュール・メンバー）への質問
 - アプリの使い方の案内
@@ -128,17 +148,60 @@ export function generateSystemPrompt(
 {"type":"collab","title":"タイトル","partnerName":"相手の名前","proposedDates":["2024-05-21T20:00:00"]}
 %%/PROPOSAL%%
 
+タスク更新（既存タスクの編集）:
+%%PROPOSAL%%
+{"type":"task_update","taskId":"abc123","changes":{"description":"新しい詳細文","dueDate":"2024-05-25"}}
+%%/PROPOSAL%%
+- taskId: 【タスク一覧】に記載されている ID をそのまま使う（推測・創作は絶対にしない）
+- changes: **変更するフィールドのみ**含める
+- 既存タスクへの編集依頼は、新規タスク作成（type:"task"）ではなく**必ず task_update を使う**
+- どのタスクを指しているか曖昧な場合（同名タスクがある・候補が複数ある等）は、提案せずどのタスクか確認する
+
+**タスクの編集可能フィールド（changes に指定できるもの）:**
+| フィールド | 意味 | 例 |
+|---|---|---|
+| title | タイトル変更 | "title":"新タイトル" |
+| description | 詳細文の作成・書き換え。null で削除 | "description":"..." / "description":null |
+| dueDate | 期限の設定・変更（YYYY-MM-DD）。null で期限を外す | "dueDate":"2024-05-25" / "dueDate":null |
+| assigneeName | 担当者の変更（【チームメンバー】の displayName）。null で担当を外す | "assigneeName":"田中さん" / "assigneeName":null |
+| columnName | ステータス移動（【タスクカラム】のカラム名） | "columnName":"完了" |
+| categoryName | カテゴリ変更（【カテゴリ】のカテゴリ名）。null でカテゴリを外す | "categoryName":"配信準備" / "categoryName":null |
+
+- 詳細文の作成を頼まれたら、タスクのタイトル・コメント・会話内容から実用的な詳細文（目的・作業内容・完了条件など）を書いて提案する
+- 「〇〇を完了にして」「終わったよ」→ columnName で完了系カラムへ移動を提案する
+
+**編集できないもの（依頼されたら「ここでは変更できない」と断り、アプリ画面での操作を案内する）:**
+- コメントの追加・編集・削除（コメントは読み取りのみ。内容の参照や要約はOK）
+- タスクの削除、作成者・作成日、スケジュールとのリンク
+
+## タスク照会
+
+「このタスクどうなってる？」「〇〇の進捗は？」のような質問には、【タスク一覧】のステータス・担当・期限・詳細を使って現状を答える。該当タスクが見つからなければ、近い名前の候補を挙げて確認する。
+
 **フォーマットの注意:**
-- 複数の登録が必要な場合（例: 毎週のスケジュール）は、%%PROPOSAL%%ブロックを複数並べてよい
+- 登録対象が複数ある場合（複数タスクの依頼・毎週のスケジュール・タスクとスケジュールの同時依頼など）は、**必ず1件につき1つの %%PROPOSAL%% ブロックを作り、全件分を並べて出力する**。複数件を1つのブロックにまとめたり、一部だけ提案して残りを省略したりしない
+  例: 「サムネ作成とタイトル決めと台本作成をタスクにして」→ タスクの %%PROPOSAL%% ブロックを3つ並べる
+%%PROPOSAL%%
+{"type":"task","title":"サムネ作成"}
+%%/PROPOSAL%%
+%%PROPOSAL%%
+{"type":"task","title":"タイトル決め"}
+%%/PROPOSAL%%
+%%PROPOSAL%%
+{"type":"task","title":"台本作成"}
+%%/PROPOSAL%%
 - JSONは必ず有効な形式（文字列はダブルクォート、末尾カンマなし）
 - 提案の前後に一言添えてOK（例:「じゃあこれでどう？」「これでOK？修正があれば言ってね！」）
 - assigneeName / participantNames は【チームメンバー】に存在する displayName のみ使う。存在しない名前は省略する
 - columnName は【タスクカラム】に存在するカラム名のみ使う。存在しない場合は省略する
 
-## 現在のチームデータ
+${formatPinnedTask(context.pinnedTask)}## 現在のチームデータ
 
 【タスクカラム（ステータス）】
 ${formatColumns(context.columns)}
+
+【カテゴリ】
+${formatCategories(context.categories ?? [])}
 
 【タスク一覧】
 ${formatTasks(context.tasks)}
@@ -162,15 +225,80 @@ export function formatColumns(columns: Array<{ name: string }>): string {
   return columns.map((c) => `- ${c.name}`).join('\n');
 }
 
+export function formatCategories(categories: Array<{ name: string }>): string {
+  if (categories.length === 0) return 'カテゴリなし';
+  return categories.map((c) => `- ${c.name}`).join('\n');
+}
+
+/** タスク一覧コンテキストでの詳細文の最大文字数（トークン節約のため切り詰める） */
+const TASK_DESC_PREVIEW_MAX = 200;
+/** タスク一覧コンテキストでのコメント表示件数・文字数上限 */
+const TASK_COMMENTS_PREVIEW_COUNT = 3;
+const TASK_COMMENT_PREVIEW_MAX = 100;
+
+/** 文字数上限で切り詰める（改行はスペースに潰す） */
+function preview(text: string, max: number): string {
+  const flat = text.replace(/\n/g, ' ');
+  return flat.length > max ? `${flat.slice(0, max)}…` : flat;
+}
+
+/** コメント配列（unknown）を安全に TaskCommentContext[] とみなして整形する */
+function formatCommentsInline(comments: unknown, count: number, max: number): string {
+  if (!Array.isArray(comments) || comments.length === 0) return '';
+  const items = (comments as TaskCommentContext[])
+    .slice(-count) // 直近 N 件
+    .map((c) => `${c.authorName}「${preview(c.text, max)}」`)
+    .join(' / ');
+  return items;
+}
+
 export function formatTasks(tasks: Array<Record<string, unknown>>): string {
   if (tasks.length === 0) return 'タスクなし';
   return tasks
     .slice(0, 30)
-    .map(
-      (t) =>
-        `- ${t.title}（ステータス: ${t.columnName ?? '不明'}、担当: ${t.assigneeName ?? 'なし'}、期限: ${t.dueDate ?? 'なし'}）`
-    )
+    .map((t) => {
+      const desc = typeof t.description === 'string' && t.description ? t.description : null;
+      const comments = formatCommentsInline(
+        t.comments,
+        TASK_COMMENTS_PREVIEW_COUNT,
+        TASK_COMMENT_PREVIEW_MAX
+      );
+      return (
+        `- ${t.title}（ID: ${t.id ?? '不明'}、ステータス: ${t.columnName ?? '不明'}、担当: ${t.assigneeName ?? 'なし'}、期限: ${t.dueDate ?? 'なし'}、カテゴリ: ${t.categoryName ?? 'なし'}）` +
+        (desc ? `\n  詳細: ${preview(desc, TASK_DESC_PREVIEW_MAX)}` : '') +
+        (comments ? `\n  コメント（直近）: ${comments}` : '')
+      );
+    })
     .join('\n');
+}
+
+/** ピン留めタスクのコメント表示件数・文字数上限（一覧より多めに全文寄りで渡す） */
+const PINNED_COMMENTS_COUNT = 10;
+const PINNED_COMMENT_MAX = 300;
+
+/** ピン留めタスク（タスク詳細画面から「AIに相談」で遷移した場合）のプロンプトブロックを生成する */
+export function formatPinnedTask(pinnedTask: AiChatContext['pinnedTask']): string {
+  if (!pinnedTask) return '';
+  const comments = (pinnedTask.comments ?? [])
+    .slice(-PINNED_COMMENTS_COUNT)
+    .map((c) => `  - ${c.authorName}: ${preview(c.text, PINNED_COMMENT_MAX)}`)
+    .join('\n');
+  return `## 対象タスク（ユーザーは今このタスクについて相談している）
+
+- ID: ${pinnedTask.id}
+- タイトル: ${pinnedTask.title}
+- ステータス: ${pinnedTask.columnName ?? '不明'}
+- 担当: ${pinnedTask.assigneeName ?? 'なし'}
+- 期限: ${pinnedTask.dueDate ?? 'なし'}
+- カテゴリ: ${pinnedTask.categoryName ?? 'なし'}
+- 詳細（全文）:
+${pinnedTask.description ?? '（未記入）'}
+- コメント（直近${PINNED_COMMENTS_COUNT}件・古い順）:
+${comments || '  （コメントなし）'}
+
+「このタスク」「詳細を書いて」など対象を明示しない依頼は、すべてこのタスク（taskId: ${pinnedTask.id}）への task_update として扱う。
+
+`;
 }
 
 export function formatSchedules(
