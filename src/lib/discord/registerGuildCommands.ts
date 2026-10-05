@@ -1,10 +1,17 @@
 const DISCORD_API = 'https://discord.com/api/v10';
 
+/**
+ * /risukerugg コマンド定義。
+ * - message: AI へのメッセージ（任意。preset だけでも送れる）
+ * - preset: チームの定型指示（AI 設定）。オートコンプリートで候補を出す（AI-023 / IN-030）
+ * Discord の制約で必須オプションは任意オプションより前に置く必要があるが、両方任意なので順序は自由。
+ */
 const RISUKERUGG_COMMAND = {
   name: 'risukerugg',
   description: 'RisukeruGG AI アシスタントに話しかける',
   options: [
-    { name: 'message', description: 'AIへのメッセージ', type: 3, required: true },
+    { name: 'message', description: 'AIへのメッセージ', type: 3, required: false },
+    { name: 'preset', description: '定型指示（AI設定で登録したもの）', type: 3, required: false, autocomplete: true },
   ],
 };
 

@@ -205,6 +205,12 @@ service cloud.firestore {
         allow read, write: if isTeamOwner(teamId);
       }
 
+      // AI 設定（追加指示・定型指示）— 閲覧はメンバー、編集は operator（AI-022 / AI-023）
+      match /ai/{doc} {
+        allow read: if isTeamMember(teamId);
+        allow write: if isTeamOwner(teamId);
+      }
+
       // ── タスク管理 v2（1枚紙） ─────────────────────────────
       // 進め方（工程の型）。閲覧は全メンバー、編集は operator / member
       match /playbooks/{playbookId} {

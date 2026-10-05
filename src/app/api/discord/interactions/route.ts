@@ -4,6 +4,7 @@ import { waitUntil } from '@vercel/functions';
 import { z } from 'zod';
 import { handleAiConversation } from './handlers/handleRisukerugg';
 import { handleButtonClick } from './handlers/handleButtonClick';
+import { buildPresetChoices } from './handlers/handlePresetAutocomplete';
 import { handleStepButton } from './handlers/handleStepButton';
 
 /** Discord Interaction タイプ定数 */
@@ -11,6 +12,7 @@ const InteractionType = {
   PING: 1,
   APPLICATION_COMMAND: 2,
   MESSAGE_COMPONENT: 3,
+  APPLICATION_COMMAND_AUTOCOMPLETE: 4,
 } as const;
 
 /** Zod スキーマ: Discord Interaction ペイロードのランタイムバリデーション */
@@ -29,6 +31,8 @@ const InteractionSchema = z.object({
           z.object({
             name: z.string(),
             value: z.unknown(),
+            /** オートコンプリート中の（入力フォーカスがある）オプション */
+            focused: z.boolean().optional(),
           })
         )
         .optional(),
@@ -100,6 +104,23 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const token = interaction.token ?? '';
 
+  // ─── オートコンプリート（/risukerugg preset の候補。IN-030） ─────────
+  if (interaction.type === InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE) {
+    const focused = interaction.data?.options?.find((o) => o.focused);
+    const guildId = interaction.guild_id;
+    if (!guildId || focused?.name !== 'preset') {
+      return Response.json({ type: 8, data: { choices: [] } });
+    }
+    const query = typeof focused.value === 'string' ? focused.value : '';
+    try {
+      const choices = await buildPresetChoices(guildId, query);
+      return Response.json({ type: 8, data: { choices } }); // APPLICATION_COMMAND_AUTOCOMPLETE_RESULT
+    } catch (err) {
+      console.error('[discord] preset autocomplete failed:', err);
+      return Response.json({ type: 8, data: { choices: [] } });
+    }
+  }
+
   // ─── スラッシュコマンド ──────────────────────────────────
   if (interaction.type === InteractionType.APPLICATION_COMMAND) {
     const commandName = interaction.data?.name;
@@ -118,10 +139,19 @@ export async function POST(req: NextRequest): Promise<Response> {
       }
 
       const messageOption = interaction.data?.options?.find((o) => o.name === 'message');
+      const presetOption = interaction.data?.options?.find((o) => o.name === 'preset');
       const userMessage = typeof messageOption?.value === 'string' ? messageOption.value : '';
+      const presetId = typeof presetOption?.value === 'string' ? presetOption.value : undefined;
       const discordUserId = interaction.member?.user?.id ?? interaction.user?.id ?? '';
 
-      waitUntil(handleAiConversation(guildId, userMessage, discordUserId, appId, token));
+      if (!userMessage.trim() && !presetId) {
+        return Response.json({
+          type: 4,
+          data: { content: 'message か preset のどちらかを指定してね。例: `/risukerugg message:来週の予定を教えて`' },
+        });
+      }
+
+      waitUntil(handleAiConversation(guildId, userMessage, discordUserId, appId, token, presetId));
 
       return Response.json({
         type: 5, // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
