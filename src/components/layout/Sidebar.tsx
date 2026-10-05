@@ -13,6 +13,8 @@ interface NavItem {
   label: string;
   icon: IconName;
   disabled?: boolean;
+  /** ラベル横の小バッジ（β など） */
+  badge?: string;
 }
 
 interface NavSection {
@@ -29,6 +31,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: '/chat',         label: 'AIに相談',  icon: 'auto_awesome' },
       { href: '/schedule',     label: 'スケジュール', icon: 'calendar_month' },
       { href: '/tasks',        label: 'タスク管理', icon: 'list_bullet' },
+      { href: '/briefs',       label: 'タスク管理 v2', icon: 'event_available', badge: 'β' },
       { href: '/collabs',      label: 'コラボ調整', icon: 'handshake' },
     ],
   },
@@ -166,6 +169,11 @@ export function Sidebar() {
                           <Link href={item.href} className={`navlink${active ? ' navlink--active' : ''}`}>
                             <Icon name={item.icon} size={18} />
                             <span className="flex-1 whitespace-nowrap">{item.label}</span>
+                            {item.badge && (
+                              <span className="ds-badge ds-badge--info text-[10px] px-1.5 py-0" aria-label={item.badge}>
+                                {item.badge}
+                              </span>
+                            )}
                           </Link>
                         )}
                       </li>
