@@ -2,15 +2,6 @@
   "name": "risukeru-gg",
   "version": "0.1.0",
   "private": true,
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@firebase/util",
-      "@sentry/cli",
-      "protobufjs",
-      "sharp",
-      "unrs-resolver"
-    ]
-  },
   "scripts": {
     "dev": "next dev",
     "functions:build": "pnpm --dir functions build",
