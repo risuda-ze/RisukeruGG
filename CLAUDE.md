@@ -19,6 +19,14 @@
 - `main`への直接コミット・直接マージ
 - `feature/`ブランチから`main`へのPR作成
 
+### `main` → `develop` 取り込み時の競合解消
+
+依存ファイルが競合した場合、`pnpm-lock.yaml` は手編集しない（片側採用だけで終わらせない）。
+
+1. `package.json` / `functions/package.json` / `pnpm-workspace.yaml` の競合を先に解消する
+2. `pnpm-lock.yaml` はどちらか一方を採用し、`pnpm install --no-frozen-lockfile` で再生成する
+3. `pnpm install --frozen-lockfile` が通ることを確認してからマージコミットを作る
+
 ## コミュニケーションルール
 
 **日本語**で簡潔に応答する
