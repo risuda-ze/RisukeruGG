@@ -19,15 +19,19 @@ overrides:
   form-data: '>=2.5.6'
   undici: '>=7.29.0 <8'
   '@babel/core': '>=7.29.6'
-  js-yaml: '>=4.3.0 <5'
+  js-yaml: '>=4.3.2 <5'
   websocket-driver: '>=0.7.5'
   fast-uri: '>=3.1.6 <4'
   browserslist: '>=4.28.7 <5'
+  # 不正入力でプロセスが終了する DoS（<2.11.0）。古い版が lockfile に残るため範囲で強制
+  baseline-browser-mapping: '>=2.11.0 <3'
+  # ai / @ai-sdk/anthropic 経由のトランジティブ依存（リソース消費の脆弱性）
+  '@ai-sdk/provider-utils': '>=4.0.33 <5'
   body-parser: '>=1.20.6 <2'
   'brace-expansion@<2': '>=1.1.16 <2'
   'brace-expansion@>=3': '>=5.0.9'
   # next の optionalDependency が sharp 0.34.x を解決するため強制的にパッチ済みへ
-  sharp: '>=0.35.0'
+  sharp: '>=0.35.4 <1'
 
 allowBuilds:
   sharp: true

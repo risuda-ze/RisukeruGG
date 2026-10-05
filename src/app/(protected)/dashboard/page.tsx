@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
 import { TaskBoardPreview } from '@/components/dashboard/TaskBoardPreview';
 import { BannerAd } from '@/components/plan/BannerAd';
+import { LegalUpdateNotice } from '@/components/dashboard/LegalUpdateNotice';
 import { isPartyPlan } from '@/lib/plan';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
 import { TopBar } from '@/components/layout/TopBar';
@@ -182,6 +183,10 @@ export default function DashboardPage() {
     <div className="flex flex-col flex-1 overflow-hidden">
       <TopBar title="ダッシュボード" />
       <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7">
+        {/* 利用規約・プライバシーポリシー改定の告知（閉じると改定日単位で非表示） */}
+        <div className="mb-4">
+          <LegalUpdateNotice />
+        </div>
         {/* ── 統計カード（5枚グリッド） ──────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
           <StatCard label="今月の配信数" value={thisMonthSchedules.length} color="purple" />

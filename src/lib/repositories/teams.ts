@@ -30,7 +30,27 @@ function toTeamMember(id: string, data: Record<string, unknown>): TeamMember {
     avatarUrl: (data.avatarUrl as string | null) ?? null,
     plan: data.plan as 'light' | 'party',
     joinedAt: (data.joinedAt as { toDate: () => Date }).toDate(),
+    // Discord メンション用（TE-012）。旧ドキュメントには存在しないため null 既定
+    discordUsername: (data.discordUsername as string | null | undefined) ?? null,
+    discordUserId: (data.discordUserId as string | null | undefined) ?? null,
   };
+}
+
+/**
+ * メンバーの Discord ユーザー名を更新する（TE-012）。
+ * 本人またはオペレーターが呼ぶ（Firestore ルールで強制）。
+ * ユーザー名が変わると解決済み ID のキャッシュは無効になるため、常に `discordUserId` を null に戻す。
+ */
+export async function updateMemberDiscordUsername(
+  teamId: string,
+  memberId: string,
+  discordUsername: string | null
+): Promise<void> {
+  const { updateDoc } = await import('firebase/firestore');
+  await updateDoc(doc(db, 'teams', teamId, 'members', memberId), {
+    discordUsername,
+    discordUserId: null,
+  });
 }
 
 export async function getTeam(teamId: string): Promise<Team | null> {
