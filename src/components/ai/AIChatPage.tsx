@@ -13,10 +13,11 @@ import { useTasksStore } from '@/stores/tasks';
 import { useCategoryStore } from '@/stores/categories';
 import { useScheduleStore } from '@/stores/schedule';
 import { subscribeMemberCalendarEvents } from '@/lib/repositories/memberCalendars';
+import { subscribeTeamAiSettings, EMPTY_AI_SETTINGS } from '@/lib/repositories/aiSettings';
 import { createSchedule } from '@/lib/repositories/schedules';
 import { createTask, updateTask } from '@/lib/repositories/tasks';
 import { createCollabSession } from '@/lib/repositories/collabs';
-import type { MemberCalendarEvent, Task } from '@/types/entities';
+import type { MemberCalendarEvent, Task, TeamAiSettings } from '@/types/entities';
 import { Icon } from '@/components/ui/Icon';
 
 // ── 定数 ───────────────────────────────────────────────────────
@@ -303,11 +304,17 @@ export function AIChatPage() {
   const categories = useCategoryStore((s) => s.categories);
   const schedules = useScheduleStore((s) => s.schedules);
   const [memberCalendarEvents, setMemberCalendarEvents] = useState<MemberCalendarEvent[]>([]);
+  // チームの AI 設定（追加指示・定型指示。AI-022 / AI-023）
+  const [aiSettings, setAiSettings] = useState<TeamAiSettings>(EMPTY_AI_SETTINGS);
 
   // メンバーの予定をFirestoreから購読（AIコンテキスト用）
   useEffect(() => {
     if (!currentTeamId) return;
     return subscribeMemberCalendarEvents(currentTeamId, setMemberCalendarEvents);
+  }, [currentTeamId]);
+  useEffect(() => {
+    if (!currentTeamId) return;
+    return subscribeTeamAiSettings(currentTeamId, setAiSettings);
   }, [currentTeamId]);
 
   // ローカル UI 状態
@@ -409,6 +416,8 @@ export function AIChatPage() {
       columns: columns.map((c) => ({ name: c.name })),
       // カテゴリ一覧（task_update の categoryName 解決用）
       categories: categories.map((c) => ({ name: c.name })),
+      // チームからの追加指示（空なら渡さない）
+      teamInstructions: aiSettings.teamInstructions || undefined,
       memberCalendars: Object.values(memberCalendarsForAI)
         .flat()
         .map((e) => ({
@@ -436,7 +445,7 @@ export function AIChatPage() {
           }
         : undefined,
     };
-  }, [tasks, columns, categories, schedules, members, memberCalendarEvents, currentUser?.uid, pinnedTask]);
+  }, [tasks, columns, categories, schedules, members, memberCalendarEvents, currentUser?.uid, pinnedTask, aiSettings.teamInstructions]);
 
   // ── ストリーミング完了後: アシスタントメッセージから提案を解析 ───────
   useEffect(() => {
@@ -781,6 +790,22 @@ export function AIChatPage() {
           {/* 下部固定入力欄 */}
           <div className="shrink-0 border-t border-border bg-surface px-4 py-3 flex flex-col gap-2">
             {pinnedChip}
+            {/* 定型指示（会話中はコンパクトに表示。AI-023） */}
+            {aiSettings.presets.length > 0 && (
+              <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+                {aiSettings.presets.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => { setInput(p.body); textareaRef.current?.focus(); }}
+                    disabled={isLoading}
+                    className="shrink-0 text-[11px] text-purple-l bg-purple/5 hover:bg-purple/10 px-2.5 py-1 rounded-full transition-colors border border-purple/10 disabled:opacity-50"
+                  >
+                    ★ {p.name}
+                  </button>
+                ))}
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="flex items-end gap-2">
               <textarea
                 ref={textareaRef}
@@ -846,9 +871,9 @@ export function AIChatPage() {
               </button>
             </form>
 
-            {/* 例示チップ */}
+            {/* 定型指示（チーム設定）+ 例示チップ */}
             <div className="flex flex-wrap gap-2 justify-center">
-              {EXAMPLE_CHIPS.map((chip) => (
+              {[...aiSettings.presets.map((p) => ({ label: `★ ${p.name}`, text: p.body })), ...EXAMPLE_CHIPS].map((chip) => (
                 <button
                   key={chip.label}
                   onClick={() => { setInput(chip.text); textareaRef.current?.focus(); }}

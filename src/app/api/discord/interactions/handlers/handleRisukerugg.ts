@@ -17,10 +17,11 @@ export async function handleAiConversation(
   userMessage: string,
   discordUserId: string,
   appId: string,
-  token: string
+  token: string,
+  presetId?: string
 ): Promise<void> {
   try {
-    await runAiConversation(guildId, userMessage, discordUserId, appId, token);
+    await runAiConversation(guildId, userMessage, discordUserId, appId, token, presetId);
   } catch (err) {
     // waitUntil() から呼ばれるため、ここで例外を握り潰すと Discord には
     // フォローアップが届かず「アプリケーションが応答しませんでした」になる。
@@ -39,7 +40,8 @@ async function runAiConversation(
   userMessage: string,
   discordUserId: string,
   appId: string,
-  token: string
+  token: string,
+  presetId?: string
 ): Promise<void> {
   // AI 呼び出しに必須のキーが無い場合は、例外で沈黙する前に明示的に案内する
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -103,6 +105,23 @@ async function runAiConversation(
     return;
   }
 
+  // ─── 定型指示（preset）と追加指示（AI 設定）の解決 ─────────────
+  // preset が指定されていれば本文を message の前に置く（AI-023 / IN-030）
+  let composedMessage = sanitizedMessage;
+  const aiSettingsSnap = await db.doc(`teams/${teamId}/ai/settings`).get();
+  const aiSettings = aiSettingsSnap.data() ?? {};
+  if (presetId) {
+    const presets = (aiSettings.presets as Array<{ id: string; body: string }> | undefined) ?? [];
+    const preset = presets.find((p) => p.id === presetId);
+    if (!preset) {
+      await sendFollowUp(appId, token, 'その定型指示は見つからなかったよ。AI設定を確認してね。');
+      return;
+    }
+    composedMessage = [preset.body, sanitizedMessage].filter(Boolean).join('\n').slice(0, 2000);
+  }
+  const teamInstructions =
+    typeof aiSettings.teamInstructions === 'string' ? (aiSettings.teamInstructions as string) : undefined;
+
   // ─── セッション取得 / タイムアウト確認 ─────────────────────
   let session = await getSession(guildId);
 
@@ -114,7 +133,7 @@ async function runAiConversation(
 
   const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
     ...(session?.messages ?? []),
-    { role: 'user', content: sanitizedMessage },
+    { role: 'user', content: composedMessage },
   ];
 
   // ─── チームデータ取得（AI コンテキスト生成用） ───────────────
@@ -204,6 +223,7 @@ async function runAiConversation(
       members,
       columns,
       categories: categoriesList.map((c) => ({ name: c.name })),
+      teamInstructions,
     },
     today,
     todayISO

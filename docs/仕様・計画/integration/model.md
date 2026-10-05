@@ -21,7 +21,15 @@ Firestore コレクション配置: `teams/{teamId}/discord/config`（サブコ�
 | `notifyOnCollabCreate`   | boolean     | コラボ調整の作成時に通知するか |
 | `notifyOnCollabResponse` | boolean     | コラボ調整への回答時に通知するか |
 
+| `briefThreadsEnabled` | boolean（任意） | ブリーフごとにスレッドを立てるか（既定 true。IN-023） |
+| `briefChannelId` / `briefChannelName` | string（任意） | スレッドの親チャンネル。未設定は `channelId` |
+| `digestEnabled` | boolean（任意） | 朝ダイジェストを送るか（既定 true） |
+| `digestChannelId` / `digestChannelName` | string（任意） | ダイジェストの送信先。未設定は `channelId` |
+| `digestTime` | string（任意） | `HH:00`（JST）。既定 `09:00` |
+
 トグルはいずれも未設定時デフォルト有効（opt-out）。明示的に `false` の場合のみ送信しない（IN-003）。
+
+ブリーフ側の連携情報（`Brief.discord`・`Step.discordMessageId`）は production カテゴリの model を参照する。
 
 ## DiscordSession
 

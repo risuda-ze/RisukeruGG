@@ -135,6 +135,13 @@ service cloud.firestore {
       allow read: if request.auth != null && isTeamMember(resource.data.teamId);
     }
 
+    // タスク管理 v2 の工程をチーム横断で読むために必要
+    // （subscribeTeamSteps が collectionGroup('steps') を teamId で絞って使用する）
+    // write は /teams/{teamId}/briefs/{briefId}/steps/{stepId} のネストルールが担保する
+    match /{path=**}/steps/{stepId} {
+      allow read: if request.auth != null && isTeamMember(resource.data.teamId);
+    }
+
     match /teams/{teamId} {
       allow read: if isTeamMember(teamId);
       allow create: if request.auth != null && passesBetaGate();
@@ -196,6 +203,46 @@ service cloud.firestore {
       // Webhook URL をチームメンバーから隠すためサブコレクション方式を採用
       match /discord/{doc} {
         allow read, write: if isTeamOwner(teamId);
+      }
+
+      // AI 設定（追加指示・定型指示）— 閲覧はメンバー、編集は operator（AI-022 / AI-023）
+      match /ai/{doc} {
+        allow read: if isTeamMember(teamId);
+        allow write: if isTeamOwner(teamId);
+      }
+
+      // ── タスク管理 v2（1枚紙） ─────────────────────────────
+      // 進め方（工程の型）。閲覧は全メンバー、編集は operator / member
+      match /playbooks/{playbookId} {
+        allow read: if isTeamMember(teamId);
+        allow write: if isOwnerOrEditor(teamId);
+      }
+
+      // ブリーフ（動画1本）。書き込みは操作層（writeBatch）経由
+      match /briefs/{briefId} {
+        allow read: if isTeamMember(teamId);
+        allow write: if isOwnerOrEditor(teamId);
+
+        // 工程。コレクショングループ読み取りは下の /{path=**}/steps ルールが担う
+        match /steps/{stepId} {
+          allow read: if isTeamMember(teamId);
+          allow write: if isOwnerOrEditor(teamId);
+
+          // 工程のやり取り
+          match /comments/{commentId} {
+            allow read: if isTeamMember(teamId);
+            allow create: if isOwnerOrEditor(teamId);
+            allow update, delete: if isTeamOwner(teamId) ||
+                                    (isOwnerOrEditor(teamId) && resource.data.authorId == request.auth.uid);
+          }
+        }
+
+        // 差分（追記のみ。改変・削除は不可）
+        match /briefEvents/{eventId} {
+          allow read: if isTeamMember(teamId);
+          allow create: if isOwnerOrEditor(teamId);
+          allow update, delete: if false;
+        }
       }
 
     }

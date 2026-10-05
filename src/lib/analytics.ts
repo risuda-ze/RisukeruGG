@@ -15,7 +15,8 @@ export type AnalyticsEventName =
   | 'team_create'
   | 'schedule_create'
   | 'collab_confirm'
-  | 'upgrade_cta_click';
+  | 'upgrade_cta_click'
+  | 'brief_create';
 
 let analyticsInstance: Analytics | null = null;
 let initPromise: Promise<Analytics | null> | null = null;

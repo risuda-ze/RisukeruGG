@@ -19,6 +19,16 @@
 - `main`への直接コミット・直接マージ
 - `feature/`ブランチから`main`へのPR作成
 
+### `main` → `develop` 取り込み時の競合解消
+
+依存ファイルが競合した場合、`pnpm-lock.yaml` は手編集も片側採用もしない。
+片側採用 → 再生成では、採用しなかった側の lockfile 単独更新（Dependabot のトランジティブ依存 bump 等）が黙って巻き戻る。
+
+1. `package.json` / `functions/package.json` / `pnpm-workspace.yaml` の競合を先に解消する
+2. `pnpm-lock.yaml` は**競合マーカーを残したまま** `pnpm install` を実行し、pnpm の自動マージに任せる（両側の更新が残る。出力をパイプで切らず完走させる）
+3. `git diff --check` で競合マーカーが消えたことを確認して `git add pnpm-lock.yaml` する（マーカーが残っていても `--frozen-lockfile` は通るため、install の成否では検知できない）
+4. `pnpm install --frozen-lockfile` が通ることを確認してからマージコミットを作る
+
 ## コミュニケーションルール
 
 **日本語**で簡潔に応答する

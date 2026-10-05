@@ -50,6 +50,7 @@
   - `ui`: `UI`
   - `integration`: `IN`
   - `ai`: `AI`
+  - `production`: `PD`
 - 番号は 3 桁ゼロ埋めを基本とし、各機能カテゴリごとに必ず `001` から開始する（例: `TE-001`）
 - 同一機能内で要件を細分化する場合は枝番を付与する（例: `TE-010-1`, `SC-008-2`）
 - 新規要件追加時は同一カテゴリ内で末尾に連番を採番し、他カテゴリの番号は参照しない。既存IDの再利用はしない
@@ -69,6 +70,7 @@
 | `platform`     | PWA・オフライン      | PWA インストール、Service Worker、オフライン閲覧、接続断時の扱いを扱う                                     | [README](./platform/README.md) / [requirements](./platform/requirements.md) / [model](./platform/model.md)                |
 | `integration`  | 外部サービス連携     | Discord 連携（通知配送、Bot 招待、`/risukerugg` AI ボット）を扱う                                          | [README](./integration/README.md) / [requirements](./integration/requirements.md) / [model](./integration/model.md)       |
 | `ai`           | AIチャット           | `/chat` の AI アシスタント、提案生成、スケジュール・タスク・コラボ登録連携を扱う                           | [README](./ai/README.md) / [requirements](./ai/requirements.md) / [model](./ai/model.md)                                  |
+| `production`   | タスク管理 v2（1枚紙） | ブリーフ（動画1本）、工程、進め方、締切逆算、差分、操作層を扱う。既存カンバン（task）と並行提供 | [README](./production/README.md) / [requirements](./production/requirements.md) / [model](./production/model.md) / [flows](./production/flows.md) |
 
 ### カテゴリ別の役割
 
@@ -127,6 +129,11 @@
 - 自然言語からの登録提案生成とチームデータ照会の責務を持つ
 - Web チャットと Discord ボットが共用するシステムプロンプト・提案解析の基盤になる
 
+#### production
+
+- 動画1本を親にした制作進行（ブリーフ・工程・進め方）の責務を持つ
+- 締切逆算・状態遷移・差分記録を操作層に集約し、Web・Discord・AI・公開 API が同じ操作を呼ぶ基盤になる
+
 ---
 
 ## 非機能要件（spec 001）
@@ -166,6 +173,7 @@
 | **DiscordTeamConfig** | 詳細は [integration/model.md](./integration/model.md) を参照。チームの Discord 通知設定（webhookUrl / guildId / channelId / 通知トグル）を管理             |
 | **DiscordSession** | 詳細は [integration/model.md](./integration/model.md) を参照。`/risukerugg` AI ボットのサーバー単位会話セッションを管理                                      |
 | **ChatMessage / Proposal** | 詳細は [ai/model.md](./ai/model.md) を参照。AIチャットの会話履歴と登録提案（セッションメモリのみ・Firestore 永続化なし）                             |
+| **Playbook / Brief / Step / BriefEvent** | 詳細は [production/model.md](./production/model.md) を参照。進め方（工程の型）、ブリーフ（動画1本）、工程、差分                                 |
 
 ---
 
