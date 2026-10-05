@@ -2,6 +2,7 @@
   "name": "risukeru-gg",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@11.28.4",
   "scripts": {
     "dev": "next dev",
     "functions:build": "pnpm --dir functions build",
