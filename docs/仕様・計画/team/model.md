@@ -27,6 +27,8 @@ Team は共同作業単位を表す。TeamMember はユーザーとチームの�
 | `avatarUrl`   | string \| null                  | アイコン画像 URL         |
 | `plan`        | `light` \| `party`              | このメンバーの現在プラン |
 | `joinedAt`    | timestamp                       | チーム参加日時           |
+| `discordUsername` | string \| null              | Discord のユーザー名（`@` の後ろの一意な名前）。メンション用に本人またはオペレーターが任意登録（TE-012）。旧ドキュメントには存在せず null 扱い |
+| `discordUserId`   | string \| null              | `discordUsername` をサーバー内検索で解決した Discord ユーザー ID のキャッシュ。Bot（Admin SDK）が書き込み、ユーザー名変更時にクライアントが null に戻す |
 
 ## ロール定義
 

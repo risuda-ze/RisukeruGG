@@ -52,6 +52,13 @@ export interface TeamMember {
   avatarUrl: string | null;
   plan: PlanType;
   joinedAt: Date;
+  /**
+   * Discord のユーザー名（`@` の後ろの一意な名前）。メンション用に本人またはオペレーターが任意で登録する。
+   * 未登録は null。ログイン連携ではなく、送信時に Bot がサーバー内検索で ID に解決する（TE-012）
+   */
+  discordUsername: string | null;
+  /** `discordUsername` をサーバー内検索で解決した Discord ユーザー ID のキャッシュ。ユーザー名変更時は null に戻す */
+  discordUserId: string | null;
 }
 
 export interface Team {
@@ -204,6 +211,14 @@ export interface DiscordTeamConfig {
   notifyOnCollabResponse: boolean; // コラボ調整への回答時に通知
   notifyBefore1h: boolean;        // スケジュール開始1時間前にリマインダー通知
   notifyBefore15min: boolean;     // スケジュール開始15分前にリマインダー通知
+  /* ── タスク管理 v2（ブリーフ）連携（IN-023〜） ── */
+  briefThreadsEnabled?: boolean;  // ブリーフごとにスレッドを立てる（既定 true）
+  briefChannelId?: string;        // スレッドの親チャンネル。未設定は channelId
+  briefChannelName?: string;
+  digestEnabled?: boolean;        // 朝ダイジェスト（既定 true）
+  digestChannelId?: string;       // ダイジェスト送信先。未設定は channelId
+  digestChannelName?: string;
+  digestTime?: string;            // 'HH:00'（JST）。既定 '09:00'
 }
 
 /** チームの定型指示（AI 設定。AI-023）。Web ではチップ、Discord では /risukerugg の preset 候補になる */

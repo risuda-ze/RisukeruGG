@@ -15,7 +15,8 @@ export const metadata: Metadata = {
 
 // プライバシーポリシーの制定日・最終改定日
 const EFFECTIVE_DATE = '2026年7月15日';
-const LAST_UPDATED = '2026年7月15日';
+// 2026-09-06 改定: Discord 連携で取得・送信する情報の明記、機密情報の取り扱いの節を追加
+const LAST_UPDATED = '2026年9月6日';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -102,7 +103,14 @@ export default function PrivacyPolicyPage() {
             <li>チーム情報（チーム名・招待設定）</li>
             <li>配信スケジュール情報（タイトル・日時・カテゴリ・参加者）</li>
             <li>タスク情報（内容・担当者・進捗状態）</li>
+            <li>ブリーフ情報（動画・配信の企画内容、工程、担当者、締切、工程ごとの入力項目）</li>
             <li>通知設定</li>
+            <li>
+              Discord ユーザー名およびユーザーID（Discord連携でメンションを受け取るために任意で登録するもの）
+            </li>
+            <li>
+              Discord サーバーID、チャンネルID、Webhook URL（チームの Discord 連携設定。オペレーターのみが登録・閲覧）
+            </li>
           </ul>
 
           <h3 className="text-sm font-semibold text-text mb-2">
@@ -124,7 +132,7 @@ export default function PrivacyPolicyPage() {
             <li>本サービスの提供・維持・改善</li>
             <li>ユーザー認証および本人確認</li>
             <li>チーム機能・コラボ機能の提供</li>
-            <li>通知（Discord 連携経由）の配信</li>
+            <li>通知およびメンション（Discord 連携経由）の配信</li>
             <li>利用状況の集計・分析によるサービス改善</li>
             <li>お問い合わせへの対応</li>
             <li>不正アクセスの検知・防止</li>
@@ -179,9 +187,22 @@ export default function PrivacyPolicyPage() {
             上記委託先（Google LLC・Vercel Inc.）は米国に所在します。米国は、個人情報保護委員会が定める「十分な保護水準を確保している外国」（十分性認定）には該当しませんが、当方は各社との間でデータ処理契約（DPA）を締結し、個人情報の適切な保護措置を確保しています。
           </p>
           <p className="text-sm text-muted leading-relaxed mb-3">
-            各委託先のプライバシーポリシーは以下よりご確認いただけます。
+            また、Discord連携を有効にしたチームでは、「9. Discord連携における情報の送信」に記載する情報が、チームの設定に基づき米国に所在する Discord Inc. へ送信されます。
+          </p>
+          <p className="text-sm text-muted leading-relaxed mb-3">
+            各委託先・送信先のプライバシーポリシーは以下よりご確認いただけます。
           </p>
           <ul className="text-sm space-y-2 ml-2">
+            <li>
+              <a
+                href="https://discord.com/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-l hover:underline"
+              >
+                Discord Inc. プライバシーポリシー
+              </a>
+            </li>
             <li>
               <a
                 href="https://policies.google.com/privacy"
@@ -237,8 +258,35 @@ export default function PrivacyPolicyPage() {
           </ul>
         </Section>
 
-        {/* ─── セクション 9: 個人情報に関するご請求 ─────── */}
-        <Section title="9. 個人情報に関するご請求">
+        {/* ─── セクション 9: Discord連携における情報の送信（2026-09-06 追加） ─── */}
+        <Section title="9. Discord連携における情報の送信">
+          <p className="text-sm text-muted leading-relaxed mb-3">
+            Discord連携を有効にしたチームでは、スケジュール、タスク、ブリーフの内容（タイトル、担当者名、締切、進捗等）が、チームが指定した Discord サーバーのチャンネルおよびスレッドへ送信されます。送信された情報は Discord Inc.（米国）が同社のプライバシーポリシーに基づき取り扱います。
+          </p>
+          <p className="text-sm text-muted leading-relaxed mb-3">
+            当方は、Discord 上での情報の閲覧、保存、拡散について管理を行わず、責任を負いません。Bot を導入する Discord サーバーの参加者、権限およびチャンネルの設定は、チームのオペレーターの責任で管理してください。
+          </p>
+          <p className="text-sm text-muted leading-relaxed">
+            Discord連携の有効・無効および送信先の設定は、チームのオペレーターがいつでも変更できます。メンション用に登録した Discord ユーザー名・ユーザーIDは、利用者本人がいつでも削除でき、アカウント削除時にはメンバー情報とともに消去されます。当方は Discord のメッセージ本文やアカウントの認証情報を取得・保持しません。
+          </p>
+        </Section>
+
+        {/* ─── セクション 10: 機密情報の取り扱い（2026-09-06 追加） ─── */}
+        <Section title="10. 機密情報の取り扱い">
+          <p className="text-sm text-muted leading-relaxed mb-3">
+            本サービスは機密情報の入力を想定しておらず、利用規約第6条においてパスワードその他の認証情報、決済情報、公的識別番号、第三者の個人情報、営業秘密その他の機密情報の入力を禁止しています。
+          </p>
+          <p className="text-sm text-muted leading-relaxed">
+            利用者が本サービスに入力した内容の適切性は、利用者自身の責任において判断してください。禁止に反して入力された機密情報の取り扱いについては、
+            <Link href="/terms" className="text-purple-l hover:underline">
+              利用規約第9条
+            </Link>
+            をご確認ください。
+          </p>
+        </Section>
+
+        {/* ─── セクション 11: 個人情報に関するご請求 ─────── */}
+        <Section title="11. 個人情報に関するご請求">
           <p className="text-sm text-muted leading-relaxed mb-3">
             ユーザーは、当方が保有するご自身の個人情報について、以下の権利を有します（個人情報保護法第33条〜第38条）。
           </p>
@@ -261,8 +309,8 @@ export default function PrivacyPolicyPage() {
           </p>
         </Section>
 
-        {/* ─── セクション 10: お問い合わせ窓口 ──────────── */}
-        <Section title="10. お問い合わせ窓口">
+        {/* ─── セクション 12: お問い合わせ窓口 ──────────── */}
+        <Section title="12. お問い合わせ窓口">
           <p className="text-sm text-muted leading-relaxed mb-3">
             個人情報の取り扱いに関するお問い合わせは、以下の窓口までご連絡ください。
           </p>
@@ -276,8 +324,8 @@ export default function PrivacyPolicyPage() {
           </dl>
         </Section>
 
-        {/* ─── セクション 11: プライバシーポリシーの変更 ── */}
-        <Section title="11. プライバシーポリシーの変更">
+        {/* ─── セクション 13: プライバシーポリシーの変更 ── */}
+        <Section title="13. プライバシーポリシーの変更">
           <p className="text-sm text-muted leading-relaxed">
             当方は、法令の変更またはサービスの変更に伴い、本ポリシーを改定することがあります。重要な変更はサービス上での告知により周知いたします。改定後のポリシーは、本ページへの掲載をもって効力を生じるものとします。
           </p>

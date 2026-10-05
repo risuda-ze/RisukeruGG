@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { handleAiConversation } from './handlers/handleRisukerugg';
 import { handleButtonClick } from './handlers/handleButtonClick';
 import { buildPresetChoices } from './handlers/handlePresetAutocomplete';
+import { handleStepButton } from './handlers/handleStepButton';
 
 /** Discord Interaction タイプ定数 */
 const InteractionType = {
@@ -167,6 +168,17 @@ export async function POST(req: NextRequest): Promise<Response> {
   // ─── ボタンクリック ──────────────────────────────────────
   if (interaction.type === InteractionType.MESSAGE_COMPONENT) {
     const customId = interaction.data?.custom_id ?? '';
+
+    // ブリーフ工程のボタン: "step_done|step_start:{teamId}:{briefId}:{stepId}"（IN-025）
+    if (customId.startsWith('step_done:') || customId.startsWith('step_start:')) {
+      const [stepAction, teamId, briefId, stepId] = customId.split(':');
+      const guildId = interaction.guild_id;
+      if (guildId && teamId && briefId && stepId && (stepAction === 'step_done' || stepAction === 'step_start')) {
+        waitUntil(handleStepButton({ action: stepAction, teamId, briefId, stepId, guildId, appId, token }));
+        return Response.json({ type: 6 }); // DEFERRED_UPDATE_MESSAGE
+      }
+      return Response.json({ type: 4, data: { content: '❌ このボタンはサーバー内でのみ使えます。' } });
+    }
     // custom_id は "{action}:{guildId}" 形式
     const colonIdx = customId.indexOf(':');
     const action = customId.slice(0, colonIdx);

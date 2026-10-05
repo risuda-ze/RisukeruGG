@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { RoleChangeDialog } from '@/components/team/RoleChangeDialog';
 import { RemoveMemberDialog } from '@/components/team/RemoveMemberDialog';
+import { DiscordUsernameDialog } from '@/components/team/DiscordUsernameDialog';
 import { LeaveTeamDialog } from '@/components/team/LeaveTeamDialog';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
 import { Card, CardHeader } from '@/components/ui/Card';
@@ -23,6 +24,7 @@ type DialogState =
   | { type: 'roleChange'; member: TeamMember; newRole: 'member' | 'rom' | 'operator' }
   | { type: 'remove'; member: TeamMember }
   | { type: 'leave' }
+  | { type: 'discord'; member: TeamMember }
   | null;
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -294,6 +296,23 @@ export default function TeamPage() {
                       >
                         {ROLE_LABELS[member.role]}
                       </div>
+                      {/* Discord ユーザー名（TE-012）。本人とオペレーターが編集できる */}
+                      <div className="mt-1.5 flex items-center gap-1 text-[11px] text-muted min-w-0">
+                        <Icon name="discord" size={12} className="shrink-0" />
+                        <span className="truncate">
+                          {member.discordUsername ? `@${member.discordUsername}` : '未設定'}
+                        </span>
+                        {(isOperator || isMe) && (
+                          <button
+                            type="button"
+                            onClick={() => setDialog({ type: 'discord', member })}
+                            aria-label={`${member.displayName} の Discord ユーザー名を編集`}
+                            className="shrink-0 px-1 rounded-[4px] hover:text-purple-l hover:bg-purple-d/30 transition-colors"
+                          >
+                            <Icon name="edit" size={12} />
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* オペレーター向けアクション */}
@@ -488,6 +507,13 @@ export default function TeamPage() {
           newRole={dialog.newRole}
           onClose={() => setDialog(null)}
           onSuccess={() => setDialog(null)}
+        />
+      )}
+      {dialog?.type === 'discord' && teamId && (
+        <DiscordUsernameDialog
+          teamId={teamId}
+          member={dialog.member}
+          onClose={() => setDialog(null)}
         />
       )}
       {dialog?.type === 'remove' && teamId && (
