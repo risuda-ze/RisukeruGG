@@ -56,13 +56,17 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   // Bot 招待用 Discord OAuth2 URL を組み立て
   // scope: bot（サーバーへの Bot 参加）+ applications.commands（ギルドコマンド登録）
-  // permissions: 2048 = Send Messages のみ（最小限の権限）
+  // permissions（IN-026）:
+  //   VIEW_CHANNEL (1<<10) + SEND_MESSAGES (1<<11) + READ_MESSAGE_HISTORY (1<<16)
+  //   + CREATE_PUBLIC_THREADS (1<<35) + SEND_MESSAGES_IN_THREADS (1<<38)
+  //   = 309237713920。ブリーフ別スレッド（タスク管理 v2）に必要。
+  //   以前（2048 = SEND_MESSAGES のみ）で招待済みのサーバーは再招待で権限を更新する
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: callbackUrl,
     response_type: 'code',
     scope: 'bot applications.commands',
-    permissions: '2048',
+    permissions: '309237713920',
     state: nonce,
   });
   const authUrl = `https://discord.com/oauth2/authorize?${params.toString()}`;

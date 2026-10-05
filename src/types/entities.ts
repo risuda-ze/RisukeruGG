@@ -211,6 +211,14 @@ export interface DiscordTeamConfig {
   notifyOnCollabResponse: boolean; // コラボ調整への回答時に通知
   notifyBefore1h: boolean;        // スケジュール開始1時間前にリマインダー通知
   notifyBefore15min: boolean;     // スケジュール開始15分前にリマインダー通知
+  /* ── タスク管理 v2（ブリーフ）連携（IN-023〜） ── */
+  briefThreadsEnabled?: boolean;  // ブリーフごとにスレッドを立てる（既定 true）
+  briefChannelId?: string;        // スレッドの親チャンネル。未設定は channelId
+  briefChannelName?: string;
+  digestEnabled?: boolean;        // 朝ダイジェスト（既定 true）
+  digestChannelId?: string;       // ダイジェスト送信先。未設定は channelId
+  digestChannelName?: string;
+  digestTime?: string;            // 'HH:00'（JST）。既定 '09:00'
 }
 
 // discord_sessions/{guildId} の型（Sprint 3 AI ボット用）

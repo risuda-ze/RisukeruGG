@@ -39,6 +39,19 @@
 - **IN-019**: 「登録する」「修正する」は提案を発行させた Discord ユーザー本人のみ操作できる（`initiatorDiscordUserId` と照合）。「キャンセル」は誰でも操作できる
 - **IN-020**: 登録確定時は保存済み提案データを Zod スキーマで全件再検証してから（1 件でも無効なら全件拒否）、Admin SDK でスケジュール・タスク・コラボの登録およびタスクの部分更新（`task_update`）を全件実行し、完了後にセッションを削除する。「修正する」は確認待ち提案のみ破棄し、会話履歴は保持する
 
+## タスク管理 v2（ブリーフ）との連携（2026-09 追加）
+
+- **IN-023**: ブリーフ連携の設定は `teams/{teamId}/discord/config` に `briefThreadsEnabled`（既定 true）/ `briefChannelId` / `briefChannelName`（スレッドの親チャンネル。未設定は `channelId`）/ `digestEnabled`（既定 true）/ `digestChannelId` / `digestChannelName`（未設定は `channelId`）/ `digestTime`（`HH:00`、JST、既定 `09:00`）として保持する。`operator` が `/integrations/discord` の「タスク管理 v2（ブリーフ）」から設定し、更新 API（`POST /api/discord/update-brief-settings`）はチャンネル ID を Bot トークンで取得した実チャンネル一覧と照合する
+- **IN-024**: ブリーフ作成時（Firestore トリガー）に、親チャンネルへ**公開スレッド**（名前 = ブリーフのタイトル、7 日で自動アーカイブ）を作り、先頭に**要約メッセージ**（タイトル・状態・公開予定日・進捗・工程ごとの状態/担当/締切/超過/入力待ち・Web の URL）を投稿して `Brief.discord = { threadId, summaryMessageId, channelId }` に記録する。以後、ブリーフのタイトル・公開予定日・状態、工程の状態・担当・締切・タイトルが変わるたびに Bot が同じメッセージを編集する。Discord はスレッドの入れ子を持たないため、工程ごとのスレッドは作らない
+- **IN-025**: 工程が `ready` になったとき、スレッドへ**着手可能通知**を投稿する。本文は「【工程名】@担当 着手できます。締切 M/D」に必要情報の未入力一覧を添え、ボタンは **完了**（`step_done:{teamId}:{briefId}:{stepId}`）/ **着手**（`step_start:...`）/ **Web で開く**（リンク）。二重投稿を避けるため、投稿前にトランザクションで `Step.discordMessageId` を予約する。担当者のメンションは IN-015-1 の解決を使い、未解決なら表示名に「個人設定で Discord ユーザー名を登録するとメンションで届きます」を添える
+  - **IN-025-1**: ボタンはサーバーの誰でも押せる。Interactions Endpoint は `custom_id` の teamId とサーバーの guildId が連携済みであることを確認してから、操作層（`changeStepStatus`）を Discord 由来（`actorId: null`、role なし、`source: discord`）で実行する。誰が押したかは記録しない（IN-015-3）
+  - **IN-025-2**: 成功時は元メッセージを即時に書き換え（完了はボタンなし、着手は完了ボタンのみ残す）、要約の更新と後続工程の通知は Firestore トリガーが行う。遷移できない場合（待機中の工程を完了にする等）は理由をフォローアップで返す
+  - **IN-025-3**: 工程が `done` / `skipped` になったら通知メッセージを書き換えてボタンを外す
+- **IN-026**: Bot 招待の権限は `VIEW_CHANNEL + SEND_MESSAGES + READ_MESSAGE_HISTORY + CREATE_PUBLIC_THREADS + SEND_MESSAGES_IN_THREADS`（`309237713920`）とする。旧権限（`2048`）で招待済みのサーバーは「Botをサーバーに追加」の再実行で権限を更新する。設定画面にその旨を案内する
+- **IN-027**: **朝ダイジェスト**は Cloud Scheduler（毎時 0 分、JST）で起動し、チームの `digestTime` の時と一致するチームだけに 1 日 1 回送る。内容は「今日が締切 / 締切を過ぎています（超過日数付き） / 担当が決まっていません / 入力待ち（未入力項目付き） / 昨日からの変更（新規ブリーフ・公開日変更・完了数・担当変更数）」で、該当なしの節は省略し、すべて該当なしなら投稿しない。対象は `planning` / `in_progress` のブリーフの `ready` / `in_progress` の工程
+- **IN-028**: **締切前リマインド**はダイジェストと同時刻に、`daysUntilDue === Step.reminderDaysBefore` の未完了工程について担当者へメンションで送る。送信先はブリーフのスレッド（未作成ならダイジェストの送信先）。担当未定は「担当未定」と表示する（operator へのメンションは行わない）
+- **IN-029**: ブリーフ関連の投稿はスレッド・ダイジェスト先で完結させ、既存の通知チャンネル向けトグル（IN-003）には影響しない。Discord への送信失敗はログのみで、ブリーフ・工程の処理本体を失敗させない（IN-005 と同じ）
+
 ## セキュリティ・運用条件
 
 - **IN-021**: `discord_sessions` / `discord_bot_invite_requests` / `discord_bot_invite_pending` はいずれも Admin SDK（サーバーサイド）専用とし、Firestore ルールでクライアントからのアクセスを全面禁止する
