@@ -9,29 +9,32 @@ overrides:
   # 固定値ではなく下限付き範囲にして、次回以降のパッチ版へ追従できるようにする。
   qs: '>=6.16.0 <7'
   uuid: 11.1.1
-  # @grpc/grpc-js <1.14.4 の脆弱性対応。firestore は ~1.9.0 固定のためバックポート版 1.9.16 を、
-  # google-gax は ^1.10.9 のため 1.14.4 をそれぞれパッチ範囲内で強制適用する。
-  '@grpc/grpc-js@~1.9.0': 1.9.16
-  '@grpc/grpc-js@>=1.10.0 <1.14.4': 1.14.4
+  # @grpc/grpc-js <1.14.5 の脆弱性対応。@firebase/firestore は ~1.9.0 固定だが 1.9 系には
+  # 修正版のバックポートが無い（修正は 1.13.6 / 1.14.5 のみ）ため、全経路を 1.14 系へ統一する。
+  '@grpc/grpc-js': '>=1.14.5 <2'
   # Dependabot alert 対応（トランジティブ依存の脆弱性修正）
   vite: '>=8.0.16'
   protobufjs: '>=7.6.5 <8'
   form-data: '>=2.5.6'
-  undici: '>=7.29.0 <8'
+  undici: '>=7.29.1 <8'
   '@babel/core': '>=7.29.6'
   js-yaml: '>=4.3.2 <5'
   websocket-driver: '>=0.7.5'
-  fast-uri: '>=3.1.6 <4'
+  fast-uri: '>=3.1.8 <4'
   browserslist: '>=4.28.7 <5'
   # 不正入力でプロセスが終了する DoS（<2.11.0）。古い版が lockfile に残るため範囲で強制
   baseline-browser-mapping: '>=2.11.0 <3'
   # ai / @ai-sdk/anthropic 経由のトランジティブ依存（リソース消費の脆弱性）
   '@ai-sdk/provider-utils': '>=4.0.33 <5'
   body-parser: '>=1.20.6 <2'
-  'brace-expansion@<2': '>=1.1.16 <2'
-  'brace-expansion@>=3': '>=5.0.9'
+  'brace-expansion@<2': '>=1.1.21 <2'
+  'brace-expansion@>=3': '>=5.0.12'
   # next の optionalDependency が sharp 0.34.x を解決するため強制的にパッチ済みへ
   sharp: '>=0.35.4 <1'
+  # react-big-calendar 経由。ReDoS（<2.31.0）
+  moment: '>=2.31.0 <3'
+  # firebase-admin 経由。multipart 解析の DoS（<3.2.1）
+  '@fastify/busboy': '>=3.2.1 <4'
 
 allowBuilds:
   sharp: true
