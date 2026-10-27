@@ -13,28 +13,34 @@ overrides:
   # 修正版のバックポートが無い（修正は 1.13.6 / 1.14.5 のみ）ため、全経路を 1.14 系へ統一する。
   '@grpc/grpc-js': '>=1.14.5 <2'
   # Dependabot alert 対応（トランジティブ依存の脆弱性修正）
-  vite: '>=8.0.16'
+  vite: '>=8.1.6 <9'
   protobufjs: '>=7.6.5 <8'
   form-data: '>=2.5.6'
-  undici: '>=7.29.1 <8'
+  undici: '>=7.30.1 <8'
   '@babel/core': '>=7.29.6'
   js-yaml: '>=4.3.2 <5'
   websocket-driver: '>=0.7.5'
-  fast-uri: '>=3.1.8 <4'
+  fast-uri: '>=3.1.9 <4'
   browserslist: '>=4.28.7 <5'
   # 不正入力でプロセスが終了する DoS（<2.11.0）。古い版が lockfile に残るため範囲で強制
   baseline-browser-mapping: '>=2.11.0 <3'
   # ai / @ai-sdk/anthropic 経由のトランジティブ依存（リソース消費の脆弱性）
   '@ai-sdk/provider-utils': '>=4.0.33 <5'
-  body-parser: '>=1.20.6 <2'
+  body-parser: '>=1.20.9 <2'
   'brace-expansion@<2': '>=1.1.21 <2'
   'brace-expansion@>=3': '>=5.0.12'
   # next の optionalDependency が sharp 0.34.x を解決するため強制的にパッチ済みへ
-  sharp: '>=0.35.4 <1'
+  sharp: '>=0.35.5 <1'
   # react-big-calendar 経由。ReDoS（<2.31.0）
   moment: '>=2.31.0 <3'
   # firebase-admin 経由。multipart 解析の DoS（<3.2.1）
   '@fastify/busboy': '>=3.2.1 <4'
+  # firebase-functions(express) 経由。IPv4-mapped IPv6 による IP 偽装（<2.0.8）
+  proxy-addr: '>=2.0.8 <3'
+  # postcss / css-tree 経由。indexed source map による DoS（<1.2.2）
+  source-map-js: '>=1.2.2 <2'
+  # eslint-plugin-react-hooks が 4.4.3 を解決し続けるため範囲で強制（メモリ枯渇、<4.6.6）
+  zod: '>=4.6.6 <5'
 
 allowBuilds:
   sharp: true
@@ -42,3 +48,19 @@ allowBuilds:
   '@firebase/util': true
   protobufjs: true
   '@sentry/cli': true
+
+minimumReleaseAgeExclude:
+  - '@sentry/browser-utils@10.77.1'
+  - '@sentry/browser@10.77.1'
+  - '@sentry/bundler-plugins@10.77.1'
+  - '@sentry/core@10.77.1'
+  - '@sentry/feedback@10.77.1'
+  - '@sentry/nextjs@10.77.1'
+  - '@sentry/node-core@10.77.1'
+  - '@sentry/node@10.77.1'
+  - '@sentry/opentelemetry@10.77.1'
+  - '@sentry/react@10.77.1'
+  - '@sentry/replay-canvas@10.77.1'
+  - '@sentry/replay@10.77.1'
+  - '@sentry/server-utils@10.77.1'
+  - '@sentry/vercel-edge@10.77.1'
