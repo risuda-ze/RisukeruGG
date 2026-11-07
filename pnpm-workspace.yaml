@@ -7,7 +7,7 @@ overrides:
   serialize-javascript: 7.0.5
   # qs: express4/body-parser が ~6.15.1、stripe が ^6.11.0 のため 6.16.0 へ自然到達できず範囲で強制。
   # 固定値ではなく下限付き範囲にして、次回以降のパッチ版へ追従できるようにする。
-  qs: '>=6.16.0 <7'
+  qs: '>=6.16.1 <7'
   uuid: 11.1.1
   # @grpc/grpc-js <1.14.5 の脆弱性対応。@firebase/firestore は ~1.9.0 固定だが 1.9 系には
   # 修正版のバックポートが無い（修正は 1.13.6 / 1.14.5 のみ）ため、全経路を 1.14 系へ統一する。
@@ -41,6 +41,11 @@ overrides:
   source-map-js: '>=1.2.2 <2'
   # eslint-plugin-react-hooks が 4.4.3 を解決し続けるため範囲で強制（メモリ枯渇、<4.6.6）
   zod: '>=4.6.6 <5'
+  # @sentry/bundler-plugins が glob ^13 を解決し続けるため範囲で強制。
+  # AbortSignal 無視による走査継続（<14.0.2）と globparts 増幅の DoS（minimatch <11.0.1）。
+  # minimatch@3 系（eslint 経由）は対象外なのでセレクタで 7 以上に限定する
+  'glob@>=9': '>=14.0.2 <15'
+  'minimatch@>=7': '>=11.0.1 <12'
 
 allowBuilds:
   sharp: true
