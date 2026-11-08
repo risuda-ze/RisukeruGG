@@ -12,6 +12,7 @@ import { Card, CardHeader } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
+import { BriefsLoadError } from '@/components/briefs/BriefsLoadError';
 import { PlaybookEditor } from '@/components/briefs/PlaybookEditor';
 import type { Playbook } from '@/types/briefs';
 
@@ -31,6 +32,7 @@ export default function PlaybooksPage() {
   const members = useAuthStore((s) => s.members);
   const playbooks = useBriefsStore((s) => s.playbooks);
   const loading = useBriefsStore((s) => s.loading);
+  const loadError = useBriefsStore((s) => s.error);
   const subscribe = useBriefsStore((s) => s.subscribe);
   const briefOps = useBriefOps();
   const [editor, setEditor] = useState<EditorState>({ mode: 'closed' });
@@ -89,7 +91,9 @@ export default function PlaybooksPage() {
           </Card>
         )}
 
-        {loading ? (
+        {loadError ? (
+          <BriefsLoadError message={loadError} />
+        ) : loading ? (
           <div className="flex justify-center py-16">
             <Spinner size="lg" />
           </div>
