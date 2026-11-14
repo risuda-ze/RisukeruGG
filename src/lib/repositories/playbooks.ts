@@ -10,6 +10,7 @@ import {
   serverTimestamp,
   Timestamp,
   updateDoc,
+  type FirestoreError,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
@@ -71,11 +72,19 @@ function serializeSteps(steps: StepDef[]) {
 
 const playbooksCol = (teamId: string) => collection(db, 'teams', teamId, 'playbooks');
 
-export function subscribePlaybooks(teamId: string, callback: (playbooks: Playbook[]) => void): Unsubscribe {
+export function subscribePlaybooks(
+  teamId: string,
+  callback: (playbooks: Playbook[]) => void,
+  onError?: (err: FirestoreError) => void
+): Unsubscribe {
   const q = query(playbooksCol(teamId), orderBy('createdAt', 'asc'));
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => toPlaybook(d.id, d.data() as Record<string, unknown>)));
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      callback(snap.docs.map((d) => toPlaybook(d.id, d.data() as Record<string, unknown>)));
+    },
+    onError
+  );
 }
 
 export async function createPlaybook(teamId: string, input: PlaybookInput): Promise<string> {

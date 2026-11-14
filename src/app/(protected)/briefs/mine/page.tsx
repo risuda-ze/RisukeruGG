@@ -7,6 +7,7 @@ import { useBriefsStore } from '@/stores/briefs';
 import { TopBar } from '@/components/layout/TopBar';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
+import { BriefsLoadError } from '@/components/briefs/BriefsLoadError';
 import { Icon } from '@/components/ui/Icon';
 import { StepAlertBadges, StepStatusBadge } from '@/components/briefs/StepStatusBadge';
 import { formatShortDate } from '@/lib/briefs/format';
@@ -22,6 +23,7 @@ export default function MyStepsPage() {
   const briefs = useBriefsStore((s) => s.briefs);
   const steps = useBriefsStore((s) => s.steps);
   const loading = useBriefsStore((s) => s.loading);
+  const loadError = useBriefsStore((s) => s.error);
   const subscribe = useBriefsStore((s) => s.subscribe);
 
   const teamId = currentTeam?.id;
@@ -58,7 +60,9 @@ export default function MyStepsPage() {
         </Link>
       </TopBar>
       <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 max-w-2xl">
-        {loading ? (
+        {loadError ? (
+          <BriefsLoadError message={loadError} />
+        ) : loading ? (
           <div className="flex justify-center py-16">
             <Spinner size="lg" />
           </div>

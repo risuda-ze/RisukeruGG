@@ -11,6 +11,7 @@ import {
   writeBatch,
   getDocs,
   addDoc,
+  type FirestoreError,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
@@ -30,43 +31,69 @@ const commentsCol = (teamId: string, briefId: string, stepId: string) =>
 
 /* ── 購読 ─────────────────────────────────────────────── */
 
-export function subscribeBriefs(teamId: string, callback: (briefs: Brief[]) => void): Unsubscribe {
+export function subscribeBriefs(
+  teamId: string,
+  callback: (briefs: Brief[]) => void,
+  onError?: (err: FirestoreError) => void
+): Unsubscribe {
   const q = query(briefsCol(teamId), orderBy('createdAt', 'desc'));
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => toBrief(teamId, d.id, d.data() as Record<string, unknown>)));
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      callback(snap.docs.map((d) => toBrief(teamId, d.id, d.data() as Record<string, unknown>)));
+    },
+    onError
+  );
 }
 
 /** チーム内の全工程（コレクショングループ）。自分の工程一覧・一覧の進捗表示に使う */
-export function subscribeTeamSteps(teamId: string, callback: (steps: Step[]) => void): Unsubscribe {
+export function subscribeTeamSteps(
+  teamId: string,
+  callback: (steps: Step[]) => void,
+  onError?: (err: FirestoreError) => void
+): Unsubscribe {
   const q = query(collectionGroup(db, 'steps'), where('teamId', '==', teamId));
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => toStep(d.id, d.data() as Record<string, unknown>)));
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      callback(snap.docs.map((d) => toStep(d.id, d.data() as Record<string, unknown>)));
+    },
+    onError
+  );
 }
 
 export function subscribeStepComments(
   teamId: string,
   briefId: string,
   stepId: string,
-  callback: (comments: StepComment[]) => void
+  callback: (comments: StepComment[]) => void,
+  onError?: (err: FirestoreError) => void
 ): Unsubscribe {
   const q = query(commentsCol(teamId, briefId, stepId), orderBy('createdAt', 'asc'));
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => toStepComment(d.id, d.data() as Record<string, unknown>)));
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      callback(snap.docs.map((d) => toStepComment(d.id, d.data() as Record<string, unknown>)));
+    },
+    onError
+  );
 }
 
 export function subscribeBriefEvents(
   teamId: string,
   briefId: string,
   callback: (events: BriefEvent[]) => void,
+  onError?: (err: FirestoreError) => void,
   max = 50
 ): Unsubscribe {
   const q = query(eventsCol(teamId, briefId), orderBy('createdAt', 'desc'), limit(max));
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => toBriefEvent(d.id, d.data() as Record<string, unknown>)));
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      callback(snap.docs.map((d) => toBriefEvent(d.id, d.data() as Record<string, unknown>)));
+    },
+    onError
+  );
 }
 
 export async function addStepComment(

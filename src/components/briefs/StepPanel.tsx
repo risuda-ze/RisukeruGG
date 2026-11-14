@@ -14,6 +14,7 @@ import { canTransition, missingRequiredFields } from '@/lib/briefs/transitions';
 import { formatDateTime, fromDateInputValue, toDateInputValue } from '@/lib/briefs/format';
 import { stepCommentInputSchema } from '@/lib/validations/briefs';
 import { useAuthStore } from '@/stores/auth';
+import { briefsLoadErrorMessage } from '@/stores/briefs';
 import type { Step, StepComment, StepStatus } from '@/types/briefs';
 import type { TeamMember } from '@/types/entities';
 
@@ -52,7 +53,10 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
 
   useEffect(() => {
     if (!teamId) return;
-    return subscribeStepComments(teamId, step.briefId, step.id, setComments);
+    // コメントの読み取りが拒否されても画面に理由を出す
+    return subscribeStepComments(teamId, step.briefId, step.id, setComments, (err) =>
+      setError(briefsLoadErrorMessage(err))
+    );
   }, [teamId, step.briefId, step.id]);
 
   async function run(action: () => Promise<unknown>) {

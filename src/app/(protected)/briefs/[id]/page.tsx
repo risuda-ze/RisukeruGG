@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
-import { useBriefsStore, selectStepsOfBrief } from '@/stores/briefs';
+import { briefsLoadErrorMessage, selectStepsOfBrief, useBriefsStore } from '@/stores/briefs';
 import { useBriefOps } from '@/hooks/useBriefOps';
 import { createPlaybook } from '@/lib/repositories/playbooks';
 import { subscribeBriefEvents } from '@/lib/repositories/briefs';
@@ -14,6 +14,7 @@ import { TopBar } from '@/components/layout/TopBar';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
+import { BriefsLoadError } from '@/components/briefs/BriefsLoadError';
 import { Icon } from '@/components/ui/Icon';
 import { BriefHeader } from '@/components/briefs/BriefHeader';
 import { StepRow } from '@/components/briefs/StepRow';
@@ -69,6 +70,7 @@ export default function BriefDetailPage() {
   const briefs = useBriefsStore((s) => s.briefs);
   const allSteps = useBriefsStore((s) => s.steps);
   const loading = useBriefsStore((s) => s.loading);
+  const loadError = useBriefsStore((s) => s.error);
   const subscribe = useBriefsStore((s) => s.subscribe);
   const briefOps = useBriefOps();
 
@@ -86,7 +88,10 @@ export default function BriefDetailPage() {
   }, [teamId, subscribe]);
   useEffect(() => {
     if (!teamId || !showEvents) return;
-    return subscribeBriefEvents(teamId, briefId, setEvents);
+    // 差分の読み取りが拒否されても画面に理由を出す（一覧側の購読エラーと同じ文言）
+    return subscribeBriefEvents(teamId, briefId, setEvents, (err) =>
+      setError(briefsLoadErrorMessage(err))
+    );
   }, [teamId, briefId, showEvents]);
 
   const brief = briefs.find((b) => b.id === briefId) ?? null;
@@ -122,6 +127,16 @@ export default function BriefDetailPage() {
     }
   }
 
+  if (loadError && !brief) {
+    return (
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <TopBar title="ブリーフ" />
+        <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 max-w-lg">
+          <BriefsLoadError message={loadError} />
+        </div>
+      </div>
+    );
+  }
   if (loading && !brief) {
     return (
       <div className="flex flex-col flex-1 overflow-hidden">
