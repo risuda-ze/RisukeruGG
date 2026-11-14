@@ -9,6 +9,7 @@ import { TopBar } from '@/components/layout/TopBar';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
+import { BriefsLoadError } from '@/components/briefs/BriefsLoadError';
 import { Icon } from '@/components/ui/Icon';
 import { Badge } from '@/components/ui/Badge';
 import { BriefCard } from '@/components/briefs/BriefCard';
@@ -29,6 +30,7 @@ export default function BriefsPage() {
   const steps = useBriefsStore((s) => s.steps);
   const playbooks = useBriefsStore((s) => s.playbooks);
   const loading = useBriefsStore((s) => s.loading);
+  const loadError = useBriefsStore((s) => s.error);
   const subscribe = useBriefsStore((s) => s.subscribe);
   const briefOps = useBriefOps();
 
@@ -115,7 +117,9 @@ export default function BriefsPage() {
           </div>
         </div>
 
-        {loading ? (
+        {loadError ? (
+          <BriefsLoadError message={loadError} />
+        ) : loading ? (
           <div className="flex justify-center py-16">
             <Spinner size="lg" />
           </div>
