@@ -16,7 +16,8 @@ overrides:
   vite: '>=8.1.6 <9'
   protobufjs: '>=7.6.5 <8'
   form-data: '>=2.5.6'
-  undici: '>=7.30.1 <8'
+  # fetch() の SRI 検証バイパス等 6 件の修正（<7.30.2）
+  undici: '>=7.30.2 <8'
   '@babel/core': '>=7.29.6'
   js-yaml: '>=4.3.2 <5'
   websocket-driver: '>=0.7.5'
