@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
-import { useBriefsStore, selectStepsOfBrief } from '@/stores/briefs';
+import { briefsLoadErrorMessage, selectStepsOfBrief, useBriefsStore } from '@/stores/briefs';
 import { useBriefOps } from '@/hooks/useBriefOps';
 import { createPlaybook } from '@/lib/repositories/playbooks';
 import { subscribeBriefEvents } from '@/lib/repositories/briefs';
@@ -88,7 +88,10 @@ export default function BriefDetailPage() {
   }, [teamId, subscribe]);
   useEffect(() => {
     if (!teamId || !showEvents) return;
-    return subscribeBriefEvents(teamId, briefId, setEvents);
+    // 差分の読み取りが拒否されても画面に理由を出す（一覧側の購読エラーと同じ文言）
+    return subscribeBriefEvents(teamId, briefId, setEvents, (err) =>
+      setError(briefsLoadErrorMessage(err))
+    );
   }, [teamId, briefId, showEvents]);
 
   const brief = briefs.find((b) => b.id === briefId) ?? null;

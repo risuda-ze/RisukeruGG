@@ -66,24 +66,34 @@ export function subscribeStepComments(
   teamId: string,
   briefId: string,
   stepId: string,
-  callback: (comments: StepComment[]) => void
+  callback: (comments: StepComment[]) => void,
+  onError?: (err: FirestoreError) => void
 ): Unsubscribe {
   const q = query(commentsCol(teamId, briefId, stepId), orderBy('createdAt', 'asc'));
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => toStepComment(d.id, d.data() as Record<string, unknown>)));
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      callback(snap.docs.map((d) => toStepComment(d.id, d.data() as Record<string, unknown>)));
+    },
+    onError
+  );
 }
 
 export function subscribeBriefEvents(
   teamId: string,
   briefId: string,
   callback: (events: BriefEvent[]) => void,
+  onError?: (err: FirestoreError) => void,
   max = 50
 ): Unsubscribe {
   const q = query(eventsCol(teamId, briefId), orderBy('createdAt', 'desc'), limit(max));
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => toBriefEvent(d.id, d.data() as Record<string, unknown>)));
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      callback(snap.docs.map((d) => toBriefEvent(d.id, d.data() as Record<string, unknown>)));
+    },
+    onError
+  );
 }
 
 export async function addStepComment(
