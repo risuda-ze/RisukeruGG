@@ -1,48 +1,85 @@
 ---
 name: RisukeruGG design system
-description: Light "lavender observatory" design system for RisukeruGG — streamer task & schedule management app
-theme: light
+description: "Lavender observatory" design system for RisukeruGG — streamer task & schedule management app. Dark by default, light as alternate theme
+theme: dark
+themes: [dark, light]
 version: 3
+# 役割名は両テーマ共通。値だけがテーマで変わる。dark は light から OKLCH で明度を反転して導出
 colors:
-  # 基調
-  canvas: '#fcf9f5' # Parchment — ページ背景
-  surface: '#f3ecf7' # Lilac Mist — 1段目の面（テーブル行・セクション背景）
-  surface-2: '#eadff8' # Lavender Veil — テーブルヘッダー・フッター・区切り
-  card: '#ffffff' # Pure — カード・モーダル・入力欄
-  border: '#eadff8' # Lavender Veil — 既定の枡線（1px）
-  border-strong: '#4d3e78' # Deep Iris — 強い枡線（ゴーストボタン・フォーカス）
-
-  # ブランド（紫）
-  brand: '#4d3e78' # Deep Iris — 文字・アイコン・枡線の基本色
-  brand-2: '#6956a8' # Amethyst — 補足文字・2次枡線
-  primary: '#745fbb' # Iris Glow — 唯一の塗りボタン色
-  primary-hover: '#6956a8'
-  primary-active: '#4d3e78'
-
-  # テキスト
-  text: '#4d3e78' # Deep Iris — 本文・見出し（parchment 上 8.8:1）
-  text-2: '#6956a8' # Amethyst — 補足（parchment 上 5.7:1）
-  text-muted: '#7f72ac' # placeholder・大きい補足のみ（parchment 上 4.1:1）
-  text-disabled: '#b8afd4'
-  text-on-primary: '#ffffff' # primary 上 5.1:1
-
-  # セマンティック（ファミリーから割り当て）
-  success: '#1f7a57' # Forest Fern
-  success-tint: '#e9f3e7' # Licheno
-  warning: '#b74d1a' # Tangerine
-  warning-tint: '#feede0' # Apricot Wash
-  danger: '#a53c3a' # Crimson
-  danger-tint: '#ffdce8' # Rose Quartz
-  info: '#3c699b' # Cobalt
-  info-tint: '#ccdcf8' # Sky Tint
-  live: '#e14f4c' # Vermilion — LIVE ドットのみ（文字には使わない）
-
-  # カラーファミリー（カテゴリ色・チーム色・カード種別）: tint + border + text
-  family-pink: { tint: '#ffdce8', border: '#a54b7a', text: '#803218' }
-  family-orange: { tint: '#feede0', border: '#b74d1a', text: '#b74d1a' }
-  family-green: { tint: '#e9f3e7', border: '#1f7a57', text: '#1f7a57' }
-  family-blue: { tint: '#ccdcf8', border: '#3c699b', text: '#4d3e78' }
-  family-teal: { tint: '#f3ecf7', border: '#058380', text: '#4d3e78' }
+  dark:
+    # 基調（暗 → 明 で段を積む）
+    canvas: '#100c1c' # ページ背景
+    surface: '#191528' # 1段目の面（サイドバー・テーブル行）
+    card: '#211c33' # カード・モーダル・入力欄（最前面）
+    surface-2: '#2c273f' # テーブルヘッダー・区切り・hover
+    border: '#36314c' # 既定の枡線（1px）。面より明るい
+    border-strong: '#b9b1d9' # ゴーストボタン・フォーカス
+    # ブランド（紫）
+    brand: '#e8e4fd' # 文字・アイコン・枡線の基本色（= text）
+    brand-2: '#b8afe5'
+    primary: '#7d68c5' # 唯一の塗りボタン色（白文字 4.5:1）
+    primary-hover: '#8e7ad9'
+    primary-active: '#6c56b1'
+    # テキスト
+    text: '#e8e4fd' # canvas 上 15.5:1
+    text-2: '#b8afe5' # canvas 上 9.4:1
+    text-muted: '#8d86aa' # canvas 上 5.6:1
+    text-disabled: '#5c5868'
+    text-on-primary: '#ffffff'
+    text-on-danger: '#100c1c' # 明るい danger の上は白が足りないため canvas 色
+    # セマンティック
+    success: '#64b892'
+    success-tint: '#222d34'
+    warning: '#f18153'
+    warning-tint: '#3a242b'
+    danger: '#e65850'
+    danger-tint: '#2d1926'
+    info: '#79a8de'
+    info-tint: '#252941'
+    live: '#fb6762' # LIVE ドットのみ
+    # カラーファミリー: tint + border + text
+    family-pink: { tint: '#372339', border: '#e181b0', text: '#feafd4' }
+    family-orange: { tint: '#3a242b', border: '#f18153', text: '#feb79b' }
+    family-green: { tint: '#222d34', border: '#64b892', text: '#8bdfb7' }
+    family-blue: { tint: '#252941', border: '#79a8de', text: '#a5cefe' }
+    family-teal: { tint: '#202c3a', border: '#53b7b4', text: '#7bdeda' }
+  light:
+    # 基調
+    canvas: '#fcf9f5' # Parchment — ページ背景
+    surface: '#f3ecf7' # Lilac Mist — 1段目の面
+    card: '#ffffff' # Pure — カード・モーダル・入力欄
+    surface-2: '#eadff8' # Lavender Veil — テーブルヘッダー・区切り
+    border: '#eadff8' # 既定の枡線（1px）
+    border-strong: '#4d3e78' # Deep Iris — ゴーストボタン・フォーカス
+    # ブランド（紫）
+    brand: '#4d3e78' # Deep Iris
+    brand-2: '#6956a8' # Amethyst
+    primary: '#745fbb' # Iris Glow
+    primary-hover: '#6956a8'
+    primary-active: '#4d3e78'
+    # テキスト
+    text: '#4d3e78' # canvas 上 8.8:1
+    text-2: '#6956a8' # canvas 上 5.7:1
+    text-muted: '#7f72ac' # placeholder・大きい補足のみ（4.1:1）
+    text-disabled: '#b8afd4'
+    text-on-primary: '#ffffff' # primary 上 5.1:1
+    text-on-danger: '#ffffff' # danger 上 6.4:1
+    # セマンティック
+    success: '#1f7a57' # Forest Fern
+    success-tint: '#e9f3e7' # Licheno
+    warning: '#b74d1a' # Tangerine
+    warning-tint: '#feede0' # Apricot Wash
+    danger: '#a53c3a' # Crimson
+    danger-tint: '#ffdce8' # Rose Quartz
+    info: '#3c699b' # Cobalt
+    info-tint: '#ccdcf8' # Sky Tint
+    live: '#e14f4c' # Vermilion — LIVE ドットのみ
+    # カラーファミリー: tint + border + text
+    family-pink: { tint: '#ffdce8', border: '#a54b7a', text: '#803218' }
+    family-orange: { tint: '#feede0', border: '#b74d1a', text: '#b74d1a' }
+    family-green: { tint: '#e9f3e7', border: '#1f7a57', text: '#1f7a57' }
+    family-blue: { tint: '#ccdcf8', border: '#3c699b', text: '#4d3e78' }
+    family-teal: { tint: '#f3ecf7', border: '#058380', text: '#4d3e78' }
 
 typography:
   # システムフォントのみ（Web フォントは読み込まない）。見出しも本文も同じスタック。
@@ -74,22 +111,23 @@ rounded:
 elevation: none # 影は使わない。枡線と面の色で奥行きを出す
 ---
 
-# RisukeruGG デザインシステム v3（ライト）
+# RisukeruGG デザインシステム v3
 
 **App**: RisukeruGG — 配信者向けのタスク管理・スケジュール管理アプリ
-**Brand**: 温かみのあるオフホワイトのキャンバスに、濃い紫がインクのように乗る。影を使わず、淡い面と鮮やかな枡線で奥行きを作る「標本カード」の世界観。
+**Brand**: 紫がかったキャンバスに、ラベンダーの文字と鮮やかな枡線が乗る。影を使わず、面の段差と枡線で奥行きを作る「標本カード」の世界観。
 **Platform**: スマホ（Android / iOS）＋ PC。Web（Next.js）で両対応。
+**Theme**: **既定はダーク**。ライトは `[data-theme="light"]` の代替テーマ。両テーマは同じ役割名のトークンを持ち、値だけが変わる。ダークの値はライトから OKLCH で明度を反転して導出した（`docs/DESIGN-theme-preview.html` で並べて確認できる）。
 
-v2（ネオンパープル・ダーク）は廃止。ダークテーマは別 PR で `[data-theme="dark"]` として追加する（後述）。
+v2（ネオンパープル）は廃止。v2 の配色は再利用しない。
 
 ---
 
 ## 0. 原則
 
-1. **ページ背景は Parchment `#fcf9f5`**。純白 `#ffffff` はカード・モーダル・入力欄にだけ使う。
-2. **文字・アイコン・枡線の基本色は Deep Iris `#4d3e78`**。黒 `#000` と無彩色グレーは使わない。
-3. **塗りボタンは Iris Glow `#745fbb` のみ**。2次アクションは Deep Iris のゴースト枡線。
-4. **影を使わない**。奥行きは「Parchment → 淡い面 → 白」の面の段差と、2px の枡線で表す。
+1. **ページ背景は `--canvas`**（dark `#100c1c` / light `#fcf9f5`）。最前面の `--card` はダークでは最も明るい紫黒、ライトでは純白。
+2. **文字・アイコン・枡線の基本色は `--text`**（dark `#e8e4fd` / light `#4d3e78`）。黒 `#000`・純白の文字・無彩色グレーは使わない。
+3. **塗りボタンは `--primary` のみ**（dark `#7d68c5` / light `#745fbb`）。2次アクションは `--border-strong` のゴースト枡線。
+4. **影を使わない**。奥行きは面の段差（ダークは暗 → 明、ライトは明 → 白）と 2px の枡線で表す。
 5. **角丸は 14px が基本形**。カード・ボタン・モーダルは全部 14px。タグ・ナビ・入力欄は 7px。
 6. **色を付けたい要素はカラーファミリーから1つ選ぶ**。淡い面（tint）と枡線（border）は同じファミリーから取る。鮮やかな色を広い面に塗らない。
 7. **フォントはシステムフォントの1スタック**。Web フォントは読み込まない。見出しは細いウェイト（300〜400）と負のトラッキングで静かに。
@@ -102,54 +140,69 @@ v2（ネオンパープル・ダーク）は廃止。ダークテーマは別 PR
 
 ### 1.1 色
 
-| 役割 | トークン | 値 | 備考 |
-| --- | --- | --- | --- |
-| ページ背景 | `--canvas` | `#fcf9f5` | Parchment |
-| 面 1 | `--surface` | `#f3ecf7` | Lilac Mist。テーブル行・サイドバー・セクション背景 |
-| 面 2 | `--surface-2` | `#eadff8` | Lavender Veil。テーブルヘッダー・区切り |
-| カード | `--card` | `#ffffff` | カード・モーダル・入力欄・ボトムナビ |
-| 枡線 | `--border` | `#eadff8` | 既定 1px |
-| 強い枡線 | `--border-strong` | `#4d3e78` | ゴーストボタン・フォーカスリング |
-| ブランド | `--brand` | `#4d3e78` | Deep Iris |
-| ブランド 2 | `--brand-2` | `#6956a8` | Amethyst |
-| プライマリ | `--primary` | `#745fbb` | Iris Glow。塗りボタン |
-| プライマリ hover | `--primary-hover` | `#6956a8` | |
-| プライマリ active | `--primary-active` | `#4d3e78` | |
-| 文字 | `--text` | `#4d3e78` | |
-| 文字 2 | `--text-2` | `#6956a8` | |
-| 文字 muted | `--text-muted` | `#7f72ac` | placeholder・補足のみ（4.1:1） |
-| 文字 disabled | `--text-disabled` | `#b8afd4` | |
-| プライマリ上の文字 | `--text-on-primary` | `#ffffff` | |
-| 成功 | `--success` / `--success-tint` | `#1f7a57` / `#e9f3e7` | Forest Fern / Licheno |
-| 警告 | `--warning` / `--warning-tint` | `#b74d1a` / `#feede0` | Tangerine / Apricot |
-| 危険 | `--danger` / `--danger-tint` | `#a53c3a` / `#ffdce8` | Crimson / Rose |
-| 情報 | `--info` / `--info-tint` | `#3c699b` / `#ccdcf8` | Cobalt / Sky |
-| LIVE | `--live` | `#e14f4c` | Vermilion。ドット・アイコンのみ。文字色に使わない（3.7:1） |
+役割名は両テーマ共通。部品は役割名しか参照しない。
+
+| 役割 | トークン | Dark（既定） | Light | 備考 |
+| --- | --- | --- | --- | --- |
+| ページ背景 | `--canvas` | `#100c1c` | `#fcf9f5` | |
+| 面 1 | `--surface` | `#191528` | `#f3ecf7` | サイドバー・テーブル行・セクション背景 |
+| カード | `--card` | `#211c33` | `#ffffff` | カード・モーダル・入力欄・ボトムナビ。最前面 |
+| 面 2 | `--surface-2` | `#2c273f` | `#eadff8` | テーブルヘッダー・区切り・hover |
+| 枡線 | `--border` | `#36314c` | `#eadff8` | 既定 1px。ダークでは面より明るい |
+| 強い枡線 | `--border-strong` | `#b9b1d9` | `#4d3e78` | ゴーストボタン・フォーカスリング |
+| ブランド | `--brand` | `#e8e4fd` | `#4d3e78` | 文字・アイコンの基本色（= text） |
+| ブランド 2 | `--brand-2` | `#b8afe5` | `#6956a8` | リンク・補足 |
+| プライマリ | `--primary` | `#7d68c5` | `#745fbb` | 塗りボタン |
+| プライマリ hover | `--primary-hover` | `#8e7ad9` | `#6956a8` | |
+| プライマリ active | `--primary-active` | `#6c56b1` | `#4d3e78` | |
+| 文字 | `--text` | `#e8e4fd` | `#4d3e78` | |
+| 文字 2 | `--text-2` | `#b8afe5` | `#6956a8` | |
+| 文字 muted | `--text-muted` | `#8d86aa` | `#7f72ac` | placeholder・補足のみ |
+| 文字 disabled | `--text-disabled` | `#5c5868` | `#b8afd4` | |
+| プライマリ上の文字 | `--text-on-primary` | `#ffffff` | `#ffffff` | |
+| danger 上の文字 | `--text-on-danger` | `#100c1c` | `#ffffff` | ダークは明るい danger に白が乗らないため canvas 色 |
+| 成功 | `--success` / `--success-tint` | `#64b892` / `#222d34` | `#1f7a57` / `#e9f3e7` | |
+| 警告 | `--warning` / `--warning-tint` | `#f18153` / `#3a242b` | `#b74d1a` / `#feede0` | |
+| 危険 | `--danger` / `--danger-tint` | `#e65850` / `#2d1926` | `#a53c3a` / `#ffdce8` | |
+| 情報 | `--info` / `--info-tint` | `#79a8de` / `#252941` | `#3c699b` / `#ccdcf8` | |
+| LIVE | `--live` | `#fb6762` | `#e14f4c` | ドット・アイコンのみ。文字色に使わない |
+
+#### ダークの導出規則
+
+ライトの各値から、色相を保ったまま OKLCH の明度を反転する。GitHub / Linear / Notion / Material のライト↔ダーク対応に倣う。
+
+- 面は「暗 → 明」で段を積む（canvas → surface → card → surface-2）。ライトの「白が最前面」を「最も明るい紫黒が最前面」に置き換える
+- 枡線は面より明るくする（ライトは面より暗い）
+- 文字は Deep Iris / Amethyst の色相を保った明るいラベンダー
+- プライマリは白文字 4.5:1 を満たす上限まで1段明るく（L 0.58）
+- danger は彩度を優先して `#e65850`。白文字は 3.6:1 で不足のため、文字は `--text-on-danger`（canvas 色）
+- ファミリーの border は L 0.72 に揃え、tint は border を canvas に 22%（danger は 16%）混ぜた低彩度面、text は L 0.84
 
 #### カラーファミリー（カテゴリ色・チーム色）
 
 ユーザーが選ぶカテゴリ色は、自由な色ではなくこの5ファミリーから選ぶ。カードやチップは `tint` を面、`border` を枡線、`text` を文字に使う。
 
-| ファミリー | tint | border | text | 文字コントラスト（tint 上） |
-| --- | --- | --- | --- | --- |
-| pink | `#ffdce8` | `#a54b7a` | `#803218` | 7.0:1 |
-| orange | `#feede0` | `#b74d1a` | `#b74d1a` | 4.5:1 |
-| green | `#e9f3e7` | `#1f7a57` | `#1f7a57` | 4.6:1 |
-| blue | `#ccdcf8` | `#3c699b` | `#4d3e78` | 6.7:1（Cobalt は 4.1:1 で不足のため Deep Iris） |
-| teal | `#f3ecf7` | `#058380` | `#4d3e78` | 8.0:1（Peacock は 4.0:1 で不足のため Deep Iris） |
+| ファミリー | Dark tint / border / text | Light tint / border / text | 文字コントラスト（dark / light） |
+| --- | --- | --- | --- |
+| pink | `#372339` / `#e181b0` / `#feafd4` | `#ffdce8` / `#a54b7a` / `#803218` | 8.4 / 7.0 |
+| orange | `#3a242b` / `#f18153` / `#feb79b` | `#feede0` / `#b74d1a` / `#b74d1a` | 8.5 / 4.5 |
+| green | `#222d34` / `#64b892` / `#8bdfb7` | `#e9f3e7` / `#1f7a57` / `#1f7a57` | 8.9 / 4.6 |
+| blue | `#252941` / `#79a8de` / `#a5cefe` | `#ccdcf8` / `#3c699b` / `#4d3e78` | 8.7 / 6.7（light は Cobalt 4.1 で不足のため Deep Iris） |
+| teal | `#202c3a` / `#53b7b4` / `#7bdeda` | `#f3ecf7` / `#058380` / `#4d3e78` | 9.0 / 8.0（light は Peacock 4.0 で不足のため Deep Iris） |
 
 #### コントラスト（WCAG、実測）
 
-| 組み合わせ | 比 | 判定 |
-| --- | --- | --- |
-| text `#4d3e78` on canvas / surface / card | 8.8 / 8.0 / 9.2 | AAA |
-| text-2 `#6956a8` on canvas / card | 5.7 / 6.0 | AA |
-| text-2 on Sky `#ccdcf8` | 4.3 | 大きい文字のみ。Sky の上では text を使う |
-| text-muted `#7f72ac` on canvas | 4.1 | 大きい文字・placeholder のみ |
-| white on primary `#745fbb` | 5.1 | AA |
-| white on danger `#a53c3a` | 6.4 | AA |
-| white on success `#1f7a57` | 5.3 | AA |
-| white on live `#e14f4c` | 3.9 | 不可。LIVE は文字を乗せない |
+| 組み合わせ | Dark | Light | 判定 |
+| --- | --- | --- | --- |
+| text on canvas / surface / card | 15.5 / 14.4 / 13.3 | 8.8 / 8.0 / 9.2 | AAA |
+| text-2 on canvas / card | 9.4 / 8.1 | 5.7 / 6.0 | AA |
+| text-2 on info-tint | — | 4.3 | light では Sky 上は text を使う |
+| text-muted on canvas | 5.6 | 4.1 | light は大きい文字・placeholder のみ |
+| text-on-primary on primary | 4.5 | 5.1 | AA |
+| text-on-danger on danger | 5.4 | 6.4 | AA |
+| danger on danger-tint | 4.6 | 5.0 | AA |
+| white on success | — | 5.3 | success の塗りは作らない |
+| live on canvas | 6.6 | 3.7 | LIVE は文字を乗せない |
 
 ### 1.2 タイポグラフィ
 
@@ -206,9 +259,9 @@ shadcn の `--radius` は `--radius-lg`（14px）に合わせる。
 | 0 | `--canvas` | ページ |
 | 1 | `--surface` | サイドバー・テーブル行・セクション背景 |
 | 2 | ファミリー tint | 色付きカード・バッジ |
-| 3 | `--card`（白） | カード・モーダル・入力欄・ドロップダウン |
+| 3 | `--card` | カード・モーダル・入力欄・ドロップダウン（ダークは最も明るい紫黒、ライトは白） |
 
-重なりの表現は「面の段差 + 1px `--border`」が基本。強調したいカードだけ「2px ファミリー border」にする。モーダルのスクリムは `color-mix(in oklab, var(--brand) 40%, transparent)`。
+重なりの表現は「面の段差 + 1px `--border`」が基本。強調したいカードだけ「2px ファミリー border」にする。モーダルのスクリムは `color-mix(in oklab, var(--canvas) 70%, transparent)`。
 
 ### 1.6 モーション
 
@@ -240,7 +293,7 @@ shadcn の `--radius` は `--radius-lg`（14px）に合わせる。
 | primary | `--primary` | なし | white | `--primary-hover` | 画面に1つの主アクション |
 | ghost | 透明 | 1.5px `--border-strong` | `--text` | 背景 `--surface` | 2次アクション |
 | subtle | `--surface` | なし | `--text` | 背景 `--surface-2` | ツールバー・補助操作 |
-| danger | `--danger` | なし | white | 暗く | 削除 |
+| danger | `--danger` | なし | `--text-on-danger` | 暗く | 削除 |
 | link | 透明 | なし | `--brand-2` | 下線 | インライン |
 
 - 角丸 `--radius-lg`、高さ 44px（sm: 36px、lg: 52px）、padding 12px 24px、ウェイト 600。
@@ -289,7 +342,7 @@ shadcn の `--radius` は `--radius-lg`（14px）に合わせる。
 
 - 面 `--card`、1px `--border`、角丸 `--radius-md`。項目は `--radius-sm`、hover `--surface`。
 - 出現 `drop-down` + `fade-in`（base / ease-out）。
-- Tooltip は `--brand` 面 + 白文字、`--radius-sm`。
+- Tooltip は反転配色（`--text` 面 + `--canvas` 文字）、`--radius-sm`。両テーマで成立する。
 
 ### Toast
 
@@ -324,7 +377,7 @@ shadcn の `--radius` は `--radius-lg`（14px）に合わせる。
 - 色を付けるときはファミリーの tint と border を組で使う
 - 見出しは細いウェイト + 負のトラッキング、ラベルは大文字 + 正のトラッキング
 - 塗りボタンは画面に1つ、primary 色のみ
-- ページ背景は Parchment、白はカード以上の段にだけ
+- ページ背景は `--canvas`、最も明るい面（白 / 明るい紫黒）はカード以上の段にだけ
 
 ### Don't
 
@@ -341,41 +394,79 @@ shadcn の `--radius` は `--radius-lg`（14px）に合わせる。
 ```css
 @import 'tailwindcss';
 
-/* ── デザイントークン（正本: docs/DESIGN.md） ───────────────── */
+/* ── テーマ値（正本: docs/DESIGN.md frontmatter）。既定 = dark ──── */
+:root,
+[data-theme='dark'] {
+  --canvas: #100c1c; --surface: #191528; --card: #211c33; --surface-2: #2c273f;
+  --border: #36314c; --border-strong: #b9b1d9;
+  --brand: #e8e4fd; --brand-2: #b8afe5;
+  --primary: #7d68c5; --primary-hover: #8e7ad9; --primary-active: #6c56b1;
+  --text: #e8e4fd; --text-2: #b8afe5; --text-muted: #8d86aa; --text-disabled: #5c5868;
+  --text-on-primary: #ffffff; --text-on-danger: #100c1c;
+  --success: #64b892; --success-tint: #222d34;
+  --warning: #f18153; --warning-tint: #3a242b;
+  --danger: #e65850; --danger-tint: #2d1926;
+  --info: #79a8de; --info-tint: #252941;
+  --live: #fb6762;
+  --pink-tint: #372339;   --pink-border: #e181b0;   --pink-text: #feafd4;
+  --orange-tint: #3a242b; --orange-border: #f18153; --orange-text: #feb79b;
+  --green-tint: #222d34;  --green-border: #64b892;  --green-text: #8bdfb7;
+  --blue-tint: #252941;   --blue-border: #79a8de;   --blue-text: #a5cefe;
+  --teal-tint: #202c3a;   --teal-border: #53b7b4;   --teal-text: #7bdeda;
+  color-scheme: dark;
+}
+[data-theme='light'] {
+  --canvas: #fcf9f5; --surface: #f3ecf7; --card: #ffffff; --surface-2: #eadff8;
+  --border: #eadff8; --border-strong: #4d3e78;
+  --brand: #4d3e78; --brand-2: #6956a8;
+  --primary: #745fbb; --primary-hover: #6956a8; --primary-active: #4d3e78;
+  --text: #4d3e78; --text-2: #6956a8; --text-muted: #7f72ac; --text-disabled: #b8afd4;
+  --text-on-primary: #ffffff; --text-on-danger: #ffffff;
+  --success: #1f7a57; --success-tint: #e9f3e7;
+  --warning: #b74d1a; --warning-tint: #feede0;
+  --danger: #a53c3a; --danger-tint: #ffdce8;
+  --info: #3c699b; --info-tint: #ccdcf8;
+  --live: #e14f4c;
+  --pink-tint: #ffdce8;   --pink-border: #a54b7a;   --pink-text: #803218;
+  --orange-tint: #feede0; --orange-border: #b74d1a; --orange-text: #b74d1a;
+  --green-tint: #e9f3e7;  --green-border: #1f7a57;  --green-text: #1f7a57;
+  --blue-tint: #ccdcf8;   --blue-border: #3c699b;   --blue-text: #4d3e78;
+  --teal-tint: #f3ecf7;   --teal-border: #058380;   --teal-text: #4d3e78;
+  color-scheme: light;
+}
+
+/* ── Tailwind ユーティリティ化（bg-canvas / text-text-2 / border-pink-border 等） ── */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-brand: var(--brand);
+  --color-brand-2: var(--brand-2);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-muted: var(--text-muted);
+  --color-text-disabled: var(--text-disabled);
+  --color-text-on-primary: var(--text-on-primary);
+  --color-text-on-danger: var(--text-on-danger);
+  --color-success: var(--success);       --color-success-tint: var(--success-tint);
+  --color-warning: var(--warning);       --color-warning-tint: var(--warning-tint);
+  --color-danger: var(--danger);         --color-danger-tint: var(--danger-tint);
+  --color-info: var(--info);             --color-info-tint: var(--info-tint);
+  --color-live: var(--live);
+  --color-pink-tint: var(--pink-tint);     --color-pink-border: var(--pink-border);     --color-pink-text: var(--pink-text);
+  --color-orange-tint: var(--orange-tint); --color-orange-border: var(--orange-border); --color-orange-text: var(--orange-text);
+  --color-green-tint: var(--green-tint);   --color-green-border: var(--green-border);   --color-green-text: var(--green-text);
+  --color-blue-tint: var(--blue-tint);     --color-blue-border: var(--blue-border);     --color-blue-text: var(--blue-text);
+  --color-teal-tint: var(--teal-tint);     --color-teal-border: var(--teal-border);     --color-teal-text: var(--teal-text);
+}
+
 @theme {
-  --color-canvas: #fcf9f5;
-  --color-surface: #f3ecf7;
-  --color-surface-2: #eadff8;
-  --color-card: #ffffff;
-  --color-border: #eadff8;
-  --color-border-strong: #4d3e78;
-  --color-brand: #4d3e78;
-  --color-brand-2: #6956a8;
-  --color-primary: #745fbb;
-  --color-primary-hover: #6956a8;
-  --color-primary-active: #4d3e78;
-  --color-text: #4d3e78;
-  --color-text-2: #6956a8;
-  --color-text-muted: #7f72ac;
-  --color-text-disabled: #b8afd4;
-  --color-text-on-primary: #ffffff;
-  --color-success: #1f7a57;
-  --color-success-tint: #e9f3e7;
-  --color-warning: #b74d1a;
-  --color-warning-tint: #feede0;
-  --color-danger: #a53c3a;
-  --color-danger-tint: #ffdce8;
-  --color-info: #3c699b;
-  --color-info-tint: #ccdcf8;
-  --color-live: #e14f4c;
-
-  /* カラーファミリー */
-  --color-pink-tint: #ffdce8;   --color-pink-border: #a54b7a;   --color-pink-text: #803218;
-  --color-orange-tint: #feede0; --color-orange-border: #b74d1a; --color-orange-text: #b74d1a;
-  --color-green-tint: #e9f3e7;  --color-green-border: #1f7a57;  --color-green-text: #1f7a57;
-  --color-blue-tint: #ccdcf8;   --color-blue-border: #3c699b;   --color-blue-text: #4d3e78;
-  --color-teal-tint: #f3ecf7;   --color-teal-border: #058380;   --color-teal-text: #4d3e78;
-
   /* システムフォントのみ。Web フォントに切り替えるときは先頭に var(--font-noto-sans-jp) を足す */
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Hiragino Sans', 'Yu Gothic UI',
     'Noto Sans JP', sans-serif;
@@ -392,28 +483,24 @@ shadcn の `--radius` は `--radius-lg`（14px）に合わせる。
   --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
-/* ── shadcn 変数へのエイリアス ──────────────────────────────── */
-:root,
-[data-theme='light'] {
-  --background: var(--color-canvas);
-  --foreground: var(--color-text);
-  --card: var(--color-card);
-  --card-foreground: var(--color-text);
-  --popover: var(--color-card);
-  --popover-foreground: var(--color-text);
-  --primary: var(--color-primary);
-  --primary-foreground: var(--color-text-on-primary);
-  --secondary: var(--color-surface);
-  --secondary-foreground: var(--color-text);
-  --muted: var(--color-surface);
-  --muted-foreground: var(--color-text-2);
-  --accent: var(--color-surface-2);
-  --accent-foreground: var(--color-text);
-  --destructive: var(--color-danger);
-  --destructive-foreground: #ffffff;
-  --border: var(--color-border);
-  --input: var(--color-border);
-  --ring: var(--color-brand);
+/* ── shadcn 変数へのエイリアス（テーマ非依存。値はテーマ側の変数を参照） ── */
+:root {
+  --background: var(--canvas);
+  --foreground: var(--text);
+  --card-foreground: var(--text);
+  --popover: var(--card);
+  --popover-foreground: var(--text);
+  --primary-foreground: var(--text-on-primary);
+  --secondary: var(--surface);
+  --secondary-foreground: var(--text);
+  --muted: var(--surface);
+  --muted-foreground: var(--text-2);
+  --accent: var(--surface-2);
+  --accent-foreground: var(--text);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--text-on-danger);
+  --input: var(--border);
+  --ring: var(--brand);
   --radius: var(--radius-lg);
 
   --duration-instant: 80ms;
@@ -421,13 +508,12 @@ shadcn の `--radius` は `--radius-lg`（14px）に合わせる。
   --duration-base: 250ms;
   --duration-slow: 400ms;
 }
-
-/* [data-theme='dark'] は別 PR で追加する。部品側は変数しか参照しないこと */
+/* shadcn の --card / --primary / --border はテーマ側の同名変数をそのまま使う */
 
 html { font-size: 16px; }
 body {
-  background: var(--color-canvas);
-  color: var(--color-text);
+  background: var(--canvas);
+  color: var(--text);
   font-family: var(--font-sans);
   font-feature-settings: 'palt';
 }
@@ -446,15 +532,16 @@ body {
 
 ## 5. 同期ルール
 
-- 正本はこのファイル。`globals.css` の `@theme` と `:root` は frontmatter から生成する（スクリプトは #178 フェーズ2で追加）。手で編集した場合は必ず両方を直す。
-- 新しい色・角丸・時間が必要になったら、まずここに追記してから使う。
-- ダークテーマは `[data-theme='dark']` ブロックとして別 PR で追加する。色は本ファイルのファミリーから派生させ、v2 のネオン配色は再利用しない。
+- 正本はこのファイル。`globals.css` の `[data-theme]` ブロックは frontmatter の `colors.dark` / `colors.light` から生成する（スクリプトは #178 フェーズ2で追加）。手で編集した場合は必ず両方を直す。
+- 新しい色・角丸・時間が必要になったら、まず両テーマ分をここに追記してから使う。片方だけ足さない。
+- 既定は dark（`:root`）。light は `[data-theme='light']`。テーマ切り替え UI は別 issue。
+- `docs/DESIGN-theme-preview.html` は両テーマの見え方とコントラストの確認用。トークンを変えたら更新する。
 - UI 仕様の規約は `docs/仕様・計画/ui/requirements.md` UI-019〜026 を参照。本ファイルと矛盾した場合は本ファイルを優先し、requirements.md を更新する。
 
 ## 6. 生成 AI 向け指示
 
-1. 背景は `--color-canvas`、文字は `--color-text`。黒・グレーの生値は書かない。
-2. 塗りは `--color-primary` のボタン1つだけ。他は枡線か面の段差。
+1. 背景は `--canvas`（Tailwind: `bg-canvas`）、文字は `--text`（`text-text`）。黒・グレー・白の生値は書かない。テーマで値が変わる前提で役割名だけを使う。
+2. 塗りは `--primary` のボタン1つだけ。他は枡線か面の段差。
 3. 色付き要素はファミリー（pink / orange / green / blue / teal）を1つ選び、tint と border を組で使う。
 4. `box-shadow` を書かない。
 5. 角丸は `--radius-*`、時間は `--duration-*`、イージングは `--ease-*`。
