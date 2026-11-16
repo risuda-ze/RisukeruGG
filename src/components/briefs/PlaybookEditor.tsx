@@ -9,7 +9,7 @@ import { playbookInputSchema, type PlaybookInput } from '@/lib/validations/brief
 import { FIELD_TYPE_LABELS, type FieldDef, type FieldType, type Playbook, type StepDef } from '@/types/briefs';
 import type { TeamMember } from '@/types/entities';
 import { badgeVariants } from '@/components/ui/Badge';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/cn';
 
 interface PlaybookEditorProps {
   initial: Playbook | null;

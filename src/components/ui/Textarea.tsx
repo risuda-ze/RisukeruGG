@@ -1,7 +1,7 @@
 'use client';
 
 import { TextareaHTMLAttributes, forwardRef } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/cn';
 import { fieldClass, fieldLabelClass } from './Input';
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {

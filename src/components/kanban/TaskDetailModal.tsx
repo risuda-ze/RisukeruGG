@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/auth';
 import { MarkdownView } from '@/components/ui/MarkdownEditor';
 import { DateField } from '@/components/ui/DateField';
 import { Icon } from '@/components/ui/Icon';
+import { DialogShell } from '@/components/ui/Dialog';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import { useModalDrag } from '@/hooks/useModalDrag';
 import { Dropdown } from '@/components/ui/Dropdown';
@@ -92,7 +93,6 @@ export function TaskDetailModal({
   const [saveError, setSaveError] = useState('');
 
   const myName = currentUser?.displayName ?? 'あなた';
-  const mouseDownOnOverlay = useRef<boolean>(false);
 
   /* ドラッグ移動（PC のみ） */
   const { position, handleDragStart } = useModalDrag();
@@ -239,23 +239,14 @@ export function TaskDetailModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[290] flex items-end md:items-center justify-center md:p-8"
-      style={{ background: 'rgba(6,6,16,0.85)', backdropFilter: 'blur(6px)' }}
-      onMouseDown={(e) => { mouseDownOnOverlay.current = e.target === e.currentTarget; }}
-      onClick={() => { if (mouseDownOnOverlay.current) handleCancel(); }}
+    <DialogShell
+      onClose={handleCancel}
+      label={isNew ? 'タスクを作成' : 'タスクの詳細'}
+      data-testid="task-detail-modal"
+      // .task-modal でモバイル全画面 / PC 1180px（ScheduleModal と同サイズ）に切り替わる
+      className="task-modal flex flex-col overflow-hidden border border-border bg-card"
+      style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
     >
-      {/* モーダル本体 — .task-modal でモバイル全画面 / PC 1180px（ScheduleModal と同サイズ）に切り替わる */}
-      <div
-        className="task-modal flex flex-col overflow-hidden"
-        style={{
-          background: 'var(--card-2)',
-          border: '1px solid var(--border-l)',
-          boxShadow: 'var(--shadow-xl)',
-          transform: `translate(${position.x}px, ${position.y}px)`,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
         {/* パープルバー */}
         <div className="h-1.5 shrink-0" style={{ background: 'linear-gradient(90deg, var(--purple-d), var(--purple))' }} />
 
@@ -275,7 +266,7 @@ export function TaskDetailModal({
                     onBlur={isNew ? undefined : handleTitleConfirm}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !isNew) handleTitleConfirm();
-                      if (e.key === 'Escape' && !isNew) { setTitleValue(task!.title); setEditingTitle(false); }
+                      if (e.key === 'Escape' && !isNew) { e.stopPropagation(); setTitleValue(task!.title); setEditingTitle(false); }
                     }}
                     placeholder="タスクのタイトルを入力..."
                     className="w-full text-[18px] font-bold bg-bg border border-purple rounded-[8px] px-2 py-1 text-text outline-none"
@@ -606,7 +597,6 @@ export function TaskDetailModal({
             </button>
           </div>
         </div>
-      </div>
-    </div>
+    </DialogShell>
   );
 }

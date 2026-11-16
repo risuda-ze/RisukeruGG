@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { AuthProvider } from '@/components/AuthProvider';
 import { AnalyticsListener } from '@/components/AnalyticsListener';
+import { Toaster } from '@/components/ui/Toaster';
 import './globals.css';
 
 // 本番 URL（OGP の絶対 URL 生成に使用）。未設定環境でもビルドが壊れないようフォールバックする。
@@ -70,6 +71,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col antialiased">
         <AnalyticsListener />
         <AuthProvider>{children}</AuthProvider>
+        <Toaster />
       </body>
     </html>
   );

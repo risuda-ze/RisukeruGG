@@ -1,5 +1,5 @@
 /* ローディングスピナー */
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/cn';
 
 export interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg';

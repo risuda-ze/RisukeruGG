@@ -14,6 +14,7 @@ import {
 import { trackEvent } from '@/lib/analytics';
 import { useAuthStore } from '@/stores/auth';
 import { Icon } from '@/components/ui/Icon';
+import { DialogShell } from '@/components/ui/Dialog';
 import { COLLAB_STATUS_LABELS } from '@/types/entities';
 import type { CollabSession, CollabParticipant, CollabComment } from '@/types/entities';
 import { Timestamp, doc, onSnapshot } from 'firebase/firestore';
@@ -515,30 +516,18 @@ export function CollabDetailModal({
 
   const availableMembers = members.filter((m) => !participants.some((p) => p.id === m.userId));
 
-  /* リサイズドラッグ時の誤クローズを防ぐため mousedown 発生元を追跡する */
-  const mouseDownOnOverlay = useRef<boolean>(false);
 
   /* ── ドラッグ移動 ─────────────────────────────── */
   const { position, handleDragStart } = useModalDrag();
 
   return (
-    /* オーバーレイ */
-    <div
-      className="fixed inset-0 z-[290] flex items-end md:items-center justify-center md:p-4"
-      style={{ background: 'rgba(6,6,16,0.85)', backdropFilter: 'blur(6px)' }}
-      onMouseDown={(e) => { mouseDownOnOverlay.current = e.target === e.currentTarget; }}
-      onClick={() => { if (mouseDownOnOverlay.current) onClose(); }}
+    <DialogShell
+      onClose={onClose}
+      label="コラボの詳細"
+      data-testid="collab-detail-modal"
+      className="collab-modal flex flex-col overflow-hidden rounded-t-lg border border-border bg-card md:rounded-lg"
+      style={{ transform: isMobile ? undefined : `translate(${position.x}px, ${position.y}px)` }}
     >
-      <div
-        className="collab-modal flex flex-col overflow-hidden rounded-t-[20px] md:rounded-[24px]"
-        style={{
-          background: 'var(--card-2)',
-          border: '1px solid var(--border-l)',
-          boxShadow: 'var(--shadow-xl)',
-          transform: isMobile ? undefined : `translate(${position.x}px, ${position.y}px)`,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
         {/* アンバーグラデーションバー */}
         <div
           className="h-1.5 shrink-0"
@@ -1239,7 +1228,6 @@ export function CollabDetailModal({
             )}
           </div>
         </div>
-      </div>
-    </div>
+    </DialogShell>
   );
 }

@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
 import { buttonVariants } from '@/components/ui/Button';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/cn';
 
 /** 直近の改定日（terms / privacy-policy の LAST_UPDATED と揃える） */
 export const LEGAL_REVISION_DATE = '2026-09-06';

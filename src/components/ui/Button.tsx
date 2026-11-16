@@ -2,7 +2,7 @@
 
 import { ButtonHTMLAttributes, Ref } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/cn';
 
 /**
  * ボタンの見た目。<Link> などボタン以外の要素にも

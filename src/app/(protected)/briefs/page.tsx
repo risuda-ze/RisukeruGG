@@ -15,7 +15,7 @@ import { Badge, badgeVariants } from '@/components/ui/Badge';
 import { BriefCard } from '@/components/briefs/BriefCard';
 import { NewBriefModal } from '@/components/briefs/NewBriefModal';
 import type { Brief } from '@/types/briefs';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/cn';
 
 type Filter = 'active' | 'mine' | 'all';
 

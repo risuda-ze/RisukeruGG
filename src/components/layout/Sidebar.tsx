@@ -7,7 +7,7 @@ import { useSidebarStore } from '@/stores/sidebar';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { TeamSwitcher } from '@/components/layout/TeamSwitcher';
 import { badgeVariants } from '@/components/ui/Badge';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/cn';
 
 /* ── ナビゲーション定義 ─────────────────────────────────────── */
 interface NavItem {

@@ -1,5 +1,5 @@
 import { cva } from 'class-variance-authority';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/cn';
 
 type BadgeVariant =
   | 'purple' | 'amber' | 'live' | 'green' | 'muted' | 'default'

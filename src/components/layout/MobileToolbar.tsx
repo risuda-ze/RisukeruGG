@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { Drawer, DrawerClose, DrawerContent, DrawerTitle } from '@/components/ui/Drawer';
 
 /* ── ツールバーのアイテム定義 ─────────────────────────── */
 interface ToolbarItem {
@@ -43,7 +44,7 @@ const DRAWER_ITEMS: DrawerItem[] = [
 /**
  * モバイル用下部ツールバー。
  * md ブレークポイント以上では非表示（Sidebar が代替）。
- * 「その他」タップで右スライドドロワーを開く。
+ * 「その他」タップで右から Drawer を開く。
  */
 export function MobileToolbar() {
   const pathname = usePathname();
@@ -51,60 +52,33 @@ export function MobileToolbar() {
 
   return (
     <>
-      {/* 右スライドドロワー */}
-      {drawerOpen && (
-        <div className="fixed inset-0 z-[80] flex md:hidden">
-          {/* スクリム */}
-          <div
-            className="absolute inset-0"
-            style={{ background: 'rgba(0,0,0,0.55)', animation: 'fade-in 250ms both' }}
-            onClick={() => setDrawerOpen(false)}
-          />
-          {/* ドロワーパネル（右から） */}
-          <div
-            className="absolute right-0 top-0 bottom-0 w-[75vw] max-w-[300px] flex flex-col overflow-y-auto animate-slide-in-right"
-            style={{
-              background: 'var(--surface)',
-              borderLeft: '1px solid var(--card-border)',
-              boxShadow: 'var(--shadow-xl)',
-              padding: '20px 14px',
-            }}
-          >
-            <div className="flex items-center justify-between px-2 pb-4 mb-2" style={{ borderBottom: '1px solid var(--card-border)' }}>
-              <span className="text-[14px] font-bold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-head)' }}>
-                その他のメニュー
-              </span>
-              <button
-                onClick={() => setDrawerOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-[6px] transition-colors"
-                style={{ color: 'var(--text-muted)' }}
+      {/* 「その他」メニュー（右から出る Drawer） */}
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} swipeDirection="right">
+        <DrawerContent className="max-w-[300px] bg-surface">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3.5 py-5">
+            <div className="mb-2 flex items-center justify-between border-b border-border px-2 pb-4">
+              <DrawerTitle className="text-[0.875rem] font-semibold tracking-normal">その他のメニュー</DrawerTitle>
+              <DrawerClose
+                aria-label="メニューを閉じる"
+                className="flex size-9 cursor-pointer items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
               >
                 <Icon name="close" size={18} />
-              </button>
+              </DrawerClose>
             </div>
             {DRAWER_ITEMS.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
                 onClick={() => setDrawerOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 rounded-[8px] transition-colors"
-                style={{ color: 'var(--text-secondary)' }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
-                  (e.currentTarget as HTMLElement).style.background = 'var(--card-raised)';
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
-                  (e.currentTarget as HTMLElement).style.background = '';
-                }}
+                className="flex min-h-11 items-center gap-3 rounded-sm px-3 py-3 text-text-2 transition-colors hover:bg-surface-2 hover:text-text"
               >
                 <Icon name={item.icon} size={18} />
                 <span className="text-[14px] font-medium">{item.label}</span>
               </Link>
             ))}
           </div>
-        </div>
-      )}
+        </DrawerContent>
+      </Drawer>
 
       {/* ツールバー本体 */}
       <nav

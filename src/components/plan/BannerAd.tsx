@@ -16,7 +16,7 @@ import { trackEvent } from '@/lib/analytics';
 import { isPartyPlan } from '@/lib/plan';
 import type { PlanType } from '@/types/entities';
 import { badgeVariants } from '@/components/ui/Badge';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/cn';
 
 interface BannerAdProps {
   plan: PlanType;

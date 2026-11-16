@@ -1,18 +1,21 @@
 'use client';
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode } from 'react';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import { Drawer, DrawerBody, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/Drawer';
 
 export interface ModalProps {
   /** モーダル表示フラグ */
   open: boolean;
-  /** 閉じるコールバック（Escキー・オーバーレイクリック） */
+  /** 閉じるコールバック（Escキー・スクリムのクリック・スワイプ） */
   onClose: () => void;
   /** モーダルタイトル */
   title?: string;
   children: ReactNode;
-  /** フッターエリア（OK/キャンセルボタン等） */
+  /** フッターエリア（キャンセル → 主アクションの順） */
   footer?: ReactNode;
-  /** モーダルサイズ */
+  /** モーダルサイズ（PC のみ。モバイルは全幅のボトムシート） */
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
@@ -23,42 +26,40 @@ const sizeClasses = {
   xl: 'max-w-[760px]',
 };
 
+/** 標準モーダル。PC（md 以上）は Dialog、モバイルは下からの Drawer で表示する */
 export function Modal({ open, onClose, title, children, footer, size = 'md' }: ModalProps) {
-  /* ESCキーで閉じる */
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open, onClose]);
+  const isMobile = useMediaQuery(767);
+  const onOpenChange = (next: boolean) => {
+    if (!next) onClose();
+  };
 
-  if (!open) return null;
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange} showSwipeHandle>
+        <DrawerContent aria-label={title}>
+          {title && (
+            <DrawerHeader>
+              <DrawerTitle>{title}</DrawerTitle>
+            </DrawerHeader>
+          )}
+          <DrawerBody>{children}</DrawerBody>
+          {footer && <DrawerFooter>{footer}</DrawerFooter>}
+        </DrawerContent>
+      </Drawer>
+    );
+  }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div
-        className={`w-full ${sizeClasses[size]} rounded-lg bg-card border border-border shadow-lg`}
-      >
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className={sizeClasses[size]} aria-label={title}>
         {title && (
-          <div className="px-6 py-4 border-b border-border">
-            <h2 className="text-base font-semibold text-text">{title}</h2>
-          </div>
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+          </DialogHeader>
         )}
-        <div className="px-6 py-4 text-sm text-text">{children}</div>
-        {footer && (
-          <div className="px-6 py-4 border-t border-border flex justify-end gap-3">{footer}</div>
-        )}
-      </div>
-    </div>
+        <DialogBody className={footer ? undefined : 'pb-6'}>{children}</DialogBody>
+        {footer && <DialogFooter>{footer}</DialogFooter>}
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -10,6 +10,7 @@ import { DateField } from '@/components/ui/DateField';
 import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import { Icon } from '@/components/ui/Icon';
+import { DialogShell } from '@/components/ui/Dialog';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { Input } from '@/components/ui/Input';
 import { Button, buttonVariants } from '@/components/ui/Button';
@@ -90,7 +91,6 @@ export function ScheduleModal({
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const isDragging = useRef(false);
   const dragStart = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 });
-  const mouseDownOnOverlay = useRef(false);
 
   /* ── リサイズ（pointer capture 方式） */
   const cardRef = useRef<HTMLDivElement>(null);
@@ -217,23 +217,18 @@ export function ScheduleModal({
 
   /* ─────────────────── レンダリング ─────────────────── */
   return (
-    <div
-      className="fixed inset-0 z-[280] flex items-end justify-center p-0 md:items-center md:p-8"
-      style={{ background: 'rgba(6,6,16,0.85)', backdropFilter: 'blur(6px)', animation: 'fade-in 200ms ease-out both' }}
-      onMouseDown={(e) => { mouseDownOnOverlay.current = e.target === e.currentTarget; }}
-      onClick={() => { if (mouseDownOnOverlay.current) onClose(); }}
+    <DialogShell
+      onClose={onClose}
+      label={isNew ? '予定を追加' : '予定を編集'}
+      data-testid="schedule-modal"
+      // ドラッグ移動は外枠の transform で行う（position=0 のときは transform を省略して不要な stacking context を避ける）
+      className="relative w-full md:w-auto"
+      style={
+        !isMobile && (position.x !== 0 || position.y !== 0)
+          ? { transform: `translate(${position.x}px, ${position.y}px)` }
+          : undefined
+      }
     >
-      {/* ── ドラッグ移動ラッパー（position=0 のときは transform を省略して不要な stacking context を避ける） */}
-      <div
-        className="w-full md:w-auto"
-        style={{
-          position: 'relative',
-          ...(!isMobile && (position.x !== 0 || position.y !== 0)
-            ? { transform: `translate(${position.x}px, ${position.y}px)` }
-            : {}),
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
         {/* ── モーダル本体（スマホは全幅ボトムシート） */}
         <div
           ref={cardRef}
@@ -439,7 +434,6 @@ export function ScheduleModal({
         </div>
         )}
 
-      </div>
-    </div>
+    </DialogShell>
   );
 }

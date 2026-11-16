@@ -1,5 +1,6 @@
 'use client';
 
+import { toast } from 'sonner';
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
@@ -33,7 +34,6 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
   const [config, setConfig] = useState<DiscordTeamConfig | null>(null);
   const [loadedTeamId, setLoadedTeamId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // チャンネル選択モード用の state
   const [dismissedNonce, setDismissedNonce] = useState<string | null>(null);
@@ -170,8 +170,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
   }
 
   function showToast(type: 'success' | 'error', message: string) {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 4000);
+    toast[type](message);
   }
 
   async function handleBotInvite() {
@@ -404,24 +403,6 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
           </p>
         )}
 
-        {toast && (
-          <p
-            className="text-[12px] rounded-[8px] px-3 py-2 border"
-            style={{
-              color: toast.type === 'success' ? 'var(--green)' : 'var(--live)',
-              background:
-                toast.type === 'success'
-                  ? 'color-mix(in oklab, var(--success) 10%, transparent)'
-                  : 'color-mix(in oklab, var(--danger) 10%, transparent)',
-              borderColor:
-                toast.type === 'success'
-                  ? 'color-mix(in oklab, var(--success) 30%, transparent)'
-                  : 'color-mix(in oklab, var(--danger) 30%, transparent)',
-            }}
-          >
-            {toast.message}
-          </p>
-        )}
 
         {/* ── 接続済み表示 ── */}
         {isConnected && (

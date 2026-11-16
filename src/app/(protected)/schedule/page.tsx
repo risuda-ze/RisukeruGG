@@ -24,6 +24,8 @@ import { Icon } from '@/components/ui/Icon';
 import type { ScheduleEntry, MemberCalendarEvent } from '@/types/entities';
 import { getEventLastDay } from '@/lib/utils/eventDays';
 import { buttonVariants } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
 
 export default function SchedulePage() {
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -58,12 +60,6 @@ export default function SchedulePage() {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
-  /* 読み取り専用ポップアップのドラッグ移動 */
-  const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
-  const popupIsDragging = useRef(false);
-  const popupDragStart = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 });
-  const popupMouseDownOnOverlay = useRef(false);
-  const popupPanelRef = useRef<HTMLDivElement>(null);
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
@@ -104,33 +100,6 @@ export default function SchedulePage() {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [moreOpen]);
-
-  // 読み取り専用ポップアップのドラッグ
-  useEffect(() => {
-    function onMove(e: MouseEvent) {
-      if (!popupIsDragging.current) return;
-      setPopupPos({
-        x: popupDragStart.current.posX + e.clientX - popupDragStart.current.mouseX,
-        y: popupDragStart.current.posY + e.clientY - popupDragStart.current.mouseY,
-      });
-    }
-    function onUp() { popupIsDragging.current = false; }
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-    return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
-  }, []);
-
-  // ポップアップが切り替わったらドラッグ位置をリセット
-  useEffect(() => {
-    setPopupPos({ x: 0, y: 0 }); // eslint-disable-line react-hooks/set-state-in-effect
-  }, [selectedSchedule?.id]);
-
-  function handlePopupDragStart(e: React.MouseEvent) {
-    if ((e.target as HTMLElement).closest('button, input, select, a')) return;
-    popupIsDragging.current = true;
-    popupDragStart.current = { mouseX: e.clientX, mouseY: e.clientY, posX: popupPos.x, posY: popupPos.y };
-    e.preventDefault();
-  }
 
   // Googleカレンダーの個人予定を取得
   useEffect(() => {
@@ -411,47 +380,24 @@ export default function SchedulePage() {
 
       {/* メンバーの予定の詳細（読み取り専用） */}
       {selectedSchedule?.source === 'member' && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          onMouseDown={(e) => { popupMouseDownOnOverlay.current = !popupPanelRef.current?.contains(e.target as Node); }}
-          onClick={() => { if (popupMouseDownOnOverlay.current) setSelectedSchedule(null); }}
-        >
-          <div className="absolute inset-0 bg-black/50" />
-          <div
-            ref={popupPanelRef}
-            className="relative z-10 w-[calc(100vw-32px)] max-w-md bg-card border border-border rounded-[20px] overflow-hidden"
-            style={{ transform: `translate(${popupPos.x}px, ${popupPos.y}px)` }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              className="flex items-start justify-between gap-3 p-6 pb-4 cursor-move"
-              onMouseDown={handlePopupDragStart}
-            >
-              <div className="flex items-center gap-2">
-                <Icon name="groups" size={18} className="text-[#60a5fa]" />
-                <span className="text-[11px] font-semibold" style={{ color: '#60a5fa' }}>メンバーの予定</span>
-              </div>
-              <button onClick={() => setSelectedSchedule(null)} className="text-text-muted hover:text-text">
-                <Icon name="close" size={20} />
-              </button>
-            </div>
-            <div className="px-6 pb-6">
-              <h3 className="text-[17px] font-bold text-text mb-3">{selectedSchedule.title}</h3>
-              <p className="text-[13px] text-text-muted">
-                {selectedSchedule.allDay
-                  ? isSameDay(selectedSchedule.startAt, getEventLastDay(selectedSchedule))
-                    ? format(selectedSchedule.startAt, 'M月d日(E)', { locale: ja }) + ' 終日'
-                    : format(selectedSchedule.startAt, 'M月d日(E)', { locale: ja }) +
-                      ' – ' +
-                      format(getEventLastDay(selectedSchedule), 'M月d日(E)', { locale: ja }) +
-                      ' 終日'
-                  : format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja }) +
-                    ' – ' +
-                    format(selectedSchedule.endAt, 'HH:mm')}
-              </p>
-            </div>
-          </div>
-        </div>
+        <Modal open onClose={() => setSelectedSchedule(null)} title={selectedSchedule.title} size="sm">
+          <Badge variant="info" className="mb-3">
+            <Icon name="groups" size={13} />
+            メンバーの予定
+          </Badge>
+          <p className="text-[13px] text-text-2">
+            {selectedSchedule.allDay
+              ? isSameDay(selectedSchedule.startAt, getEventLastDay(selectedSchedule))
+                ? format(selectedSchedule.startAt, 'M月d日(E)', { locale: ja }) + ' 終日'
+                : format(selectedSchedule.startAt, 'M月d日(E)', { locale: ja }) +
+                  ' – ' +
+                  format(getEventLastDay(selectedSchedule), 'M月d日(E)', { locale: ja }) +
+                  ' 終日'
+              : format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja }) +
+                ' – ' +
+                format(selectedSchedule.endAt, 'HH:mm')}
+          </p>
+        </Modal>
       )}
 
       {/* スケジュール詳細オーバーレイ（チーム予定） */}
@@ -468,43 +414,20 @@ export default function SchedulePage() {
 
       {/* Googleカレンダー予定の詳細（読み取り専用） */}
       {selectedSchedule?.source === 'google' && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          onMouseDown={(e) => { popupMouseDownOnOverlay.current = !popupPanelRef.current?.contains(e.target as Node); }}
-          onClick={() => { if (popupMouseDownOnOverlay.current) setSelectedSchedule(null); }}
-        >
-          <div className="absolute inset-0 bg-black/50" />
-          <div
-            ref={popupPanelRef}
-            className="relative z-10 w-[calc(100vw-32px)] max-w-md bg-card border border-border rounded-[20px] overflow-hidden"
-            style={{ transform: `translate(${popupPos.x}px, ${popupPos.y}px)` }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              className="flex items-start justify-between gap-3 p-6 pb-4 cursor-move"
-              onMouseDown={handlePopupDragStart}
-            >
-              <div className="flex items-center gap-2">
-                <Icon name="event" size={18} className="text-green" />
-                <span className="text-[11px] font-semibold" style={{ color: 'var(--green)' }}>Googleカレンダー</span>
-              </div>
-              <button onClick={() => setSelectedSchedule(null)} className="text-text-muted hover:text-text">
-                <Icon name="close" size={20} />
-              </button>
-            </div>
-            <div className="px-6 pb-6">
-              <h3 className="text-[17px] font-bold text-text mb-3">{selectedSchedule.title}</h3>
-              <p className="text-[13px] text-text-muted mb-1">
-                {format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja })}
-                {' – '}
-                {format(selectedSchedule.endAt, 'HH:mm')}
-              </p>
-              {selectedSchedule.description && (
-                <p className="text-[12px] text-text-muted mt-3 whitespace-pre-wrap">{selectedSchedule.description}</p>
-              )}
-            </div>
-          </div>
-        </div>
+        <Modal open onClose={() => setSelectedSchedule(null)} title={selectedSchedule.title} size="sm">
+          <Badge variant="success" className="mb-3">
+            <Icon name="event" size={13} />
+            Googleカレンダー
+          </Badge>
+          <p className="text-[13px] text-text-2">
+            {format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja })}
+            {' – '}
+            {format(selectedSchedule.endAt, 'HH:mm')}
+          </p>
+          {selectedSchedule.description && (
+            <p className="mt-3 text-[12px] whitespace-pre-wrap text-text-2">{selectedSchedule.description}</p>
+          )}
+        </Modal>
       )}
 
       {/* スケジュール追加モーダル（チーム予定・新規作成） */}

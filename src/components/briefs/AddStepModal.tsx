@@ -10,7 +10,7 @@ import { addStepInputSchema } from '@/lib/validations/briefs';
 import type { Step } from '@/types/briefs';
 import type { TeamMember } from '@/types/entities';
 import { badgeVariants } from '@/components/ui/Badge';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/cn';
 
 interface AddStepModalProps {
   open: boolean;

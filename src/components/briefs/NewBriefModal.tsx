@@ -14,7 +14,7 @@ import { trackEvent } from '@/lib/analytics';
 import type { Playbook } from '@/types/briefs';
 import type { TeamMember } from '@/types/entities';
 import { badgeVariants } from '@/components/ui/Badge';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/cn';
 
 interface NewBriefModalProps {
   open: boolean;

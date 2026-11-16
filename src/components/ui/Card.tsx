@@ -1,6 +1,6 @@
 import { HTMLAttributes, ReactNode } from 'react';
 import { cva } from 'class-variance-authority';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/cn';
 
 /** アクセントレール（左3px）の色バリアント */
 export type CardAccent = 'primary' | 'success' | 'warning' | 'danger';

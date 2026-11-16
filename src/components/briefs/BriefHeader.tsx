@@ -15,7 +15,7 @@ import { formatShortDate, fromDateInputValue, toDateInputValue } from '@/lib/bri
 import { BRIEF_STATUS_LABELS, type Brief, type BriefStatus, type Step } from '@/types/briefs';
 import type { TeamMember } from '@/types/entities';
 import { badgeVariants } from '@/components/ui/Badge';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/cn';
 
 interface BriefHeaderProps {
   brief: Brief;

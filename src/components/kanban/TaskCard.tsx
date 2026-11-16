@@ -45,6 +45,7 @@ function TaskCardComponent({
 
   return (
     <div
+      data-testid="task-card"
       className={`tcard group ${isDone ? 'opacity-[.82]' : ''} ${isDragging ? 'rotate-1 shadow-lg' : ''}`}
       style={{ '--tc': column?.color ?? 'var(--card-border)' } as React.CSSProperties}
       onClick={() => onEdit(task)}
