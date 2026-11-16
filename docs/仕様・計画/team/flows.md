@@ -1,14 +1,17 @@
 # team flows
 
-## 初回ソロチーム生成フロー
+## 初回チーム作成フロー
 
 このフローは user カテゴリの初回ログインフローから委譲される。
 
 1. user カテゴリの初回ログインフローが完了し、User アカウントが作成される
-2. システムがソロチームを自動作成する（name: displayName のチーム, operatorUids: [作成者 uid], teamCode, createdAt）
-3. 作成者をオペレーターとして `teams/{teamId}/members/{uid}` に登録する
-4. チームコードを自動生成して `teamCodes/{code}` に保存する
-5. User の `currentTeamId` と `teamIds` をソロチームで初期化する
+2. システムがソロチームを自動作成する
+   * name: displayName
+   * operatorUids: [作成者 uid]
+   * teamCode: 自動採番
+   * createdAt: システム日付
+3. チームコードを自動生成して `teamCodes/{code}` に保存する
+4. User の `currentTeamId` と `teamIds` をソロチームで初期化する
 
 ## チーム作成フロー
 
