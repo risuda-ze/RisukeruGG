@@ -110,8 +110,8 @@
 
 ### 前提条件
 
-- [Node.js](https://nodejs.org/) 18以上
-- [pnpm](https://pnpm.io/) 9以上
+- [Node.js](https://nodejs.org/) 22以上
+- [pnpm](https://pnpm.io/) 11（`package.json` の `packageManager` に合わせる。`corepack enable` 推奨）
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
 ### 手順

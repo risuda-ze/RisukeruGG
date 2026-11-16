@@ -1,11 +1,11 @@
 # Firebase Emulator Suite
-# Node.js 20 + OpenJDK 21（firebase-tools@latest の要件）+ Firebase CLI + pnpm
+# Node.js 22（Functions ランタイム nodejs22 と一致）+ OpenJDK 21 + Firebase CLI + pnpm
 
 # Stage 1: Eclipse Temurin 公式イメージから Java 21 JRE を取得
 FROM eclipse-temurin:21-jre AS jre
 
 # Stage 2: メインイメージ
-FROM node:20-bookworm-slim
+FROM node:22-bookworm-slim
 
 # Java 21 JRE をコピー（apt リポジトリに依存しない確実な方法）
 COPY --from=jre /opt/java/openjdk /opt/java/openjdk
@@ -17,8 +17,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Firebase CLI と pnpm をグローバルインストール
-RUN npm install -g firebase-tools@14 pnpm
+# Firebase CLI をグローバルインストール。pnpm は corepack 経由で
+# package.json の packageManager と同じバージョンを使う
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN npm install -g firebase-tools@14 && corepack enable
 
 WORKDIR /workspace
 

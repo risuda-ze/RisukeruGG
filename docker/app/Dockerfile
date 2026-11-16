@@ -1,7 +1,9 @@
 # Next.js 開発サーバー
-FROM node:20-slim
+FROM node:22-slim
 
-RUN npm install -g pnpm
+# pnpm は corepack 経由で package.json の packageManager と同じバージョンを使う
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
 
 WORKDIR /workspace
 
