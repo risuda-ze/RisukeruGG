@@ -1,7 +1,30 @@
-# RisukeruGG
+# RisukeruGG基本仕様書
 
-**最終更新**: 2026-05-26
-**バージョン**: 1.0.0
+- [RisukeruGG基本仕様書](#risukerugg基本仕様書)
+  - [ユビキタス言語](#ユビキタス言語)
+  - [概要](#概要)
+  - [技術スタック](#技術スタック)
+  - [機能要件](#機能要件)
+    - [採番ルール](#採番ルール)
+    - [カテゴリ一覧](#カテゴリ一覧)
+    - [カテゴリ別の役割](#カテゴリ別の役割)
+      - [user](#user)
+      - [plan](#plan)
+      - [team](#team)
+      - [schedule](#schedule)
+      - [task](#task)
+      - [collab](#collab)
+      - [notification](#notification)
+      - [ui](#ui)
+      - [platform](#platform)
+      - [integration](#integration)
+      - [ai](#ai)
+      - [production](#production)
+  - [非機能要件（spec 001）](#非機能要件spec-001)
+  - [データモデル（主要エンティティ）](#データモデル主要エンティティ)
+  - [フェーズ 1 スコープ外（将来対応）](#フェーズ-1-スコープ外将来対応)
+  - [更新履歴](#更新履歴)
+
 
 ---
 
@@ -9,35 +32,41 @@
 
 共通用語は [docs/共通用語/共通用語.md](../共通用語/共通用語.md) を参照してください。
 
-> 注記: 用語の追加・定義更新が必要な場合は、この仕様書ではなく共通用語ファイル側を更新してください。
-
 ---
 
 ## 概要
 
-ゲーム配信者（Twitch・YouTube）およびその制作チームを対象とした、配信者特化型チームスケジュール管理 Web アプリ。配信枠の共有管理・コラボ日程調整・制作タスク管理を一元化し、配信者が本業（配信）に集中できる環境を提供する。
+ゲーム配信者（Twitch・YouTube）およびその制作チームを対象とした、配信者特化型チームスケジュール管理 Web アプリ。配信枠の共有管理・コラボ日程調整・制作タスク管理を一元化し、配信者が本業（配信・コンテンツ制作）に集中できる環境を提供する。
 
-**技術スタック**: Next.js 14（App Router）/ TypeScript / Tailwind CSS / Zustand / Firebase（Auth・Firestore・Storage・Cloud Functions・FCM）/ Vercel / pnpm / ESLint+Prettier / Vitest / Playwright
+## 技術スタック
+
+| レイヤー             | 技術                                                    |
+| -------------------- | ------------------------------------------------------- |
+| フロントエンド       | Next.js 14 (App Router) + TypeScript 5 + Tailwind CSS 4 |
+| 状態管理             | Zustand                                                 |
+| フォーム             | React Hook Form + Zod                                   |
+| カレンダーライブラリ | react-big-calendar                                      |
+| カンバンライブラリ   | @hello-pangea/dnd                                       |
+| 認証                 | Firebase Authentication（Google SSO / メール認証）      |
+| DB                   | Cloud Firestore（リアルタイム同期）                     |
+| ストレージ           | Firebase Storage                                        |
+| 通知                 | Firebase Cloud Messaging（FCM）                         |
+| サーバーレス         | Firebase Cloud Functions                                |
+| ホスティング         | Vercel                                                  |
+| テスト               | Vitest（ユニット）/ Playwright（E2E）                   |
+| 開発環境             | Docker + Firebase Emulator Suite                        |
 
 ---
 
 ## 機能要件
 
-この章は、プロジェクト全体の機能分類・責務・参照先をまとめる親仕様です。
+プロジェクト全体の機能分類・責務は以下の通り
 
-詳細仕様は [docs/仕様・計画](./) 配下のカテゴリ別ディレクトリに分割し、親仕様には全体像と参照のみを保持します。
+詳細仕様は [docs/仕様・計画](./) 配下のカテゴリ別ディレクトリを参照する
 
-> 注記: 新規要件の追加や既存要件の更新は、まず該当カテゴリ配下の詳細ファイルを更新し、その後にこの章の全体像を必要な範囲で同期してください。
+### 採番ルール
 
-### 配置ルール
-
-- 機能カテゴリごとに [docs/仕様・計画](./) 配下へ機能IDディレクトリを作成する
-- 各機能ID配下では `README.md` を入口とし、`requirements.md`、`model.md`、`flows.md` を基本構成とする
-- 画面仕様、権限仕様、外部連携仕様などが必要になった場合は、該当カテゴリ配下へ追加ファイルを拡張する
-
-### 要件ID採番ルール（2026-05 更新）
-
-- 機能要件IDは `FR-***` ではなく、`{機能識別ID}-{番号}` 形式で管理する
+- 機能要件IDは `{機能識別ID}-{番号}` 形式で管理する
 - 機能識別IDは以下を使用する
   - `user`: `US`
   - `team`: `TE`
@@ -57,20 +86,20 @@
 
 ### カテゴリ一覧
 
-| 機能ID         | カテゴリ             | 大まかな記述内容                                                                                           | 参照先                                                                                                                    |
-| -------------- | -------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `user`         | 認証・アカウント管理 | Google OAuth2 認証、初回ログイン時のアカウント初期化、セッション維持、アカウント削除後のゴースト保持を扱う | [README](./user/README.md) / [requirements](./user/requirements.md) / [model](./user/model.md) / [flows](./user/flows.md) |
-| `plan`         | プラン管理           | LIGHT / PARTY プラン、月次利用上限、アップグレード導線、プラン判定ルールを扱う                             | [README](./plan/README.md) / [requirements](./plan/requirements.md) / [model](./plan/model.md)                            |
-| `team`         | チーム管理           | チーム作成、所属、ロール、チームコード、アクティブチーム切り替えを扱う                                     | [README](./team/README.md) / [requirements](./team/requirements.md) / [model](./team/model.md)                            |
-| `schedule`     | スケジュール管理     | スケジュール CRUD、カレンダー表示、Google カレンダー同期、カレンダー UI 改善を扱う                         | [README](./schedule/README.md) / [requirements](./schedule/requirements.md) / [model](./schedule/model.md)                |
-| `task`         | 制作タスク管理       | カンバン、タスク詳細、担当者、カテゴリ、列設定、タスク進捗管理を扱う                                       | [README](./task/README.md) / [requirements](./task/requirements.md) / [model](./task/model.md)                            |
-| `collab`       | コラボ日程調整       | コラボセッション、公開回答フォーム、再調整、複製、関連 UI を扱う                                           | [README](./collab/README.md) / [requirements](./collab/requirements.md) / [model](./collab/model.md)                      |
-| `notification` | 通知                 | 通知カテゴリ、既読管理、プッシュ通知、通知設定、遷移ルールを扱う                                           | [README](./notification/README.md) / [requirements](./notification/requirements.md) / [model](./notification/model.md)    |
-| `ui`           | UI・ナビゲーション   | サイドバー、TopBar、通知導線、共通ナビゲーション状態を扱う                                                 | [README](./ui/README.md) / [requirements](./ui/requirements.md) / [model](./ui/model.md)                                  |
-| `platform`     | PWA・オフライン      | PWA インストール、Service Worker、オフライン閲覧、接続断時の扱いを扱う                                     | [README](./platform/README.md) / [requirements](./platform/requirements.md) / [model](./platform/model.md)                |
-| `integration`  | 外部サービス連携     | Discord 連携（通知配送、Bot 招待、`/risukerugg` AI ボット）を扱う                                          | [README](./integration/README.md) / [requirements](./integration/requirements.md) / [model](./integration/model.md)       |
-| `ai`           | AIチャット           | `/chat` の AI アシスタント、提案生成、スケジュール・タスク・コラボ登録連携を扱う                           | [README](./ai/README.md) / [requirements](./ai/requirements.md) / [model](./ai/model.md)                                  |
-| `production`   | タスク管理 v2（1枚紙） | ブリーフ（動画1本）、工程、進め方、締切逆算、差分、操作層を扱う。既存カンバン（task）と並行提供 | [README](./production/README.md) / [requirements](./production/requirements.md) / [model](./production/model.md) / [flows](./production/flows.md) |
+| 機能ID         | カテゴリ               | 大まかな記述内容                                                                                           | 参照先                                                                                                                                            |
+| -------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user`         | 認証・アカウント管理   | Google OAuth2 認証、初回ログイン時のアカウント初期化、セッション維持、アカウント削除後のゴースト保持を扱う | [README](./user/README.md) / [requirements](./user/requirements.md) / [model](./user/model.md) / [flows](./user/flows.md)                         |
+| `plan`         | プラン管理             | LIGHT / PARTY プラン、月次利用上限、アップグレード導線、プラン判定ルールを扱う                             | [README](./plan/README.md) / [requirements](./plan/requirements.md) / [model](./plan/model.md)                                                    |
+| `team`         | チーム管理             | チーム作成、所属、ロール、チームコード、アクティブチーム切り替えを扱う                                     | [README](./team/README.md) / [requirements](./team/requirements.md) / [model](./team/model.md)                                                    |
+| `schedule`     | スケジュール管理       | スケジュール CRUD、カレンダー表示、Google カレンダー同期、カレンダー UI 改善を扱う                         | [README](./schedule/README.md) / [requirements](./schedule/requirements.md) / [model](./schedule/model.md)                                        |
+| `task`         | 制作タスク管理         | カンバン、タスク詳細、担当者、カテゴリ、列設定、タスク進捗管理を扱う                                       | [README](./task/README.md) / [requirements](./task/requirements.md) / [model](./task/model.md)                                                    |
+| `collab`       | コラボ日程調整         | コラボセッション、公開回答フォーム、再調整、複製、関連 UI を扱う                                           | [README](./collab/README.md) / [requirements](./collab/requirements.md) / [model](./collab/model.md)                                              |
+| `notification` | 通知                   | 通知カテゴリ、既読管理、プッシュ通知、通知設定、遷移ルールを扱う                                           | [README](./notification/README.md) / [requirements](./notification/requirements.md) / [model](./notification/model.md)                            |
+| `ui`           | UI・ナビゲーション     | サイドバー、TopBar、通知導線、共通ナビゲーション状態を扱う                                                 | [README](./ui/README.md) / [requirements](./ui/requirements.md) / [model](./ui/model.md)                                                          |
+| `platform`     | PWA・オフライン        | PWA インストール、Service Worker、オフライン閲覧、接続断時の扱いを扱う                                     | [README](./platform/README.md) / [requirements](./platform/requirements.md) / [model](./platform/model.md)                                        |
+| `integration`  | 外部サービス連携       | Discord 連携（通知配送、Bot 招待、`/risukerugg` AI ボット）を扱う                                          | [README](./integration/README.md) / [requirements](./integration/requirements.md) / [model](./integration/model.md)                               |
+| `ai`           | AIチャット             | `/chat` の AI アシスタント、提案生成、スケジュール・タスク・コラボ登録連携を扱う                           | [README](./ai/README.md) / [requirements](./ai/requirements.md) / [model](./ai/model.md)                                                          |
+| `production`   | タスク管理 v2（1枚紙） | ブリーフ（動画1本）、工程、進め方、締切逆算、差分、操作層を扱う。既存カンバン（task）と並行提供            | [README](./production/README.md) / [requirements](./production/requirements.md) / [model](./production/model.md) / [flows](./production/flows.md) |
 
 ### カテゴリ別の役割
 
@@ -156,24 +185,24 @@
 
 ## データモデル（主要エンティティ）
 
-| エンティティ      | 主要フィールド                                                                                                                                                |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **User**          | 詳細は [user/model.md](./user/model.md) を参照。認証済みアカウントの active / ghost 状態と保持フィールドを管理                                                |
-| **Plan**          | 詳細は [plan/model.md](./plan/model.md) を参照。プラン種別、月次カウント、保存先と制限判定を管理                                                            |
-| **Team**          | 詳細は [team/model.md](./team/model.md) を参照。チームの保持フィールドと Firestore コレクション配置を管理                                                     |
-| **TeamMember**    | 詳細は [team/model.md](./team/model.md) を参照。ロール（operator/member/rom）と所属関係を管理                                                                 |
-| **TaskStatus**    | 詳細は [task/model.md](./task/model.md) を参照。タスク列定義と完了列判定を task カテゴリで正本化する                                                          |
-| **Category**      | 詳細は [task/model.md](./task/model.md) を参照。タスク・スケジュール共通の統合カテゴリ定義とコレクション配置を task カテゴリで正本化する                      |
-| **ScheduleEntry** | title, startAt, endAt, allDay, platform, description, participantIds, categoryId（Category 参照）, version（楽観的ロック用）                                  |
-| **Task**          | 詳細は [task/model.md](./task/model.md) を参照。タスク項目と `columnId` 中心の状態表現を task カテゴリで正本化する                                            |
-| **CollabSession** | 詳細は [collab/model.md](./collab/model.md) を参照。コラボ作成、公開回答、確定、再調整に必要な保持項目を管理                                                  |
-| **CollabComment** | 詳細は [collab/model.md](./collab/model.md) を参照。コラボ内コメント / メモの保持項目を管理                                                                   |
-| **Notification**  | receiverId, type, refEntityId, isRead, createdAt                                                                                                              |
-| **SidebarState**  | collapsed（boolean）, openSections（string[]）— Zustand ストア（localStorage 永続化）                                                                         |
-| **DiscordTeamConfig** | 詳細は [integration/model.md](./integration/model.md) を参照。チームの Discord 通知設定（webhookUrl / guildId / channelId / 通知トグル）を管理             |
-| **DiscordSession** | 詳細は [integration/model.md](./integration/model.md) を参照。`/risukerugg` AI ボットのサーバー単位会話セッションを管理                                      |
-| **ChatMessage / Proposal** | 詳細は [ai/model.md](./ai/model.md) を参照。AIチャットの会話履歴と登録提案（セッションメモリのみ・Firestore 永続化なし）                             |
-| **Playbook / Brief / Step / BriefEvent** | 詳細は [production/model.md](./production/model.md) を参照。進め方（工程の型）、ブリーフ（動画1本）、工程、差分                                 |
+| エンティティ                             | 主要フィールド                                                                                                                                 |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **User**                                 | 詳細は [user/model.md](./user/model.md) を参照。認証済みアカウントの active / ghost 状態と保持フィールドを管理                                 |
+| **Plan**                                 | 詳細は [plan/model.md](./plan/model.md) を参照。プラン種別、月次カウント、保存先と制限判定を管理                                               |
+| **Team**                                 | 詳細は [team/model.md](./team/model.md) を参照。チームの保持フィールドと Firestore コレクション配置を管理                                      |
+| **TeamMember**                           | 詳細は [team/model.md](./team/model.md) を参照。ロール（operator/member/rom）と所属関係を管理                                                  |
+| **TaskStatus**                           | 詳細は [task/model.md](./task/model.md) を参照。タスク列定義と完了列判定を task カテゴリで正本化する                                           |
+| **Category**                             | 詳細は [task/model.md](./task/model.md) を参照。タスク・スケジュール共通の統合カテゴリ定義とコレクション配置を task カテゴリで正本化する       |
+| **ScheduleEntry**                        | title, startAt, endAt, allDay, platform, description, participantIds, categoryId（Category 参照）, version（楽観的ロック用）                   |
+| **Task**                                 | 詳細は [task/model.md](./task/model.md) を参照。タスク項目と `columnId` 中心の状態表現を task カテゴリで正本化する                             |
+| **CollabSession**                        | 詳細は [collab/model.md](./collab/model.md) を参照。コラボ作成、公開回答、確定、再調整に必要な保持項目を管理                                   |
+| **CollabComment**                        | 詳細は [collab/model.md](./collab/model.md) を参照。コラボ内コメント / メモの保持項目を管理                                                    |
+| **Notification**                         | receiverId, type, refEntityId, isRead, createdAt                                                                                               |
+| **SidebarState**                         | collapsed（boolean）, openSections（string[]）— Zustand ストア（localStorage 永続化）                                                          |
+| **DiscordTeamConfig**                    | 詳細は [integration/model.md](./integration/model.md) を参照。チームの Discord 通知設定（webhookUrl / guildId / channelId / 通知トグル）を管理 |
+| **DiscordSession**                       | 詳細は [integration/model.md](./integration/model.md) を参照。`/risukerugg` AI ボットのサーバー単位会話セッションを管理                        |
+| **ChatMessage / Proposal**               | 詳細は [ai/model.md](./ai/model.md) を参照。AIチャットの会話履歴と登録提案（セッションメモリのみ・Firestore 永続化なし）                       |
+| **Playbook / Brief / Step / BriefEvent** | 詳細は [production/model.md](./production/model.md) を参照。進め方（工程の型）、ブリーフ（動画1本）、工程、差分                                |
 
 ---
 
@@ -183,9 +212,12 @@
 - YouTube / Twitch API 連携
 - 配信スケジュールの繰り返し設定
 - チームの削除・解散フロー
-- オフライン書き込み（楽観的更新キュー）
-- iOS PWA 対応の最適化
-- 多言語対応（日本語のみ）
-- 国際タイムゾーン対応（JST 固定）
+- 公開APIの整備
 
-> 注記: ブランチ単位の実装状況サマリーは speckit 廃止（2026-07-15）に伴い削除した。過去の実装経緯は Git 履歴を参照し、現行仕様は本ドキュメントおよび各カテゴリ配下の詳細ファイルを正本とする。
+---
+
+## 更新履歴
+
+| 日付       | バージョン | 内容     | 備考 |
+| ---------- | ---------- | -------- |
+| 2026-11-15 | v1.0.0     | 初回作成 |      |

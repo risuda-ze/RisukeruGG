@@ -1,87 +1,53 @@
 # リスケるGG
 
-**撮影も、コラボも、編集もGGなスケジュールを**
-配信スケジュール、もうリスケしない。
-
 ゲーム配信者（Twitch・YouTube）およびその制作チームを対象とした、**配信者特化型チームスケジュール管理アプリ**。
-配信枠の管理・コラボ調整・編集タスク管理を一元化し、配信者が本業（配信）に集中できる環境を提供します。
+配信枠の管理・コラボ調整・編集タスク管理を一元化し、配信者がコンテンツ制作・配信に集中できる環境を提供します。
+
+アプリの基本思想として、小さなタスク管理アプリではなく、スケジュール管理・タスク管理・コラボ調整など必要な機能を集約し、チーム管理をよりミニマルに実現できることに重視しています。特に入力補助やAIツールとの連携（API連携）を含めることで、WEBアプリの操作を極力減らし、チーム管理のハードルを下げることを意識しています。
+
+アプリ内で情報を共有することでそれぞれの管理業務で重複して情報を管理する必要がなくなります。
 
 ---
 
 ## 目次
 
-1. [機能概要](#機能概要)
-2. [デザインシステム](#デザインシステム)
-3. [技術スタック](#技術スタック)
-4. [開発環境セットアップ](#開発環境セットアップ)
-5. [コマンド一覧](#コマンド一覧)
-6. [テストデータ投入](#テストデータ投入)
-7. [環境変数](#環境変数)
-8. [アーキテクチャ](#アーキテクチャ)
-9. [画面一覧](#画面一覧)
-10. [料金プラン](#料金プラン)
+- [リスケるGG](#リスケるgg)
+  - [目次](#目次)
+  - [料金プラン](#料金プラン)
+  - [機能概要](#機能概要)
+  - [開発環境セットアップ](#開発環境セットアップ)
+    - [前提条件](#前提条件)
+    - [手順](#手順)
+  - [コマンド一覧](#コマンド一覧)
+  - [テストデータ投入](#テストデータ投入)
+  - [環境変数](#環境変数)
+    - [エラー監視・アナリティクス](#エラー監視アナリティクス)
+  - [アーキテクチャ](#アーキテクチャ)
+  - [画面一覧](#画面一覧)
 
 ---
+
+## 料金プラン
+
+| 機能           | LIGHTプラン（無料）  | PARTYプラン（¥500/人・月）         |
+| -------------- | -------------------- | ---------------------------------- |
+| メンバー数     | 2人まで              | 無制限                             |
+| タスク管理     | 月5件まで            | 無制限                             |
+| コラボ調整     | 月3件まで            | 無制限                             |
+| 通知           | LIVEリマインダーのみ | 全種類                             |
+| 広告・告知枠   | あり                 | なし                               |
+| 無料トライアル | —                    | 14日間（正式課金開始時に提供予定） |
 
 ## 機能概要
 
-| 機能             | 概要                                                             |
-| ---------------- | ---------------------------------------------------------------- |
-| スケジュール管理 | 配信枠の作成・編集・削除。週/月カレンダービューでチーム共有      |
-| コラボ調整       | コラボ打診の送受信・候補日程調整・確定枠の自動カレンダー登録     |
-| タスク管理       | カンバン形式（TODO / 進行中 / 完了）で撮影・編集・告知を一元管理 |
-| チーム管理       | メンバー招待・ロール設定（オーナー / 編集者 / 閲覧者）           |
-| 通知設定         | LIVEリマインダー・コラボ返答・タスク更新の通知（プラン別）       |
-| PWA対応          | ホーム画面追加・プッシュ通知（Android Chrome）                   |
-
----
-
-## デザインシステム
-
-紫がかったキャンバスにラベンダーの文字と枡線が乗る「標本カード」のデザイン（v3）。既定はダークテーマ、ライトは `[data-theme="light"]` の代替テーマ。
-
-- **正本**: [docs/DESIGN.md](docs/DESIGN.md)。色・タイポグラフィ・余白・角丸・モーションと部品の規約はここに書く
-- **トークン**: `docs/DESIGN.md` の frontmatter から `src/app/tokens.css` を生成する（`pnpm tokens`。同期チェックは `pnpm tokens:check`）。`tokens.css` は手で編集しない
-- **部品**: shadcn（Base UI 版）と Animate UI（Base UI 版）を `src/components/ui/*` にコピー所有。アニメーションは `motion`、トーストは `sonner`
-- **フォント**: システムフォントのみ（Web フォントは読み込まない）
-- **影・グロー**: 使わない。奥行きは面の段差と枡線で表す
-- **確認ページ**: `pnpm dev` 起動中に http://localhost:3000/design-preview で全部品と両テーマを確認できる（本番ビルドでは 404）
-- **見比べ用**: [docs/DESIGN-theme-preview.html](docs/DESIGN-theme-preview.html)（両テーマの配色とコントラスト）
-
-### 主要トークン（抜粋）
-
-| 役割 | トークン | Dark（既定） | Light |
-| --- | --- | --- | --- |
-| ページ背景 | `--canvas` | `#100c1c` | `#fcf9f5` |
-| 面 1 | `--surface` | `#191528` | `#f3ecf7` |
-| カード | `--card` | `#211c33` | `#ffffff` |
-| 枡線 | `--border` | `#36314c` | `#eadff8` |
-| プライマリ | `--primary` | `#7d68c5` | `#745fbb` |
-| 文字 | `--text` | `#e8e4fd` | `#4d3e78` |
-| 文字 2 | `--text-2` | `#b8afe5` | `#6956a8` |
-| 危険 | `--danger` | `#e65850` | `#a53c3a` |
-
-全トークン・カラーファミリー・コントラスト表は `docs/DESIGN.md` を参照。
-
----
-
-## 技術スタック
-
-| レイヤー       | 技術                                                    |
-| -------------- | ------------------------------------------------------- |
-| フロントエンド | Next.js 14 (App Router) + TypeScript 5 + Tailwind CSS 4 |
-| 状態管理       | Zustand                                                 |
-| フォーム       | React Hook Form + Zod                                   |
-| カレンダー     | react-big-calendar                                      |
-| カンバン       | @hello-pangea/dnd                                       |
-| 認証           | Firebase Authentication（Google SSO / メール認証）      |
-| DB             | Cloud Firestore（リアルタイム同期）                     |
-| ストレージ     | Firebase Storage                                        |
-| 通知           | Firebase Cloud Messaging（FCM）                         |
-| サーバーレス   | Firebase Cloud Functions                                |
-| ホスティング   | Vercel                                                  |
-| テスト         | Vitest（ユニット）/ Playwright（E2E）                   |
-| 開発環境       | Docker + Firebase Emulator Suite                        |
+| 機能             | 概要                                                                                                                                                           |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| スケジュール管理 | 撮影予定やコラボ予定などのチーム共有の予定を共有できます。また、個人のGoogleカレンダーと連携することでチームの予定を個人スケジュールに反映することができます。 |
+| コラボ調整       | 他配信者とのコラボの際の日程調整を行います。決定した予定はスケジュール登録され、変更も可能です。                                                               |
+| タスク管理       | コンテンツ制作や会議などチームのタスクを管理・共有できます。                                                                                                   |
+| チーム管理       | アプリ内で使用するチーム特有の設定ができます。                                                                                                                 |
+| 通知設定         | Discord Botを使用したリマインダー通知を設定できます。                                                                                                          |
+| PWA対応          | Android端末ではChromeを経由したPWAに対応しています。スマホで入力したり、プッシュ通知を受け取ることが可能です。                                                 |
 
 ---
 
@@ -204,114 +170,20 @@ Cloud Functions 側は `functions/` の環境変数（`.env` もしくはデプ�
 FREE_PARTY_MODE=true
 ```
 
-### エラー監視・アナリティクス（T10）
+### エラー監視・アナリティクス
 
-| 環境変数 | 用途 | 未設定時の挙動 |
-| --- | --- | --- |
-| `NEXT_PUBLIC_SENTRY_DSN` | Sentry のプロジェクト DSN。クライアント・サーバー両方のエラー収集に使用。 | **完全に無効（no-op）**。ビルドにも影響しない。 |
-| `SENTRY_ORG` | Sentry の組織スラッグ（ソースマップアップロード用）。 | ソースマップをアップロードしない。 |
-| `SENTRY_PROJECT` | Sentry のプロジェクトスラッグ（ソースマップアップロード用）。 | ソースマップをアップロードしない。 |
-| `SENTRY_AUTH_TOKEN` | ソースマップアップロード用の認証トークン。**ビルド環境（CI）でのみ設定**。 | ソースマップアップロードをスキップ（ローカルビルド・トークン無しでも `pnpm build` は成功する）。 |
-| `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | GA4 計測ID。ページビュー・主要イベント計測に使用。 | Analytics 未初期化。すべての計測呼び出しが no-op。 |
+| 環境変数                              | 用途                                                                       | 未設定時の挙動                                                                                   |
+| ------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_SENTRY_DSN`              | Sentry のプロジェクト DSN。クライアント・サーバー両方のエラー収集に使用。  | **完全に無効（no-op）**。ビルドにも影響しない。                                                  |
+| `SENTRY_ORG`                          | Sentry の組織スラッグ（ソースマップアップロード用）。                      | ソースマップをアップロードしない。                                                               |
+| `SENTRY_PROJECT`                      | Sentry のプロジェクトスラッグ（ソースマップアップロード用）。              | ソースマップをアップロードしない。                                                               |
+| `SENTRY_AUTH_TOKEN`                   | ソースマップアップロード用の認証トークン。**ビルド環境（CI）でのみ設定**。 | ソースマップアップロードをスキップ（ローカルビルド・トークン無しでも `pnpm build` は成功する）。 |
+| `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | GA4 計測ID。ページビュー・主要イベント計測に使用。                         | Analytics 未初期化。すべての計測呼び出しが no-op。                                               |
 
 - **Sentry**: `NEXT_PUBLIC_SENTRY_DSN` が空の場合はクライアント・サーバーとも初期化せず、イベントを一切送信しません。本番の CI ビルドでソースマップをアップロードする場合のみ `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` を設定してください。`tracesSampleRate` は 0.1、`sendDefaultPii` は無効（個人情報を送信しない）設定です。
 - **Cloud Functions のエラー監視**: Firebase 標準の Cloud Logging / Error Reporting を利用するため、Functions 側に Sentry 導入は不要です（追加設定なし）。
 - **Firebase Analytics（GA4）**: `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` が設定され、かつブラウザが対応（`isSupported()` が true）の場合のみ有効化します。エミュレータ利用時（`NEXT_PUBLIC_USE_EMULATORS=true`）は無効化されます。ページビューと主要イベント（`team_create` / `schedule_create` / `collab_confirm` / `upgrade_cta_click`）を計測します。
 
-### クローズドベータ入場制限（T11）
-
-正式リリース（課金開始）までは、招待したテスターのみがアプリを利用できるようにする仕組みです。ゲートの正は Firestore にあり、環境変数はクライアントの表示切替にのみ使います。
-
-| 設定 | 役割 |
-| --- | --- |
-| `NEXT_PUBLIC_CLOSED_BETA=true` | クライアント側の表示切替。allowlist 外ユーザーに待機画面を表示する。 |
-| `app_config/beta { enabled: true }`（Firestore） | ゲートの正。`firestore.rules` が `get()` で参照し、`enabled=true` かつ allowlist 非在籍のユーザーのデータアクセスを拒否する。 |
-| `beta_allowlist/{email}`（Firestore） | 許可ユーザー。ドキュメント ID = 小文字正規化したメールアドレス。**メールはリポジトリに記録しない**。 |
-| `beta_requests/{uid}`（Firestore） | 利用申請の記録（Callable `requestBetaAccess` が書き込み、管理者へ通知メール送信）。 |
-
-有効化の手順:
-
-1. Firestore コンソールで `app_config/beta` ドキュメントを作成し `enabled: true`（boolean）を設定する。
-2. `.env.local` に `NEXT_PUBLIC_CLOSED_BETA=true` を追加する。
-3. Cloud Functions の Secret `GMAIL_USER` / `GMAIL_APP_PASSWORD`（お問い合わせ機能と共用）を設定する。
-4. 招待するテスターを allowlist に登録する（下記スクリプト）。
-
-allowlist の管理（`FIREBASE_SERVICE_ACCOUNT_KEY` にサービスアカウント JSON を設定して実行）:
-
-```bash
-node scripts/beta-allowlist.mjs add    user@example.com [別のメール...]
-node scripts/beta-allowlist.mjs remove user@example.com
-node scripts/beta-allowlist.mjs list
-```
-
-解除（課金開始時）: `app_config/beta.enabled = false`（または doc 削除）＋ `NEXT_PUBLIC_CLOSED_BETA` を外すと、全ユーザーが即時開放されます。待機中に作成されたアカウント・ソロチームはそのまま利用に移行します。
-
-### Stripe 課金（T4）
-
-PARTY プラン（ユーザー単位・月額500円税込・14日間無料トライアル）の課金を Stripe Checkout + Customer Portal で提供します。プラン状態の反映は Webhook が担い、`users/{uid}.plan` と所属チームの `teams/{teamId}/members/{uid}.plan` を更新します。
-
-関連 Cloud Functions:
-
-| Function | 種別 | 役割 |
-| --- | --- | --- |
-| `createStripeCheckoutSession` | callable | Checkout セッションを作成し遷移 URL を返す（`trial_period_days = 14`、`client_reference_id = uid`） |
-| `createStripePortalSession` | callable | Customer Portal（解約・支払い方法変更）へのセッションを作成 |
-| `stripeWebhook` | HTTP (onRequest) | 署名検証のうえプラン遷移を反映。`stripeEvents/{eventId}` で冪等性を担保 |
-
-Webhook イベントとプラン遷移:
-
-| イベント | plan 遷移 |
-| --- | --- |
-| `checkout.session.completed` | → `party`（`stripeCustomerId` も保存） |
-| `customer.subscription.deleted` | → `light` |
-| `invoice.payment_failed` | 変更なし（猶予は Stripe 側。降格は subscription 削除時のみ） |
-
-環境変数 / Secrets（Cloud Functions 側）:
-
-| 変数 | 種別 | 用途 | 未設定時の挙動 |
-| --- | --- | --- | --- |
-| `STRIPE_SECRET_KEY` | Secret | Stripe シークレットキー（`sk_...`） | 該当 Function 実行時にのみ参照。未設定でもデプロイ・ビルドは成功 |
-| `STRIPE_PRICE_ID` | Secret | PARTY プランの Price ID（`price_...`） | 同上 |
-| `STRIPE_WEBHOOK_SECRET` | Secret | Webhook 署名シークレット（`whsec_...`） | 同上（未設定時は署名検証に失敗し 400 を返す） |
-| `NEXT_PUBLIC_APP_URL` | 環境変数 | Checkout 成功/キャンセル・Portal 戻り先 URL のベース | `https://risukeru.gg` にフォールバック |
-
-> ⚠️ **備忘（2026-07-20）**: 初回デプロイ時に `STRIPE_SECRET_KEY` / `STRIPE_PRICE_ID` / `STRIPE_WEBHOOK_SECRET` へ**仮のダミー値**を登録した。現状のままでは Checkout / Portal / Webhook はすべて失敗する（課金機能は動作しない）。**課金を開始する前に、下記の手順で必ず正式な値に差し替えること。**
->
-> 差し替え方法:
->
-> ```bash
-> # 1. 各シークレットを正式な値で上書き（実行するとマスク付きの入力プロンプトが出る）
-> firebase functions:secrets:set STRIPE_SECRET_KEY      # sk_live_...（テスト検証時は sk_test_...）
-> firebase functions:secrets:set STRIPE_PRICE_ID        # price_...
-> firebase functions:secrets:set STRIPE_WEBHOOK_SECRET  # whsec_...
->
-> # 2. 再デプロイ（シークレットは関数がバージョン固定で参照するため、set しただけでは反映されない）
-> firebase deploy --only functions
->
-> # 確認: 現在の値を参照する場合
-> firebase functions:secrets:access STRIPE_SECRET_KEY
-> ```
->
-> 正式な値の取得元は下記「本番セットアップ手順」1〜2 を参照（Price ID は Stripe ダッシュボードの Product、`whsec_...` は Webhook エンドポイント登録時に発行される）。
-
-**本番セットアップ手順**（実 Stripe アカウントで一度だけ実施）:
-
-1. Stripe ダッシュボードで **Product** を作成し、**Price** を「月額500円（税込・JPY）／継続」で登録して Price ID（`price_...`）を控える。
-2. **Webhook エンドポイント**を登録する。URL は デプロイ後の `stripeWebhook` の関数 URL（例: `https://asia-northeast1-<project>.cloudfunctions.net/stripeWebhook`）。購読イベントは `checkout.session.completed` / `customer.subscription.deleted` / `invoice.payment_failed`。発行された署名シークレット（`whsec_...`）を控える。
-3. **Customer Portal** を有効化する（Billing → Customer portal の設定で解約・支払い方法変更を許可）。
-4. Secrets を登録する:
-   ```bash
-   firebase functions:secrets:set STRIPE_SECRET_KEY
-   firebase functions:secrets:set STRIPE_PRICE_ID
-   firebase functions:secrets:set STRIPE_WEBHOOK_SECRET
-   ```
-5. `functions` の環境変数に `NEXT_PUBLIC_APP_URL` を本番ドメインで設定する（未設定時は既定ドメインを使用）。
-6. デプロイ後、Stripe のテストモードで Checkout → Webhook 受信までを疎通確認する。
-7. 課金公開と同時に試用モード（`FREE_PARTY_MODE` / `NEXT_PUBLIC_FREE_PARTY_MODE`）を無効化する。
-
-> クライアントからの `plan` / `planUpdatedAt` / `stripeCustomerId` 書き換えは Firestore ルールで禁止しています（サーバー専用フィールド。PL-009）。
-
----
 
 ## アーキテクチャ
 
@@ -362,23 +234,3 @@ tests/
 | 設定               | `/settings`      | プロフィール・チーム設定・連携 |
 
 ---
-
-## 料金プラン
-
-| 機能           | LIGHTプラン（無料）  | PARTYプラン（¥500/人・月）   |
-| -------------- | -------------------- | ---------------------------- |
-| メンバー数     | 2人まで              | 無制限                       |
-| タスク管理     | 月5件まで            | 無制限                       |
-| コラボ調整     | 月3件まで            | 無制限                       |
-| 通知           | LIVEリマインダーのみ | 全種類                       |
-| 広告・告知枠   | あり                 | なし                         |
-| 無料トライアル | —                    | 14日間（正式課金開始時に提供予定） |
-
----
-
-## ドキュメント
-
-- **正本仕様**: [docs/仕様・計画/risukeru_gg_spec.md](docs/仕様・計画/risukeru_gg_spec.md)（カテゴリ別の詳細は `docs/仕様・計画/` 配下）
-- **変更仕様・実装計画**: `docs/変更仕様/`
-- **LPデザインモック**: [docs/LP/risukeru_gg_lp.html](docs/LP/risukeru_gg_lp.html)（+ `css/` / `js/`）
-  本番LP（`src/app/page.tsx`）のデザイン変更を検討する際の参照用に残している静的HTMLモック。本番実装とは独立しており、ビルド・配信には含まれない。ブラウザで直接開いて確認する。
