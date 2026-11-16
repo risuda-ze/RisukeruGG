@@ -1,188 +1,319 @@
 /* ============================================================
-   リスケるGG — グローバルスタイル & デザイントークン
-   参照: specs/001-risukeru-gg-app/research.md
+   リスケるGG — グローバルスタイル
+   デザイントークンの正本: docs/DESIGN.md（v3）
+   テーマ値（[data-theme] ブロック）は tokens.css に自動生成する（pnpm tokens）
    ============================================================ */
 
 @import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+@import './tokens.css';
 
-/* ── Tailwind v4 カスタムトークン定義 ───────────────────────── */
-@theme {
-  /* カラー */
-  --color-bg: #0a0a18;
-  --color-surface: #11112a;
-  --color-card: #16163a;
-  --color-card-2: #1c1c42;
-  --color-border: #2a2a55;
-  --color-border-l: #3a3a6a;
+/* 既定はダーク。dark: バリアントは「ライト指定の外」に効かせる */
+@custom-variant dark (&:where(:not([data-theme='light'], [data-theme='light'] *)));
 
-  /* プライマリ（アクセント #3fb6e0） */
-  --color-purple: #3fb6e0;
-  --color-purple-l: #8fe0ff;
-  --color-purple-d: #2479a0;
+/* ── 役割トークンの Tailwind ユーティリティ化（bg-canvas / text-text-2 / border-pink-border 等） ── */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-brand: var(--brand);
+  --color-brand-2: var(--brand-2);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-muted: var(--text-muted);
+  --color-text-disabled: var(--text-disabled);
+  --color-text-on-primary: var(--text-on-primary);
+  --color-text-on-danger: var(--text-on-danger);
+  --color-success: var(--success);
+  --color-success-tint: var(--success-tint);
+  --color-warning: var(--warning);
+  --color-warning-tint: var(--warning-tint);
+  --color-danger: var(--danger);
+  --color-danger-tint: var(--danger-tint);
+  --color-info: var(--info);
+  --color-info-tint: var(--info-tint);
+  --color-live: var(--live);
+  --color-pink-tint: var(--pink-tint);
+  --color-pink-border: var(--pink-border);
+  --color-pink-text: var(--pink-text);
+  --color-orange-tint: var(--orange-tint);
+  --color-orange-border: var(--orange-border);
+  --color-orange-text: var(--orange-text);
+  --color-green-tint: var(--green-tint);
+  --color-green-border: var(--green-border);
+  --color-green-text: var(--green-text);
+  --color-blue-tint: var(--blue-tint);
+  --color-blue-border: var(--blue-border);
+  --color-blue-text: var(--blue-text);
+  --color-teal-tint: var(--teal-tint);
+  --color-teal-border: var(--teal-border);
+  --color-teal-text: var(--teal-text);
 
-  /* セカンダリ（アンバー） */
-  --color-amber: #ef9f27;
-  --color-amber-l: #fac775;
-  --color-amber-d: #ba7517;
-
-  /* テキスト */
-  --color-text: #e8e8ff;
-  --color-text-2: #c0c0e8;
-  --color-muted: #6666aa;
-  --color-muted-l: #8888bb;
-
-  /* セマンティック */
-  --color-live: #f0506e;
-  --color-green: #3dd68c;
-  --color-info: #5bc8fa;
-  --color-warning: #ef9f27;
-
-  /* フォント変数（layout.tsx で next/font/google を通じてセット） */
-  --font-ja: 'Zen Kaku Gothic New', sans-serif;
-  --font-num: 'Space Grotesk', sans-serif;
-
-  /* 角丸 */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
-  --radius-full: 9999px;
+  /* shadcn 互換名（shadcn CLI で追加した部品がそのまま動くようにする） */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--text-muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-heading: var(--font-sans);
 }
 
-/* ── CSS カスタムプロパティ（デザイントークン） ────────────── */
-:root {
-  /* Backgrounds */
-  --bg:          #0a0a18;
-  --surface:     #11112a;
-  --card:        #16163a;
-  --card-2:      #1c1c42;
-  --card-raised: #1c1c42;
+@theme {
+  /* システムフォントのみ。Web フォントに切り替えるときは先頭に var(--font-noto-sans-jp) を足す */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Hiragino Sans', 'Yu Gothic UI',
+    'Noto Sans JP', sans-serif;
 
-  /* Borders */
-  --border:       #2a2a55;
-  --border-l:     #3a3a6a;
-  --border-light: #3a3a6a;
-  --card-border:        color-mix(in oklab, var(--primary-700) 52%, var(--border));
-  --card-border-raised: color-mix(in oklab, var(--primary-500) 48%, var(--border-light));
+  --radius-xs: 4px;
+  --radius-sm: 7px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
 
-  /* Primary ramp */
-  --primary:     #3fb6e0;
-  --primary-50:  #ecf9ff;
-  --primary-100: #d0f0fc;
-  --primary-200: #a8e4f8;
-  --primary-300: #8fe0ff;
-  --primary-400: #5ec5ea;
-  --primary-500: #3fb6e0;
-  --primary-600: #2f9bc4;
-  --primary-700: #2479a0;
-  --primary-800: #1a5673;
-  --primary-900: #0d3a52;
-  --primary-950: #06222e;
-
-  /* Aliases */
-  --purple:    #3fb6e0;
-  --purple-l:  #8fe0ff;
-  --purple-d:  #2479a0;
-  --purple-xs: rgba(63, 182, 224, 0.08);
-  --purple-sm: rgba(63, 182, 224, 0.15);
-  --purple-md: rgba(63, 182, 224, 0.25);
-
-  /* Semantic */
-  --success:     #3dd68c;  --success-dim: rgba(61, 214, 140, 0.15);
-  --warning:     #ef9f27;  --warning-dim: rgba(239, 159, 39, 0.15);
-  --danger:      #f0506e;  --danger-dim:  rgba(240, 80, 110, 0.15);
-  --info:        #5bc8fa;  --info-dim:    rgba(91, 200, 250, 0.15);
-  --live:        #f0506e;
-  --live-xs:     rgba(240, 80, 110, 0.15);
-  --green:       #3dd68c;
-
-  /* Amber */
-  --amber:   #ef9f27;
-  --amber-l: #fac775;
-  --amber-d: #ba7517;
-
-  /* Pink — hover accent */
-  --pink:      #ec4f95;
-  --pink-300:  #ff9ec6;
-  --pink-700:  #c93576;
-  --pink-900:  #5a1c3a;
-  --pink-dim:  rgba(236, 79, 149, 0.15);
-  --glow-pink: 0 0 calc(18px * var(--glow-mult, 1)) rgba(236, 79, 149, 0.5);
-
-  /* Glow */
-  --glow-mult:    1;
-  --glow-primary: 0 0 calc(16px * var(--glow-mult)) rgba(63, 182, 224, calc(0.5 * var(--glow-mult)));
-  --glow-success: 0 0 calc(12px * var(--glow-mult)) rgba(61, 214, 140,  calc(0.45 * var(--glow-mult)));
-  --glow-warning: 0 0 calc(12px * var(--glow-mult)) rgba(239, 159, 39,  calc(0.45 * var(--glow-mult)));
-  --glow-danger:  0 0 calc(12px * var(--glow-mult)) rgba(240, 80, 110,  calc(0.45 * var(--glow-mult)));
-
-  /* Text */
-  --text:           #e4e4ee;
-  --text-2:         #a8a8c0;
-  --text-primary:   #e4e4ee;
-  --text-secondary: #a8a8c0;
-  --text-muted:     #7070a0;
-  --text-disabled:  #4a4a70;
-  --text-accent:    #8fe0ff;
-  --text-on-primary:#ffffff;
-  --muted:          #7070a0;
-  --muted-l:        #8888bb;
-
-  /* Shadow */
-  --shadow-sm: 0 1px 3px 0 rgba(0,0,0,0.4);
-  --shadow-md: 0 4px 12px -1px rgba(0,0,0,0.5), 0 2px 6px -2px rgba(0,0,0,0.4);
-  --shadow-lg: 0 10px 28px -3px rgba(0,0,0,0.6), 0 4px 10px -4px rgba(0,0,0,0.4);
-  --shadow-xl: 0 20px 40px -5px rgba(0,0,0,0.7), 0 8px 16px -6px rgba(0,0,0,0.5);
-
-  /* Radius */
-  --r-sm:   6px;  --r-md:  12px; --r-lg:  18px;
-  --r-xl:   24px; --r-full: 9999px;
-  --radius-xs:  4px;  --radius-sm: 6px;  --radius-md:  10px;
-  --radius-lg:  16px; --radius-xl: 24px; --radius-2xl: 32px; --radius-full: 9999px;
-
-  /* Motion */
-  --duration-instant: 80ms;
-  --duration-fast:    150ms;
-  --duration-base:    250ms;
-  --duration-slow:    400ms;
-  --duration-crawl:   600ms;
-  --ease-snap:   cubic-bezier(0.25, 0, 0, 1);
-  --ease-out:    cubic-bezier(0, 0, 0.2, 1);
-  --ease-in:     cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-snap: cubic-bezier(0.25, 0, 0, 1);
   --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  /* タイポグラフィ役割（text-display / text-h1 / text-h2 / text-h3 / text-caption） */
+  --text-display: 2.5rem;
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 400;
+  --text-h1: 1.75rem;
+  --text-h1--line-height: 1.1;
+  --text-h1--letter-spacing: -0.02em;
+  --text-h1--font-weight: 400;
+  --text-h2: 1.5rem;
+  --text-h2--line-height: 1.15;
+  --text-h2--letter-spacing: -0.015em;
+  --text-h2--font-weight: 400;
+  --text-h3: 1.25rem;
+  --text-h3--line-height: 1.2;
+  --text-h3--letter-spacing: -0.01em;
+  --text-h3--font-weight: 500;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.3;
+  --text-caption--letter-spacing: 0.02em;
+  --text-caption--font-weight: 500;
+}
+
+/* セクションラベル・ステータス名 */
+@utility eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── shadcn 変数へのエイリアス（テーマ非依存。値は役割トークンを参照） ──
+   --card / --primary / --border は役割トークンと同名のためそのまま使う。
+   [data-theme] にも掛けるのは、入れ子のテーマ指定で再評価させるため */
+:root,
+[data-theme] {
+  --background: var(--canvas);
+  --foreground: var(--text);
+  --card-foreground: var(--text);
+  --popover: var(--card);
+  --popover-foreground: var(--text);
+  --primary-foreground: var(--text-on-primary);
+  --secondary: var(--surface);
+  --secondary-foreground: var(--text);
+  --muted: var(--surface);
+  --muted-foreground: var(--text-2);
+  --accent: var(--surface-2);
+  --accent-foreground: var(--text);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--text-on-danger);
+  --input: var(--border);
+  --ring: var(--brand);
+  --radius: var(--radius-lg);
+  /* モーダルのスクリム */
+  --scrim: color-mix(in oklab, var(--canvas) 70%, transparent);
+}
+
+:root {
+  --duration-instant: 80ms;
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 400ms;
+}
+
+/* ============================================================
+   旧トークンの別名（v2 → v3 移行用）
+   既存画面が参照している旧名を v3 の役割トークンへ向ける。
+   新規コードでは使わない。参照が無くなった名前から削除する（#178）。
+   ============================================================ */
+@theme inline {
+  --color-bg: var(--canvas);
+  --color-card-2: var(--surface-2);
+  --color-border-l: var(--border);
+  --color-purple: var(--primary);
+  --color-purple-l: var(--brand-2);
+  --color-purple-d: var(--primary-active);
+  --color-amber: var(--warning);
+  --color-amber-l: var(--orange-text);
+  --color-amber-d: var(--orange-border);
+  --color-muted-l: var(--text-2);
+  --color-green: var(--success);
+}
+
+@theme {
+  /* v2 の 24px / 32px は廃止。大きい角丸もシステムの基本形 14px に揃える */
+  --radius-xl: 14px;
+  --radius-2xl: 14px;
+}
+
+:root,
+[data-theme] {
+  --bg: var(--canvas);
+  --card-2: var(--surface-2);
+  --card-raised: var(--surface-2);
+  --border-l: var(--border);
+  --border-light: var(--border);
+  --card-border: var(--border);
+  --card-border-raised: var(--border);
+
+  --primary-50: var(--text);
+  --primary-100: var(--text);
+  --primary-200: var(--text-2);
+  --primary-300: var(--brand-2);
+  --primary-400: var(--primary-hover);
+  --primary-500: var(--primary);
+  --primary-600: var(--primary-active);
+  --primary-700: var(--primary-active);
+  --primary-800: var(--border);
+  --primary-900: var(--surface-2);
+  --primary-950: var(--surface-2);
+
+  --purple: var(--primary);
+  --purple-l: var(--brand-2);
+  --purple-d: var(--primary-active);
+  --purple-xs: color-mix(in oklab, var(--primary) 8%, transparent);
+  --purple-sm: color-mix(in oklab, var(--primary) 15%, transparent);
+  --purple-md: color-mix(in oklab, var(--primary) 25%, transparent);
+
+  --success-dim: var(--success-tint);
+  --warning-dim: var(--warning-tint);
+  --danger-dim: var(--danger-tint);
+  --info-dim: var(--info-tint);
+  --live-xs: var(--danger-tint);
+  --green: var(--success);
+  --amber: var(--warning);
+  --amber-l: var(--orange-text);
+  --amber-d: var(--orange-border);
+
+  --text-primary: var(--text);
+  --text-secondary: var(--text-2);
+  --text-accent: var(--brand-2);
+  --muted-l: var(--text-2);
+
+  /* v3 は影・グローを使わない。旧参照は「影なし」に解決させる */
+  --glow-primary: 0 0 #0000;
+  --glow-success: 0 0 #0000;
+  --glow-warning: 0 0 #0000;
+  --glow-danger: 0 0 #0000;
+  --shadow-sm: 0 0 #0000;
+  --shadow-md: 0 0 #0000;
+  --shadow-lg: 0 0 #0000;
+  --shadow-xl: 0 0 #0000;
+
+  --r-sm: var(--radius-sm);
+  --r-md: var(--radius-md);
+  --r-lg: var(--radius-lg);
+  --r-xl: var(--radius-lg);
+  --r-full: var(--radius-full);
+
+  --duration-crawl: 600ms;
   --ease-linear: linear;
 
-  /* Fonts */
-  --font-head: 'Space Grotesk', 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
-  --font-body: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
+  --font-head: var(--font-sans);
+  --font-body: var(--font-sans);
+  --font-ja: var(--font-sans);
+  --font-num: var(--font-sans);
 }
 
 /* ── ベーススタイル ─────────────────────────────────────────── */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    border-color: var(--border);
+  }
+
+  html {
+    height: 100%;
+    font-size: 16px;
+    /* スクロールバーを常に表示してレイアウトシフトを防ぐ */
+    overflow-y: scroll;
+  }
+
+  body {
+    min-height: 100%;
+    background-color: var(--canvas);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-feature-settings: 'palt';
+    line-height: 1.6;
+  }
+
+  /* 見出しの既定（静かな見出し: 細めのウェイト + 負のトラッキング）。ユーティリティで上書きできる */
+  h1 {
+    font-size: var(--text-h1);
+    font-weight: var(--text-h1--font-weight);
+    line-height: var(--text-h1--line-height);
+    letter-spacing: var(--text-h1--letter-spacing);
+  }
+  h2 {
+    font-size: var(--text-h2);
+    font-weight: var(--text-h2--font-weight);
+    line-height: var(--text-h2--line-height);
+    letter-spacing: var(--text-h2--letter-spacing);
+  }
+  h3 {
+    font-size: var(--text-h3);
+    font-weight: var(--text-h3--font-weight);
+    line-height: var(--text-h3--line-height);
+    letter-spacing: var(--text-h3--letter-spacing);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
 }
 
-html {
-  height: 100%;
-  /* スクロールバーを常に表示してレイアウトシフトを防ぐ */
-  overflow-y: scroll;
-}
-
-body {
-  min-height: 100%;
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: var(--font-ja, 'Zen Kaku Gothic New', sans-serif);
-  line-height: 1.58;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* 数値・英字は Space Grotesk を使用するクラス */
+/* 数値・時刻は等幅数字で桁を揃える */
 .font-num {
-  font-family: var(--font-num, 'Space Grotesk', sans-serif);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ── デザインシステム キーフレーム ──────────────────────────── */
@@ -191,7 +322,6 @@ body {
 @keyframes drop-down     { from{transform:translateY(-12px);opacity:0} to{transform:translateY(0);opacity:1} }
 @keyframes slide-in-left { from{transform:translateX(-16px);opacity:0} to{transform:translateX(0);opacity:1} }
 @keyframes pop           { 0%{transform:scale(0.85);opacity:0} 70%{transform:scale(1.08);opacity:1} 100%{transform:scale(1);opacity:1} }
-@keyframes glow-pulse    { 0%,100%{box-shadow:0 0 8px rgba(63,182,224,0.3)} 50%{box-shadow:0 0 20px rgba(63,182,224,0.7)} }
 @keyframes scan          { from{background-position:-200% center} to{background-position:200% center} }
 @keyframes bar-grow      { from{ width:0 } }
 @keyframes hop {
@@ -294,15 +424,6 @@ body {
   display: none;
 }
 
-/* ── カレンダー・時刻ピッカーアイコン ───────────────────────── */
-/* ダークテーマ固定のため、デフォルトの黒いアイコンを --text (#e8e8ff) 系に変換 */
-input[type='date']::-webkit-calendar-picker-indicator,
-input[type='datetime-local']::-webkit-calendar-picker-indicator,
-input[type='time']::-webkit-calendar-picker-indicator {
-  filter: invert(1) opacity(0.65);
-  cursor: pointer;
-}
-
 /* ============================================================
    デザインシステム コンポーネントクラス
    ============================================================ */
@@ -329,12 +450,12 @@ input[type='time']::-webkit-calendar-picker-indicator {
 .btn:disabled, .btn[disabled], .btn.is-disabled { opacity: 0.35; pointer-events: none; }
 
 .btn--primary { background: var(--primary); color: var(--text-on-primary); }
-.btn--primary:hover { background: var(--pink); color: #fff; box-shadow: var(--glow-pink); }
-.btn--primary:active { background: var(--pink-700); }
+.btn--primary:hover { background: var(--primary-hover); color: #fff; box-shadow: var(--glow-primary); }
+.btn--primary:active { background: var(--primary-active); }
 
 .btn--ghost { background: transparent; border-color: var(--primary); color: var(--primary-300); }
-.btn--ghost:hover { background: var(--pink-dim); border-color: var(--pink); color: var(--pink-300); box-shadow: var(--glow-pink); }
-.btn--ghost:active { background: var(--pink-900); }
+.btn--ghost:hover { background: var(--surface); border-color: var(--primary-hover); color: var(--text); box-shadow: var(--glow-primary); }
+.btn--ghost:active { background: var(--surface-2); }
 
 .btn--danger { background: var(--danger); color: #fff; }
 .btn--danger:hover { background: #f3637e; box-shadow: var(--glow-danger); }
@@ -344,7 +465,7 @@ input[type='time']::-webkit-calendar-picker-indicator {
 .btn--success:hover { box-shadow: var(--glow-success); filter: brightness(1.06); }
 
 .btn--subtle { background: var(--card-raised); border-color: var(--border-light); color: var(--text-secondary); }
-.btn--subtle:hover { color: var(--pink-300); border-color: var(--pink); background: var(--pink-dim); }
+.btn--subtle:hover { color: var(--text); border-color: var(--primary-hover); background: var(--surface); }
 
 .btn--secondary { background: var(--surface); border-color: var(--border-light); color: var(--text-secondary); }
 .btn--secondary:hover { background: var(--card-raised); border-color: var(--card-border); color: var(--text-primary); }
@@ -563,7 +684,7 @@ input[type='time']::-webkit-calendar-picker-indicator {
   border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap; width: 100%;
   transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
 }
-.dropdown__item:hover { background: rgba(91,200,250,0.12); color: var(--info); }
+.dropdown__item:hover { background: color-mix(in oklab, var(--info) 12%, transparent); color: var(--info); }
 .dropdown__item.is-active { color: var(--primary-300); }
 .dropdown__check { margin-left: auto; }
 
@@ -603,7 +724,7 @@ select option {
 
 /* ============================================================
    スケジュール画面 — デザインシステムクラス
-   schedule.css (design file) から移植。--primary は #3fb6e0 に統一済み。
+   schedule.css (design file) から移植。
    ============================================================ */
 
 /* ---- カレンダーグリッド ---- */
@@ -749,7 +870,7 @@ select option {
 .caltip__row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 0.78rem; }
 .caltip__row + .caltip__row { border-top: 1px solid var(--border); }
 .caltip__dot { width: 7px; height: 7px; border-radius: 2px; flex: 0 0 auto; }
-.caltip__time { font-family: 'Space Grotesk', monospace; color: var(--text-secondary); font-size: 0.72rem; flex: 0 0 auto; }
+.caltip__time { font-variant-numeric: tabular-nums; color: var(--text-secondary); font-size: 0.72rem; flex: 0 0 auto; }
 .caltip__t { color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* イベントチップ */
@@ -761,7 +882,7 @@ select option {
   transition: filter var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
 }
 .evt:hover { filter: brightness(1.18); transform: translateX(1px); }
-.evt__time { font-family: 'Space Grotesk', monospace; font-weight: 600; font-size: 0.7rem; color: var(--text-secondary); flex: 0 0 auto; }
+.evt__time { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 0.7rem; color: var(--text-secondary); flex: 0 0 auto; }
 .evt__title { font-size: 0.74rem; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .evt--bar { border-left-width: 0; border-radius: 5px; padding: 3px 8px; box-shadow: inset 3px 0 0 var(--evt); }
 .evt--bar .evt__title { font-weight: 600; }
@@ -786,7 +907,7 @@ select option {
   transition: background var(--duration-fast) var(--ease-out); }
 .cwv__col:last-child { border-right: none; }
 .cwv__col:hover { background: var(--surface); }
-.cwv__col.is-today { background: rgba(63,182,224,0.06); }
+.cwv__col.is-today { background: color-mix(in oklab, var(--primary) 6%, transparent); }
 .cwv__evt {
   display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; opacity: 1;
   background: var(--evt-bg); border-left: 3px solid var(--evt);
@@ -795,7 +916,7 @@ select option {
 }
 .cwv__evt:hover { filter: brightness(1.16); transform: translateY(-1px); }
 .cwv__evt-top { display: flex; align-items: center; gap: 5px; }
-.cwv__evt-time { font-family: 'Space Grotesk', monospace; font-weight: 600; font-size: 0.74rem; color: var(--text-secondary); }
+.cwv__evt-time { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 0.74rem; color: var(--text-secondary); }
 .cwv__evt-title { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); line-height: 1.3; }
 .cwv__emptyhint { font-size: 0.74rem; color: var(--text-disabled); text-align: center; padding-top: 6px; }
 
@@ -897,7 +1018,6 @@ select option {
   background: linear-gradient(135deg, var(--primary-400), var(--primary-700));
   color: #fff; display: flex; align-items: center; justify-content: center;
   box-shadow: var(--glow-primary), var(--shadow-lg);
-  animation: glow-pulse 2.6s linear infinite;
   transition: transform var(--duration-fast) var(--ease-spring);
 }
 .aifab:hover { transform: scale(1.1) rotate(8deg); }
@@ -997,7 +1117,7 @@ select option {
 .mevt { display: flex; align-items: center; gap: 10px; padding: 11px 13px; border-radius: var(--radius-md); margin-bottom: 7px; cursor: pointer; opacity: 1;
   background: var(--evt-bg); border-left: 3px solid var(--evt);
   animation: pop-scale-cal var(--duration-base) var(--ease-spring) both; }
-.mevt__time { font-family: 'Space Grotesk', monospace; font-weight: 600; font-size: 0.78rem; color: var(--text-secondary); flex: 0 0 auto; width: 42px; }
+.mevt__time { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 0.78rem; color: var(--text-secondary); flex: 0 0 auto; width: 42px; }
 .mevt__title { font-size: 0.88rem; font-weight: 600; color: var(--text-primary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .maday__empty { font-size: 0.78rem; color: var(--text-disabled); padding: 6px 0 2px; }
 
@@ -1026,7 +1146,6 @@ input[type="datetime-local"] {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  color-scheme: dark;
   font-family: var(--font-body);
   font-size: 0.875rem;
   padding: 8px 12px;
@@ -1044,7 +1163,6 @@ input[type="datetime-local"]:focus {
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.6) sepia(1) hue-rotate(220deg) saturate(1.5);
   cursor: pointer;
 }
 

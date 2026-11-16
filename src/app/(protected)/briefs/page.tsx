@@ -63,7 +63,7 @@ export default function BriefsPage() {
         <TopBar title="タスク管理 v2" />
         <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 max-w-lg">
           <Card>
-            <p className="text-sm text-muted">チームに参加すると、動画ごとの1枚紙で制作を進められます。</p>
+            <p className="text-sm text-text-muted">チームに参加すると、動画ごとの1枚紙で制作を進められます。</p>
           </Card>
         </div>
       </div>
@@ -128,7 +128,7 @@ export default function BriefsPage() {
             <p className="text-sm text-text mb-1">
               {briefs.length === 0 ? 'まだブリーフがありません' : '条件に合うブリーフがありません'}
             </p>
-            <p className="text-[12px] text-muted mb-4">
+            <p className="text-[12px] text-text-muted mb-4">
               動画1本ごとに1枚紙を作ると、工程・担当・締切が自動で埋まります。
               {playbooks.length === 0 && ' まず「進め方」を作っておくと、次からは公開日を入れるだけで済みます。'}
             </p>
@@ -153,7 +153,7 @@ export default function BriefsPage() {
           </div>
         )}
 
-        <p className="mt-6 text-[11px] text-muted flex items-center gap-1">
+        <p className="mt-6 text-[11px] text-text-muted flex items-center gap-1">
           <Badge variant="info">β</Badge>
           従来のカンバン（タスク管理）はそのまま使えます。v2 は動画1本単位の進行管理に向いています。
         </p>

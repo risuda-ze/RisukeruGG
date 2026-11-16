@@ -42,7 +42,7 @@ export function BannerAd({ plan }: BannerAdProps) {
         <span className="block truncate text-sm font-semibold text-text">
           PARTYプランで広告も上限もゼロに
         </span>
-        <span className="block truncate text-[12px] text-muted">
+        <span className="block truncate text-[12px] text-text-muted">
           チーム機能・全通知・無制限のフル機能を開放
         </span>
       </span>

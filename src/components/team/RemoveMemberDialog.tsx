@@ -63,7 +63,7 @@ export function RemoveMemberDialog({
             削除後、これらのタスクは担当者なし（未アサイン）になります。
           </p>
         )}
-        <p className="text-muted">削除後、このメンバーはソロチームへ移動されます。</p>
+        <p className="text-text-muted">削除後、このメンバーはソロチームへ移動されます。</p>
         {error && <p className="text-live">{error}</p>}
       </div>
     </Modal>

@@ -83,11 +83,11 @@ colors:
 
 typography:
   # システムフォントのみ（Web フォントは読み込まない）。見出しも本文も同じスタック。
-  # 見出しは細いウェイト + 負のトラッキングで「静かな見出し」を作る
+  # 見出しは負のトラッキングと補助色（text-2）で「静かな見出し」を作る。300 は使わない
   family: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Hiragino Sans', 'Yu Gothic UI', 'Noto Sans JP', sans-serif"
   base: 16px
-  display: { size: 2.5rem, weight: 300, lineHeight: 1.05, tracking: '-0.03em' } # 40px
-  h1: { size: 1.75rem, weight: 300, lineHeight: 1.1, tracking: '-0.02em' } # 28px
+  display: { size: 2.5rem, weight: 400, lineHeight: 1.05, tracking: '-0.03em' } # 40px
+  h1: { size: 1.75rem, weight: 400, lineHeight: 1.1, tracking: '-0.02em' } # 28px
   h2: { size: 1.5rem, weight: 400, lineHeight: 1.15, tracking: '-0.015em' } # 24px
   h3: { size: 1.25rem, weight: 500, lineHeight: 1.2, tracking: '-0.01em' } # 20px
   body: { size: 1rem, weight: 400, lineHeight: 1.6 } # 16px
@@ -130,7 +130,7 @@ v2（ネオンパープル）は廃止。v2 の配色は再利用しない。
 4. **影を使わない**。奥行きは面の段差（ダークは暗 → 明、ライトは明 → 白）と 2px の枡線で表す。
 5. **角丸は 14px が基本形**。カード・ボタン・モーダルは全部 14px。タグ・ナビ・入力欄は 7px。
 6. **色を付けたい要素はカラーファミリーから1つ選ぶ**。淡い面（tint）と枡線（border）は同じファミリーから取る。鮮やかな色を広い面に塗らない。
-7. **フォントはシステムフォントの1スタック**。Web フォントは読み込まない。見出しは細いウェイト（300〜400）と負のトラッキングで静かに。
+7. **フォントはシステムフォントの1スタック**。Web フォントは読み込まない。見出しはウェイト 400 と負のトラッキングで静かに。
 8. **色・余白・角丸・時間はトークン経由**。生の値を書かない。`prefers-reduced-motion` を必ず尊重する。
 9. タップ対象は 44px 以上。
 
@@ -196,7 +196,7 @@ v2（ネオンパープル）は廃止。v2 の配色は再利用しない。
 | --- | --- | --- | --- |
 | text on canvas / surface / card | 15.5 / 14.4 / 13.3 | 8.8 / 8.0 / 9.2 | AAA |
 | text-2 on canvas / card | 9.4 / 8.1 | 5.7 / 6.0 | AA |
-| text-2 on info-tint | — | 4.3 | light では Sky 上は text を使う |
+| text-2 on info-tint | — | 4.3 | 部品で固定済み。info variant は `--text` を焼き込み `--text-2` を参照しない |
 | text-muted on canvas | 5.6 | 4.1 | light は大きい文字・placeholder のみ |
 | text-on-primary on primary | 4.5 | 5.1 | AA |
 | text-on-danger on danger | 5.4 | 6.4 | AA |
@@ -210,8 +210,8 @@ v2（ネオンパープル）は廃止。v2 の配色は再利用しない。
 
 | 役割 | サイズ | ウェイト | 行間 | トラッキング | 用途 |
 | --- | --- | --- | --- | --- | --- |
-| display | 40px | 300 | 1.05 | -0.03em | ダッシュボードの日付・大きな数値 |
-| h1 | 28px | 300 | 1.1 | -0.02em | ページタイトル（TopBar） |
+| display | 40px | 400 | 1.05 | -0.03em | ダッシュボードの日付・大きな数値 |
+| h1 | 28px | 400 | 1.1 | -0.02em | ページタイトル（TopBar） |
 | h2 | 24px | 400 | 1.15 | -0.015em | セクション見出し・モーダルタイトル |
 | h3 | 20px | 500 | 1.2 | -0.01em | カード見出し |
 | body | 16px | 400 | 1.6 | 0 | 本文 |
@@ -220,7 +220,8 @@ v2（ネオンパープル）は廃止。v2 の配色は再利用しない。
 | eyebrow | 12px | 600 | 1.15 | 0.06em / 大文字 | セクションラベル・ステータス名 |
 
 - 本文の最小は 14px。12px は caption / eyebrow / バッジに限る。
-- 300 ウェイトは OS によって存在しない（Yu Gothic は Light / Regular / Bold のみ）。その場合ブラウザが最も近いウェイトに丸めるので、h1 / display が太く見えたら 400 に下げて揃える。Windows で細く薄く見える場合は `-webkit-font-smoothing` ではなく色（`--text`）で補う。
+- 見出しの最小ウェイトは 400。300 は使わない（Windows の Yu Gothic UI に 300 が無く Light 250 に丸まり、環境差が出るため）。「静かな見出し」は負のトラッキングと `--text-2` で出す。Windows で細く薄く見える場合は `-webkit-font-smoothing` ではなく色（`--text`）で補う。
+- Tailwind では `text-display` / `text-h1` / `text-h2` / `text-h3` / `text-caption` と `eyebrow` ユーティリティで役割を指定する。h1〜h3 要素には既定で同じ値が当たる。
 - `html { font-size: 16px }`。v2 の 18px は廃止。
 
 #### システムフォントを選んだ理由
@@ -284,7 +285,7 @@ shadcn の `--radius` は `--radius-lg`（14px）に合わせる。
 
 ## 2. コンポーネント規約
 
-部品は shadcn（Base UI）からコピーし、見た目は以下に合わせる。アニメ付き版は Animate UI を主、Motion Primitives を補助に使う。
+部品は shadcn（Base UI）からコピーし、見た目は以下に合わせる。アニメ付き版は Animate UI（Base UI 版）のみを使う。コピーした部品内の lucide アイコンは `Icon.tsx`（Material Icons）に差し替える。
 
 ### Button
 
@@ -317,6 +318,7 @@ shadcn の `--radius` は `--radius-lg`（14px）に合わせる。
 - Badge: ピル、tint 面 + 1px 同ファミリー border + ファミリー text、eyebrow タイポ。
 - Tag: 角丸 `--radius-sm`、同配色、caption タイポ。
 - ステータス: success / warning / danger / info は各 `*-tint` と色。
+- info variant（Badge / Alert / HintBar 等）の文字色は `--text` に固定する。ライトの `--text-2` は info-tint 上で 4.3:1 しかないため、部品側で `--text-2` を参照しない構造にする。
 - LIVE: `--danger-tint` 面 + `--danger` 文字 + `--live` のドット（ドットだけ `pulse`）。
 
 ### Input / Textarea / Select
@@ -375,7 +377,7 @@ shadcn の `--radius` は `--radius-lg`（14px）に合わせる。
 
 - カード・ボタン・モーダルは 14px 角丸で揃える
 - 色を付けるときはファミリーの tint と border を組で使う
-- 見出しは細いウェイト + 負のトラッキング、ラベルは大文字 + 正のトラッキング
+- 見出しはウェイト 400 + 負のトラッキング、ラベルは大文字 + 正のトラッキング
 - 塗りボタンは画面に1つ、primary 色のみ
 - ページ背景は `--canvas`、最も明るい面（白 / 明るい紫黒）はカード以上の段にだけ
 
@@ -393,8 +395,11 @@ shadcn の `--radius` は `--radius-lg`（14px）に合わせる。
 
 ```css
 @import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
-/* ── テーマ値（正本: docs/DESIGN.md frontmatter）。既定 = dark ──── */
+/* ── テーマ値（正本: docs/DESIGN.md frontmatter）。既定 = dark ────
+   実ファイルではこの2ブロックを src/app/tokens.css に自動生成し、@import './tokens.css' で読み込む */
 :root,
 [data-theme='dark'] {
   --canvas: #100c1c; --surface: #191528; --card: #211c33; --surface-2: #2c273f;
@@ -526,15 +531,18 @@ body {
 }
 ```
 
-`layout.tsx` の `next/font/google`（Zen Kaku Gothic New / Space Grotesk）は削除する。Web フォントは読み込まない。
+`layout.tsx` は `next/font/google` を読み込まない（Web フォントなし）。
+
+実際の `globals.css` には上記に加えて、shadcn 互換の `--color-background` 等の登録、タイポグラフィ役割（`--text-h1` 等）、`dark:` バリアントの定義、v2 の旧名を v3 の役割トークンへ向ける移行用の別名ブロックがある。旧名は新規コードで使わない。
 
 ---
 
 ## 5. 同期ルール
 
-- 正本はこのファイル。`globals.css` の `[data-theme]` ブロックは frontmatter の `colors.dark` / `colors.light` から生成する（スクリプトは #178 フェーズ2で追加）。手で編集した場合は必ず両方を直す。
+- 正本はこのファイル。`[data-theme]` ブロック（`src/app/tokens.css`）は frontmatter の `colors.dark` / `colors.light` から `pnpm tokens` で生成する（`scripts/generate-design-tokens.mjs`）。`tokens.css` は手で編集しない。同期ずれは `pnpm tokens:check` とユニットテスト（`tests/unit/design/tokens.test.ts`）で検出する。
+- frontmatter に色を足したら `globals.css` の `@theme inline` に `--color-*` の登録も足す（Tailwind ユーティリティ化のため。ここは手書き）。
 - 新しい色・角丸・時間が必要になったら、まず両テーマ分をここに追記してから使う。片方だけ足さない。
-- 既定は dark（`:root`）。light は `[data-theme='light']`。テーマ切り替え UI は別 issue。
+- 既定は dark（`:root`）。light は `[data-theme='light']`。テーマ切り替え UI は #215。
 - `docs/DESIGN-theme-preview.html` は両テーマの見え方とコントラストの確認用。トークンを変えたら更新する。
 - UI 仕様の規約は `docs/仕様・計画/ui/requirements.md` UI-019〜026 を参照。本ファイルと矛盾した場合は本ファイルを優先し、requirements.md を更新する。
 

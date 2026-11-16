@@ -63,7 +63,7 @@ export function StepRow({ step, members, selected, onSelect, onComplete, canEdit
 
       {/* タイトルと注意 */}
       <div className="min-w-0">
-        <div className={`text-sm font-medium truncate ${closed ? 'line-through text-muted' : 'text-text'}`}>
+        <div className={`text-sm font-medium truncate ${closed ? 'line-through text-text-muted' : 'text-text'}`}>
           {step.title}
         </div>
         <div className="flex flex-wrap items-center gap-1 mt-0.5">
@@ -73,15 +73,15 @@ export function StepRow({ step, members, selected, onSelect, onComplete, canEdit
 
       {/* 担当（モバイルでは 2 行目） */}
       <div className="col-start-2 md:col-start-3 text-[12px] text-text-2 truncate flex items-center gap-1">
-        <Icon name="manage_accounts" size={13} className="text-muted shrink-0" />
-        {assignee ? assignee.displayName : <span className="text-muted">未定</span>}
+        <Icon name="manage_accounts" size={13} className="text-text-muted shrink-0" />
+        {assignee ? assignee.displayName : <span className="text-text-muted">未定</span>}
       </div>
 
       {/* 締切 */}
       <div className="col-start-2 md:col-start-4 text-[12px] text-text-2 flex items-center gap-1">
-        <Icon name="event" size={13} className="text-muted shrink-0" />
+        <Icon name="event" size={13} className="text-text-muted shrink-0" />
         {formatShortDate(step.dueDate)}
-        {step.dueDateOverridden && <span className="text-muted text-[10px]">固定</span>}
+        {step.dueDateOverridden && <span className="text-text-muted text-[10px]">固定</span>}
       </div>
 
       {/* 状態 */}

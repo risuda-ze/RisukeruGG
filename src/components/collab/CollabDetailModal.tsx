@@ -77,7 +77,7 @@ function StatusBadge({ status }: { status: CollabSession['status'] }) {
   return (
     <span
       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border"
-      style={{ background: 'var(--purple-xs)', color: 'var(--muted)', borderColor: 'var(--border)' }}
+      style={{ background: 'var(--purple-xs)', color: 'var(--text-muted)', borderColor: 'var(--border)' }}
     >
       {label}
     </span>
@@ -101,7 +101,7 @@ function ResponseAggregate({
       <span className={`material-icons text-[18px] ${iconClass}`}>{icon}</span>
       <span
         className="text-[13px] font-bold font-num"
-        style={{ color: count === 0 ? 'var(--muted)' : 'var(--text-2)' }}
+        style={{ color: count === 0 ? 'var(--text-muted)' : 'var(--text-2)' }}
       >
         {count}
       </span>
@@ -582,7 +582,7 @@ export function CollabDetailModal({
                         className={`w-9 h-9 rounded-[8px] flex items-center justify-center border-2 transition-all ${
                           iconValue === icon
                             ? 'border-amber bg-amber/10 text-amber-l'
-                            : 'border-transparent text-muted hover:bg-surface hover:text-text'
+                            : 'border-transparent text-text-muted hover:bg-surface hover:text-text'
                         }`}
                         title={icon}
                       >
@@ -611,7 +611,7 @@ export function CollabDetailModal({
                   {canEditInPlace && (
                     <button
                       onClick={() => setEditingTitle(true)}
-                      className="shrink-0 text-muted hover:text-purple-l transition-colors"
+                      className="shrink-0 text-text-muted hover:text-purple-l transition-colors"
                     >
                       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M11.013 2.513a1.75 1.75 0 0 1 2.475 2.474L6.226 12.25a2.751 2.751 0 0 1-.892.566l-2.35.864a.75.75 0 0 1-.96-.96l.864-2.35a2.75 2.75 0 0 1 .566-.892l7.56-7.559Z" />
@@ -625,7 +625,7 @@ export function CollabDetailModal({
                   value={statusValue}
                   onChange={(e) => setStatusValue(e.target.value as CollabSession['status'])}
                   className="text-[11px] font-semibold rounded-full px-3 py-1 outline-none border cursor-pointer"
-                  style={{ background: 'var(--purple-xs)', color: 'var(--muted)', borderColor: 'var(--border)' }}
+                  style={{ background: 'var(--purple-xs)', color: 'var(--text-muted)', borderColor: 'var(--border)' }}
                   onMouseDown={(e) => e.stopPropagation()}
                 >
                   <option value="open">募集中</option>
@@ -636,7 +636,7 @@ export function CollabDetailModal({
             </div>
             <button
               onClick={onClose}
-              className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center border border-border text-muted hover:text-text transition-colors"
+              className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center border border-border text-text-muted hover:text-text transition-colors"
               style={{ background: 'var(--surface)' }}
               aria-label="閉じる"
             >
@@ -671,11 +671,11 @@ export function CollabDetailModal({
             {/* 内容 */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] font-semibold text-muted tracking-[0.06em] uppercase">内容</label>
+                <label className="text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase">内容</label>
                 {canEditInPlace && !editingContent && (
                   <button
                     onClick={startEditContent}
-                    className="text-muted hover:text-purple-l transition-colors"
+                    className="text-text-muted hover:text-purple-l transition-colors"
                   >
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M11.013 2.513a1.75 1.75 0 0 1 2.475 2.474L6.226 12.25a2.751 2.751 0 0 1-.892.566l-2.35.864a.75.75 0 0 1-.96-.96l.864-2.35a2.75 2.75 0 0 1 .566-.892l7.56-7.559Z" />
@@ -695,7 +695,7 @@ export function CollabDetailModal({
                   <div className="flex gap-2 justify-end">
                     <button
                       onClick={cancelEditContent}
-                      className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-muted hover:text-text"
+                      className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-text-muted hover:text-text"
                     >
                       キャンセル
                     </button>
@@ -714,7 +714,7 @@ export function CollabDetailModal({
                   onClick={canEditInPlace ? startEditContent : undefined}
                 >
                   {contentValue || (
-                    <span className="text-muted italic text-[13px]">内容が入力されていません{canEditInPlace ? '（クリックして編集）' : ''}</span>
+                    <span className="text-text-muted italic text-[13px]">内容が入力されていません{canEditInPlace ? '（クリックして編集）' : ''}</span>
                   )}
                 </div>
               )}
@@ -722,7 +722,7 @@ export function CollabDetailModal({
 
             {/* 参加者 */}
             <div>
-              <div className="text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-3">参加者</div>
+              <div className="text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase mb-3">参加者</div>
               <div className="flex flex-wrap gap-2 mb-3">
                 {participants.map((p) => {
                   const style = avatarStyle(p.name);
@@ -748,7 +748,7 @@ export function CollabDetailModal({
                       {canEditInPlace && (
                         <button
                           onClick={() => removeParticipant(p.id)}
-                          className="text-muted hover:text-live transition-colors"
+                          className="text-text-muted hover:text-live transition-colors"
                         >
                           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3 h-3">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l8 8M12 4l-8 8" />
@@ -763,7 +763,7 @@ export function CollabDetailModal({
                     <button
                       onClick={() => setShowMemberPicker((v) => !v)}
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-dashed text-[12px] font-semibold transition-colors"
-                      style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
+                      style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
                     >
                       <Icon name="person_add" size={16} />
                       メンバー追加
@@ -813,7 +813,7 @@ export function CollabDetailModal({
                   />
                   <button
                     onClick={addExternal}
-                    className="px-3 py-1.5 rounded-[10px] text-[13px] font-semibold border border-border text-muted hover:text-text hover:border-border-l transition-colors"
+                    className="px-3 py-1.5 rounded-[10px] text-[13px] font-semibold border border-border text-text-muted hover:text-text hover:border-border-l transition-colors"
                     style={{ background: 'var(--surface)' }}
                   >
                     追加
@@ -824,7 +824,7 @@ export function CollabDetailModal({
 
             {/* 候補日程 */}
             <div>
-              <div className="text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-3">候補日程</div>
+              <div className="text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase mb-3">候補日程</div>
               <div className="flex flex-col gap-2 mb-3">
                 {/* 日時の昇順でソート（originalIndex で participantResponses を参照） */}
                 {proposedDates
@@ -851,7 +851,7 @@ export function CollabDetailModal({
                           <div className="flex gap-2 justify-end">
                             <button
                               onClick={() => { setEditingDateIndex(null); setEditDateValue(null); }}
-                              className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-muted"
+                              className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-text-muted"
                             >
                               取消
                             </button>
@@ -869,7 +869,6 @@ export function CollabDetailModal({
                         <>
                           <div
                             className="text-[14px] font-bold font-num text-text"
-                            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                           >
                             {format(date, 'M月 dd日（E） HH:mm 〜', { locale: ja })}
                           </div>
@@ -884,7 +883,7 @@ export function CollabDetailModal({
                                     setEditingDateIndex(originalIndex);
                                     setEditDateValue(date);
                                   }}
-                                  className="text-muted hover:text-purple-l transition-colors"
+                                  className="text-text-muted hover:text-purple-l transition-colors"
                                   title="編集"
                                 >
                                   <Icon name="edit" size={16} />
@@ -892,7 +891,7 @@ export function CollabDetailModal({
                                 <button
                                   onClick={() => handleDeleteDate(originalIndex)}
                                   disabled={proposedDates.length <= 1}
-                                  className="text-muted hover:text-live transition-colors disabled:opacity-30"
+                                  className="text-text-muted hover:text-live transition-colors disabled:opacity-30"
                                   title="削除"
                                 >
                                   <Icon name="delete" size={16} />
@@ -936,7 +935,7 @@ export function CollabDetailModal({
                     <div className="flex gap-2 justify-end">
                       <button
                         onClick={() => { setShowAddDate(false); setNewDateValue(null); }}
-                        className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-muted"
+                        className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-text-muted"
                       >
                         取消
                       </button>
@@ -972,13 +971,13 @@ export function CollabDetailModal({
             >
               <div className="flex flex-col flex-1 overflow-hidden min-h-0">
                 <div className="px-6 py-4 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
-                  <p className="text-[11px] font-semibold text-muted tracking-[0.06em] uppercase">コメント / メモ</p>
+                  <p className="text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase">コメント / メモ</p>
                 </div>
 
                 {/* コメントリスト */}
                 <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4" style={{ minHeight: 0 }}>
                   {comments.length === 0 && (
-                    <p className="text-[12px] text-muted italic text-center mt-4">まだコメントはありません</p>
+                    <p className="text-[12px] text-text-muted italic text-center mt-4">まだコメントはありません</p>
                   )}
                   {comments.map((c) => {
                     const style = avatarStyle(c.authorName);
@@ -1003,7 +1002,7 @@ export function CollabDetailModal({
                               className="rounded-[0_10px_10px_10px] px-3 py-2"
                               style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
                             >
-                              <div className="flex justify-between mb-1 text-[11px] text-muted">
+                              <div className="flex justify-between mb-1 text-[11px] text-text-muted">
                                 <strong className="text-text font-semibold">{c.authorName}</strong>
                                 <span>{format(c.createdAt, 'HH:mm', { locale: ja })}</span>
                               </div>
@@ -1011,7 +1010,7 @@ export function CollabDetailModal({
                             </div>
                             <button
                               onClick={() => { setReplyingTo(c.id); setReplyText(''); }}
-                              className="mt-1 text-[11px] text-muted hover:text-purple-l transition-colors ml-1"
+                              className="mt-1 text-[11px] text-text-muted hover:text-purple-l transition-colors ml-1"
                             >
                               返信
                             </button>
@@ -1041,7 +1040,7 @@ export function CollabDetailModal({
                                     className="flex-1 rounded-[0_8px_8px_8px] px-2.5 py-1.5"
                                     style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
                                   >
-                                    <div className="flex justify-between mb-0.5 text-[10px] text-muted">
+                                    <div className="flex justify-between mb-0.5 text-[10px] text-text-muted">
                                       <strong className="text-text font-semibold">{r.authorName}</strong>
                                       <span>{r.time}</span>
                                     </div>
@@ -1068,7 +1067,7 @@ export function CollabDetailModal({
                             <div className="flex gap-1.5 justify-end">
                               <button
                                 onClick={() => setReplyingTo(null)}
-                                className="px-2.5 py-1 rounded-[6px] text-[11px] font-semibold border border-border text-muted"
+                                className="px-2.5 py-1 rounded-[6px] text-[11px] font-semibold border border-border text-text-muted"
                               >
                                 キャンセル
                               </button>
@@ -1099,7 +1098,7 @@ export function CollabDetailModal({
                     className="w-full bg-bg border border-border text-text px-3 py-2 rounded-[10px] text-[12px] outline-none transition-colors focus:border-purple resize-none"
                   />
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-muted">Ctrl+Enter で送信</span>
+                    <span className="text-[10px] text-text-muted">Ctrl+Enter で送信</span>
                     <button
                       onClick={sendComment}
                       disabled={!commentText.trim() || sendingComment}
@@ -1127,11 +1126,11 @@ export function CollabDetailModal({
                   style={{ background: 'rgba(239,159,39,0.1)', color: 'var(--amber-l)', border: '1px solid rgba(239,159,39,0.3)' }}
                 >
                   <p className="font-semibold mb-2">確定済みのコラボを「調整中」に戻しますか？</p>
-                  <p className="text-[11px] text-muted mb-3">確定日・リンクスケジュールが削除されます。候補日程・参加者・コメントは保持されます。</p>
+                  <p className="text-[11px] text-text-muted mb-3">確定日・リンクスケジュールが削除されます。候補日程・参加者・コメントは保持されます。</p>
                   <div className="flex gap-2 justify-end">
                     <button
                       onClick={() => setShowReopenConfirm(false)}
-                      className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-muted"
+                      className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-text-muted"
                     >
                       キャンセル
                     </button>
@@ -1182,7 +1181,7 @@ export function CollabDetailModal({
               <button
                 onClick={copyUrl}
                 className="flex items-center gap-1.5 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold border transition-colors"
-                style={{ background: 'transparent', color: 'var(--muted)', borderColor: 'var(--border)' }}
+                style={{ background: 'transparent', color: 'var(--text-muted)', borderColor: 'var(--border)' }}
               >
                 <Icon name="link" size={16} />
                 {copied ? '✓ コピー済み' : 'URLをコピー'}
@@ -1197,7 +1196,7 @@ export function CollabDetailModal({
                         onClose();
                       }}
                       className="flex items-center gap-1.5 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold border transition-colors"
-                      style={{ background: 'var(--surface)', color: 'var(--muted)', borderColor: 'var(--border)' }}
+                      style={{ background: 'var(--surface)', color: 'var(--text-muted)', borderColor: 'var(--border)' }}
                     >
                       <Icon name="content_copy" size={16} />
                       コピーして新規作成

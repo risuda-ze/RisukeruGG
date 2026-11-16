@@ -114,7 +114,7 @@ function BetaWaitingScreen() {
           <h1 className="text-xl font-bold text-text tracking-tight mb-3">
             正式公開までお待ちください
           </h1>
-          <p className="text-sm text-muted leading-relaxed mb-6">
+          <p className="text-sm text-text-muted leading-relaxed mb-6">
             リスケるGG は現在クローズドベータ期間中です。
             <br />
             ご利用には招待が必要です。利用を希望される場合は、下のボタンから申請してください。

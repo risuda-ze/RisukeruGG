@@ -67,18 +67,18 @@ export function PlanStatus({ monthlyTaskCount, monthlyCollabCount }: PlanStatusP
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Badge variant={isLight ? 'muted' : 'purple'}>{isLight ? 'LIGHT' : 'PARTY'}</Badge>
-        <span className="text-sm text-muted">現在のプラン</span>
+        <span className="text-sm text-text-muted">現在のプラン</span>
       </div>
 
       {isLight && (
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between text-muted">
+          <div className="flex justify-between text-text-muted">
             <span>タスク作成（月）</span>
             <span className="font-num">
               {monthlyTaskCount} / {LIGHT_PLAN_LIMITS.monthlyTasks}件
             </span>
           </div>
-          <div className="flex justify-between text-muted">
+          <div className="flex justify-between text-text-muted">
             <span>コラボ日程（月）</span>
             <span className="font-num">
               {monthlyCollabCount} / {LIGHT_PLAN_LIMITS.monthlyCollabs}件

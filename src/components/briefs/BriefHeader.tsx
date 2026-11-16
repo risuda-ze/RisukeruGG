@@ -124,7 +124,7 @@ export function BriefHeader({ brief, steps, members }: BriefHeaderProps) {
                 </button>
               );
             })}
-            {members.length === 0 && <span className="text-[12px] text-muted">メンバーがいません</span>}
+            {members.length === 0 && <span className="text-[12px] text-text-muted">メンバーがいません</span>}
           </div>
         </div>
       </div>
@@ -174,22 +174,22 @@ export function BriefHeader({ brief, steps, members }: BriefHeaderProps) {
           {formatShortDate(brief.publishAt)} → <span className="text-text font-medium">{formatShortDate(pendingDate)}</span>
         </p>
         {preview.length === 0 ? (
-          <p className="text-[12px] text-muted">締切が変わる工程はありません</p>
+          <p className="text-[12px] text-text-muted">締切が変わる工程はありません</p>
         ) : (
           <ul className="space-y-1.5 text-[12px]">
             {preview.map((c) => (
               <li key={c.stepId} className="flex items-center gap-2">
-                <Icon name="chevron_right" size={12} className="text-muted" />
+                <Icon name="chevron_right" size={12} className="text-text-muted" />
                 <span className="text-text flex-1 truncate">{stepTitle(c.stepId)}</span>
-                <span className="text-muted">{formatShortDate(c.before)}</span>
-                <span className="text-muted">→</span>
+                <span className="text-text-muted">{formatShortDate(c.before)}</span>
+                <span className="text-text-muted">→</span>
                 <span className="text-text font-medium">{formatShortDate(c.after)}</span>
               </li>
             ))}
           </ul>
         )}
         {steps.some((s) => s.dueDateOverridden) && (
-          <p className="text-[11px] text-muted mt-3">手で固定した工程の締切は変わりません</p>
+          <p className="text-[11px] text-text-muted mt-3">手で固定した工程の締切は変わりません</p>
         )}
       </Modal>
     </Card>

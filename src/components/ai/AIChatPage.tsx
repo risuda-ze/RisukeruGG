@@ -135,7 +135,7 @@ function TaskUpdateDiff({
           if (field === 'description' && newValue !== null) {
             return (
               <div key={field} className="flex flex-col gap-1">
-                <span className="text-[11px] font-semibold text-muted">
+                <span className="text-[11px] font-semibold text-text-muted">
                   {CHANGE_FIELD_LABELS[field]}（変更後）
                 </span>
                 <p className="text-[12px] text-text whitespace-pre-wrap bg-surface border border-border rounded-[10px] px-3 py-2 max-h-[160px] overflow-y-auto">
@@ -148,7 +148,7 @@ function TaskUpdateDiff({
           const oldDisplay =
             oldValue && oldValue.length > 60 ? `${oldValue.slice(0, 60)}…` : oldValue;
           return (
-            <p key={field} className="text-[12px] text-muted">
+            <p key={field} className="text-[12px] text-text-muted">
               {CHANGE_FIELD_LABELS[field] ?? field}:{' '}
               <span className="line-through opacity-60">{oldDisplay ?? 'なし'}</span>
               {' → '}
@@ -180,20 +180,20 @@ function ProposalItemDetail({
     <div className="flex flex-col gap-0.5">
       <p className="text-[14px] font-medium text-text">{proposal.title}</p>
       {proposal.type === 'schedule' && (
-        <p className="text-[12px] text-muted">
+        <p className="text-[12px] text-text-muted">
           {proposal.startAt ? formatDateTimeDisplay(proposal.startAt) : ''}
           {proposal.endAt ? ` 〜 ${format(new Date(proposal.endAt), 'HH:mm')}` : ''}
         </p>
       )}
       {proposal.type === 'task' && (
-        <p className="text-[12px] text-muted">
+        <p className="text-[12px] text-text-muted">
           {[proposal.columnName, proposal.assigneeName, proposal.dueDate]
             .filter(Boolean)
             .join(' · ')}
         </p>
       )}
       {proposal.type === 'collab' && proposal.partnerName && (
-        <p className="text-[12px] text-muted">相手: {proposal.partnerName}</p>
+        <p className="text-[12px] text-text-muted">相手: {proposal.partnerName}</p>
       )}
     </div>
   );
@@ -262,7 +262,7 @@ function ProposalCard({ proposals, status, onConfirm, onReject, resolveTask }: P
           <button
             onClick={onReject}
             disabled={status === 'loading'}
-            className="px-4 h-9 rounded-full border border-border text-[13px] text-muted transition-all hover:border-purple-l hover:text-purple-l disabled:opacity-60"
+            className="px-4 h-9 rounded-full border border-border text-[13px] text-text-muted transition-all hover:border-purple-l hover:text-purple-l disabled:opacity-60"
           >
             修正する
           </button>
@@ -715,7 +715,7 @@ export function AIChatPage() {
         {/* 戻るボタン（モバイルのみ） */}
         <button
           onClick={() => router.back()}
-          className="md:hidden w-9 h-9 flex items-center justify-center rounded-full text-muted hover:text-text hover:bg-bg transition-colors"
+          className="md:hidden w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:text-text hover:bg-bg transition-colors"
           aria-label="戻る"
         >
           <Icon name="chevron_right" size={22} className="rotate-180" />
@@ -734,7 +734,7 @@ export function AIChatPage() {
           <button
             onClick={clearMessages}
             aria-label="会話をリセット"
-            className="w-9 h-9 flex items-center justify-center rounded-full text-muted hover:text-text hover:bg-bg transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:text-text hover:bg-bg transition-colors"
           >
             <Icon name="delete_outline" size={20} />
           </button>
@@ -771,7 +771,7 @@ export function AIChatPage() {
                       {[0, 1, 2].map((i) => (
                         <div
                           key={i}
-                          className="w-2 h-2 bg-muted rounded-full animate-bounce"
+                          className="w-2 h-2 bg-text-muted rounded-full animate-bounce"
                           style={{ animationDelay: `${i * 0.15}s` }}
                         />
                       ))}
@@ -819,7 +819,7 @@ export function AIChatPage() {
                     : 'メッセージを入力...'
                 }
                 disabled={isLoading || proposalStatus === 'loading'}
-                className="flex-1 bg-bg border border-border text-text text-[14px] px-4 py-2.5 rounded-[14px] outline-none transition-colors focus:border-purple placeholder:text-muted/50 disabled:opacity-50 resize-none overflow-y-auto max-h-[40vh]"
+                className="flex-1 bg-bg border border-border text-text text-[14px] px-4 py-2.5 rounded-[14px] outline-none transition-colors focus:border-purple placeholder:text-text-muted/50 disabled:opacity-50 resize-none overflow-y-auto max-h-[40vh]"
               />
               <button
                 type="submit"
@@ -829,7 +829,7 @@ export function AIChatPage() {
                 <Icon name="send" size={20} />
               </button>
             </form>
-            <p className="text-[11px] text-muted/50 text-center mt-1.5">
+            <p className="text-[11px] text-text-muted/50 text-center mt-1.5">
               Enter で送信 · Shift+Enter で改行
             </p>
           </div>
@@ -843,7 +843,7 @@ export function AIChatPage() {
               <Icon name="auto_awesome" size={28} className="text-purple" />
             </div>
             <h2 className="text-[18px] font-bold text-text">AIアシスタント</h2>
-            <p className="text-[13px] text-muted mt-1">
+            <p className="text-[13px] text-text-muted mt-1">
               スケジュールやタスクの登録、チームデータへの質問ができます
             </p>
           </div>
@@ -860,7 +860,7 @@ export function AIChatPage() {
                 rows={1}
                 placeholder="メッセージを入力..."
                 disabled={isLoading}
-                className="flex-1 bg-surface border border-border text-text text-[14px] px-4 py-3 rounded-[14px] outline-none transition-colors focus:border-purple placeholder:text-muted/50 disabled:opacity-50 resize-none overflow-y-auto max-h-[40vh] shadow-sm"
+                className="flex-1 bg-surface border border-border text-text text-[14px] px-4 py-3 rounded-[14px] outline-none transition-colors focus:border-purple placeholder:text-text-muted/50 disabled:opacity-50 resize-none overflow-y-auto max-h-[40vh] shadow-sm"
               />
               <button
                 type="submit"

@@ -22,7 +22,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
   const sortedTasks = sortTasksByDueDate(tasks);
 
   if (tasks.length === 0) {
-    return <p className="text-[12px] text-muted py-4 text-center">タスクはありません</p>;
+    return <p className="text-[12px] text-text-muted py-4 text-center">タスクはありません</p>;
   }
 
   const getAssignee = (assigneeId: string | null) =>
@@ -64,7 +64,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
 
               {/* 期限 */}
               {task.dueDate && (
-                <p className="text-[11px] text-muted mt-2">
+                <p className="text-[11px] text-text-muted mt-2">
                   {format(task.dueDate, 'M月d日（E）', { locale: ja })}
                 </p>
               )}
@@ -79,7 +79,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
                     textClass="text-purple-l"
                     size="sm"
                   />
-                  <span className="text-[11px] text-muted truncate">{assignee.displayName}</span>
+                  <span className="text-[11px] text-text-muted truncate">{assignee.displayName}</span>
                 </div>
               )}
             </button>
@@ -103,7 +103,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
           <div className="space-y-3">
             {selectedCategory && (
               <div className="flex items-center gap-2">
-                <span className="text-[12px] text-muted w-20">カテゴリ</span>
+                <span className="text-[12px] text-text-muted w-20">カテゴリ</span>
                 <span
                   className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide"
                   style={{
@@ -116,12 +116,12 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
               </div>
             )}
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-muted w-20">進捗</span>
+              <span className="text-[12px] text-text-muted w-20">進捗</span>
               <span className="text-[12px] text-text">{getColumnName(selectedTask.columnId)}</span>
             </div>
             {selectedTask.dueDate && (
               <div className="flex items-center gap-2">
-                <span className="text-[12px] text-muted w-20">期限</span>
+                <span className="text-[12px] text-text-muted w-20">期限</span>
                 <span className="text-[12px] text-text">
                   {format(selectedTask.dueDate, 'yyyy年M月d日（E）', { locale: ja })}
                 </span>
@@ -129,7 +129,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
             )}
             {selectedAssignee && (
               <div className="flex items-center gap-2">
-                <span className="text-[12px] text-muted w-20">担当者</span>
+                <span className="text-[12px] text-text-muted w-20">担当者</span>
                 <div className="flex items-center gap-1.5">
                   <Avatar
                     initials={selectedAssignee.displayName.slice(0, 2)}

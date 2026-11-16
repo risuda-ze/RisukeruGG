@@ -106,7 +106,7 @@ function KanbanStatusSettings() {
   if (!teamId) {
     return (
       <Card>
-        <p className="text-sm text-muted">チームに参加してください</p>
+        <p className="text-sm text-text-muted">チームに参加してください</p>
       </Card>
     );
   }
@@ -191,7 +191,7 @@ function KanbanStatusSettings() {
     <div className="space-y-5">
       <div>
         <h3 className="text-sm font-semibold text-text">ステータスの管理</h3>
-        <p className="text-[12px] text-muted mt-0.5">
+        <p className="text-[12px] text-text-muted mt-0.5">
           「完了」とみなす列をひとつ選択してください。ダッシュボードの達成率計算に使用されます。
         </p>
       </div>
@@ -199,7 +199,7 @@ function KanbanStatusSettings() {
       {/* ステータス一覧 */}
       <Card noPadding>
         {columns.length === 0 && (
-          <p className="px-[18px] py-3 text-sm text-muted">ステータスがありません</p>
+          <p className="px-[18px] py-3 text-sm text-text-muted">ステータスがありません</p>
         )}
         <div className="divide-y divide-border">
           {columns.map((col, index) => (
@@ -223,7 +223,7 @@ function KanbanStatusSettings() {
                   完了列
                 </span>
               )}
-              <span className="text-[11px] text-muted font-num shrink-0">
+              <span className="text-[11px] text-text-muted font-num shrink-0">
                 {tasks.filter((t) => t.columnId === col.id).length}件
               </span>
               {isOperator && (
@@ -288,7 +288,7 @@ function KanbanStatusSettings() {
 
             {/* アイコン選択 */}
             <div>
-              <p className="text-[12px] font-medium text-muted mb-1.5">アイコン（任意）</p>
+              <p className="text-[12px] font-medium text-text-muted mb-1.5">アイコン（任意）</p>
               <div className="flex gap-1.5 flex-wrap">
                 <button
                   type="button"
@@ -300,7 +300,7 @@ function KanbanStatusSettings() {
                   }`}
                   title="なし"
                 >
-                  <span className="text-[10px] text-muted font-bold">—</span>
+                  <span className="text-[10px] text-text-muted font-bold">—</span>
                 </button>
                 {TASK_ICON_OPTIONS.map((icon) => (
                   <button
@@ -322,7 +322,7 @@ function KanbanStatusSettings() {
 
             {/* カラー選択 */}
             <div>
-              <p className="text-[12px] font-medium text-muted mb-1.5">カラー</p>
+              <p className="text-[12px] font-medium text-text-muted mb-1.5">カラー</p>
               <div className="flex gap-1.5 flex-wrap">
                 {DEFAULT_COLORS.map((color) => (
                   <button
@@ -400,7 +400,7 @@ function KanbanStatusSettings() {
                   }`}
                   title="なし"
                 >
-                  <span className="text-[10px] text-muted font-bold">—</span>
+                  <span className="text-[10px] text-text-muted font-bold">—</span>
                 </button>
                 {TASK_ICON_OPTIONS.map((icon) => (
                   <button
@@ -446,18 +446,18 @@ function KanbanStatusSettings() {
             >
               <div>
                 <p className="text-sm font-medium text-text">完了列に設定</p>
-                <p className="text-[11px] text-muted mt-0.5">
+                <p className="text-[11px] text-text-muted mt-0.5">
                   この列を「完了」とみなし、達成率計算に使用します
                 </p>
               </div>
               <div
                 className={`w-10 h-6 rounded-full relative transition-all shrink-0 ${
-                  editIsDone ? 'bg-green/50' : 'bg-muted/30'
+                  editIsDone ? 'bg-green/50' : 'bg-text-muted/30'
                 }`}
               >
                 <div
                   className={`absolute top-1 w-4 h-4 rounded-full transition-all ${
-                    editIsDone ? 'right-1 bg-green' : 'left-1 bg-muted'
+                    editIsDone ? 'right-1 bg-green' : 'left-1 bg-text-muted'
                   }`}
                 />
               </div>
@@ -533,7 +533,7 @@ function CategorySettings() {
   if (!teamId) {
     return (
       <Card>
-        <p className="text-sm text-muted">チームに参加してください</p>
+        <p className="text-sm text-text-muted">チームに参加してください</p>
       </Card>
     );
   }
@@ -591,7 +591,7 @@ function CategorySettings() {
     <div className="space-y-5">
       <div>
         <h3 className="text-sm font-semibold text-text">カテゴリの管理</h3>
-        <p className="text-[12px] text-muted mt-0.5">
+        <p className="text-[12px] text-text-muted mt-0.5">
           タスクとスケジュールで共通して使うカテゴリを追加・編集・削除します。
         </p>
       </div>
@@ -599,7 +599,7 @@ function CategorySettings() {
       {/* カテゴリ一覧 */}
       <Card noPadding>
         {categories.length === 0 && (
-          <p className="px-[18px] py-3 text-sm text-muted">カテゴリがありません</p>
+          <p className="px-[18px] py-3 text-sm text-text-muted">カテゴリがありません</p>
         )}
         <div className="divide-y divide-border">
           {categories.map((cat) => (
@@ -659,7 +659,7 @@ function CategorySettings() {
 
             {/* アイコン選択 */}
             <div>
-              <p className="text-[12px] font-medium text-muted mb-1.5">アイコン（任意）</p>
+              <p className="text-[12px] font-medium text-text-muted mb-1.5">アイコン（任意）</p>
               <div className="flex gap-1.5 flex-wrap">
                 <button
                   type="button"
@@ -671,7 +671,7 @@ function CategorySettings() {
                   }`}
                   title="なし"
                 >
-                  <span className="text-[10px] text-muted font-bold">—</span>
+                  <span className="text-[10px] text-text-muted font-bold">—</span>
                 </button>
                 {TASK_ICON_OPTIONS.map((icon) => (
                   <button
@@ -693,7 +693,7 @@ function CategorySettings() {
 
             {/* カラー選択 */}
             <div>
-              <p className="text-[12px] font-medium text-muted mb-1.5">カラー</p>
+              <p className="text-[12px] font-medium text-text-muted mb-1.5">カラー</p>
               <div className="flex gap-1.5 flex-wrap">
                 {DEFAULT_COLORS.map((color) => (
                   <button
@@ -778,7 +778,7 @@ function CategorySettings() {
                   }`}
                   title="なし"
                 >
-                  <span className="text-[10px] text-muted font-bold">—</span>
+                  <span className="text-[10px] text-text-muted font-bold">—</span>
                 </button>
                 {TASK_ICON_OPTIONS.map((icon) => (
                   <button

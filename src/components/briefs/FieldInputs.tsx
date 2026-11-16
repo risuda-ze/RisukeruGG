@@ -50,7 +50,7 @@ export function FieldInputs({ defs, values, onChange, disabled }: FieldInputsPro
                   onChange={(v) => onChange(def.key, v || null)}
                   size="sm"
                 />
-                {hint && <span className="text-[11px] text-muted">{hint}</span>}
+                {hint && <span className="text-[11px] text-text-muted">{hint}</span>}
               </div>
             );
           case 'number':

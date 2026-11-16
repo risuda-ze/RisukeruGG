@@ -41,7 +41,7 @@ export default function TokushohoPage() {
           {/* ログインに戻るリンク */}
           <Link
             href="/login"
-            className="text-sm text-muted hover:text-purple-l transition-colors flex items-center gap-1"
+            className="text-sm text-text-muted hover:text-purple-l transition-colors flex items-center gap-1"
           >
             <Icon name="chevron_right" size={16} className="rotate-180" />
             ログインに戻る
@@ -53,12 +53,12 @@ export default function TokushohoPage() {
       <main className="max-w-3xl mx-auto px-4 py-10">
         {/* タイトル */}
         <h1 className="text-2xl font-bold text-text mb-2">特定商取引法に基づく表記</h1>
-        <p className="text-xs text-muted mb-10">
+        <p className="text-xs text-text-muted mb-10">
           制定日: {EFFECTIVE_DATE}　／　最終改定日: {LAST_UPDATED}
         </p>
 
         {/* はじめに */}
-        <p className="text-sm text-muted leading-relaxed mb-10">
+        <p className="text-sm text-text-muted leading-relaxed mb-10">
           「特定商取引に関する法律」第11条に基づき、配信者向けスケジュール管理アプリ「リスケるGG」（以下「本サービス」）の販売条件について、以下のとおり表示いたします。
         </p>
 
@@ -108,7 +108,7 @@ export default function TokushohoPage() {
         </div>
 
         {/* 制定日・バージョン */}
-        <div className="mt-10 pt-6 border-t border-border text-xs text-muted space-y-1">
+        <div className="mt-10 pt-6 border-t border-border text-xs text-text-muted space-y-1">
           <p>制定日: {EFFECTIVE_DATE}</p>
           <p>最終改定日: {LAST_UPDATED}</p>
           <p className="mt-2">リスケるGG v{packageJson.version}</p>
@@ -118,10 +118,10 @@ export default function TokushohoPage() {
       {/* ── フッター ──────────────────────────────────────── */}
       <footer className="border-t border-border mt-10">
         <div className="max-w-3xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-muted">
+          <p className="text-xs text-text-muted">
             © {new Date().getFullYear()} リスケるGG. All rights reserved.
           </p>
-          <Link href="/login" className="text-xs text-muted hover:text-purple-l transition-colors">
+          <Link href="/login" className="text-xs text-text-muted hover:text-purple-l transition-colors">
             ← ログインに戻る
           </Link>
         </div>
@@ -136,7 +136,7 @@ export default function TokushohoPage() {
 function TokuRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col sm:flex-row border-b border-border last:border-b-0">
-      <dt className="text-sm text-muted font-medium bg-surface px-4 py-3 shrink-0 sm:w-48 sm:border-r sm:border-border">
+      <dt className="text-sm text-text-muted font-medium bg-surface px-4 py-3 shrink-0 sm:w-48 sm:border-r sm:border-border">
         {label}
       </dt>
       <dd className="text-sm text-text-2 leading-relaxed px-4 py-3 flex-1">{children}</dd>

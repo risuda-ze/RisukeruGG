@@ -318,7 +318,7 @@ function CollabBoard({
         )}
         <button
           onClick={() => setHintVisible((v) => !v)}
-          className="w-8 h-8 rounded-full flex items-center justify-center border border-border text-muted hover:text-text transition-colors"
+          className="w-8 h-8 rounded-full flex items-center justify-center border border-border text-text-muted hover:text-text transition-colors"
           style={{ background: 'var(--surface)' }}
           aria-label="使い方を表示"
           title="使い方を表示"
@@ -343,7 +343,7 @@ function CollabBoard({
           </div>
           <button
             onClick={() => setHintVisible(false)}
-            className="shrink-0 text-muted hover:text-text transition-colors mt-0.5"
+            className="shrink-0 text-text-muted hover:text-text transition-colors mt-0.5"
             aria-label="閉じる"
           >
             <Icon name="close" size={14} />

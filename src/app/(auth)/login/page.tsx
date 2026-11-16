@@ -76,7 +76,7 @@ export default function LoginPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-text tracking-tight">リスケるGG</h1>
-            <p className="text-sm text-muted mt-1">配信チームのスケジュール管理</p>
+            <p className="text-sm text-text-muted mt-1">配信チームのスケジュール管理</p>
           </div>
 
           {/* エラーメッセージ */}
@@ -123,7 +123,7 @@ export default function LoginPage() {
           </Button>
 
           {/* 利用規約・プライバシーポリシーへのリンクを含む同意テキスト */}
-          <p className="text-center text-[11px] text-muted mt-5">
+          <p className="text-center text-[11px] text-text-muted mt-5">
             サインインすることで
             <Link
               href="/terms"

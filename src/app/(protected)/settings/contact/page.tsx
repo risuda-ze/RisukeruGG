@@ -101,7 +101,7 @@ export default function ContactPage() {
                 <Icon name="check" size={48} />
               </div>
               <h2 className="text-lg font-semibold text-text mb-2">送信しました</h2>
-              <p className="text-sm text-muted mb-6">
+              <p className="text-sm text-text-muted mb-6">
                 お問い合わせを受け付けました。
                 <br />
                 内容を確認し、担当者よりご連絡する場合があります。
@@ -160,7 +160,7 @@ export default function ContactPage() {
                     </span>
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-text">{option.label}</p>
-                      <p className="text-[11px] text-muted">{option.description}</p>
+                      <p className="text-[11px] text-text-muted">{option.description}</p>
                     </div>
                   </label>
                 ))}
@@ -176,7 +176,7 @@ export default function ContactPage() {
                     <span className="text-live ml-1">*</span>
                   </label>
                   <span
-                    className={`text-[11px] ${subject.length > MAX_SUBJECT_LENGTH ? 'text-live' : 'text-muted'}`}
+                    className={`text-[11px] ${subject.length > MAX_SUBJECT_LENGTH ? 'text-live' : 'text-text-muted'}`}
                   >
                     {subject.length} / {MAX_SUBJECT_LENGTH}
                   </span>
@@ -187,7 +187,7 @@ export default function ContactPage() {
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="お問い合わせの件名を入力してください"
-                  className={`w-full rounded-[10px] border px-3 py-2.5 text-sm text-text bg-bg placeholder:text-muted/50 outline-none transition-colors focus:border-purple ${
+                  className={`w-full rounded-[10px] border px-3 py-2.5 text-sm text-text bg-bg placeholder:text-text-muted/50 outline-none transition-colors focus:border-purple ${
                     subjectError ? 'border-live' : 'border-border'
                   }`}
                   disabled={formState === 'submitting'}
@@ -207,7 +207,7 @@ export default function ContactPage() {
                     <span className="text-live ml-1">*</span>
                   </label>
                   <span
-                    className={`text-[11px] ${body.length > MAX_BODY_LENGTH ? 'text-live' : 'text-muted'}`}
+                    className={`text-[11px] ${body.length > MAX_BODY_LENGTH ? 'text-live' : 'text-text-muted'}`}
                   >
                     {body.length} / {MAX_BODY_LENGTH}
                   </span>
@@ -218,7 +218,7 @@ export default function ContactPage() {
                   onChange={(e) => setBody(e.target.value)}
                   placeholder="お問い合わせの内容を詳しくご記入ください"
                   rows={8}
-                  className={`w-full rounded-[10px] border px-3 py-2.5 text-sm text-text bg-bg placeholder:text-muted/50 outline-none transition-colors focus:border-purple resize-y min-h-[120px] ${
+                  className={`w-full rounded-[10px] border px-3 py-2.5 text-sm text-text bg-bg placeholder:text-text-muted/50 outline-none transition-colors focus:border-purple resize-y min-h-[120px] ${
                     bodyError ? 'border-live' : 'border-border'
                   }`}
                   disabled={formState === 'submitting'}

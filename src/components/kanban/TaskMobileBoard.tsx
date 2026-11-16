@@ -88,14 +88,14 @@ export default function TaskMobileBoard({
           <span className="font-semibold text-[15px] text-text" style={{ fontFamily: 'var(--font-head)' }}>
             {selectedColumn.name}
           </span>
-          <span className="text-[12px] text-muted font-num">{columnTasks.length}件</span>
+          <span className="text-[12px] text-text-muted font-num">{columnTasks.length}件</span>
         </div>
       )}
 
       {/* タスクリスト */}
       <div className="flex-1 overflow-y-auto px-4 pb-24 flex flex-col gap-2.5" style={{ minHeight: 0 }}>
         {columnTasks.length === 0 ? (
-          <p className="text-[13px] text-muted text-center py-8">タスクはありません</p>
+          <p className="text-[13px] text-text-muted text-center py-8">タスクはありません</p>
         ) : (
           columnTasks.map((task) => (
             <TaskCard

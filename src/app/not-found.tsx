@@ -37,7 +37,7 @@ export default function NotFound() {
         <div className="rounded-[16px] bg-surface border border-border p-8 shadow-lg">
           <p className="text-5xl font-bold text-purple-l tracking-tight">404</p>
           <h1 className="mt-4 text-lg font-bold text-text">ページが見つかりません</h1>
-          <p className="mt-2 text-sm text-muted">
+          <p className="mt-2 text-sm text-text-muted">
             お探しのページは移動または削除された可能性があります。
           </p>
           <div className="mt-6 flex flex-col gap-2">
@@ -49,7 +49,7 @@ export default function NotFound() {
             </Link>
             <Link
               href="/"
-              className="w-full rounded-[10px] border border-border px-4 py-3 text-sm text-muted transition-colors hover:text-text"
+              className="w-full rounded-[10px] border border-border px-4 py-3 text-sm text-text-muted transition-colors hover:text-text"
             >
               トップページへ
             </Link>

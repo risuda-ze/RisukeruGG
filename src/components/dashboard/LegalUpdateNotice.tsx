@@ -64,7 +64,7 @@ export function LegalUpdateNotice() {
       </span>
       <div className="min-w-0 flex-1 text-sm">
         <p className="font-semibold text-text">利用規約・プライバシーポリシーを改定しました</p>
-        <p className="mt-1 text-[12px] leading-relaxed text-muted">
+        <p className="mt-1 text-[12px] leading-relaxed text-text-muted">
           機密情報の入力禁止と、Discord連携で送信される情報の取り扱いを明記しました。
           <Link href="/terms" className="ml-1 text-purple-l hover:underline">
             利用規約

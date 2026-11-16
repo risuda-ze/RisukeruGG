@@ -24,7 +24,7 @@ interface WeekCalendarProps {
 /** 日曜始まりの曜日ヘッダーラベル */
 const DOW_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-const DEFAULT_EVENT_COLOR = '#3fb6e0';
+const DEFAULT_EVENT_COLOR = '#7d68c5'; // DESIGN.md primary（dark）
 const GCAL_EVENT_COLOR = '#4ade80';
 const MEMBER_EVENT_COLOR = '#60a5fa';
 
@@ -48,7 +48,7 @@ function getEventStyle(
 function getDowColorClass(i: number): string {
   if (i === 0) return 'text-live';
   if (i === 6) return 'text-info';
-  return 'text-muted';
+  return 'text-text-muted';
 }
 
 /** 週内でイベントが占める列範囲を取得する（0-indexed, null = 週外） */
@@ -170,7 +170,7 @@ export function WeekCalendar({
             単日の終日イベントは日別リスト側にのみ出し、二重表示を避ける */}
         {multiDayStripInWeek.length > 0 && (
           <div className="px-3 py-2.5 flex flex-col gap-1.5 bg-card/25">
-            <span className="text-[10px] font-medium tracking-widest text-muted/70 px-1">
+            <span className="text-[10px] font-medium tracking-widest text-text-muted/70 px-1">
               連日の予定
             </span>
             {multiDayStripInWeek.map((event) => {
@@ -209,7 +209,7 @@ export function WeekCalendar({
             <div key={day.toISOString()}>
               <div
                 className={`flex items-center gap-2 px-4 py-2 ${
-                  isCurrentDay ? 'bg-[rgba(63,182,224,0.08)]' : 'bg-card/40'
+                  isCurrentDay ? 'bg-[color-mix(in oklab, var(--primary) 8%, transparent)]' : 'bg-card/40'
                 }`}
               >
                 <span className={`text-[10px] font-medium tracking-widest ${getDowColorClass(i)}/60`}>
@@ -231,7 +231,7 @@ export function WeekCalendar({
                 {onDateClick && daySchedules.length > 0 && (
                   <button
                     onClick={() => onDateClick(day)}
-                    className="ml-auto shrink-0 w-9 h-9 -my-1 flex items-center justify-center rounded-[8px] text-muted active:text-accent active:bg-surface transition-colors"
+                    className="ml-auto shrink-0 w-9 h-9 -my-1 flex items-center justify-center rounded-[8px] text-text-muted active:text-accent active:bg-surface transition-colors"
                     aria-label={`${format(day, 'M月d日', { locale: ja })}に予定を追加`}
                   >
                     <Icon name="add" size={18} />
@@ -244,13 +244,13 @@ export function WeekCalendar({
                   /* 予定が無い日: 追加を促す空状態行（タップで作成モーダル） */
                   <button
                     onClick={() => onDateClick(day)}
-                    className="w-full text-left flex items-center gap-2 px-5 py-2.5 min-h-[44px] text-[12px] text-muted/45 active:text-accent transition-colors"
+                    className="w-full text-left flex items-center gap-2 px-5 py-2.5 min-h-[44px] text-[12px] text-text-muted/45 active:text-accent transition-colors"
                   >
                     <Icon name="add" size={15} />
                     <span>予定を追加</span>
                   </button>
                 ) : (
-                  <div className="px-5 py-3 text-[12px] text-muted/40">—</div>
+                  <div className="px-5 py-3 text-[12px] text-text-muted/40">—</div>
                 )
               ) : (
                 <div className="px-3 py-2 flex flex-col gap-1.5">
@@ -269,10 +269,10 @@ export function WeekCalendar({
                           style={{ borderLeftColor: style.borderLeftColor, background: 'transparent' }}
                           onClick={() => onEventClick(s)}
                         >
-                          <span className="text-[12px] font-medium text-muted truncate flex-1">
+                          <span className="text-[12px] font-medium text-text-muted truncate flex-1">
                             {s.title}
                           </span>
-                          <span className="text-[10px] font-num text-muted/70 shrink-0">
+                          <span className="text-[10px] font-num text-text-muted/70 shrink-0">
                             {getEventDayIndex(s, day)}/{getEventDayCount(s)}日目
                           </span>
                         </button>

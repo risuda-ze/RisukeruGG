@@ -100,7 +100,7 @@ export default function PlaybooksPage() {
         ) : playbooks.length === 0 && editor.mode === 'closed' ? (
           <Card className="text-center py-10">
             <p className="text-sm text-text mb-1">進め方がまだありません</p>
-            <p className="text-[12px] text-muted mb-4">
+            <p className="text-[12px] text-text-muted mb-4">
               動画1本の工程（構成確認 → 編集 → サムネ → 告知 など）と、担当・公開日からの日数・必要な情報を一度決めておくと、次からは公開日を入れるだけで1枚紙ができます。
             </p>
             {briefOps.canEdit && (
@@ -117,7 +117,7 @@ export default function PlaybooksPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h3 className="text-sm font-bold text-text">{p.name}</h3>
-                      <p className="text-[11px] text-muted">
+                      <p className="text-[11px] text-text-muted">
                         v{p.version} ・ {ORIGIN_LABELS[p.origin]} ・ {p.steps.length} 工程
                       </p>
                     </div>
@@ -137,9 +137,9 @@ export default function PlaybooksPage() {
                       const assignee = members.find((m) => m.userId === s.defaultAssigneeId);
                       return (
                         <li key={s.key} className="flex items-center gap-1">
-                          {i > 0 && <Icon name="chevron_right" size={12} className="text-muted" />}
+                          {i > 0 && <Icon name="chevron_right" size={12} className="text-text-muted" />}
                           <span className="text-text">{s.title}</span>
-                          <span className="text-muted">
+                          <span className="text-text-muted">
                             ({assignee?.displayName ?? s.roleLabel ?? '未定'} / {s.leadDays}日前)
                           </span>
                           {s.optional && <Badge variant="neutral">任意</Badge>}

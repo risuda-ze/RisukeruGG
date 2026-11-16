@@ -128,17 +128,17 @@ export default function DashboardPage() {
         <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 max-w-lg">
           <Card>
             <h3 className="text-sm font-semibold text-text mb-1">チームに参加または作成する</h3>
-            <p className="text-[12px] text-muted mb-5">
+            <p className="text-[12px] text-text-muted mb-5">
               チームメンバーとスケジュールを共有できます
             </p>
             <div className="mb-5">
-              <p className="text-[11px] font-medium text-muted mb-2 uppercase tracking-wide">
+              <p className="text-[11px] font-medium text-text-muted mb-2 uppercase tracking-wide">
                 チームコードで参加
               </p>
               <TeamJoinForm />
             </div>
             <div className="border-t border-border pt-4">
-              <p className="text-[11px] font-medium text-muted mb-2 uppercase tracking-wide">
+              <p className="text-[11px] font-medium text-text-muted mb-2 uppercase tracking-wide">
                 新しいチームを作成
               </p>
               <Button variant="secondary" size="sm" onClick={() => setShowCreateTeam(true)}>
@@ -235,7 +235,7 @@ export default function DashboardPage() {
               />
               <div className="px-[18px] py-[14px]">
                 {pendingCollabs.length === 0 ? (
-                  <p className="text-[12px] text-muted py-2 text-center">打診はありません</p>
+                  <p className="text-[12px] text-text-muted py-2 text-center">打診はありません</p>
                 ) : (
                   <p className="text-[12px] text-text">
                     {pendingCollabs.length}件の打診が回答待ちです

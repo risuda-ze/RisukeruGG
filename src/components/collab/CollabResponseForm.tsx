@@ -24,7 +24,7 @@ function PcStepBadge({ step, label, description }: { step: number; label: string
         </div>
         <span className="text-[14px] font-bold text-text">{label}</span>
       </div>
-      <p className="text-[12px] text-muted">{description}</p>
+      <p className="text-[12px] text-text-muted">{description}</p>
     </div>
   );
 }
@@ -39,14 +39,14 @@ function MobileStepHeader({ step, label, description, active }: { step: number; 
           style={
             active
               ? { background: 'var(--purple-d)', color: 'var(--purple-l)' }
-              : { background: 'var(--surface)', color: 'var(--muted)', border: '1px solid var(--border)' }
+              : { background: 'var(--surface)', color: 'var(--text-muted)', border: '1px solid var(--border)' }
           }
         >
           {step}
         </div>
         <span className="text-[14px] font-bold text-text">{label}</span>
       </div>
-      <p className="text-[12px] text-muted pl-8">{description}</p>
+      <p className="text-[12px] text-text-muted pl-8">{description}</p>
     </div>
   );
 }
@@ -174,7 +174,7 @@ export default function CollabResponseForm({
       />
       {memberParticipants.length > 0 && (
         <div className="mb-3 pl-8">
-          <p className="text-[11px] text-muted mb-2">チームメンバーから選択</p>
+          <p className="text-[11px] text-text-muted mb-2">チームメンバーから選択</p>
           <div className="flex flex-wrap gap-2">
             {memberParticipants.map((p) => (
               <button
@@ -202,7 +202,7 @@ export default function CollabResponseForm({
       )}
       <div className="pl-8">
         {memberParticipants.length > 0 && (
-          <p className="text-[11px] text-muted mb-2">または直接入力</p>
+          <p className="text-[11px] text-text-muted mb-2">または直接入力</p>
         )}
         <input
           type="text"
@@ -210,7 +210,7 @@ export default function CollabResponseForm({
           onChange={(e) => setRespondentName(e.target.value)}
           placeholder="例: 田中 太郎"
           maxLength={50}
-          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none"
+          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none"
           aria-label="お名前"
         />
         {error && currentStep === 0 && (
@@ -239,7 +239,7 @@ export default function CollabResponseForm({
     <div className="flex flex-col gap-3">
       {memberParticipants.length > 0 && (
         <div>
-          <p className="text-[11px] text-muted mb-2">チームメンバーから選択</p>
+          <p className="text-[11px] text-text-muted mb-2">チームメンバーから選択</p>
           <div className="flex flex-wrap gap-2">
             {memberParticipants.map((p) => (
               <button
@@ -267,7 +267,7 @@ export default function CollabResponseForm({
       )}
       <div>
         {memberParticipants.length > 0 && (
-          <p className="text-[11px] text-muted mb-2">または直接入力</p>
+          <p className="text-[11px] text-text-muted mb-2">または直接入力</p>
         )}
         <input
           type="text"
@@ -275,7 +275,7 @@ export default function CollabResponseForm({
           onChange={(e) => setRespondentName(e.target.value)}
           placeholder="例: 田中 太郎"
           maxLength={50}
-          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none"
+          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none"
           aria-label="お名前"
         />
         {error && (
@@ -307,7 +307,7 @@ export default function CollabResponseForm({
                   className={`px-3 py-2 min-h-[40px] rounded-[6px] text-xs font-medium transition-colors ${
                     val === 'ok'
                       ? 'bg-green/15 border border-green/40 text-green'
-                      : 'bg-bg border border-border text-muted hover:text-green hover:border-green/40'
+                      : 'bg-bg border border-border text-text-muted hover:text-green hover:border-green/40'
                   }`}
                 >
                   ○ OK
@@ -318,7 +318,7 @@ export default function CollabResponseForm({
                   className={`px-3 py-2 min-h-[40px] rounded-[6px] text-xs font-medium transition-colors ${
                     val === 'ng'
                       ? 'bg-live/10 border border-live/30 text-live'
-                      : 'bg-bg border border-border text-muted hover:text-live hover:border-live/30'
+                      : 'bg-bg border border-border text-text-muted hover:text-live hover:border-live/30'
                   }`}
                 >
                   × NG
@@ -329,7 +329,7 @@ export default function CollabResponseForm({
                   className={`px-3 py-2 min-h-[40px] rounded-[6px] text-xs font-medium transition-colors ${
                     val === 'pending'
                       ? 'bg-amber/15 border border-amber/40 text-amber-l'
-                      : 'bg-bg border border-border text-muted hover:text-amber-l hover:border-amber/40'
+                      : 'bg-bg border border-border text-text-muted hover:text-amber-l hover:border-amber/40'
                   }`}
                 >
                   ? 未定
@@ -354,7 +354,7 @@ export default function CollabResponseForm({
       <div className="pl-8 space-y-3">
         {step2DateList}
         <div>
-          <label className="block text-[12px] font-semibold text-muted mb-2">
+          <label className="block text-[12px] font-semibold text-text-muted mb-2">
             別の日程を提案する（任意）
           </label>
           <input
@@ -369,7 +369,7 @@ export default function CollabResponseForm({
         <button
           type="button"
           onClick={() => setCurrentStep(0)}
-          className="flex items-center gap-1 px-3 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-muted hover:text-text transition-colors"
+          className="flex items-center gap-1 px-3 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-text-muted hover:text-text transition-colors"
         >
           <Icon name="chevron_right" size={16} className="rotate-180" />
           戻る
@@ -391,7 +391,7 @@ export default function CollabResponseForm({
     <div className="flex flex-col gap-3">
       {step2DateList}
       <div>
-        <label className="block text-[12px] font-semibold text-muted mb-2">
+        <label className="block text-[12px] font-semibold text-text-muted mb-2">
           別の日程を提案する（任意）
         </label>
         <input
@@ -413,10 +413,10 @@ export default function CollabResponseForm({
           onChange={(e) => setNote(e.target.value)}
           maxLength={200}
           rows={4}
-          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none resize-none"
+          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none resize-none"
           placeholder="コメントがあればどうぞ（任意）"
         />
-        <p className="text-[10px] text-muted text-right font-num">{note.length}/200</p>
+        <p className="text-[10px] text-text-muted text-right font-num">{note.length}/200</p>
       </div>
 
       {/* 未選択確認ダイアログ */}
@@ -460,7 +460,7 @@ export default function CollabResponseForm({
         <button
           type="button"
           onClick={() => setCurrentStep(1)}
-          className="flex items-center gap-1 px-3 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-muted hover:text-text transition-colors"
+          className="flex items-center gap-1 px-3 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-text-muted hover:text-text transition-colors"
         >
           <Icon name="chevron_right" size={16} className="rotate-180" />
           戻る

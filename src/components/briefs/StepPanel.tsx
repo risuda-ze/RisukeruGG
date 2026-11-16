@@ -150,7 +150,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
           </div>
         )}
         {step.status === 'waiting' && (
-          <p className="text-[12px] text-muted">
+          <p className="text-[12px] text-text-muted">
             先行工程（{step.dependsOn.join('・') || 'なし'}）が終わると着手できます
           </p>
         )}
@@ -194,7 +194,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
         {/* 工程固有の項目 */}
         {step.requiredFields.length > 0 && (
           <section className="space-y-3">
-            <h4 className="text-[12px] font-semibold text-muted uppercase tracking-wide">この工程に必要な情報</h4>
+            <h4 className="text-[12px] font-semibold text-text-muted uppercase tracking-wide">この工程に必要な情報</h4>
             <FieldInputs
               defs={step.requiredFields}
               values={fields}
@@ -221,14 +221,14 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
 
         {/* コメント */}
         <section className="space-y-3">
-          <h4 className="text-[12px] font-semibold text-muted uppercase tracking-wide">やり取り</h4>
+          <h4 className="text-[12px] font-semibold text-text-muted uppercase tracking-wide">やり取り</h4>
           {comments.length === 0 ? (
-            <p className="text-[12px] text-muted">まだコメントはありません</p>
+            <p className="text-[12px] text-text-muted">まだコメントはありません</p>
           ) : (
             <ul className="space-y-2">
               {comments.map((c) => (
                 <li key={c.id} className="rounded-[10px] px-3 py-2" style={{ background: 'var(--bg)' }}>
-                  <div className="flex items-center gap-2 text-[11px] text-muted">
+                  <div className="flex items-center gap-2 text-[11px] text-text-muted">
                     <span className="font-medium text-text-2">{c.authorName}</span>
                     <span>{formatDateTime(c.createdAt)}</span>
                     {c.source === 'discord' && <Icon name="discord" size={12} />}
@@ -259,7 +259,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
           <div className="pt-2 border-t border-border">
             <button
               type="button"
-              className="text-[12px] text-muted hover:text-live transition-colors"
+              className="text-[12px] text-text-muted hover:text-live transition-colors"
               onClick={() => {
                 if (confirm(`工程「${step.title}」を削除しますか？`)) {
                   run(() => briefOps.removeStep(step.briefId, step.id)).then(onClose);

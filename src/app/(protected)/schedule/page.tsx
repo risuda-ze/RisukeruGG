@@ -430,13 +430,13 @@ export default function SchedulePage() {
                 <Icon name="groups" size={18} className="text-[#60a5fa]" />
                 <span className="text-[11px] font-semibold" style={{ color: '#60a5fa' }}>メンバーの予定</span>
               </div>
-              <button onClick={() => setSelectedSchedule(null)} className="text-muted hover:text-text">
+              <button onClick={() => setSelectedSchedule(null)} className="text-text-muted hover:text-text">
                 <Icon name="close" size={20} />
               </button>
             </div>
             <div className="px-6 pb-6">
               <h3 className="text-[17px] font-bold text-text mb-3">{selectedSchedule.title}</h3>
-              <p className="text-[13px] text-muted">
+              <p className="text-[13px] text-text-muted">
                 {selectedSchedule.allDay
                   ? isSameDay(selectedSchedule.startAt, getEventLastDay(selectedSchedule))
                     ? format(selectedSchedule.startAt, 'M月d日(E)', { locale: ja }) + ' 終日'
@@ -487,19 +487,19 @@ export default function SchedulePage() {
                 <Icon name="event" size={18} className="text-green" />
                 <span className="text-[11px] font-semibold" style={{ color: 'var(--green)' }}>Googleカレンダー</span>
               </div>
-              <button onClick={() => setSelectedSchedule(null)} className="text-muted hover:text-text">
+              <button onClick={() => setSelectedSchedule(null)} className="text-text-muted hover:text-text">
                 <Icon name="close" size={20} />
               </button>
             </div>
             <div className="px-6 pb-6">
               <h3 className="text-[17px] font-bold text-text mb-3">{selectedSchedule.title}</h3>
-              <p className="text-[13px] text-muted mb-1">
+              <p className="text-[13px] text-text-muted mb-1">
                 {format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja })}
                 {' – '}
                 {format(selectedSchedule.endAt, 'HH:mm')}
               </p>
               {selectedSchedule.description && (
-                <p className="text-[12px] text-muted mt-3 whitespace-pre-wrap">{selectedSchedule.description}</p>
+                <p className="text-[12px] text-text-muted mt-3 whitespace-pre-wrap">{selectedSchedule.description}</p>
               )}
             </div>
           </div>

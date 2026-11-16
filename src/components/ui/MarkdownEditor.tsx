@@ -104,7 +104,7 @@ const MD_COMPONENTS: Components = {
 
   /* 引用 */
   blockquote: ({ children }) => (
-    <blockquote className="border-l-[3px] border-purple-l/40 pl-3 text-muted italic mb-2">
+    <blockquote className="border-l-[3px] border-purple-l/40 pl-3 text-text-muted italic mb-2">
       {children}
     </blockquote>
   ),
@@ -151,7 +151,7 @@ export function MarkdownView({
           {value}
         </ReactMarkdown>
       ) : (
-        <span className="text-muted/50 italic text-[13px]">{placeholder ?? '内容なし'}</span>
+        <span className="text-text-muted/50 italic text-[13px]">{placeholder ?? '内容なし'}</span>
       )}
     </div>
   );
@@ -182,7 +182,7 @@ export function MarkdownEditor({
       {/* ラベル行 */}
       <div className="flex items-center justify-between min-h-[22px]">
         {label && (
-          <label className="text-[12px] font-semibold text-muted">{label}</label>
+          <label className="text-[12px] font-semibold text-text-muted">{label}</label>
         )}
         {/* 編集 / 完了 ボタン（readOnly でない場合のみ） */}
         {!readOnly && (
@@ -239,7 +239,7 @@ export function MarkdownEditor({
               {value}
             </ReactMarkdown>
           ) : (
-            <span className="text-muted/50 italic text-[13px]">
+            <span className="text-text-muted/50 italic text-[13px]">
               {readOnly ? '説明なし' : (placeholder ?? '内容なし')}
             </span>
           )}
@@ -248,7 +248,7 @@ export function MarkdownEditor({
 
       {/* 文字数カウンター（編集中のみ） */}
       {maxLength && !readOnly && editing && (
-        <p className="text-[11px] text-muted/50 self-end">
+        <p className="text-[11px] text-text-muted/50 self-end">
           {value.length} / {maxLength}
         </p>
       )}

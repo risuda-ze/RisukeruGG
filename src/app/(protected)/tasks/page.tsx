@@ -135,7 +135,7 @@ export default function TasksPage() {
     return <div className="flex flex-1 items-center justify-center bg-bg"><Spinner size="lg" /></div>;
   }
   if (!teamId) {
-    return <div className="flex flex-1 items-center justify-center text-muted text-sm px-4">チームに参加してからタスク管理を利用できます</div>;
+    return <div className="flex flex-1 items-center justify-center text-text-muted text-sm px-4">チームに参加してからタスク管理を利用できます</div>;
   }
 
   return (
@@ -165,7 +165,7 @@ export default function TasksPage() {
 
       {/* ── PC: カンバンボード / モバイル: ステータスピル+リスト ── */}
       {columns.length === 0 ? (
-        <div className="text-center text-muted text-sm py-16">
+        <div className="text-center text-text-muted text-sm py-16">
           <p>カンバンカラムがありません</p>
           <p className="mt-1 text-[11px]">設定ページからカラムを追加してください</p>
         </div>

@@ -71,7 +71,7 @@ export default function KanbanBoard({
           </span>
           <button
             onClick={onDismissHint}
-            className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-muted hover:text-text transition-colors"
+            className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-text-muted hover:text-text transition-colors"
             aria-label="ヒントを閉じる"
           >
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2} className="w-3 h-3">
@@ -169,7 +169,7 @@ function TaskStatusPanel({
         </span>
         {/* 件数バッジ */}
         <span
-          className="min-w-[22px] h-[22px] px-1.5 rounded-full flex items-center justify-center text-[11px] font-bold font-num text-muted"
+          className="min-w-[22px] h-[22px] px-1.5 rounded-full flex items-center justify-center text-[11px] font-bold font-num text-text-muted"
           style={{ background: 'var(--card)', border: '1px solid var(--card-border)' }}
         >
           {tasks.length}
@@ -191,7 +191,7 @@ function TaskStatusPanel({
             }}
           >
             {tasks.length === 0 && !snapshot.isDraggingOver && (
-              <p className="text-[11px] text-muted text-center py-3">タスクはありません</p>
+              <p className="text-[11px] text-text-muted text-center py-3">タスクはありません</p>
             )}
             {tasks.map((task, index) => (
               <Draggable key={task.id} draggableId={task.id} index={index} isDragDisabled={!canEdit}>
@@ -220,7 +220,7 @@ function TaskStatusPanel({
       {canEdit && (
         <button
           onClick={() => onAddTask(column.id)}
-          className="flex items-center justify-center gap-1.5 w-full py-2.5 text-[12px] text-muted hover:text-text transition-colors shrink-0"
+          className="flex items-center justify-center gap-1.5 w-full py-2.5 text-[12px] text-text-muted hover:text-text transition-colors shrink-0"
           style={{ borderTop: '1px dashed var(--border-light)' }}
         >
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">

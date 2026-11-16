@@ -93,25 +93,25 @@ export function DiscordBriefSettings({ teamId, idToken, config, onSaved }: Disco
   return (
     <div className="space-y-3 border-t border-border pt-4">
       <p className="text-[12px] font-semibold text-text">タスク管理 v2（ブリーフ）</p>
-      <p className="text-[11px] text-muted">
+      <p className="text-[11px] text-text-muted">
         ブリーフごとにスレッドを立て、工程の着手・完了をボタンで報告できます。毎朝、締切・遅延・入力待ちのダイジェストを送ります。
         スレッド作成には Bot の権限更新が必要な場合があります。うまく動かないときは「Botをサーバーに追加」を再実行してください。
       </p>
 
       <Toggle label="ブリーフごとにスレッドを立てる" checked={threadsEnabled} onChange={setThreadsEnabled} />
       <div className="space-y-1">
-        <span className="text-[12px] text-muted">スレッドを立てるチャンネル</span>
+        <span className="text-[12px] text-text-muted">スレッドを立てるチャンネル</span>
         {channelSelect(briefChannelId, setBriefChannelId)}
       </div>
 
       <Toggle label="朝のダイジェストを送る" checked={digestEnabled} onChange={setDigestEnabled} />
       <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px] gap-2">
         <div className="space-y-1">
-          <span className="text-[12px] text-muted">ダイジェストの送信先</span>
+          <span className="text-[12px] text-text-muted">ダイジェストの送信先</span>
           {channelSelect(digestChannelId, setDigestChannelId)}
         </div>
         <div className="space-y-1">
-          <span className="text-[12px] text-muted">時刻（JST）</span>
+          <span className="text-[12px] text-text-muted">時刻（JST）</span>
           <select
             value={digestTime}
             onChange={(e) => setDigestTime(e.target.value)}

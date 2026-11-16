@@ -134,13 +134,13 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
       {/* 工程 */}
       <section className="space-y-2">
         <div className="flex items-center justify-between">
-          <h4 className="text-[12px] font-semibold text-muted uppercase tracking-wide">工程（上から順に）</h4>
+          <h4 className="text-[12px] font-semibold text-text-muted uppercase tracking-wide">工程（上から順に）</h4>
           <Button size="sm" variant="secondary" onClick={addStep}>
             <Icon name="add" size={14} />
             工程を追加
           </Button>
         </div>
-        {steps.length === 0 && <p className="text-[12px] text-muted">工程がありません。「工程を追加」から始めてください</p>}
+        {steps.length === 0 && <p className="text-[12px] text-text-muted">工程がありません。「工程を追加」から始めてください</p>}
         <ul className="space-y-2">
           {steps.map((s, i) => {
             const open = expanded === i;
@@ -148,7 +148,7 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
             return (
               <li key={i} className="rounded-[12px] border border-border" style={{ background: 'var(--bg)' }}>
                 <div className="flex items-center gap-2 px-3 py-2">
-                  <span className="text-[11px] text-muted w-5 text-right tabular-nums">{i + 1}</span>
+                  <span className="text-[11px] text-text-muted w-5 text-right tabular-nums">{i + 1}</span>
                   <input
                     value={s.title}
                     onChange={(e) => updateStep(i, { title: e.target.value })}
@@ -156,7 +156,7 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
                     className="flex-1 min-w-0 bg-transparent text-sm text-text outline-none"
                     maxLength={60}
                   />
-                  <span className="hidden sm:inline text-[11px] text-muted truncate max-w-[160px]">
+                  <span className="hidden sm:inline text-[11px] text-text-muted truncate max-w-[160px]">
                     {assignee?.displayName ?? '担当未定'} / 公開 {s.leadDays} 日前
                   </span>
                   <button type="button" onClick={() => moveStep(i, -1)} aria-label="上へ" className="btn btn--ghost btn--icon btn--sm" disabled={i === 0}>
@@ -204,7 +204,7 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
                             </button>
                           );
                         })}
-                        {steps.length <= 1 && <span className="text-[12px] text-muted">他の工程がありません</span>}
+                        {steps.length <= 1 && <span className="text-[12px] text-text-muted">他の工程がありません</span>}
                       </div>
                     </div>
                     {/* 必要な情報 */}
@@ -231,7 +231,7 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
                       ))}
                     </div>
                     <div className="flex justify-end">
-                      <button type="button" onClick={() => removeStep(i)} className="text-[12px] text-muted hover:text-live transition-colors">
+                      <button type="button" onClick={() => removeStep(i)} className="text-[12px] text-text-muted hover:text-live transition-colors">
                         この工程を削除
                       </button>
                     </div>
@@ -246,13 +246,13 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
       {/* 見出し項目 */}
       <section className="space-y-2">
         <div className="flex items-center justify-between">
-          <h4 className="text-[12px] font-semibold text-muted uppercase tracking-wide">見出しに置く項目</h4>
+          <h4 className="text-[12px] font-semibold text-text-muted uppercase tracking-wide">見出しに置く項目</h4>
           <Button size="sm" variant="subtle" onClick={() => setHeaderFields((prev) => [...prev, { ...emptyField(prev.length), required: false }])}>
             <Icon name="add" size={14} />
             項目
           </Button>
         </div>
-        {headerFields.length === 0 && <p className="text-[12px] text-muted">例: 概要、素材リンク。見出しに入力欄として並びます</p>}
+        {headerFields.length === 0 && <p className="text-[12px] text-text-muted">例: 概要、素材リンク。見出しに入力欄として並びます</p>}
         {headerFields.map((f, fi) => (
           <div key={fi} className="grid grid-cols-[1fr_auto_auto] gap-2 items-end">
             <Input label={fi === 0 ? '項目名' : ''} value={f.label} onChange={(e) => setHeaderFields((prev) => prev.map((x, idx) => (idx === fi ? { ...x, label: e.target.value } : x)))} maxLength={40} />

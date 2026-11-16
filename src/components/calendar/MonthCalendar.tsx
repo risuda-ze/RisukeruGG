@@ -31,7 +31,7 @@ interface MonthCalendarProps {
 /** 日曜始まりの曜日ヘッダーラベル */
 const DOW_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-const DEFAULT_EVENT_COLOR = '#3fb6e0';
+const DEFAULT_EVENT_COLOR = '#7d68c5'; // DESIGN.md primary（dark）
 const GCAL_EVENT_COLOR = '#4ade80';
 const MEMBER_EVENT_COLOR = '#60a5fa';
 
@@ -181,7 +181,7 @@ function WeekRow({
               className={[
                 'border-r border-border last:border-r-0 relative overflow-hidden transition-colors',
                 !isCurrentMonth ? 'opacity-40 bg-bg' : '',
-                isCurrentDay ? 'bg-[rgba(63,182,224,0.05)]' : '',
+                isCurrentDay ? 'bg-[color-mix(in oklab, var(--primary) 5%, transparent)]' : '',
                 onDateClick ? 'cursor-pointer' : '',
               ]
                 .filter(Boolean)
@@ -205,7 +205,7 @@ function WeekRow({
                         ? 'text-live hover:text-live'
                         : colIndex === 6
                           ? 'text-info hover:text-info'
-                          : 'text-muted hover:text-purple-l',
+                          : 'text-text-muted hover:text-purple-l',
                   ].join(' ')}
                   style={isCurrentDay ? { boxShadow: 'var(--glow-primary)' } : undefined}
                   onMouseEnter={(e) => {
@@ -247,7 +247,7 @@ function WeekRow({
                 {/* +N件：クリックで週表示に切り替え */}
                 {totalOverflow > 0 && (
                   <button
-                    className="text-[10px] text-muted px-1 py-0.5 font-semibold shrink-0 hover:text-purple-l transition-colors text-left"
+                    className="text-[10px] text-text-muted px-1 py-0.5 font-semibold shrink-0 hover:text-purple-l transition-colors text-left"
                     onClick={(e) => { e.stopPropagation(); onDateLabelClick?.(day); }}
                   >
                     +{totalOverflow}件
@@ -376,7 +376,7 @@ function DayTooltipPanel({
       </div>
 
       {daySchedules.length === 0 ? (
-        <p className="px-3 py-3 text-[11px] text-muted italic">予定なし</p>
+        <p className="px-3 py-3 text-[11px] text-text-muted italic">予定なし</p>
       ) : (
         <div className="flex flex-col">
           {daySchedules.map((s) => {
@@ -395,7 +395,7 @@ function DayTooltipPanel({
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-medium text-text truncate">{s.title}</p>
-                  <p className="text-[10px] text-muted font-num">
+                  <p className="text-[10px] text-text-muted font-num">
                     {s.allDay
                       ? '終日'
                       : `${format(s.startAt, 'HH:mm')} – ${format(s.endAt, 'HH:mm')}`}

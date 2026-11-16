@@ -86,7 +86,7 @@ export default function CollabDetailPage() {
 
   if (!session) {
     return (
-      <div className="flex flex-1 items-center justify-center text-muted text-sm">
+      <div className="flex flex-1 items-center justify-center text-text-muted text-sm">
         セッションが見つかりません
       </div>
     );
@@ -105,7 +105,7 @@ export default function CollabDetailPage() {
               {COLLAB_STATUS_LABELS[session.status]}
             </Badge>
           </div>
-          <p className="text-[11px] text-muted font-num">
+          <p className="text-[11px] text-text-muted font-num">
             {session.partnerName}さんと · 期限: {format(session.expiresAt, 'M/d', { locale: ja })}
             まで
           </p>
@@ -160,13 +160,13 @@ export default function CollabDetailPage() {
                     {response === 'ok' ? '○ OK' : '× NG'}
                   </span>
                 ) : responses ? (
-                  <span className="text-[11px] text-muted">未回答</span>
+                  <span className="text-[11px] text-text-muted">未回答</span>
                 ) : null}
               </div>
             );
           })}
           {!responses && session.status === 'open' && (
-            <p className="text-[11px] text-muted">まだ回答がありません</p>
+            <p className="text-[11px] text-text-muted">まだ回答がありません</p>
           )}
         </div>
       </Card>
@@ -176,7 +176,7 @@ export default function CollabDetailPage() {
         <Card className="mb-4">
           {responses.alternativeDates.length > 0 && (
             <div className="mb-3">
-              <p className="text-[11px] font-medium text-muted mb-1">代替日程の提案</p>
+              <p className="text-[11px] font-medium text-text-muted mb-1">代替日程の提案</p>
               {responses.alternativeDates.map((d, i) => (
                 <p key={i} className="text-sm text-text font-num">
                   {format(d, 'M月d日(E) HH:mm', { locale: ja })}
@@ -186,7 +186,7 @@ export default function CollabDetailPage() {
           )}
           {responses.note && (
             <div>
-              <p className="text-[11px] font-medium text-muted mb-1">メモ</p>
+              <p className="text-[11px] font-medium text-text-muted mb-1">メモ</p>
               <p className="text-sm text-text">{responses.note}</p>
             </div>
           )}

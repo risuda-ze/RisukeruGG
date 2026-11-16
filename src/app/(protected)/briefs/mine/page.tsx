@@ -77,7 +77,7 @@ export default function MyStepsPage() {
                 <Link href={`/briefs/${brief.id}?step=${step.id}`} className="block no-underline">
                   <Card interactive className="flex items-center gap-3">
                     <div className="min-w-0 flex-1">
-                      <div className="text-[11px] text-muted truncate">{brief.title}</div>
+                      <div className="text-[11px] text-text-muted truncate">{brief.title}</div>
                       <div className="text-sm font-medium text-text truncate">{step.title}</div>
                       <div className="flex flex-wrap items-center gap-1 mt-1">
                         <StepStatusBadge status={step.status} />
@@ -85,7 +85,7 @@ export default function MyStepsPage() {
                       </div>
                     </div>
                     <div className="text-[12px] text-text-2 shrink-0 flex items-center gap-1">
-                      <Icon name="event" size={13} className="text-muted" />
+                      <Icon name="event" size={13} className="text-text-muted" />
                       {formatShortDate(step.dueDate)}
                     </div>
                   </Card>

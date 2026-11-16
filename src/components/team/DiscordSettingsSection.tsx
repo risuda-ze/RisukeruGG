@@ -380,7 +380,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
       <Card noPadding>
         <CardHeader title="Discord 連携" />
         <div className="p-[18px]">
-          <p className="text-[13px] text-muted">読み込み中...</p>
+          <p className="text-[13px] text-text-muted">読み込み中...</p>
         </div>
       </Card>
     );
@@ -393,7 +393,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
     <Card noPadding>
       <CardHeader title="Discord 連携" />
       <div className="p-[18px] space-y-5">
-        <p className="text-[13px] text-muted">
+        <p className="text-[13px] text-text-muted">
           Discord サーバーに RisukeruGG Bot を追加すると、タスク・コラボ通知や AI
           アシスタントが使えます。
         </p>
@@ -435,7 +435,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
               </div>
               <div className="flex-1">
                 <p className="text-[13px] font-semibold text-text">Discord Bot 接続済み</p>
-                <p className="text-[11px] text-muted">
+                <p className="text-[11px] text-text-muted">
                   通知チャンネル:{' '}
                   {config.channelName ? `#${config.channelName}` : `ID: ${config.channelId}`}
                 </p>
@@ -474,7 +474,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
                   </Button>
                   <button
                     onClick={() => setChannelEditOpen(false)}
-                    className="text-[12px] text-muted hover:text-text transition-colors"
+                    className="text-[12px] text-text-muted hover:text-text transition-colors"
                   >
                     キャンセル
                   </button>
@@ -485,13 +485,13 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
                 <button
                   onClick={handleOpenChannelEdit}
                   disabled={loadingGuildChannels}
-                  className="text-[12px] text-muted hover:text-text transition-colors disabled:opacity-50"
+                  className="text-[12px] text-text-muted hover:text-text transition-colors disabled:opacity-50"
                 >
                   {loadingGuildChannels ? 'チャンネル取得中...' : '通知チャンネルを変更する'}
                 </button>
                 <button
                   onClick={handleDisconnect}
-                  className="text-[12px] text-muted hover:text-live transition-colors"
+                  className="text-[12px] text-text-muted hover:text-live transition-colors"
                 >
                   登録を解除する
                 </button>
@@ -507,7 +507,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
               <p className="text-[12px] font-semibold text-text mb-1">
                 ✅ Bot がサーバーに参加しました
               </p>
-              <p className="text-[11px] text-muted">通知を送るチャンネルを選択してください</p>
+              <p className="text-[11px] text-text-muted">通知を送るチャンネルを選択してください</p>
             </div>
             <div>
               <p className="text-[12px] font-semibold text-text mb-2">通知チャンネル</p>
@@ -552,7 +552,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
             </Button>
 
             {/* Sprint 1 フォールバック: Webhook URL 設定 */}
-            <details className="text-[12px] text-muted">
+            <details className="text-[12px] text-text-muted">
               <summary className="cursor-pointer hover:text-text transition-colors">
                 Webhook URL で通知する（旧方式）
               </summary>
@@ -565,7 +565,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
                     placeholder="https://discord.com/api/webhooks/..."
                     type="url"
                   />
-                  <p className="text-[11px] text-muted mt-1">
+                  <p className="text-[11px] text-text-muted mt-1">
                     Discord のサーバー設定 → 連携サービス → ウェブフック → URL をコピー
                   </p>
                 </div>

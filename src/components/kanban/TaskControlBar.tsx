@@ -46,7 +46,7 @@ export function TaskControlBar({
           className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
             activeCategoryIds.length === 0
               ? 'bg-purple-d text-purple-l'
-              : 'bg-surface border border-border text-muted hover:text-text'
+              : 'bg-surface border border-border text-text-muted hover:text-text'
           }`}
         >
           すべて
@@ -60,7 +60,7 @@ export function TaskControlBar({
             className={`shrink-0 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
               activeCategoryIds.includes(cat.id)
                 ? 'bg-purple-d text-purple-l'
-                : 'bg-surface border border-border text-muted hover:text-text'
+                : 'bg-surface border border-border text-text-muted hover:text-text'
             }`}
           >
             {cat.icon && (
@@ -76,7 +76,7 @@ export function TaskControlBar({
         <select
           value={activeAssigneeId ?? ''}
           onChange={(e) => onAssigneeChange(e.target.value || null)}
-          className="shrink-0 rounded-full px-3 py-1.5 text-xs border border-border bg-surface text-muted hover:text-text transition-colors cursor-pointer outline-none focus:border-primary"
+          className="shrink-0 rounded-full px-3 py-1.5 text-xs border border-border bg-surface text-text-muted hover:text-text transition-colors cursor-pointer outline-none focus:border-primary"
           aria-label="担当者でフィルタ"
         >
           <option value="">担当者: すべて</option>
@@ -91,7 +91,7 @@ export function TaskControlBar({
       {/* 右エリア: アクションボタン群（縮まない） */}
       <div className="flex items-center gap-2 shrink-0">
         {/* タスク件数テキスト */}
-        <span className="text-[12px] text-muted whitespace-nowrap">{taskCount}件</span>
+        <span className="text-[12px] text-text-muted whitespace-nowrap">{taskCount}件</span>
 
         {/* タスク追加の導線はPC=各列下部の「＋」、モバイル=FABに集約（ツールバーのボタンは廃止） */}
 
@@ -108,7 +108,7 @@ export function TaskControlBar({
         {/* ヒント表示ボタン */}
         <button
           onClick={onShowHint}
-          className="w-8 h-8 rounded-full flex items-center justify-center border border-border text-muted hover:text-text transition-colors"
+          className="w-8 h-8 rounded-full flex items-center justify-center border border-border text-text-muted hover:text-text transition-colors"
           style={{ background: 'var(--surface)' }}
           aria-label="ヒントを表示"
           title="操作ヒントを表示"

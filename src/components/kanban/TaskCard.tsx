@@ -79,7 +79,7 @@ function TaskCardComponent({
               variant="ghost"
               size="sm"
               onClick={(e) => { e.stopPropagation(); onEdit(task); }}
-              className="px-1.5 py-1 text-muted hover:text-purple-l"
+              className="px-1.5 py-1 text-text-muted hover:text-purple-l"
               aria-label="タスクを編集"
             >
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5">
@@ -90,7 +90,7 @@ function TaskCardComponent({
               variant="ghost"
               size="sm"
               onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
-              className="px-1.5 py-1 text-muted hover:text-live"
+              className="px-1.5 py-1 text-text-muted hover:text-live"
               aria-label="タスクを削除"
             >
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5">
@@ -105,7 +105,7 @@ function TaskCardComponent({
       <div className="flex items-center gap-1.5 flex-wrap">
         {/* ① 締め切り日時: 終日フラグに応じて M/d または M/d HH:mm */}
         {task.dueDate && (
-          <span className="text-[10px] text-muted font-num">
+          <span className="text-[10px] text-text-muted font-num">
             {(task.dueDateAllDay ?? true)
               ? format(task.dueDate, 'M/d', { locale: ja })
               : format(task.dueDate, 'M/d HH:mm', { locale: ja })}
@@ -115,7 +115,7 @@ function TaskCardComponent({
         {assigneeName && (
           <div className="flex items-center gap-1">
             <Avatar initials={assigneeInitials} src={assignee?.avatarUrl} size="sm" />
-            <span className="text-[10px] text-muted font-num truncate max-w-[70px]">
+            <span className="text-[10px] text-text-muted font-num truncate max-w-[70px]">
               {assigneeName}
             </span>
           </div>

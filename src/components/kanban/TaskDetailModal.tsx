@@ -287,7 +287,7 @@ export function TaskDetailModal({
                 <div className="flex items-center gap-2">
                   <h2 className="text-[18px] font-bold text-text leading-snug">{titleValue || '（タイトルなし）'}</h2>
                   {canEdit && (
-                    <button onClick={() => setEditingTitle(true)} className="shrink-0 text-muted hover:text-purple-l transition-colors" aria-label="タイトルを編集">
+                    <button onClick={() => setEditingTitle(true)} className="shrink-0 text-text-muted hover:text-purple-l transition-colors" aria-label="タイトルを編集">
                       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M11.013 2.513a1.75 1.75 0 0 1 2.475 2.474L6.226 12.25a2.751 2.751 0 0 1-.892.566l-2.35.864a.75.75 0 0 1-.96-.96l.864-2.35a2.75 2.75 0 0 1 .566-.892l7.56-7.559Z" />
                       </svg>
@@ -297,7 +297,7 @@ export function TaskDetailModal({
               )}
             </div>
             <button onClick={handleCancel}
-              className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center border border-border text-muted hover:text-text transition-colors"
+              className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center border border-border text-text-muted hover:text-text transition-colors"
               style={{ background: 'var(--surface)' }} aria-label="閉じる">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l8 8M12 4l-8 8" />
@@ -313,7 +313,7 @@ export function TaskDetailModal({
             <div className="grid grid-cols-2 gap-4">
               {/* ステータス */}
               <div>
-                <label className="block text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-1.5">ステータス</label>
+                <label className="block text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase mb-1.5">ステータス</label>
                 {canEdit ? (
                   <div className="flex items-center gap-2">
                     {currentColumn?.icon && (
@@ -338,7 +338,7 @@ export function TaskDetailModal({
                         {currentColumn.icon}
                       </span>
                     ) : (
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: currentColumn?.color ?? 'var(--muted)' }} />
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: currentColumn?.color ?? 'var(--text-muted)' }} />
                     )}
                     <span className="text-[13px] text-text">{currentColumn?.name ?? '—'}</span>
                   </div>
@@ -346,7 +346,7 @@ export function TaskDetailModal({
               </div>
               {/* カテゴリ */}
               <div>
-                <label className="block text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-1.5">カテゴリ</label>
+                <label className="block text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase mb-1.5">カテゴリ</label>
                 {canEdit ? (
                   <div className="flex items-center gap-2">
                     {currentCategory?.icon && (
@@ -377,7 +377,7 @@ export function TaskDetailModal({
               </div>
               {/* 担当者 */}
               <div>
-                <label className="block text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-1.5">担当者</label>
+                <label className="block text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase mb-1.5">担当者</label>
                 {canEdit ? (
                   <>
                     <button type="button" onClick={() => setShowAssigneePicker((v) => !v)}
@@ -385,13 +385,13 @@ export function TaskDetailModal({
                       {currentAssignee ? (
                         <><Avatar initials={currentAssignee.displayName.slice(0, 2)} src={currentAssignee.avatarUrl} bgClass="bg-purple-d/30" textClass="text-purple-l" size="sm" />
                           <span className="flex-1 text-text truncate">{currentAssignee.displayName}</span></>
-                      ) : <span className="flex-1 text-muted">なし</span>}
-                      <Icon name="chevron_down" size={14} className={`text-muted${showAssigneePicker ? ' rotate-180' : ''}`} />
+                      ) : <span className="flex-1 text-text-muted">なし</span>}
+                      <Icon name="chevron_down" size={14} className={`text-text-muted${showAssigneePicker ? ' rotate-180' : ''}`} />
                     </button>
                     {showAssigneePicker && (
                       <div className="mt-1 border border-border rounded-[10px] overflow-hidden z-10 relative">
                         <button type="button" onClick={() => handleAssigneeChange('')}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] transition-colors text-left ${!assigneeId ? 'bg-purple/10 text-purple-l' : 'hover:bg-surface text-muted'}`}>
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] transition-colors text-left ${!assigneeId ? 'bg-purple/10 text-purple-l' : 'hover:bg-surface text-text-muted'}`}>
                           <div className="w-6 h-6 rounded-full border border-dashed border-border flex items-center justify-center shrink-0"><Icon name="person_off" size={12} /></div>
                           <span className="flex-1">なし</span>
                           {!assigneeId && <Icon name="check" size={14} />}
@@ -413,7 +413,7 @@ export function TaskDetailModal({
               <div>
                 {canEdit ? (
                   <>
-                    <label className="block text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-1.5">締切日</label>
+                    <label className="block text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase mb-1.5">締切日</label>
                     <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <DateField
@@ -435,7 +435,7 @@ export function TaskDetailModal({
                   </>
                 ) : (
                   <>
-                    <label className="block text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-1.5">締切日</label>
+                    <label className="block text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase mb-1.5">締切日</label>
                     <span className="text-[13px] text-text font-num py-2 block">
                       {task?.dueDate
                         ? (task.dueDateAllDay ?? true)
@@ -451,9 +451,9 @@ export function TaskDetailModal({
             {/* 説明 */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] font-semibold text-muted tracking-[0.06em] uppercase">詳細</label>
+                <label className="text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase">詳細</label>
                 {canEdit && !editingDesc && (
-                  <button onClick={() => setEditingDesc(true)} className="text-muted hover:text-purple-l transition-colors" aria-label="詳細を編集">
+                  <button onClick={() => setEditingDesc(true)} className="text-text-muted hover:text-purple-l transition-colors" aria-label="詳細を編集">
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M11.013 2.513a1.75 1.75 0 0 1 2.475 2.474L6.226 12.25a2.751 2.751 0 0 1-.892.566l-2.35.864a.75.75 0 0 1-.96-.96l.864-2.35a2.75 2.75 0 0 1 .566-.892l7.56-7.559Z" />
                     </svg>
@@ -467,7 +467,7 @@ export function TaskDetailModal({
                     className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple resize-y" />
                   <div className="flex gap-2 justify-end">
                     <button onClick={() => { setDescription(task?.description ?? ''); setEditingDesc(false); }}
-                      className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-muted hover:text-text">
+                      className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-text-muted hover:text-text">
                       キャンセル
                     </button>
                     {!isNew && (
@@ -491,12 +491,12 @@ export function TaskDetailModal({
           {!isNew && (
             <div className="md:w-[340px] md:shrink-0 flex flex-col overflow-hidden max-h-[280px] md:max-h-none" style={{ borderColor: 'var(--border)' }}>
               <div className="px-5 py-3 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
-                <p className="text-[11px] font-semibold text-muted tracking-[0.06em] uppercase">コメント / メモ</p>
+                <p className="text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase">コメント / メモ</p>
               </div>
               {/* コメントリスト */}
               <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3" style={{ minHeight: 0 }}>
                 {comments.length === 0 && (
-                  <div className="flex items-center gap-2 p-3 rounded-[10px] text-[12px] text-muted" style={{ background: 'var(--surface)', border: '1px dashed var(--border)' }}>
+                  <div className="flex items-center gap-2 p-3 rounded-[10px] text-[12px] text-text-muted" style={{ background: 'var(--surface)', border: '1px dashed var(--border)' }}>
                     <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 shrink-0 opacity-50"><path d="M2 2h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H9l-3 3v-3H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Z" /></svg>
                     まだコメントはありません
                   </div>
@@ -515,7 +515,7 @@ export function TaskDetailModal({
                         </div>
                       )}
                       <div className={`max-w-[78%] flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'}`}>
-                        <div className="flex items-center gap-1.5 text-[10px] text-muted">
+                        <div className="flex items-center gap-1.5 text-[10px] text-text-muted">
                           {!isMe && <span className="font-semibold text-text-secondary">{c.authorName}</span>}
                           <span>{format(c.createdAt, 'HH:mm', { locale: ja })}</span>
                         </div>
@@ -556,7 +556,7 @@ export function TaskDetailModal({
                     onChange={(e) => setCommentText(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(); } }}
                     placeholder="コメントを入力..."
-                    className="flex-1 bg-transparent text-[13px] text-text outline-none placeholder:text-muted"
+                    className="flex-1 bg-transparent text-[13px] text-text outline-none placeholder:text-text-muted"
                   />
                 </div>
                 <button onClick={addComment} disabled={!commentText.trim() || sendingComment}
@@ -596,7 +596,7 @@ export function TaskDetailModal({
           <div className="ml-auto flex items-center gap-2">
             {saveError && <p className="text-[11px] text-live">{saveError}</p>}
             <button onClick={handleCancel}
-              className="px-4 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-muted hover:text-text transition-colors">
+              className="px-4 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-text-muted hover:text-text transition-colors">
               キャンセル
             </button>
             <button onClick={handleSave} disabled={saving}
