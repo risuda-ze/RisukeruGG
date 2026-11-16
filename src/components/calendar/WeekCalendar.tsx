@@ -93,22 +93,26 @@ export function WeekCalendar({
   const multiDayStripInWeek = allDayInWeek.filter((s) => isMultiDayEvent(s));
 
   return (
-    <div className="calweekview">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card">
 
       {/* ── 曜日ヘッダー（デスクトップ） ────────────────────── */}
       {!isMobile && (
-      <div className="cwv__head grid">
+      <div className="grid flex-none grid-cols-7 border-b border-border">
         {days.map((day, i) => {
           const isCurrentDay = isToday(day);
           return (
             <button
               key={day.toISOString()}
-              className={`cwv__daybtn${isCurrentDay ? ' is-today' : ''}`}
+              className="flex cursor-pointer flex-col items-center gap-0.75 border-r border-border px-1 py-2.75 transition-colors duration-(--duration-fast) ease-out last:border-r-0 hover:bg-surface-2"
               onClick={() => onDateClick?.(day)}
               title="この日に予定を追加"
             >
-              <span className={`cwv__wd${i === 0 ? ' is-sun' : i === 6 ? ' is-sat' : ''}`}>{DOW_LABELS[i]}</span>
-              <span className="cwv__dnum">{format(day, 'd')}</span>
+              <span className={`text-[0.72rem] font-semibold ${i === 0 ? 'text-danger' : i === 6 ? 'text-info' : 'text-text-muted'}`}>{DOW_LABELS[i]}</span>
+              <span
+                className={`font-num flex size-8.5 items-center justify-center rounded-md text-[1.15rem] font-bold ${isCurrentDay ? 'bg-primary text-text-on-primary' : 'text-text'}`}
+              >
+                {format(day, 'd')}
+              </span>
             </button>
           );
         })}
@@ -209,7 +213,7 @@ export function WeekCalendar({
             <div key={day.toISOString()}>
               <div
                 className={`flex items-center gap-2 px-4 py-2 ${
-                  isCurrentDay ? 'bg-[color-mix(in oklab, var(--primary) 8%, transparent)]' : 'bg-card/40'
+                  isCurrentDay ? 'bg-primary/8' : 'bg-card/40'
                 }`}
               >
                 <span className={`text-[10px] font-medium tracking-widest ${getDowColorClass(i)}/60`}>
@@ -314,7 +318,7 @@ export function WeekCalendar({
 
       {/* ── デスクトップ: 単日イベントのグリッド ────────────── */}
       {!isMobile && (
-      <div className="cwv__cols grid">
+      <div className="grid min-h-0 flex-1 grid-cols-7 overflow-y-auto">
         {days.map((day) => {
           const daySingleSchedules = singleDaySchedules
             .filter((s) => eventOccupiesDay(s, day))
@@ -324,11 +328,11 @@ export function WeekCalendar({
           return (
             <div
               key={day.toISOString()}
-              className={`cwv__col${isCurrentDay ? ' is-today' : ''}`}
+              className={`flex cursor-pointer flex-col gap-1.5 border-r border-border px-1.75 py-2 transition-colors duration-(--duration-fast) ease-out last:border-r-0 ${isCurrentDay ? 'bg-primary/6' : 'hover:bg-surface-2'}`}
               onClick={() => onDateClick?.(day)}
             >
               {daySingleSchedules.length === 0 ? (
-                <span className="cwv__emptyhint">＋ 追加</span>
+                <span className="pt-1.5 text-center text-[0.74rem] text-text-disabled">＋ 追加</span>
               ) : (
                 daySingleSchedules.map((s) => {
                   const evStyle = getEventStyle(s.categoryId, categories, s.source);
@@ -336,18 +340,18 @@ export function WeekCalendar({
                   return (
                     <button
                       key={s.id}
-                      className="cwv__evt w-full text-left"
+                      className="flex w-full cursor-pointer flex-col gap-0.5 rounded-sm border-l-[3px] border-l-(--evt) bg-(--evt-bg) px-2.5 py-2 text-left transition-[filter,translate] duration-(--duration-fast) ease-out animate-[pop-scale_var(--duration-base)_var(--ease-spring)_both] hover:-translate-y-px hover:brightness-[1.16]"
                       style={{ '--evt': evStyle.borderLeftColor, '--evt-bg': evStyle.background } as React.CSSProperties}
                       onClick={(e) => { e.stopPropagation(); onEventClick(s); }}
                       title={s.title}
                     >
-                      <div className="cwv__evt-top">
+                      <div className="flex items-center gap-1.25">
                         {cat?.icon && (
                           <span className="material-icons text-[12px] opacity-80 shrink-0" style={{ color: evStyle.borderLeftColor }}>{cat.icon}</span>
                         )}
-                        <span className="cwv__evt-time">{format(s.startAt, 'HH:mm')}</span>
+                        <span className="font-num text-[0.74rem] font-semibold text-text-2">{format(s.startAt, 'HH:mm')}</span>
                       </div>
-                      <span className="cwv__evt-title">{s.title}</span>
+                      <span className="text-[0.82rem] leading-[1.3] font-semibold text-text">{s.title}</span>
                     </button>
                   );
                 })

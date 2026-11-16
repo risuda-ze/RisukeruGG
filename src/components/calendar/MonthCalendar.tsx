@@ -181,7 +181,7 @@ function WeekRow({
               className={[
                 'border-r border-border last:border-r-0 relative overflow-hidden transition-colors',
                 !isCurrentMonth ? 'opacity-40 bg-bg' : '',
-                isCurrentDay ? 'bg-[color-mix(in oklab, var(--primary) 5%, transparent)]' : '',
+                isCurrentDay ? 'bg-primary/5' : '',
                 onDateClick ? 'cursor-pointer' : '',
               ]
                 .filter(Boolean)
@@ -434,16 +434,21 @@ export function MonthCalendar({
   const singleDaySchedules = schedules.filter((s) => !s.allDay && !isMultiDayEvent(s));
 
   return (
-    <div className="cal">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card">
       {/* 曜日ヘッダー */}
-      <div className="cal__wd">
+      <div className="grid flex-none grid-cols-7 border-b border-border">
         {DOW_LABELS.map((d, i) => (
-          <span key={d} className={i === 0 ? 'is-sun' : i === 6 ? 'is-sat' : ''}>{d}</span>
+          <span
+            key={d}
+            className={`py-2.25 text-center text-[0.74rem] font-semibold ${i === 0 ? 'text-danger' : i === 6 ? 'text-info' : 'text-text-muted'}`}
+          >
+            {d}
+          </span>
         ))}
       </div>
 
       {/* 週行グリッド */}
-      <div className="cal__weeks">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         {Array.from({ length: weekCount }, (_, week) => {
           const weekDays = days.slice(week * 7, (week + 1) * 7);
           return (

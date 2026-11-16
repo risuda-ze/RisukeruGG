@@ -8,11 +8,12 @@ export type CardAccent = 'primary' | 'success' | 'warning' | 'danger';
 /** カラーファミリー（docs/DESIGN.md 1.1）。specimen カードの面と枡線を決める */
 export type ColorFamily = 'pink' | 'orange' | 'green' | 'blue' | 'teal';
 
+// hover: も指定するのは、interactive の hover（枡線を強くする）でレールの色まで変えないため
 const ACCENT_CLASS: Record<CardAccent, string> = {
-  primary: 'border-l-primary',
-  success: 'border-l-success',
-  warning: 'border-l-warning',
-  danger: 'border-l-danger',
+  primary: 'border-l-primary hover:border-l-primary',
+  success: 'border-l-success hover:border-l-success',
+  warning: 'border-l-warning hover:border-l-warning',
+  danger: 'border-l-danger hover:border-l-danger',
 };
 
 /** specimen: ファミリーの tint 面 + 2px 同ファミリー枡線 */

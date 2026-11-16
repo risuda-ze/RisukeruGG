@@ -16,6 +16,7 @@ import { DialogShell } from '@/components/ui/Dialog';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import { useModalDrag } from '@/hooks/useModalDrag';
 import { Dropdown } from '@/components/ui/Dropdown';
+import { Switch } from '@/components/ui/Switch';
 import type { Task, TeamMember, Category, TaskStatus, CollabComment } from '@/types/entities';
 
 interface TaskDetailDraft {
@@ -243,8 +244,8 @@ export function TaskDetailModal({
       onClose={handleCancel}
       label={isNew ? 'タスクを作成' : 'タスクの詳細'}
       data-testid="task-detail-modal"
-      // .task-modal でモバイル全画面 / PC 1180px（ScheduleModal と同サイズ）に切り替わる
-      className="task-modal flex flex-col overflow-hidden border border-border bg-card"
+      // モバイルは全画面、PC は 1180px のリサイズ可能なカード（ScheduleModal と同サイズ）
+      className="flex h-dvh max-h-dvh w-full flex-col overflow-hidden border border-border bg-card md:h-[min(720px,calc(100vh-64px))] md:max-h-[calc(100vh-64px)] md:min-h-[400px] md:w-[min(1180px,calc(100vw-64px))] md:min-w-[560px] md:resize md:rounded-lg"
       style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
     >
         {/* パープルバー */}
@@ -414,14 +415,12 @@ export function TaskDetailModal({
                           placeholder="日付を選択"
                         />
                       </div>
-                      <label
-                        className={`allday${dueDateAllDay ? ' is-on' : ''}`}
-                        onClick={handleDueDateAllDayToggle}
-                        style={{ paddingBottom: 11, flexShrink: 0 }}
-                      >
-                        <span className="allday__txt">終日</span>
-                        <span className="allday__sw" />
-                      </label>
+                      <Switch
+                        label="終日"
+                        checked={dueDateAllDay}
+                        onCheckedChange={handleDueDateAllDayToggle}
+                        className="pb-2.75"
+                      />
                     </div>
                   </>
                 ) : (

@@ -525,7 +525,8 @@ export function CollabDetailModal({
       onClose={onClose}
       label="コラボの詳細"
       data-testid="collab-detail-modal"
-      className="collab-modal flex flex-col overflow-hidden rounded-t-lg border border-border bg-card md:rounded-lg"
+      // モバイルは下寄せの全幅シート、PC は 900px のリサイズ可能なカード
+      className="flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-lg border border-border bg-card md:h-[min(720px,calc(100vh-32px))] md:max-h-[calc(100vh-32px)] md:min-h-[400px] md:w-[min(900px,calc(100vw-32px))] md:min-w-[540px] md:resize md:rounded-lg"
       style={{ transform: isMobile ? undefined : `translate(${position.x}px, ${position.y}px)` }}
     >
         {/* アンバーグラデーションバー */}

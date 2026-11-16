@@ -141,7 +141,7 @@ export function MiniCalendar({ value, onChange, min, allDay = false }: MiniCalen
       ? min.getDate() : null;
 
   return (
-    <div className="minical">
+    <div className="minical" data-testid="mini-calendar">
       {/* ── 月ナビ（全幅） ── */}
       <div className="minical__head">
         <button type="button" className="minical__nav" onClick={() => shift(-1)} title="前の月">

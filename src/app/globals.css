@@ -163,7 +163,6 @@
    ============================================================ */
 @theme inline {
   --color-bg: var(--canvas);
-  --color-card-2: var(--surface-2);
   --color-border-l: var(--border);
   --color-purple: var(--primary);
   --color-purple-l: var(--brand-2);
@@ -171,14 +170,7 @@
   --color-amber: var(--warning);
   --color-amber-l: var(--orange-text);
   --color-amber-d: var(--amber-d);
-  --color-muted-l: var(--text-2);
   --color-green: var(--success);
-}
-
-@theme {
-  /* v2 の 24px / 32px は廃止。大きい角丸もシステムの基本形 14px に揃える */
-  --radius-xl: 14px;
-  --radius-2xl: 14px;
 }
 
 :root,
@@ -189,18 +181,12 @@
   --border-l: var(--border);
   --border-light: var(--border);
   --card-border: var(--border);
-  --card-border-raised: var(--border);
 
-  --primary-50: var(--text);
-  --primary-100: var(--text);
   --primary-200: var(--text-2);
   --primary-300: var(--brand-2);
   --primary-400: var(--primary-hover);
-  --primary-500: var(--primary);
-  --primary-600: var(--primary-active);
   --primary-700: var(--primary-active);
   --primary-800: var(--border);
-  --primary-900: var(--surface-2);
   --primary-950: var(--surface-2);
 
   --purple: var(--primary);
@@ -209,12 +195,10 @@
   --purple-d: color-mix(in oklab, var(--primary) 35%, var(--canvas));
   --purple-xs: color-mix(in oklab, var(--primary) 8%, transparent);
   --purple-sm: color-mix(in oklab, var(--primary) 15%, transparent);
-  --purple-md: color-mix(in oklab, var(--primary) 25%, transparent);
 
   --success-dim: var(--success-tint);
   --warning-dim: var(--warning-tint);
   --danger-dim: var(--danger-tint);
-  --info-dim: var(--info-tint);
   --live-xs: var(--danger-tint);
   --green: var(--success);
   --amber: var(--warning);
@@ -228,26 +212,11 @@
 
   /* v3 は影・グローを使わない。旧参照は「影なし」に解決させる */
   --glow-primary: 0 0 #0000;
-  --glow-success: 0 0 #0000;
-  --glow-warning: 0 0 #0000;
-  --glow-danger: 0 0 #0000;
-  --shadow-sm: 0 0 #0000;
   --shadow-md: 0 0 #0000;
-  --shadow-lg: 0 0 #0000;
   --shadow-xl: 0 0 #0000;
-
-  --r-sm: var(--radius-sm);
-  --r-md: var(--radius-md);
-  --r-lg: var(--radius-lg);
-  --r-xl: var(--radius-lg);
-  --r-full: var(--radius-full);
-
-  --duration-crawl: 600ms;
-  --ease-linear: linear;
 
   --font-head: var(--font-sans);
   --font-body: var(--font-sans);
-  --font-ja: var(--font-sans);
   --font-num: var(--font-sans);
 }
 
@@ -320,10 +289,6 @@
 /* ── デザインシステム キーフレーム ──────────────────────────── */
 @keyframes fade-in       { from{opacity:0} to{opacity:1} }
 @keyframes slide-up      { from{transform:translateY(12px);opacity:0} to{transform:translateY(0);opacity:1} }
-@keyframes drop-down     { from{transform:translateY(-12px);opacity:0} to{transform:translateY(0);opacity:1} }
-@keyframes slide-in-left { from{transform:translateX(-16px);opacity:0} to{transform:translateX(0);opacity:1} }
-@keyframes pop           { 0%{transform:scale(0.85);opacity:0} 70%{transform:scale(1.08);opacity:1} 100%{transform:scale(1);opacity:1} }
-@keyframes scan          { from{background-position:-200% center} to{background-position:200% center} }
 
 /* opacity に依存しない scale アニメーション（バックグラウンドタブでのフリーズ防止） */
 @keyframes pop-scale {
@@ -339,10 +304,6 @@
 }
 
 /* モバイルドロワー右スライドイン */
-@keyframes slide-in-right {
-  from { transform: translateX(100%); }
-  to   { transform: translateX(0); }
-}
 
 /* ── LIVEバッジ アニメーション ──────────────────────────────── */
 @keyframes pulse {
@@ -414,44 +375,44 @@
 }
 
 /* ── MiniCalendar ───────────────────────────────────────────── */
-.minical { font-family: var(--font-head); width: 100%; }
+.minical { font-family: var(--font-sans); width: 100%; }
 .minical__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.minical__title { font-weight: 600; font-size: 0.95rem; color: var(--text-primary); }
+.minical__title { font-weight: 600; font-size: 0.95rem; color: var(--text); }
 .minical__nav {
-  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--card-border);
-  background: var(--surface); color: var(--text-secondary);
+  width: 30px; height: 30px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+  background: var(--surface); color: var(--text-2);
   display: flex; align-items: center; justify-content: center; cursor: pointer;
   transition: border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
 }
-.minical__nav:hover { border-color: var(--primary); color: var(--text-primary); }
+.minical__nav:hover { border-color: var(--primary); color: var(--text); }
 .minical__grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
 .minical__wd { text-align: center; font-size: 0.66rem; font-weight: 600; color: var(--text-muted); padding-bottom: 5px; }
 .minical__wd.is-sun { color: var(--danger); }
 .minical__wd.is-sat { color: var(--info); }
 .minical__day {
   position: relative; aspect-ratio: 1; border: none; background: transparent;
-  color: var(--text-secondary); font-family: var(--font-head); font-size: 0.82rem; font-weight: 500;
-  border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--text-2); font-family: var(--font-sans); font-size: 0.82rem; font-weight: 500;
+  border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
 }
-.minical__day:hover:not(:disabled) { background: var(--card-raised); color: var(--text-primary); }
-.minical__day.is-today { color: var(--primary-300); box-shadow: inset 0 0 0 1px var(--primary-700, var(--primary)); }
-.minical__day.is-sel { background: var(--primary); color: #fff; box-shadow: var(--glow-primary); }
+.minical__day:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.minical__day.is-today { color: var(--brand-2); box-shadow: inset 0 0 0 1px var(--primary); }
+.minical__day.is-sel { background: var(--primary); color: var(--text-on-primary); }
 .minical__day.is-disabled { opacity: 0.3; cursor: not-allowed; }
 .minical__time-label {
   display: flex; align-items: center; gap: 7px;
-  font-weight: 600; font-size: 0.82rem; color: var(--text-secondary); white-space: nowrap;
+  font-weight: 600; font-size: 0.82rem; color: var(--text-2); white-space: nowrap;
 }
-.minical__time-label .ic { color: var(--primary-300); }
+.minical__time-label .ic { color: var(--brand-2); }
 .minical__colon { font-weight: 700; color: var(--text-muted); }
 .minical__readout {
   display: flex; align-items: center; gap: 8px; margin-top: 12px;
   padding: 10px 13px; border-radius: var(--radius-md);
-  background: var(--primary-950); border: 1px solid var(--primary-800, var(--primary));
+  background: var(--surface-2); border: 1px solid var(--border);
   cursor: default;
   transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
 }
-.minical__readout:focus-within { border-color: var(--primary); box-shadow: var(--glow-primary); }
+.minical__readout:focus-within { border-color: var(--brand); }
 
 /* ── Native form controls ────────────────────────────────────── */
 /* select */
@@ -460,8 +421,8 @@ select {
   background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238d86aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-family: var(--font-body);
+  color: var(--text);
+  font-family: var(--font-sans);
   font-size: 0.875rem;
   padding: 8px 36px 8px 12px;
   outline: none;
@@ -476,217 +437,8 @@ select:focus {
 }
 select option {
   background: var(--card);
-  color: var(--text-primary);
+  color: var(--text);
 }
-
-/* ============================================================
-   スケジュール画面 — デザインシステムクラス
-   schedule.css (design file) から移植。
-   ============================================================ */
-
-/* ---- カレンダーグリッド ---- */
-@keyframes pop-scale-cal { from { transform: scale(0.88); } 60% { transform: scale(1.04); } to { transform: scale(1); } }
-
-/* カレンダーヘッダー */
-.calhd { flex: 0 0 auto; display: flex; align-items: center; gap: 16px; padding: 4px 0 16px; flex-wrap: wrap; }
-.calhd__month { font-family: var(--font-head); font-weight: 700; font-size: 1.5rem; letter-spacing: -0.01em; white-space: nowrap; }
-.calhd__right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-
-/* 週/月セグメントトグル */
-.segtoggle { display: inline-flex; background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius-md); padding: 3px; gap: 2px; }
-.segtoggle button {
-  border: none; background: none; cursor: pointer; padding: 7px 18px; border-radius: 7px;
-  font-family: var(--font-head); font-weight: 600; font-size: 0.84rem; color: var(--text-secondary);
-  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
-}
-.segtoggle button:hover { color: var(--text-primary); }
-.segtoggle button.is-on { background: var(--primary); color: var(--text-on-primary); box-shadow: var(--glow-primary); }
-
-/* 日付ナビ */
-.datenav { display: inline-flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius-md); padding: 3px; }
-.datenav__arrow {
-  width: 34px; height: 34px; border-radius: 7px; border: none; background: none; cursor: pointer;
-  color: var(--text-secondary); display: flex; align-items: center; justify-content: center;
-  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
-}
-.datenav__arrow:hover { background: var(--card-raised); color: var(--text-primary); }
-.datenav__today {
-  border: none; background: none; cursor: pointer; padding: 0 14px; height: 34px; border-radius: 7px;
-  font-family: var(--font-head); font-weight: 600; font-size: 0.82rem; color: var(--text-primary);
-  transition: background var(--duration-fast) var(--ease-out);
-}
-.datenav__today:hover { background: var(--card-raised); color: var(--text-accent); }
-
-/* ヘルプトグル */
-.helptoggle {
-  width: 38px; height: 38px; border-radius: var(--radius-md); border: 1px solid var(--card-border);
-  background: var(--surface); color: var(--text-secondary); cursor: pointer; flex: 0 0 auto;
-  display: flex; align-items: center; justify-content: center;
-  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
-}
-.helptoggle:hover { border-color: var(--primary); color: var(--text-primary); }
-.helptoggle.is-on { background: var(--primary-950); border-color: var(--primary-700); color: var(--text-accent); }
-
-/* カレンダーグリッド — 月表示 */
-.calwrap { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 16px; }
-.cal { display: flex; flex-direction: column; flex: 1; min-height: 0;
-  background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius-lg); overflow: hidden; }
-.cal__wd { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--card-border); flex: 0 0 auto; }
-.cal__wd span { text-align: center; padding: 9px 0; font-family: var(--font-head); font-weight: 600; font-size: 0.74rem; color: var(--text-muted); }
-.cal__wd span.is-sun { color: var(--danger); }
-.cal__wd span.is-sat { color: var(--info); }
-.cal__weeks { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; }
-
-/* イベントチップ */
-.evt {
-  display: flex; align-items: center; gap: 6px; min-width: 0; opacity: 1;
-  padding: 3px 7px; border-radius: 6px; cursor: pointer;
-  background: var(--evt-bg); border-left: 3px solid var(--evt);
-  animation: pop-scale-cal var(--duration-base) var(--ease-spring) both;
-  transition: filter var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
-}
-.evt:hover { filter: brightness(1.18); transform: translateX(1px); }
-
-/* カレンダー — 週表示 */
-.calweekview { flex: 1; min-height: 0; display: flex; flex-direction: column;
-  background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius-lg); overflow: hidden; }
-.cwv__head { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--card-border); flex: 0 0 auto; }
-.cwv__daybtn { border: none; background: none; cursor: pointer; padding: 11px 4px; display: flex; flex-direction: column; align-items: center; gap: 3px;
-  border-right: 1px solid var(--card-border); transition: background var(--duration-fast) var(--ease-out); }
-.cwv__daybtn:last-child { border-right: none; }
-.cwv__daybtn:hover { background: var(--surface); }
-.cwv__wd { font-family: var(--font-head); font-weight: 600; font-size: 0.72rem; color: var(--text-muted); }
-.cwv__wd.is-sun { color: var(--danger); } .cwv__wd.is-sat { color: var(--info); }
-.cwv__dnum { font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; color: var(--text-primary);
-  width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
-.cwv__daybtn.is-today .cwv__dnum { background: var(--primary); color: #fff; box-shadow: var(--glow-primary); }
-.cwv__cols { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(7, 1fr); overflow-y: auto; }
-.cwv__col { border-right: 1px solid var(--card-border); padding: 8px 7px; display: flex; flex-direction: column; gap: 6px; cursor: pointer;
-  transition: background var(--duration-fast) var(--ease-out); }
-.cwv__col:last-child { border-right: none; }
-.cwv__col:hover { background: var(--surface); }
-.cwv__col.is-today { background: color-mix(in oklab, var(--primary) 6%, transparent); }
-.cwv__evt {
-  display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; opacity: 1;
-  background: var(--evt-bg); border-left: 3px solid var(--evt);
-  animation: pop-scale-cal var(--duration-base) var(--ease-spring) both;
-  transition: filter var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
-}
-.cwv__evt:hover { filter: brightness(1.16); transform: translateY(-1px); }
-.cwv__evt-top { display: flex; align-items: center; gap: 5px; }
-.cwv__evt-time { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 0.74rem; color: var(--text-secondary); }
-.cwv__evt-title { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); line-height: 1.3; }
-.cwv__emptyhint { font-size: 0.74rem; color: var(--text-disabled); text-align: center; padding-top: 6px; }
-
-/* 詳細フォーム */
-.sform__footer { display: flex; align-items: center; gap: 12px; padding: 16px 26px; border-top: 1px solid var(--card-border); flex: 0 0 auto; }
-.sform__footer-right { margin-left: auto; display: flex; gap: 12px; }
-
-/* 終日トグル */
-.allday { display: inline-flex; align-items: center; gap: 9px; cursor: pointer; user-select: none; }
-.allday__sw { width: 42px; height: 24px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border-light);
-  position: relative; transition: background var(--duration-base) var(--ease-out), border-color var(--duration-base) var(--ease-out); flex: 0 0 auto; }
-.allday__sw::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
-  background: var(--text-muted); transition: transform var(--duration-base) var(--ease-spring), background var(--duration-base) var(--ease-out); }
-.allday.is-on .allday__sw { background: var(--primary); border-color: var(--primary); box-shadow: var(--glow-primary); }
-.allday.is-on .allday__sw::after { transform: translateX(18px); background: #fff; }
-.allday__txt { font-family: var(--font-head); font-weight: 600; font-size: 0.84rem; color: var(--text-secondary); }
-.allday.is-on .allday__txt { color: var(--text-accent); }
-
-/* 詳細モーダル */
-.smodal__card { position: relative; width: 870px; max-width: 100%; max-height: 100%; display: flex; flex-direction: column; opacity: 1;
-  background: var(--card); border: 1px solid var(--card-border-raised); border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl), var(--glow-primary); overflow: hidden;
-  animation: pop-modal var(--duration-base) var(--ease-spring) both; }
-.smodal__hd { display: flex; align-items: flex-start; gap: 14px; padding: 20px 22px 16px; border-bottom: 1px solid var(--card-border); flex: 0 0 auto; }
-.smodal__close { margin-left: auto; flex: 0 0 auto; width: 38px; height: 38px; border: none; border-radius: var(--radius-md);
-  background: var(--surface); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
-.smodal__close:hover { background: var(--card-raised); color: var(--text-primary); }
-.smodal__resize {
-  position: absolute; right: 12px; bottom: 12px; width: 24px; height: 24px;
-  cursor: se-resize; z-index: 10;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  opacity: 0.45; transition: opacity 150ms, background 150ms;
-  pointer-events: all;
-}
-.smodal__resize:hover { opacity: 0.9; background: var(--surface); }
-
-/* AIフローティングボタン */
-.aifab {
-  position: fixed; z-index: 70; width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer;
-  right: 22px; bottom: 22px;
-  background: linear-gradient(135deg, var(--primary-400), var(--primary-700));
-  color: #fff; display: flex; align-items: center; justify-content: center;
-  box-shadow: var(--glow-primary), var(--shadow-lg);
-  transition: transform var(--duration-fast) var(--ease-spring);
-}
-.aifab:hover { transform: scale(1.1) rotate(8deg); }
-.aifab__tip {
-  position: absolute; right: calc(100% + 10px); top: 50%; transform: translateY(-50%);
-  white-space: nowrap; background: var(--card-raised); border: 1px solid var(--border-light);
-  border-radius: var(--radius-sm); padding: 6px 11px; font-family: var(--font-head); font-weight: 600;
-  font-size: 0.78rem; color: var(--text-primary); box-shadow: var(--shadow-lg);
-  opacity: 0; pointer-events: none; transition: opacity var(--duration-fast) var(--ease-out);
-}
-.aifab:hover .aifab__tip { opacity: 1; }
-/* モバイルでは FAB を全廃し、AI 導線を MobileToolbar 中央 CTA に一本化 */
-@media (max-width: 767px) { .aifab { display: none; } }
-
-/* ── モバイル: スケジュールヘッダー（44px 1 行統合・md 未満のみ） ── */
-.mcalbar { display: flex; align-items: center; gap: 8px; height: 44px; padding-bottom: 6px; }
-.mcalbar__spacer { flex: 1 1 auto; }
-
-/* 週/月セグメント（既存 .mseg を流用しつつ本ヘッダー内では詰める） */
-.mcalbar .mseg button { padding: 6px 13px; }
-
-/* 月ナビ（‹ N月 › + 年併記） */
-.mcalnav { display: inline-flex; align-items: center; gap: 2px; }
-.mcalnav__arrow {
-  width: 36px; height: 44px; border: none; background: none; cursor: pointer; flex: 0 0 auto;
-  color: var(--text-secondary); display: flex; align-items: center; justify-content: center;
-  transition: color var(--duration-fast) var(--ease-out);
-}
-.mcalnav__arrow:active { color: var(--text-accent); }
-.mcalnav__label { display: flex; flex-direction: column; align-items: center; line-height: 1; min-width: 46px; }
-.mcalnav__year { font-family: var(--font-head); font-weight: 600; font-size: 9px; letter-spacing: 0.04em; color: var(--text-muted); }
-.mcalnav__month { font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; color: var(--text-accent); white-space: nowrap; margin-top: 1px; }
-
-/* 今日ボタン */
-.mcaltoday {
-  border: 1px solid var(--card-border); background: var(--surface); cursor: pointer; flex: 0 0 auto;
-  height: 34px; padding: 0 12px; border-radius: var(--radius-md);
-  font-family: var(--font-head); font-weight: 600; font-size: 0.8rem; color: var(--text-primary);
-  transition: color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
-}
-.mcaltoday:active { color: var(--text-accent); border-color: var(--primary); }
-
-/* ⋯ 低頻度操作メニュー */
-.mcalmore {
-  width: 44px; height: 44px; border: none; background: none; cursor: pointer; flex: 0 0 auto;
-  color: var(--text-secondary); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-md);
-  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
-}
-.mcalmore.is-on { background: var(--surface); color: var(--text-accent); }
-.mcalmenu {
-  position: absolute; right: 0; top: calc(100% + 6px); z-index: 130; width: 244px; padding: 6px;
-  background: var(--card-raised); border: 1px solid var(--border-light); border-radius: 12px; box-shadow: var(--shadow-xl);
-}
-.mcalmenu__item {
-  width: 100%; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px;
-  border: none; background: none; cursor: pointer; border-radius: 8px; text-align: left;
-  font-size: 0.86rem; color: var(--text-secondary);
-  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
-}
-.mcalmenu__item:active { background: var(--card); color: var(--text-primary); }
-
-/* モバイルトップバー */
-.mseg { display: inline-flex; background: var(--surface); border: 1px solid var(--card-border); border-radius: 9px; padding: 2px; }
-.mseg button { border: none; background: none; cursor: pointer; padding: 5px 12px; border-radius: 7px;
-  font-family: var(--font-head); font-weight: 600; font-size: 0.76rem; color: var(--text-secondary); }
-.mseg button.is-on { background: var(--primary); color: #fff; }
 
 /* date / time / datetime-local inputs */
 input[type="date"],
@@ -695,8 +447,8 @@ input[type="datetime-local"] {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-family: var(--font-body);
+  color: var(--text);
+  font-family: var(--font-sans);
   font-size: 0.875rem;
   padding: 8px 12px;
   outline: none;
@@ -714,64 +466,4 @@ input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
-}
-
-/* ── タスク詳細モーダル レスポンシブ幅 ─────────────────────────── */
-.task-modal {
-  width: 100%;
-  height: 100dvh;
-  max-height: 100dvh;
-}
-@media (min-width: 768px) {
-  .task-modal {
-    width: min(1180px, calc(100vw - 64px));
-    height: min(720px, calc(100vh - 64px));
-    min-width: 560px;
-    min-height: 400px;
-    max-height: calc(100vh - 64px);
-    border-radius: 20px;
-    resize: both;
-  }
-}
-
-/* ── コラボ詳細モーダル レスポンシブ幅 ─────────────────────────── */
-.collab-modal {
-  width: 100%;
-  max-height: 92dvh;
-}
-@media (min-width: 768px) {
-  .collab-modal {
-    width: min(900px, calc(100vw - 32px));
-    height: min(720px, calc(100vh - 32px));
-    min-width: 540px;
-    min-height: 400px;
-    max-height: calc(100vh - 32px);
-    resize: both;
-  }
-}
-
-/* ── タスクカード ──────────────────────────────────────────────── */
-.tcard {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-left: 3px solid var(--tc, var(--card-border));
-  /* 外枠数値を Card 規格に一致（radius-lg / padding 16px / border トークン）。
-     D&D の制約により Card への載せ替えは未実施。 */
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  cursor: pointer;
-  animation: pop-scale 0.18s var(--ease-spring);
-  transition: transform var(--duration-fast) var(--ease-out),
-              border-color var(--duration-fast) var(--ease-out),
-              box-shadow var(--duration-fast) var(--ease-out);
-}
-.tcard:hover {
-  transform: translateY(-2px);
-  border-top-color: var(--primary);
-  border-right-color: var(--primary);
-  border-bottom-color: var(--primary);
-  box-shadow: 0 4px 16px color-mix(in oklab, var(--primary) 18%, transparent);
 }

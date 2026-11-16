@@ -26,6 +26,46 @@ import { getEventLastDay } from '@/lib/utils/eventDays';
 import { buttonVariants } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { cn } from '@/lib/utils/cn';
+
+type CalendarView = 'month' | 'week';
+
+/* 同じ見た目のボタンが複数あるものだけ定数にまとめる */
+const DATE_NAV_ARROW =
+  'flex size-8.5 cursor-pointer items-center justify-center rounded-sm text-text-2 transition-colors duration-(--duration-fast) ease-out hover:bg-surface-2 hover:text-text';
+const MOBILE_NAV_ARROW =
+  'flex h-11 w-9 flex-none cursor-pointer items-center justify-center text-text-2 transition-colors duration-(--duration-fast) ease-out active:text-text';
+const MORE_MENU_ITEM =
+  'flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-sm px-2.5 text-left text-[0.86rem] text-text-2 transition-colors duration-(--duration-fast) ease-out hover:bg-surface hover:text-text active:bg-surface active:text-text';
+
+/** 週/月の表示切替。compact はモバイルヘッダー用の詰めた寸法 */
+function ViewToggle({
+  view,
+  onChange,
+  compact = false,
+}: {
+  view: CalendarView;
+  onChange: (view: CalendarView) => void;
+  compact?: boolean;
+}) {
+  return (
+    <div className={cn('inline-flex rounded-md border border-border bg-surface', compact ? 'p-0.5' : 'gap-0.5 p-0.75')}>
+      {(['week', 'month'] as const).map((v) => (
+        <button
+          key={v}
+          className={cn(
+            'cursor-pointer rounded-sm font-semibold transition-colors duration-(--duration-fast) ease-out',
+            compact ? 'px-3.25 py-1.5 text-[0.76rem]' : 'px-4.5 py-1.75 text-[0.84rem]',
+            view === v ? 'bg-primary text-text-on-primary' : 'text-text-2 hover:bg-surface-2 hover:text-text'
+          )}
+          onClick={() => onChange(v)}
+        >
+          {v === 'week' ? '週' : '月'}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function SchedulePage() {
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -40,7 +80,7 @@ export default function SchedulePage() {
   const categories = useCategoryStore((s) => s.categories);
   const subscribeCategories = useCategoryStore((s) => s.subscribe);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<'month' | 'week'>('month');
+  const [view, setView] = useState<CalendarView>('month');
   /* スマホ縦持ちでは初期表示を週（アジェンダ）にして、密な月グリッドを避ける */
   const isMobile = useMediaQuery(767);
   const didInitMobileView = useRef(false);
@@ -171,24 +211,18 @@ export default function SchedulePage() {
       <TopBar title="スケジュール" subtitle="予定の確認・追加・編集ができます" />
 
       {/* カレンダーヘッダー */}
-      <div
-        className="shrink-0 px-4 md:px-7"
-        style={{ background: 'var(--surface)', borderBottom: '1px solid var(--card-border)', paddingTop: 6 }}
-      >
+      <div className="shrink-0 border-b border-border bg-surface px-4 pt-1.5 md:px-7">
         {/* ── PC ヘッダー（md 以上・従来レイアウトを維持） ── */}
         {!isMobile && (
-        <div className="calhd">
+        <div className="flex flex-none flex-wrap items-center gap-4 pt-1 pb-4">
           {/* 週/月セグメントトグル */}
-          <div className="segtoggle">
-            <button className={view === 'week' ? 'is-on' : ''} onClick={() => setView('week')}>週</button>
-            <button className={view === 'month' ? 'is-on' : ''} onClick={() => setView('month')}>月</button>
-          </div>
+          <ViewToggle view={view} onChange={setView} />
 
           {/* YYYY年MM月 */}
-          <span className="calhd__month">{year}年 <span className="font-num" style={{ color: 'var(--text-accent)' }}>{month}月</span></span>
+          <span className="text-h2 whitespace-nowrap">{year}年 <span className="font-num text-brand-2">{month}月</span></span>
 
           {/* 右グループ */}
-          <div className="calhd__right">
+          <div className="ml-auto flex items-center gap-2.5">
             {/* 予定追加 */}
             {canEdit && (
               <button
@@ -210,12 +244,17 @@ export default function SchedulePage() {
             </button>
 
             {/* 日付ナビ */}
-            <div className="datenav">
-              <button className="datenav__arrow" onClick={goBack} aria-label={view === 'month' ? '前月' : '前の週'}>
+            <div className="inline-flex items-center gap-1 rounded-md border border-border bg-surface p-0.75">
+              <button className={DATE_NAV_ARROW} onClick={goBack} aria-label={view === 'month' ? '前月' : '前の週'}>
                 <Icon name="chevron_left" size={18} />
               </button>
-              <button className="datenav__today" onClick={() => setCurrentDate(new Date())}>今日</button>
-              <button className="datenav__arrow" onClick={goForward} aria-label={view === 'month' ? '翌月' : '次の週'}>
+              <button
+                className="h-8.5 cursor-pointer rounded-sm px-3.5 text-[0.82rem] font-semibold text-text transition-colors duration-(--duration-fast) ease-out hover:bg-surface-2"
+                onClick={() => setCurrentDate(new Date())}
+              >
+                今日
+              </button>
+              <button className={DATE_NAV_ARROW} onClick={goForward} aria-label={view === 'month' ? '翌月' : '次の週'}>
                 <Icon name="chevron_right" size={18} />
               </button>
             </div>
@@ -223,7 +262,10 @@ export default function SchedulePage() {
             {/* ヘルプトグル */}
             <button
               onClick={() => hintVisible ? dismissHint() : showHint()}
-              className={`helptoggle${hintVisible ? ' is-on' : ''}`}
+              className={cn(
+                'flex size-9.5 flex-none cursor-pointer items-center justify-center rounded-md border border-border transition-colors duration-(--duration-fast) ease-out',
+                hintVisible ? 'bg-surface-2 text-brand-2' : 'bg-surface text-text-2 hover:border-border-strong hover:text-text'
+              )}
               aria-label={hintVisible ? 'ヒントを閉じる' : 'ヒントを表示'}
             >
               <Icon name="help_outline" size={17} />
@@ -234,36 +276,41 @@ export default function SchedulePage() {
 
         {/* ── モバイルヘッダー（md 未満・44px 1 行に統合） ── */}
         {isMobile && (
-        <div className="mcalbar">
+        <div className="flex h-11 items-center gap-2 pb-1.5">
           {/* 週/月セグメント */}
-          <div className="mseg">
-            <button className={view === 'week' ? 'is-on' : ''} onClick={() => setView('week')}>週</button>
-            <button className={view === 'month' ? 'is-on' : ''} onClick={() => setView('month')}>月</button>
-          </div>
+          <ViewToggle view={view} onChange={setView} compact />
 
           {/* 月ナビ（‹ N月 › ・年を小さく併記） */}
-          <div className="mcalnav">
-            <button className="mcalnav__arrow" onClick={goBack} aria-label={view === 'month' ? '前月' : '前の週'}>
+          <div className="inline-flex items-center gap-0.5">
+            <button className={MOBILE_NAV_ARROW} onClick={goBack} aria-label={view === 'month' ? '前月' : '前の週'}>
               <Icon name="chevron_left" size={20} />
             </button>
-            <span className="mcalnav__label">
-              <span className="mcalnav__year font-num">{year}</span>
-              <span className="mcalnav__month font-num">{month}月</span>
+            <span className="flex min-w-11.5 flex-col items-center leading-none">
+              <span className="font-num text-[9px] font-semibold tracking-[0.04em] text-text-muted">{year}</span>
+              <span className="font-num mt-px text-[1.15rem] font-bold whitespace-nowrap text-brand-2">{month}月</span>
             </span>
-            <button className="mcalnav__arrow" onClick={goForward} aria-label={view === 'month' ? '翌月' : '次の週'}>
+            <button className={MOBILE_NAV_ARROW} onClick={goForward} aria-label={view === 'month' ? '翌月' : '次の週'}>
               <Icon name="chevron_right" size={20} />
             </button>
           </div>
 
           {/* 今日 */}
-          <button className="mcaltoday" onClick={() => setCurrentDate(new Date())}>今日</button>
+          <button
+            className="h-8.5 flex-none cursor-pointer rounded-md border border-border bg-surface px-3 text-[0.8rem] font-semibold text-text transition-colors duration-(--duration-fast) ease-out active:border-border-strong"
+            onClick={() => setCurrentDate(new Date())}
+          >
+            今日
+          </button>
 
-          <span className="mcalbar__spacer" />
+          <span className="flex-auto" />
 
           {/* ⋯ 低頻度操作メニュー */}
           <div className="relative" ref={moreRef}>
             <button
-              className={`mcalmore${moreOpen ? ' is-on' : ''}`}
+              className={cn(
+                'flex size-11 flex-none cursor-pointer items-center justify-center rounded-md transition-colors duration-(--duration-fast) ease-out',
+                moreOpen ? 'bg-surface-2 text-text' : 'text-text-2'
+              )}
               onClick={() => setMoreOpen((v) => !v)}
               aria-label="その他の操作"
               aria-expanded={moreOpen}
@@ -271,10 +318,10 @@ export default function SchedulePage() {
               <Icon name="more_horiz" size={22} />
             </button>
             {moreOpen && (
-              <div className="mcalmenu animate-pop-modal">
+              <div className="absolute top-[calc(100%+6px)] right-0 z-[130] w-61 rounded-md border border-border bg-card p-1.5 animate-pop-modal">
                 {/* メンバーの予定 表示/非表示 */}
                 <button
-                  className="mcalmenu__item"
+                  className={MORE_MENU_ITEM}
                   onClick={() => { setShowMemberCalendars((v) => !v); setMoreOpen(false); }}
                 >
                   <Icon name="groups" size={18} />
@@ -282,7 +329,7 @@ export default function SchedulePage() {
                 </button>
                 {/* ヒント表示切替 */}
                 <button
-                  className="mcalmenu__item"
+                  className={MORE_MENU_ITEM}
                   onClick={() => { if (hintVisible) dismissHint(); else showHint(); setMoreOpen(false); }}
                 >
                   <Icon name="help_outline" size={18} />
@@ -290,7 +337,7 @@ export default function SchedulePage() {
                 </button>
                 {/* Googleカレンダー接続 */}
                 <button
-                  className="mcalmenu__item"
+                  className={MORE_MENU_ITEM}
                   onClick={async () => {
                     setMoreOpen(false);
                     try { await signIn(); setGcalError(null); } catch { /* ポップアップブロック等は無視 */ }
@@ -349,7 +396,7 @@ export default function SchedulePage() {
       )}
 
       {/* カレンダー本体 */}
-      <div className="calwrap">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-4">
         {loading ? (
           <div className="flex-1 flex items-center justify-center">
             <Spinner size="lg" />

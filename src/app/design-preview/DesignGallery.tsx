@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { StatCard } from '@/components/ui/StatCard';
+import { Switch } from '@/components/ui/Switch';
 import { Textarea } from '@/components/ui/Textarea';
 
 const SURFACES = ['canvas', 'surface', 'card', 'surface-2', 'border', 'border-strong'] as const;
@@ -51,6 +52,7 @@ export function DesignGallery() {
   const [modal, setModal] = useState<null | 'confirm' | 'danger'>(null);
   const [category, setCategory] = useState<string | null>(null);
   const [hint, setHint] = useState(true);
+  const [allDay, setAllDay] = useState(true);
 
   function switchTheme(next: 'dark' | 'light') {
     setTheme(next);
@@ -195,7 +197,7 @@ export function DesignGallery() {
         </div>
       </Section>
 
-      <Section title="Input / Textarea / Dropdown">
+      <Section title="Input / Textarea / Dropdown / Switch">
         <Card className="grid gap-5 md:grid-cols-2">
           <Input label="タイトル" placeholder="予定のタイトルを入力" />
           <Input label="メールアドレス" defaultValue="invalid" error="メールアドレスの形式が正しくありません" />
@@ -212,6 +214,7 @@ export function DesignGallery() {
               <option value="month">月</option>
             </select>
             <input type="date" aria-label="日付" defaultValue="2026-11-16" />
+            <Switch label="終日" checked={allDay} onCheckedChange={setAllDay} />
           </div>
         </Card>
       </Section>

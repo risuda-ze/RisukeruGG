@@ -46,8 +46,9 @@ function TaskCardComponent({
   return (
     <div
       data-testid="task-card"
-      className={`tcard group ${isDone ? 'opacity-[.82]' : ''} ${isDragging ? 'rotate-1 shadow-lg' : ''}`}
-      style={{ '--tc': column?.color ?? 'var(--card-border)' } as React.CSSProperties}
+      // 外枠は Card 規格（radius-lg / padding 16px / 左 3px レール）に合わせる。D&D の制約で Card には載せ替えない
+      className={`group flex cursor-pointer flex-col gap-[9px] rounded-lg border border-l-[3px] border-border border-l-(--tc) bg-card p-4 animate-[pop-scale_180ms_var(--ease-spring)] transition-colors duration-(--duration-fast) ease-out hover:border-border-strong hover:border-l-(--tc) ${isDone ? 'opacity-[.82]' : ''} ${isDragging ? 'rotate-1 border-border-strong' : ''}`}
+      style={{ '--tc': column?.color ?? 'var(--border)' } as React.CSSProperties}
       onClick={() => onEdit(task)}
     >
       {/* カテゴリチップ */}

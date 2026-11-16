@@ -319,7 +319,7 @@ Webhook イベントとプラン遷移:
 src/
 ├── app/                  # Next.js App Router ページ
 │   ├── (protected)/      # 認証保護ルート
-│   ├── globals.css       # Tailwind の設定・役割トークンの登録・画面ローカル CSS
+│   ├── globals.css       # Tailwind の設定・役割トークンの登録・ベーススタイル
 │   └── tokens.css        # テーマ値（docs/DESIGN.md から自動生成）
 ├── components/
 │   ├── layout/           # AppShell, Sidebar, TopBar, BottomNav

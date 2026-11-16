@@ -13,6 +13,7 @@ import { Icon } from '@/components/ui/Icon';
 import { DialogShell } from '@/components/ui/Dialog';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { Input } from '@/components/ui/Input';
+import { Switch } from '@/components/ui/Switch';
 import { Button, buttonVariants } from '@/components/ui/Button';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { ScheduleEntry, Category } from '@/types/entities';
@@ -232,7 +233,7 @@ export function ScheduleModal({
         {/* ── モーダル本体（スマホは全幅ボトムシート） */}
         <div
           ref={cardRef}
-          className="smodal__card"
+          className="relative flex max-h-full max-w-full flex-col overflow-hidden rounded-lg border border-border bg-card animate-pop-modal"
           style={
             isMobile
               ? { width: '100%', height: '92dvh', minWidth: 0, borderRadius: '20px 20px 0 0' }
@@ -246,8 +247,8 @@ export function ScheduleModal({
 
           {/* ── ヘッダー（ドラッグハンドル / タイトル inline） */}
           <div
-            className="smodal__hd"
-            style={{ padding: '11px 18px 11px 22px', cursor: isMobile ? 'default' : 'grab', userSelect: 'none', alignItems: 'center' }}
+            className="flex flex-none items-center gap-3.5 border-b border-border py-2.75 pr-4.5 pl-5.5 select-none"
+            style={{ cursor: isMobile ? 'default' : 'grab' }}
             onPointerDown={isMobile ? undefined : handlePointerDown}
             onPointerMove={isMobile ? undefined : handlePointerMove}
             onPointerUp={isMobile ? undefined : handlePointerUp}
@@ -261,7 +262,11 @@ export function ScheduleModal({
             <span className="hidden md:inline" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {isNew ? '— 新しい予定の内容を入力して保存してください。' : '— 予定の内容を編集して保存してください。'}
             </span>
-            <button onClick={onClose} className="smodal__close" title="閉じる" style={{ marginLeft: 'auto', flexShrink: 0 }}>
+            <button
+              onClick={onClose}
+              className="ml-auto flex size-9.5 flex-none cursor-pointer items-center justify-center rounded-md bg-surface text-text-2 transition-colors duration-(--duration-fast) ease-out hover:bg-surface-2 hover:text-text"
+              title="閉じる"
+            >
               <Icon name="close" size={18} />
             </button>
           </div>
@@ -299,11 +304,7 @@ export function ScheduleModal({
                   <label className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>終了日時</label>
                   <DateField value={endAt} onChange={(d) => setEndAt(d)} min={startAt ?? undefined} hideTime={isAllDay} placeholder="終了日時を選択" />
                 </div>
-                {/* 終日トグル（.allday CSS クラス） */}
-                <label className={`allday${isAllDay ? ' is-on' : ''}`} onClick={toggleAllDay} style={{ paddingBottom: 11, flexShrink: 0, cursor: 'pointer' }}>
-                  <span className="allday__txt">終日</span>
-                  <span className="allday__sw" />
-                </label>
+                <Switch label="終日" checked={isAllDay} onCheckedChange={toggleAllDay} className="pb-2.75" />
               </div>
 
               <MarkdownEditor label="説明" value={description} onChange={setDescription} placeholder="予定の詳細を入力..." maxLength={1000} rows={5} />
@@ -405,13 +406,13 @@ export function ScheduleModal({
           </div>
 
           {/* ── フッター */}
-          <div className="sform__footer">
+          <div className="flex flex-none items-center gap-3 border-t border-border px-6.5 py-4">
             {!isNew && canEdit && (
               <button onClick={handleDelete} className={buttonVariants({ variant: 'danger', size: 'sm' })}>
                 <Icon name="delete" size={15} />削除
               </button>
             )}
-            <div className="sform__footer-right">
+            <div className="ml-auto flex gap-3">
               <Button variant="ghost" onClick={onClose}>キャンセル</Button>
               {canEdit && (
                 <Button variant="primary" onClick={handleSave} loading={saving}>保存する</Button>
@@ -424,7 +425,7 @@ export function ScheduleModal({
         {/* ── リサイズハンドル（カード外・overflow:hidden の影響を受けない。スマホでは非表示） */}
         {!isMobile && (
         <div
-          className="smodal__resize"
+          className="pointer-events-auto absolute right-3 bottom-3 z-10 flex size-6 cursor-se-resize items-center justify-center rounded-sm text-text-muted opacity-45 transition-[opacity,background-color] duration-(--duration-fast) hover:bg-surface hover:opacity-90"
           onPointerDown={handleResizePointerDown}
           onPointerMove={handleResizePointerMove}
           onPointerUp={handleResizePointerUp}
