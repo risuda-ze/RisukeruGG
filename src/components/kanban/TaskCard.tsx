@@ -81,7 +81,7 @@ function TaskCardComponent({
               variant="ghost"
               size="sm"
               onClick={(e) => { e.stopPropagation(); onEdit(task); }}
-              className="px-1.5 py-1 text-text-muted hover:text-purple-l"
+              className="px-1.5 py-1 text-text-muted hover:text-brand-2"
               aria-label="タスクを編集"
             >
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5">

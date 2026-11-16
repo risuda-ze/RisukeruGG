@@ -58,7 +58,7 @@ export function RemoveMemberDialog({
           <span className="font-medium">{member.displayName}</span> をチームから削除しますか？
         </p>
         {pendingTaskCount > 0 && (
-          <p className="text-amber-l bg-amber/10 border border-amber/30 rounded-[8px] p-3">
+          <p className="text-orange-text bg-warning/10 border border-warning/30 rounded-[8px] p-3">
             このメンバーが担当する未完タスクが {pendingTaskCount} 件あります。
             削除後、これらのタスクは担当者なし（未アサイン）になります。
           </p>

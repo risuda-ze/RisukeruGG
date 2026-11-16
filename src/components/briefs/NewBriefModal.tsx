@@ -100,7 +100,7 @@ export function NewBriefModal({ open, onClose, playbooks, members }: NewBriefMod
           hint="工程の締切はこの日から逆算されます。あとから変更できます"
         />
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+          <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>
             進め方
           </span>
           {playbooks.length === 0 ? (
@@ -121,7 +121,7 @@ export function NewBriefModal({ open, onClose, playbooks, members }: NewBriefMod
           )}
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+          <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>
             出演者
           </span>
           <div className="flex flex-wrap gap-2">

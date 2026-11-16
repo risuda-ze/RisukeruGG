@@ -221,13 +221,13 @@ export function WeekCalendar({
                 </span>
                 <span
                   className={`text-[14px] font-medium font-num ${
-                    isCurrentDay ? 'text-purple-l' : getDowColorClass(i)
+                    isCurrentDay ? 'text-brand-2' : getDowColorClass(i)
                   }`}
                 >
                   {format(day, 'M/d', { locale: ja })}
                 </span>
                 {isCurrentDay && (
-                  <span className="text-[10px] font-medium text-purple-l bg-purple-d/40 px-1.5 py-0.5 rounded-full">
+                  <span className="text-[10px] font-medium text-brand-2 bg-primary/15 px-1.5 py-0.5 rounded-full">
                     今日
                   </span>
                 )}

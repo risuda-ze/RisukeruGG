@@ -363,7 +363,7 @@ export default function SchedulePage() {
 
       {/* Googleカレンダー接続バナー（未接続・認証期限切れ共通・×で閉じたら永続非表示） */}
       {!authLoading && !googleAccessToken && gcalBannerVisible && (
-        <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-amber/10 border-b border-amber/30 text-[12px] text-amber-l">
+        <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-warning/10 border-b border-warning/30 text-[12px] text-orange-text">
           <span className="material-icons text-[16px]">
             {gcalError === 'auth_expired' ? 'warning' : 'link_off'}
           </span>
@@ -381,14 +381,14 @@ export default function SchedulePage() {
                 /* ポップアップがブロックされた場合などは無視 */
               }
             }}
-            className="shrink-0 px-3 py-1 rounded-[6px] text-[11px] font-bold bg-amber/20 border border-amber/50 hover:bg-amber/30 transition-colors"
+            className="shrink-0 px-3 py-1 rounded-[6px] text-[11px] font-bold bg-warning/20 border border-warning/50 hover:bg-warning/30 transition-colors"
           >
             {gcalError === 'auth_expired' ? '再接続' : '接続する'}
           </button>
           <button
             onClick={dismissGcalBanner}
             aria-label="バナーを閉じる"
-            className="shrink-0 flex items-center justify-center w-6 h-6 rounded-[6px] text-amber-l/70 hover:text-amber-l hover:bg-amber/15 transition-colors"
+            className="shrink-0 flex items-center justify-center w-6 h-6 rounded-[6px] text-orange-text/70 hover:text-orange-text hover:bg-warning/15 transition-colors"
           >
             <Icon name="close" size={15} />
           </button>

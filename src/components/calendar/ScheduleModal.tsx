@@ -213,8 +213,8 @@ export function ScheduleModal({
   }
 
   /* ── スタイル定数 */
-  const avatarSm: React.CSSProperties = { background: 'var(--primary-800)', color: 'var(--primary-200)' };
-  const bubbleBase: React.CSSProperties = { background: 'var(--bg)', border: '1px solid var(--border)' };
+  const avatarSm: React.CSSProperties = { background: 'var(--border)', color: 'var(--text-2)' };
+  const bubbleBase: React.CSSProperties = { background: 'var(--canvas)', border: '1px solid var(--border)' };
 
   /* ─────────────────── レンダリング ─────────────────── */
   return (
@@ -254,8 +254,8 @@ export function ScheduleModal({
             onPointerUp={isMobile ? undefined : handlePointerUp}
             onPointerCancel={isMobile ? undefined : handlePointerUp}
           >
-            <Icon name={isNew ? 'add' : 'edit'} size={17} style={{ color: 'var(--text-accent)', flexShrink: 0 } as React.CSSProperties} />
-            <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+            <Icon name={isNew ? 'add' : 'edit'} size={17} style={{ color: 'var(--brand-2)', flexShrink: 0 } as React.CSSProperties} />
+            <span style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text)', whiteSpace: 'nowrap' }}>
               {isNew ? '予定を追加' : '予定を編集'}
             </span>
             {/* サブ説明はスマホでは非表示（幅確保） */}
@@ -290,18 +290,18 @@ export function ScheduleModal({
               <Input label="タイトル *" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} placeholder="予定のタイトルを入力" />
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>カテゴリ</label>
+                <label className="text-[12px] font-semibold" style={{ color: 'var(--text-2)' }}>カテゴリ</label>
                 <Dropdown value={categoryId} options={categories.map((c) => ({ value: c.id, label: c.name }))} placeholder="未選択" onChange={setCategoryId} scroll />
               </div>
 
               {/* 開始日時 / 終了日時 / 終日トグル — 横並び（スマホは折り返し） */}
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                 <div style={{ flex: '1 1 130px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>開始日時 *</label>
+                  <label className="text-[12px] font-semibold" style={{ color: 'var(--text-2)' }}>開始日時 *</label>
                   <DateField value={startAt} onChange={handleStartAtChange} hideTime={isAllDay} placeholder="開始日時を選択" />
                 </div>
                 <div style={{ flex: '1 1 130px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>終了日時</label>
+                  <label className="text-[12px] font-semibold" style={{ color: 'var(--text-2)' }}>終了日時</label>
                   <DateField value={endAt} onChange={(d) => setEndAt(d)} min={startAt ?? undefined} hideTime={isAllDay} placeholder="終了日時を選択" />
                 </div>
                 <Switch label="終日" checked={isAllDay} onCheckedChange={toggleAllDay} className="pb-2.75" />
@@ -327,8 +327,8 @@ export function ScheduleModal({
 
               {/* 右カラムヘッダー */}
               <div className="flex items-center gap-2 shrink-0 px-5 py-3" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
-                <span className="material-icons text-[15px]" style={{ color: 'var(--text-accent)' }}>chat</span>
-                <span className="text-[12px] font-semibold tracking-[0.05em]" style={{ color: 'var(--text-secondary)' }}>コメント / メモ</span>
+                <span className="material-icons text-[15px]" style={{ color: 'var(--brand-2)' }}>chat</span>
+                <span className="text-[12px] font-semibold tracking-[0.05em]" style={{ color: 'var(--text-2)' }}>コメント / メモ</span>
               </div>
 
               {/* コメント一覧（スクロール可） */}
@@ -348,11 +348,11 @@ export function ScheduleModal({
                         <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5" style={avatarSm}>{comment.authorInitials}</div>
                         <div className="flex-1 px-3 py-2.5 rounded-[0_10px_10px_10px] text-[13px]" style={bubbleBase}>
                           <div className="flex justify-between text-[11px] mb-1" style={{ color: 'var(--text-muted)' }}>
-                            <strong style={{ color: 'var(--text-primary)' }}>{comment.authorName}</strong>
+                            <strong style={{ color: 'var(--text)' }}>{comment.authorName}</strong>
                             <span>{comment.time}</span>
                           </div>
-                          <p className="leading-relaxed mb-1.5" style={{ color: 'var(--text-primary)' }}>{comment.text}</p>
-                          <button className="text-[11px] font-semibold transition-colors" style={{ color: 'var(--text-muted)' }} onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--primary-300)'; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}>返信する</button>
+                          <p className="leading-relaxed mb-1.5" style={{ color: 'var(--text)' }}>{comment.text}</p>
+                          <button className="text-[11px] font-semibold transition-colors" style={{ color: 'var(--text-muted)' }} onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--brand-2)'; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}>返信する</button>
                         </div>
                       </div>
                       {/* 返信一覧 */}
@@ -360,13 +360,13 @@ export function ScheduleModal({
                         <div key={reply.id} className="flex gap-2.5 ml-9 relative">
                           <div className="absolute -left-[20px] top-0 bottom-4 w-px bg-border rounded" />
                           <div className="absolute -left-[20px] top-4 w-3 h-px bg-border rounded" />
-                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5" style={{ background: 'rgba(239,159,39,0.2)', color: 'var(--amber-l)' }}>{reply.authorInitials}</div>
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5" style={{ background: 'rgba(239,159,39,0.2)', color: 'var(--orange-text)' }}>{reply.authorInitials}</div>
                           <div className="flex-1 px-3 py-2 rounded-[0_10px_10px_10px] text-[12px]" style={bubbleBase}>
                             <div className="flex justify-between text-[11px] mb-1" style={{ color: 'var(--text-muted)' }}>
-                              <strong style={{ color: 'var(--text-primary)' }}>{reply.authorName}</strong>
+                              <strong style={{ color: 'var(--text)' }}>{reply.authorName}</strong>
                               <span>{reply.time}</span>
                             </div>
-                            <p style={{ color: 'var(--text-primary)' }}>{reply.text}</p>
+                            <p style={{ color: 'var(--text)' }}>{reply.text}</p>
                           </div>
                         </div>
                       ))}

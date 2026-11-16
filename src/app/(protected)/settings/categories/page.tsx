@@ -218,7 +218,7 @@ function KanbanStatusSettings() {
               {col.role === 'done' && (
                 <span
                   className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
-                  style={{ background: 'var(--success-dim)', color: 'var(--green)' }}
+                  style={{ background: 'var(--success-tint)', color: 'var(--success)' }}
                 >
                   完了列
                 </span>
@@ -252,7 +252,7 @@ function KanbanStatusSettings() {
                       setEditIcon(col.icon);
                       setEditIsDone(col.role === 'done');
                     }}
-                    className="p-1 rounded-[6px] text-text hover:text-purple-l transition-colors"
+                    className="p-1 rounded-[6px] text-text hover:text-brand-2 transition-colors"
                     aria-label="編集"
                   >
                     <Icon name="edit" size={16} />
@@ -295,7 +295,7 @@ function KanbanStatusSettings() {
                   onClick={() => setNewColIcon(null)}
                   className={`w-8 h-8 rounded-[6px] flex items-center justify-center border-2 transition-all ${
                     newColIcon === null
-                      ? 'border-purple-l bg-purple-d'
+                      ? 'border-brand-2 bg-primary/35'
                       : 'border-transparent bg-surface hover:bg-card'
                   }`}
                   title="なし"
@@ -309,7 +309,7 @@ function KanbanStatusSettings() {
                     onClick={() => setNewColIcon(icon)}
                     className={`w-8 h-8 rounded-[6px] flex items-center justify-center border-2 transition-all ${
                       newColIcon === icon
-                        ? 'border-purple-l bg-purple-d'
+                        ? 'border-brand-2 bg-primary/35'
                         : 'border-transparent bg-surface hover:bg-card'
                     }`}
                     title={icon}
@@ -395,7 +395,7 @@ function KanbanStatusSettings() {
                   onClick={() => setEditIcon(null)}
                   className={`w-8 h-8 rounded-[6px] flex items-center justify-center border-2 transition-all ${
                     editIcon === null
-                      ? 'border-purple-l bg-purple-d'
+                      ? 'border-brand-2 bg-primary/35'
                       : 'border-transparent bg-surface hover:bg-card'
                   }`}
                   title="なし"
@@ -409,7 +409,7 @@ function KanbanStatusSettings() {
                     onClick={() => setEditIcon(icon)}
                     className={`w-8 h-8 rounded-[6px] flex items-center justify-center border-2 transition-all ${
                       editIcon === icon
-                        ? 'border-purple-l bg-purple-d'
+                        ? 'border-brand-2 bg-primary/35'
                         : 'border-transparent bg-surface hover:bg-card'
                     }`}
                     title={icon}
@@ -440,7 +440,7 @@ function KanbanStatusSettings() {
             {/* 完了列トグル */}
             <div
               className={`flex items-center justify-between rounded-[10px] px-4 py-3 border cursor-pointer transition-all select-none ${
-                editIsDone ? 'border-green/30 bg-green/5' : 'border-border bg-surface/50'
+                editIsDone ? 'border-success/30 bg-success/5' : 'border-border bg-surface/50'
               }`}
               onClick={() => setEditIsDone((v) => !v)}
             >
@@ -452,12 +452,12 @@ function KanbanStatusSettings() {
               </div>
               <div
                 className={`w-10 h-6 rounded-full relative transition-all shrink-0 ${
-                  editIsDone ? 'bg-green/50' : 'bg-text-muted/30'
+                  editIsDone ? 'bg-success/50' : 'bg-text-muted/30'
                 }`}
               >
                 <div
                   className={`absolute top-1 w-4 h-4 rounded-full transition-all ${
-                    editIsDone ? 'right-1 bg-green' : 'left-1 bg-text-muted'
+                    editIsDone ? 'right-1 bg-success' : 'left-1 bg-text-muted'
                   }`}
                 />
               </div>
@@ -486,7 +486,7 @@ function KanbanStatusSettings() {
           <div className="space-y-3 text-sm">
             <p className="text-text">「{deleteConfirmColumn.name}」を削除します。</p>
             {affectedTaskCount > 0 && (
-              <p className="text-amber-l bg-amber/10 border border-amber/30 rounded-[8px] p-3">
+              <p className="text-orange-text bg-warning/10 border border-warning/30 rounded-[8px] p-3">
                 このカラムには {affectedTaskCount} 件のタスクがあります。削除すると「
                 {fallbackColumn?.name}」へ移動されます。
               </p>
@@ -624,7 +624,7 @@ function CategorySettings() {
                       setEditColor(cat.color);
                       setEditIcon(cat.icon);
                     }}
-                    className="p-1 rounded-[6px] text-text hover:text-purple-l transition-colors"
+                    className="p-1 rounded-[6px] text-text hover:text-brand-2 transition-colors"
                     aria-label="編集"
                   >
                     <Icon name="edit" size={16} />
@@ -666,7 +666,7 @@ function CategorySettings() {
                   onClick={() => setNewIcon(null)}
                   className={`w-8 h-8 rounded-[6px] flex items-center justify-center border-2 transition-all ${
                     newIcon === null
-                      ? 'border-purple-l bg-purple-d'
+                      ? 'border-brand-2 bg-primary/35'
                       : 'border-transparent bg-surface hover:bg-card'
                   }`}
                   title="なし"
@@ -680,7 +680,7 @@ function CategorySettings() {
                     onClick={() => setNewIcon(icon)}
                     className={`w-8 h-8 rounded-[6px] flex items-center justify-center border-2 transition-all ${
                       newIcon === icon
-                        ? 'border-purple-l bg-purple-d'
+                        ? 'border-brand-2 bg-primary/35'
                         : 'border-transparent bg-surface hover:bg-card'
                     }`}
                     title={icon}
@@ -773,7 +773,7 @@ function CategorySettings() {
                   onClick={() => setEditIcon(null)}
                   className={`w-8 h-8 rounded-[6px] flex items-center justify-center border-2 transition-all ${
                     editIcon === null
-                      ? 'border-purple-l bg-purple-d'
+                      ? 'border-brand-2 bg-primary/35'
                       : 'border-transparent bg-surface hover:bg-card'
                   }`}
                   title="なし"
@@ -787,7 +787,7 @@ function CategorySettings() {
                     onClick={() => setEditIcon(icon)}
                     className={`w-8 h-8 rounded-[6px] flex items-center justify-center border-2 transition-all ${
                       editIcon === icon
-                        ? 'border-purple-l bg-purple-d'
+                        ? 'border-brand-2 bg-primary/35'
                         : 'border-transparent bg-surface hover:bg-card'
                     }`}
                     title={icon}

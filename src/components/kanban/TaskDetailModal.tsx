@@ -230,10 +230,10 @@ export function TaskDetailModal({
 
   /* アバタースタイル */
   function avatarBg(name: string) {
-    return ['var(--purple-d)', 'var(--success-dim)', 'var(--warning-dim)', 'var(--danger-dim)'][name.charCodeAt(0) % 4];
+    return ['color-mix(in oklab, var(--primary) 35%, transparent)', 'var(--success-tint)', 'var(--warning-tint)', 'var(--danger-tint)'][name.charCodeAt(0) % 4];
   }
   function avatarColor(name: string) {
-    return ['var(--purple-l)', 'var(--green)', 'var(--amber-l)', 'var(--danger)'][name.charCodeAt(0) % 4];
+    return ['var(--brand-2)', 'var(--success)', 'var(--orange-text)', 'var(--danger)'][name.charCodeAt(0) % 4];
   }
   function memberAvatarUrl(authorId: string) {
     return members.find((m) => m.userId === authorId)?.avatarUrl ?? null;
@@ -249,7 +249,7 @@ export function TaskDetailModal({
       style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
     >
         {/* パープルバー */}
-        <div className="h-1.5 shrink-0" style={{ background: 'linear-gradient(90deg, var(--purple-d), var(--purple))' }} />
+        <div className="h-1.5 shrink-0" style={{ background: 'linear-gradient(90deg, color-mix(in oklab, var(--primary) 35%, transparent), var(--primary))' }} />
 
         {/* ヘッダー（ドラッグハンドル） */}
         <div
@@ -270,7 +270,7 @@ export function TaskDetailModal({
                       if (e.key === 'Escape' && !isNew) { e.stopPropagation(); setTitleValue(task!.title); setEditingTitle(false); }
                     }}
                     placeholder="タスクのタイトルを入力..."
-                    className="w-full text-[18px] font-bold bg-bg border border-purple rounded-[8px] px-2 py-1 text-text outline-none"
+                    className="w-full text-[18px] font-bold bg-canvas border border-primary rounded-[8px] px-2 py-1 text-text outline-none"
                     autoFocus
                   />
                   {titleError && <p className="text-[11px] text-live">{titleError}</p>}
@@ -279,7 +279,7 @@ export function TaskDetailModal({
                 <div className="flex items-center gap-2">
                   <h2 className="text-[18px] font-bold text-text leading-snug">{titleValue || '（タイトルなし）'}</h2>
                   {canEdit && (
-                    <button onClick={() => setEditingTitle(true)} className="shrink-0 text-text-muted hover:text-purple-l transition-colors" aria-label="タイトルを編集">
+                    <button onClick={() => setEditingTitle(true)} className="shrink-0 text-text-muted hover:text-brand-2 transition-colors" aria-label="タイトルを編集">
                       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M11.013 2.513a1.75 1.75 0 0 1 2.475 2.474L6.226 12.25a2.751 2.751 0 0 1-.892.566l-2.35.864a.75.75 0 0 1-.96-.96l.864-2.35a2.75 2.75 0 0 1 .566-.892l7.56-7.559Z" />
                       </svg>
@@ -373,9 +373,9 @@ export function TaskDetailModal({
                 {canEdit ? (
                   <>
                     <button type="button" onClick={() => setShowAssigneePicker((v) => !v)}
-                      className="w-full flex items-center gap-2 px-3 py-2 border border-border rounded-[8px] bg-bg text-left text-[13px] outline-none hover:border-border-l transition-colors">
+                      className="w-full flex items-center gap-2 px-3 py-2 border border-border rounded-[8px] bg-canvas text-left text-[13px] outline-none hover:border-border transition-colors">
                       {currentAssignee ? (
-                        <><Avatar initials={currentAssignee.displayName.slice(0, 2)} src={currentAssignee.avatarUrl} bgClass="bg-purple-d/30" textClass="text-purple-l" size="sm" />
+                        <><Avatar initials={currentAssignee.displayName.slice(0, 2)} src={currentAssignee.avatarUrl} bgClass="bg-primary/10" textClass="text-brand-2" size="sm" />
                           <span className="flex-1 text-text truncate">{currentAssignee.displayName}</span></>
                       ) : <span className="flex-1 text-text-muted">なし</span>}
                       <Icon name="chevron_down" size={14} className={`text-text-muted${showAssigneePicker ? ' rotate-180' : ''}`} />
@@ -383,17 +383,17 @@ export function TaskDetailModal({
                     {showAssigneePicker && (
                       <div className="mt-1 border border-border rounded-[10px] overflow-hidden z-10 relative">
                         <button type="button" onClick={() => handleAssigneeChange('')}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] transition-colors text-left ${!assigneeId ? 'bg-purple/10 text-purple-l' : 'hover:bg-surface text-text-muted'}`}>
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] transition-colors text-left ${!assigneeId ? 'bg-primary/10 text-brand-2' : 'hover:bg-surface text-text-muted'}`}>
                           <div className="w-6 h-6 rounded-full border border-dashed border-border flex items-center justify-center shrink-0"><Icon name="person_off" size={12} /></div>
                           <span className="flex-1">なし</span>
                           {!assigneeId && <Icon name="check" size={14} />}
                         </button>
                         {members.map((m) => (
                           <button type="button" key={m.userId} onClick={() => handleAssigneeChange(m.userId)}
-                            className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] transition-colors text-left border-t border-border ${assigneeId === m.userId ? 'bg-purple/10' : 'hover:bg-surface'}`}>
-                            <Avatar initials={m.displayName.slice(0, 2)} src={m.avatarUrl} bgClass="bg-purple-d/30" textClass="text-purple-l" size="sm" />
-                            <span className={`flex-1 truncate ${assigneeId === m.userId ? 'text-purple-l font-semibold' : 'text-text'}`}>{m.displayName}</span>
-                            {assigneeId === m.userId && <Icon name="check" size={14} className="text-purple-l" />}
+                            className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] transition-colors text-left border-t border-border ${assigneeId === m.userId ? 'bg-primary/10' : 'hover:bg-surface'}`}>
+                            <Avatar initials={m.displayName.slice(0, 2)} src={m.avatarUrl} bgClass="bg-primary/10" textClass="text-brand-2" size="sm" />
+                            <span className={`flex-1 truncate ${assigneeId === m.userId ? 'text-brand-2 font-semibold' : 'text-text'}`}>{m.displayName}</span>
+                            {assigneeId === m.userId && <Icon name="check" size={14} className="text-brand-2" />}
                           </button>
                         ))}
                       </div>
@@ -443,7 +443,7 @@ export function TaskDetailModal({
               <div className="flex items-center justify-between mb-2">
                 <label className="text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase">詳細</label>
                 {canEdit && !editingDesc && (
-                  <button onClick={() => setEditingDesc(true)} className="text-text-muted hover:text-purple-l transition-colors" aria-label="詳細を編集">
+                  <button onClick={() => setEditingDesc(true)} className="text-text-muted hover:text-brand-2 transition-colors" aria-label="詳細を編集">
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M11.013 2.513a1.75 1.75 0 0 1 2.475 2.474L6.226 12.25a2.751 2.751 0 0 1-.892.566l-2.35.864a.75.75 0 0 1-.96-.96l.864-2.35a2.75 2.75 0 0 1 .566-.892l7.56-7.559Z" />
                     </svg>
@@ -454,7 +454,7 @@ export function TaskDetailModal({
                 <div className="flex flex-col gap-2">
                   <textarea value={description} onChange={(e) => setDescription(e.target.value)}
                     placeholder="詳細を入力..." rows={4}
-                    className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple resize-y" />
+                    className="w-full bg-canvas border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-primary resize-y" />
                   <div className="flex gap-2 justify-end">
                     <button onClick={() => { setDescription(task?.description ?? ''); setEditingDesc(false); }}
                       className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-text-muted hover:text-text">
@@ -463,7 +463,7 @@ export function TaskDetailModal({
                     {!isNew && (
                       <button onClick={() => setEditingDesc(false)}
                         className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold"
-                        style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}>
+                        style={{ background: 'color-mix(in oklab, var(--primary) 35%, transparent)', color: 'var(--brand-2)' }}>
                         完了
                       </button>
                     )}
@@ -511,8 +511,8 @@ export function TaskDetailModal({
                         </div>
                         <div className="px-3 py-2 text-[13px] leading-relaxed text-text"
                           style={{
-                            background: isMe ? 'var(--primary-950)' : 'var(--surface)',
-                            border: `1px solid ${isMe ? 'var(--primary-800)' : 'var(--border)'}`,
+                            background: isMe ? 'var(--surface-2)' : 'var(--surface)',
+                            border: `1px solid ${isMe ? 'var(--border)' : 'var(--border)'}`,
                             borderRadius: isMe ? '13px 4px 13px 13px' : '4px 13px 13px 13px',
                           }}>
                           {c.text}
@@ -527,17 +527,15 @@ export function TaskDetailModal({
                 <div
                   ref={commentFieldRef}
                   className="flex-1 flex items-center px-4"
-                  style={{ height: 46, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', transition: 'border-color var(--duration-fast), box-shadow var(--duration-fast)' }}
+                  style={{ height: 46, background: 'var(--canvas)', border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', transition: 'border-color var(--duration-fast), box-shadow var(--duration-fast)' }}
                   onFocusCapture={() => {
                     if (commentFieldRef.current) {
                       commentFieldRef.current.style.borderColor = 'var(--primary)';
-                      commentFieldRef.current.style.boxShadow = 'var(--glow-primary)';
                     }
                   }}
                   onBlurCapture={() => {
                     if (commentFieldRef.current) {
                       commentFieldRef.current.style.borderColor = 'var(--border)';
-                      commentFieldRef.current.style.boxShadow = '';
                     }
                   }}
                 >
@@ -551,7 +549,7 @@ export function TaskDetailModal({
                 </div>
                 <button onClick={addComment} disabled={!commentText.trim() || sendingComment}
                   className="shrink-0 w-[46px] h-[46px] rounded-full flex items-center justify-center disabled:opacity-40 transition-opacity"
-                  style={{ background: 'var(--primary)', boxShadow: 'var(--glow-primary)' }} aria-label="コメントを送信">
+                  style={{ background: 'var(--primary)' }} aria-label="コメントを送信">
                   <svg viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth={2} className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 13V3M4 7l4-4 4 4" />
                   </svg>
@@ -567,7 +565,7 @@ export function TaskDetailModal({
           {!isNew && canEdit && (
             <button onClick={handleDelete}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] text-[13px] font-semibold border transition-colors"
-              style={{ background: 'var(--danger-dim)', color: 'var(--danger)', borderColor: 'color-mix(in oklab, var(--danger) 30%, transparent)' }}>
+              style={{ background: 'var(--danger-tint)', color: 'var(--danger)', borderColor: 'color-mix(in oklab, var(--danger) 30%, transparent)' }}>
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2 4h12M5 4V2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5V4m2 0-1 9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1L3 4" />
               </svg>
@@ -577,7 +575,7 @@ export function TaskDetailModal({
           {/* AIに相談（編集モード・canEdit のみ）: タスクをピン留めして AI チャットへ */}
           {!isNew && canEdit && (
             <button onClick={handleConsultAI}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] text-[13px] font-semibold border border-purple/20 text-purple bg-purple/5 hover:bg-purple/10 transition-colors mr-auto">
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] text-[13px] font-semibold border border-primary/20 text-primary bg-primary/5 hover:bg-primary/10 transition-colors mr-auto">
               <Icon name="auto_awesome" size={14} />
               AIに相談
             </button>
@@ -591,7 +589,7 @@ export function TaskDetailModal({
             </button>
             <button onClick={handleSave} disabled={saving}
               className="px-5 py-2 rounded-[10px] text-[13px] font-semibold disabled:opacity-40 transition-opacity"
-              style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}>
+              style={{ background: 'color-mix(in oklab, var(--primary) 35%, transparent)', color: 'var(--brand-2)' }}>
               {saving ? (isNew ? '作成中...' : '保存中...') : '保存'}
             </button>
           </div>

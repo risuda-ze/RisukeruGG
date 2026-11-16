@@ -210,7 +210,7 @@ export default function ProfileSettingsPage() {
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 activeTab === tab
-                  ? 'border-purple text-purple-l'
+                  ? 'border-primary text-brand-2'
                   : 'border-transparent text-text-muted hover:text-text'
               }`}
               aria-current={activeTab === tab ? 'page' : undefined}
@@ -229,7 +229,7 @@ export default function ProfileSettingsPage() {
               <div className="flex items-center gap-5">
                 <div
                   className="w-16 h-16 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
-                  style={{ background: 'var(--purple-d)' }}
+                  style={{ background: 'color-mix(in oklab, var(--primary) 35%, transparent)' }}
                 >
                   {avatarPreview ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
@@ -239,7 +239,7 @@ export default function ProfileSettingsPage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-[22px] font-bold" style={{ color: 'var(--purple-l)' }}>
+                    <span className="text-[22px] font-bold" style={{ color: 'var(--brand-2)' }}>
                       {initials}
                     </span>
                   )}
@@ -293,7 +293,7 @@ export default function ProfileSettingsPage() {
                     保存する
                   </Button>
                   {nameSaved && (
-                    <span className="text-[12px] text-green flex items-center gap-1">
+                    <span className="text-[12px] text-success flex items-center gap-1">
                       <Icon name="check" size={14} />
                       保存しました
                     </span>
@@ -339,7 +339,7 @@ export default function ProfileSettingsPage() {
                 // 現在プランの表示は実効プラン（試用モード中は PARTY）に合わせる
                 const isCurrent = (isParty ? 'party' : 'light') === plan;
                 return (
-                  <Card key={plan} className={isCurrent ? 'border-purple/60' : ''}>
+                  <Card key={plan} className={isCurrent ? 'border-primary/60' : ''}>
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <p className="text-[15px] font-bold text-text">
@@ -353,9 +353,9 @@ export default function ProfileSettingsPage() {
                         <span
                           className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                           style={{
-                            background: 'var(--purple-sm)',
-                            color: 'var(--purple-l)',
-                            border: '1px solid var(--purple)',
+                            background: 'color-mix(in oklab, var(--primary) 15%, transparent)',
+                            color: 'var(--brand-2)',
+                            border: '1px solid var(--primary)',
                           }}
                         >
                           現在のプラン
@@ -367,11 +367,11 @@ export default function ProfileSettingsPage() {
                       {plan === 'light' ? (
                         <>
                           <li className="flex items-center gap-1.5">
-                            <Icon name="check" size={14} className="text-green" />
+                            <Icon name="check" size={14} className="text-success" />
                             スケジュール管理
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <Icon name="check" size={14} className="text-green" />
+                            <Icon name="check" size={14} className="text-success" />
                             タスク管理（基本）
                           </li>
                           <li className="flex items-center gap-1.5">
@@ -386,19 +386,19 @@ export default function ProfileSettingsPage() {
                       ) : (
                         <>
                           <li className="flex items-center gap-1.5">
-                            <Icon name="check" size={14} className="text-green" />
+                            <Icon name="check" size={14} className="text-success" />
                             スケジュール管理
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <Icon name="check" size={14} className="text-green" />
+                            <Icon name="check" size={14} className="text-success" />
                             タスク管理（全機能）
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <Icon name="check" size={14} className="text-green" />
+                            <Icon name="check" size={14} className="text-success" />
                             コラボ調整
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <Icon name="check" size={14} className="text-green" />
+                            <Icon name="check" size={14} className="text-success" />
                             チーム機能（複数メンバー）
                           </li>
                         </>
@@ -438,8 +438,8 @@ export default function ProfileSettingsPage() {
             )}
 
             {!showBilling && (
-              <Card className="border-amber/20">
-                <p className="text-sm font-medium text-amber-l mb-1">
+              <Card className="border-warning/20">
+                <p className="text-sm font-medium text-orange-text mb-1">
                   現在は公開試用期間につき全機能を無料でご利用いただけます
                 </p>
                 <p className="text-[12px] text-text-muted">
@@ -510,7 +510,7 @@ export default function ProfileSettingsPage() {
                       href="/terms"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3 border-b border-border"
+                      className="flex items-center justify-between text-sm text-text hover:text-brand-2 transition-colors py-3 border-b border-border"
                     >
                       <span>利用規約</span>
                       <Icon name="open_in_new" size={20} className="text-text-muted" />
@@ -519,7 +519,7 @@ export default function ProfileSettingsPage() {
                       href="/privacy-policy"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3 border-b border-border"
+                      className="flex items-center justify-between text-sm text-text hover:text-brand-2 transition-colors py-3 border-b border-border"
                     >
                       <span>プライバシーポリシー</span>
                       <Icon name="open_in_new" size={20} className="text-text-muted" />
@@ -528,7 +528,7 @@ export default function ProfileSettingsPage() {
                       href="/tokushoho"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3 border-b border-border"
+                      className="flex items-center justify-between text-sm text-text hover:text-brand-2 transition-colors py-3 border-b border-border"
                     >
                       <span>特定商取引法に基づく表記</span>
                       <Icon name="open_in_new" size={20} className="text-text-muted" />
@@ -541,7 +541,7 @@ export default function ProfileSettingsPage() {
                   <h3 className="text-sm font-medium text-text-muted mb-3">サポート</h3>
                   <Link
                     href="/settings/contact"
-                    className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3"
+                    className="flex items-center justify-between text-sm text-text hover:text-brand-2 transition-colors py-3"
                   >
                     <span className="flex items-center gap-2">
                       <Icon name="mail_outline" size={16} className="text-text-muted" />
@@ -584,8 +584,8 @@ export default function ProfileSettingsPage() {
         <div className="space-y-3 text-sm">
           {/* オペレーターが複数メンバーチームを持つ場合は指名UIを表示 */}
           {isOperatorWithMembers && (
-            <div className="rounded-[10px] border border-amber/30 bg-amber/10 p-3 space-y-2">
-              <p className="text-[12px] font-semibold text-amber-l">
+            <div className="rounded-[10px] border border-warning/30 bg-warning/10 p-3 space-y-2">
+              <p className="text-[12px] font-semibold text-orange-text">
                 新しいオペレーターを選択してください
               </p>
               <Dropdown

@@ -533,7 +533,7 @@ body {
 
 `layout.tsx` は `next/font/google` を読み込まない（Web フォントなし）。
 
-実際の `globals.css` には上記に加えて、shadcn 互換の `--color-background` 等の登録、タイポグラフィ役割（`--text-h1` 等）、`dark:` バリアントの定義、v2 の旧名を v3 の役割トークンへ向ける移行用の別名ブロックがある。旧名は新規コードで使わない。
+実際の `globals.css` には上記に加えて、shadcn 互換の `--color-background` 等の登録、タイポグラフィ役割（`--text-h1` 等）、`dark:` バリアントの定義がある。v2 の旧名（`--purple` / `--text-primary` / `--card-border` 等）は廃止済みで、定義は残していない。
 
 ---
 

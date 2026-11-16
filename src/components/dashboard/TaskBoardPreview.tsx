@@ -47,7 +47,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
             <button
               key={task.id}
               onClick={() => setSelectedTask(task)}
-              className="text-left bg-card border border-border rounded-[10px] p-4 hover:border-purple/50 hover:bg-purple/5 transition-colors"
+              className="text-left bg-card border border-border rounded-[10px] p-4 hover:border-primary/50 hover:bg-primary/5 transition-colors"
             >
               {/* タスク名 */}
               <p className="text-sm font-semibold text-text mb-2 line-clamp-2">{task.title}</p>
@@ -75,8 +75,8 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
                   <Avatar
                     initials={assignee.displayName.slice(0, 2)}
                     src={assignee.avatarUrl}
-                    bgClass="bg-purple-d/30"
-                    textClass="text-purple-l"
+                    bgClass="bg-primary/10"
+                    textClass="text-brand-2"
                     size="sm"
                   />
                   <span className="text-[11px] text-text-muted truncate">{assignee.displayName}</span>
@@ -94,7 +94,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
         title={selectedTask?.title ?? ''}
         size="md"
         footer={
-          <Link href="/tasks" className="text-sm text-purple-l hover:text-purple transition-colors">
+          <Link href="/tasks" className="text-sm text-brand-2 hover:text-primary transition-colors">
             タスク管理で編集 →
           </Link>
         }
@@ -133,8 +133,8 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
                 <div className="flex items-center gap-1.5">
                   <Avatar
                     initials={selectedAssignee.displayName.slice(0, 2)}
-                    bgClass="bg-purple-d/30"
-                    textClass="text-purple-l"
+                    bgClass="bg-primary/10"
+                    textClass="text-brand-2"
                     size="sm"
                   />
                   <span className="text-[12px] text-text">{selectedAssignee.displayName}</span>

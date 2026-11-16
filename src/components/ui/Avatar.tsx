@@ -7,9 +7,9 @@ export interface AvatarProps {
   initials: string;
   /** アバター画像URL。指定された場合はイニシャルより優先して表示 */
   src?: string | null;
-  /** 背景色クラス（Tailwind、例: "bg-purple-d/30"） */
+  /** 背景色クラス（Tailwind、例: "bg-primary/10"） */
   bgClass?: string;
-  /** テキスト色クラス（Tailwind、例: "text-purple-l"） */
+  /** テキスト色クラス（Tailwind、例: "text-brand-2"） */
   textClass?: string;
   /** アバターサイズ */
   size?: AvatarSize;

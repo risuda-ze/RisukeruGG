@@ -113,8 +113,8 @@ export default function BriefsPage() {
             </button>
           ))}
           <div className="sm:hidden ml-auto flex gap-2">
-            <Link href="/briefs/mine" className="text-[12px] text-purple-l">自分の工程</Link>
-            <Link href="/briefs/playbooks" className="text-[12px] text-purple-l">進め方</Link>
+            <Link href="/briefs/mine" className="text-[12px] text-brand-2">自分の工程</Link>
+            <Link href="/briefs/playbooks" className="text-[12px] text-brand-2">進め方</Link>
           </div>
         </div>
 

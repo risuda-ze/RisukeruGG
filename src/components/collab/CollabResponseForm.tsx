@@ -18,7 +18,7 @@ function PcStepBadge({ step, label, description }: { step: number; label: string
       <div className="flex items-center gap-2 mb-1">
         <div
           className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
-          style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+          style={{ background: 'color-mix(in oklab, var(--primary) 35%, transparent)', color: 'var(--brand-2)' }}
         >
           {step}
         </div>
@@ -38,7 +38,7 @@ function MobileStepHeader({ step, label, description, active }: { step: number; 
           className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
           style={
             active
-              ? { background: 'var(--purple-d)', color: 'var(--purple-l)' }
+              ? { background: 'color-mix(in oklab, var(--primary) 35%, transparent)', color: 'var(--brand-2)' }
               : { background: 'var(--surface)', color: 'var(--text-muted)', border: '1px solid var(--border)' }
           }
         >
@@ -155,7 +155,7 @@ export default function CollabResponseForm({
       <div>
         <p className="text-base font-semibold text-text">{session.title}</p>
         {daysLeft > 0 ? (
-          <p className="text-[11px] text-amber-l mt-1">回答期限: あと{daysLeft}日</p>
+          <p className="text-[11px] text-orange-text mt-1">回答期限: あと{daysLeft}日</p>
         ) : (
           <p className="text-[11px] text-live mt-1">有効期限切れ</p>
         )}
@@ -184,13 +184,13 @@ export default function CollabResponseForm({
                 className="flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors text-[13px] font-semibold"
                 style={
                   respondentName === p.name
-                    ? { background: 'var(--purple-d)', borderColor: 'var(--purple)', color: 'var(--purple-l)' }
+                    ? { background: 'color-mix(in oklab, var(--primary) 35%, transparent)', borderColor: 'var(--primary)', color: 'var(--brand-2)' }
                     : { background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }
                 }
               >
                 <div
                   className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
-                  style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+                  style={{ background: 'color-mix(in oklab, var(--primary) 35%, transparent)', color: 'var(--brand-2)' }}
                 >
                   {p.name.slice(0, 2).toUpperCase()}
                 </div>
@@ -210,7 +210,7 @@ export default function CollabResponseForm({
           onChange={(e) => setRespondentName(e.target.value)}
           placeholder="例: 田中 太郎"
           maxLength={50}
-          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none"
+          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-text-muted focus:ring-1 focus:ring-primary focus:border-primary outline-none"
           aria-label="お名前"
         />
         {error && currentStep === 0 && (
@@ -226,7 +226,7 @@ export default function CollabResponseForm({
             setCurrentStep(1);
           }}
           className="flex items-center gap-1 px-4 py-2 rounded-[10px] text-[13px] font-semibold transition-colors"
-          style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+          style={{ background: 'color-mix(in oklab, var(--primary) 35%, transparent)', color: 'var(--brand-2)' }}
         >
           次へ <Icon name="chevron_right" size={16} />
         </button>
@@ -249,13 +249,13 @@ export default function CollabResponseForm({
                 className="flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors text-[13px] font-semibold"
                 style={
                   respondentName === p.name
-                    ? { background: 'var(--purple-d)', borderColor: 'var(--purple)', color: 'var(--purple-l)' }
+                    ? { background: 'color-mix(in oklab, var(--primary) 35%, transparent)', borderColor: 'var(--primary)', color: 'var(--brand-2)' }
                     : { background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }
                 }
               >
                 <div
                   className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
-                  style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+                  style={{ background: 'color-mix(in oklab, var(--primary) 35%, transparent)', color: 'var(--brand-2)' }}
                 >
                   {p.name.slice(0, 2).toUpperCase()}
                 </div>
@@ -275,7 +275,7 @@ export default function CollabResponseForm({
           onChange={(e) => setRespondentName(e.target.value)}
           placeholder="例: 田中 太郎"
           maxLength={50}
-          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none"
+          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-text-muted focus:ring-1 focus:ring-primary focus:border-primary outline-none"
           aria-label="お名前"
         />
         {error && (
@@ -306,8 +306,8 @@ export default function CollabResponseForm({
                   onClick={() => toggleDate(originalIndex, 'ok')}
                   className={`px-3 py-2 min-h-[40px] rounded-[6px] text-xs font-medium transition-colors ${
                     val === 'ok'
-                      ? 'bg-green/15 border border-green/40 text-green'
-                      : 'bg-bg border border-border text-text-muted hover:text-green hover:border-green/40'
+                      ? 'bg-success/15 border border-success/40 text-success'
+                      : 'bg-canvas border border-border text-text-muted hover:text-success hover:border-success/40'
                   }`}
                 >
                   ○ OK
@@ -318,7 +318,7 @@ export default function CollabResponseForm({
                   className={`px-3 py-2 min-h-[40px] rounded-[6px] text-xs font-medium transition-colors ${
                     val === 'ng'
                       ? 'bg-live/10 border border-live/30 text-live'
-                      : 'bg-bg border border-border text-text-muted hover:text-live hover:border-live/30'
+                      : 'bg-canvas border border-border text-text-muted hover:text-live hover:border-live/30'
                   }`}
                 >
                   × NG
@@ -328,8 +328,8 @@ export default function CollabResponseForm({
                   onClick={() => toggleDate(originalIndex, 'pending')}
                   className={`px-3 py-2 min-h-[40px] rounded-[6px] text-xs font-medium transition-colors ${
                     val === 'pending'
-                      ? 'bg-amber/15 border border-amber/40 text-amber-l'
-                      : 'bg-bg border border-border text-text-muted hover:text-amber-l hover:border-amber/40'
+                      ? 'bg-warning/15 border border-warning/40 text-orange-text'
+                      : 'bg-canvas border border-border text-text-muted hover:text-orange-text hover:border-warning/40'
                   }`}
                 >
                   ? 未定
@@ -361,7 +361,7 @@ export default function CollabResponseForm({
             type="datetime-local"
             value={alternativeDate}
             onChange={(e) => setAlternativeDate(e.target.value)}
-            className="w-full min-w-0 border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text focus:ring-1 focus:ring-purple focus:border-purple outline-none"
+            className="w-full min-w-0 border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text focus:ring-1 focus:ring-primary focus:border-primary outline-none"
           />
         </div>
       </div>
@@ -378,7 +378,7 @@ export default function CollabResponseForm({
           type="button"
           onClick={() => setCurrentStep(2)}
           className="flex items-center gap-1 px-4 py-2 rounded-[10px] text-[13px] font-semibold transition-colors"
-          style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}
+          style={{ background: 'color-mix(in oklab, var(--primary) 35%, transparent)', color: 'var(--brand-2)' }}
         >
           次へ <Icon name="chevron_right" size={16} />
         </button>
@@ -398,7 +398,7 @@ export default function CollabResponseForm({
           type="datetime-local"
           value={alternativeDate}
           onChange={(e) => setAlternativeDate(e.target.value)}
-          className="w-full min-w-0 border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text focus:ring-1 focus:ring-purple focus:border-purple outline-none"
+          className="w-full min-w-0 border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text focus:ring-1 focus:ring-primary focus:border-primary outline-none"
         />
       </div>
     </div>
@@ -413,7 +413,7 @@ export default function CollabResponseForm({
           onChange={(e) => setNote(e.target.value)}
           maxLength={200}
           rows={4}
-          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-text-muted focus:ring-1 focus:ring-purple focus:border-purple outline-none resize-none"
+          className="w-full border border-border rounded-[8px] px-3 py-2.5 text-sm bg-surface text-text placeholder:text-text-muted focus:ring-1 focus:ring-primary focus:border-primary outline-none resize-none"
           placeholder="コメントがあればどうぞ（任意）"
         />
         <p className="text-[10px] text-text-muted text-right font-num">{note.length}/200</p>
@@ -421,8 +421,8 @@ export default function CollabResponseForm({
 
       {/* 未選択確認ダイアログ */}
       {showConfirm && (
-        <div className="bg-amber/10 border border-amber/30 rounded-[10px] p-4">
-          <p className="text-sm text-amber-l mb-3">
+        <div className="bg-warning/10 border border-warning/30 rounded-[10px] p-4">
+          <p className="text-sm text-orange-text mb-3">
             {unselected.length}件の候補日程が未選択です。このまま送信しますか？
           </p>
           <div className="flex gap-2">
@@ -478,7 +478,7 @@ export default function CollabResponseForm({
         {/* Step 1 カード */}
         <div
           className="rounded-[14px] p-5 flex flex-col gap-0"
-          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+          style={{ background: 'var(--canvas)', border: '1px solid var(--border)' }}
         >
           <PcStepBadge
             step={1}
@@ -491,7 +491,7 @@ export default function CollabResponseForm({
         {/* Step 2 カード */}
         <div
           className="rounded-[14px] p-5 flex flex-col gap-0"
-          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+          style={{ background: 'var(--canvas)', border: '1px solid var(--border)' }}
         >
           <PcStepBadge
             step={2}
@@ -504,7 +504,7 @@ export default function CollabResponseForm({
         {/* Step 3 カード */}
         <div
           className="rounded-[14px] p-5 flex flex-col gap-0"
-          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}
+          style={{ background: 'var(--canvas)', border: '1px solid var(--border)' }}
         >
           <PcStepBadge
             step={3}
@@ -523,7 +523,7 @@ export default function CollabResponseForm({
             <div
               key={i}
               className="h-1 flex-1 rounded-full transition-colors"
-              style={{ background: i <= currentStep ? 'var(--purple)' : 'var(--border)' }}
+              style={{ background: i <= currentStep ? 'var(--primary)' : 'var(--border)' }}
             />
           ))}
         </div>

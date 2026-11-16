@@ -452,8 +452,7 @@ function CollabBoard({
       {canEdit && isMobile && (
         <button
           onClick={onStartNew}
-          className="fixed bottom-20 right-4 flex items-center gap-2 px-4 h-11 rounded-full shadow-lg font-semibold text-[13px] transition-opacity hover:opacity-90 z-10"
-          style={{ background: 'var(--purple-d)', color: 'var(--purple-l)', boxShadow: 'var(--glow-primary)' }}
+          className="fixed right-4 bottom-20 z-10 flex h-11 items-center gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-text-on-primary transition-colors duration-(--duration-instant) hover:bg-primary-hover active:bg-primary-active"
           aria-label="コラボ作成"
         >
           <Icon name="add" size={16} />

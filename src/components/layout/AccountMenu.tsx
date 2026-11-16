@@ -59,9 +59,8 @@ export function AccountMenu() {
           onClick={() => setOpen((v) => !v)}
           className="flex items-center gap-1.5 px-1.5 py-1 rounded-full border transition-colors"
           style={{
-            borderColor: open ? 'var(--primary)' : 'var(--card-border)',
+            borderColor: open ? 'var(--primary)' : 'var(--border)',
             background: 'var(--surface)',
-            boxShadow: open ? 'var(--glow-primary)' : 'none',
           }}
           aria-label="アカウントメニュー"
           aria-expanded={open}
@@ -69,15 +68,15 @@ export function AccountMenu() {
           <Avatar
             initials={initials}
             src={currentUser?.photoURL}
-            bgClass="bg-purple-d/30"
-            textClass="text-purple-l"
+            bgClass="bg-primary/10"
+            textClass="text-brand-2"
             size="sm"
           />
           <Icon
             name="expand_more"
             size={14}
             style={{
-              color: open ? 'var(--primary-300)' : 'var(--text-muted)',
+              color: open ? 'var(--brand-2)' : 'var(--text-muted)',
               transform: open ? 'rotate(180deg)' : '',
               transition: 'transform 150ms',
             } as React.CSSProperties}
@@ -89,9 +88,8 @@ export function AccountMenu() {
           <div
             className="absolute right-0 top-[calc(100%+8px)] z-[130] w-[220px] rounded-[12px] p-2 animate-pop-modal"
             style={{
-              background: 'var(--card-raised)',
-              border: '1px solid var(--border-light)',
-              boxShadow: 'var(--shadow-xl)',
+              background: 'var(--surface-2)',
+              border: '1px solid var(--border)',
             }}
           >
             {/* ユーザー名ヘッダー */}
@@ -102,13 +100,13 @@ export function AccountMenu() {
               <Avatar
                 initials={initials}
                 src={currentUser?.photoURL}
-                bgClass="bg-purple-d/30"
-                textClass="text-purple-l"
+                bgClass="bg-primary/10"
+                textClass="text-brand-2"
                 size="md"
               />
               <p
                 className="text-[13px] font-bold truncate"
-                style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-head)' }}
+                style={{ color: 'var(--text)' }}
               >
                 {currentUser?.displayName ?? 'ユーザー'}
               </p>
@@ -118,14 +116,14 @@ export function AccountMenu() {
             <button
               onClick={handleTeamChange}
               className="w-full flex items-center gap-2 px-2 py-2 rounded-[8px] text-[13px] transition-colors"
-              style={{ color: 'var(--text-secondary)' }}
+              style={{ color: 'var(--text-2)' }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.background = 'var(--card)';
-                (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
+                (e.currentTarget as HTMLElement).style.color = 'var(--text)';
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.background = '';
-                (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
+                (e.currentTarget as HTMLElement).style.color = 'var(--text-2)';
               }}
             >
               <Icon name="groups" size={16} />
@@ -136,14 +134,14 @@ export function AccountMenu() {
             <button
               onClick={handleProfile}
               className="w-full flex items-center gap-2 px-2 py-2 rounded-[8px] text-[13px] transition-colors"
-              style={{ color: 'var(--text-secondary)' }}
+              style={{ color: 'var(--text-2)' }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.background = 'var(--card)';
-                (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
+                (e.currentTarget as HTMLElement).style.color = 'var(--text)';
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.background = '';
-                (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
+                (e.currentTarget as HTMLElement).style.color = 'var(--text-2)';
               }}
             >
               <Icon name="manage_accounts" size={16} />
@@ -159,7 +157,7 @@ export function AccountMenu() {
               className="w-full flex items-center gap-2 px-2 py-2 rounded-[8px] text-[13px] transition-colors"
               style={{ color: 'var(--danger)' }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background = 'var(--danger-dim)';
+                (e.currentTarget as HTMLElement).style.background = 'var(--danger-tint)';
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.background = '';

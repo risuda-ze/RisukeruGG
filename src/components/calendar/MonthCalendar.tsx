@@ -180,7 +180,7 @@ function WeekRow({
               key={day.toISOString()}
               className={[
                 'border-r border-border last:border-r-0 relative overflow-hidden transition-colors',
-                !isCurrentMonth ? 'opacity-40 bg-bg' : '',
+                !isCurrentMonth ? 'opacity-40 bg-canvas' : '',
                 isCurrentDay ? 'bg-primary/5' : '',
                 onDateClick ? 'cursor-pointer' : '',
               ]
@@ -197,17 +197,16 @@ function WeekRow({
                 <span
                   className={[
                     'inline-flex items-center justify-center w-[22px] h-[22px] rounded-full text-[11px] font-medium',
-                    onDateLabelClick ? 'cursor-pointer hover:bg-purple-d/60' : 'cursor-default hover:bg-purple-d/40',
+                    onDateLabelClick ? 'cursor-pointer hover:bg-primary/20' : 'cursor-default hover:bg-primary/15',
                     'transition-colors',
                     isCurrentDay
-                      ? 'bg-purple text-white'
+                      ? 'bg-primary text-white'
                       : colIndex === 0
                         ? 'text-live hover:text-live'
                         : colIndex === 6
                           ? 'text-info hover:text-info'
-                          : 'text-text-muted hover:text-purple-l',
+                          : 'text-text-muted hover:text-brand-2',
                   ].join(' ')}
-                  style={isCurrentDay ? { boxShadow: 'var(--glow-primary)' } : undefined}
                   onMouseEnter={(e) => {
                     e.stopPropagation();
                     const rect = e.currentTarget.getBoundingClientRect();
@@ -247,7 +246,7 @@ function WeekRow({
                 {/* +N件：クリックで週表示に切り替え */}
                 {totalOverflow > 0 && (
                   <button
-                    className="text-[10px] text-text-muted px-1 py-0.5 font-semibold shrink-0 hover:text-purple-l transition-colors text-left"
+                    className="text-[10px] text-text-muted px-1 py-0.5 font-semibold shrink-0 hover:text-brand-2 transition-colors text-left"
                     onClick={(e) => { e.stopPropagation(); onDateLabelClick?.(day); }}
                   >
                     +{totalOverflow}件

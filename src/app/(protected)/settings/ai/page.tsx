@@ -168,7 +168,7 @@ export default function AiSettingsPage() {
           {presets.length === 0 && <p className="text-[12px] text-text-muted">まだ登録されていません</p>}
           <ul className="space-y-3">
             {presets.map((p, i) => (
-              <li key={p.id} className="rounded-[12px] border border-border p-3 space-y-2" style={{ background: 'var(--bg)' }}>
+              <li key={p.id} className="rounded-[12px] border border-border p-3 space-y-2" style={{ background: 'var(--canvas)' }}>
                 <div className="flex items-end gap-2">
                   <div className="flex-1">
                     <Input
@@ -209,7 +209,7 @@ export default function AiSettingsPage() {
         </Card>
 
         {message && (
-          <p className="text-[12px]" style={{ color: message.type === 'success' ? 'var(--green)' : 'var(--live)' }}>
+          <p className="text-[12px]" style={{ color: message.type === 'success' ? 'var(--success)' : 'var(--live)' }}>
             {message.text}
           </p>
         )}

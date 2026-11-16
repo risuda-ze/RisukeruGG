@@ -59,8 +59,8 @@ export default function TaskMobileBoard({
               className="flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-[12px] font-semibold whitespace-nowrap transition-colors"
               style={
                 isActive
-                  ? { background: 'var(--primary-950)', border: '1px solid var(--primary-700)', color: 'var(--text-accent)' }
-                  : { background: 'var(--surface)', border: '1px solid var(--card-border)', color: 'var(--text-secondary)' }
+                  ? { background: 'var(--surface-2)', border: '1px solid var(--primary-active)', color: 'var(--brand-2)' }
+                  : { background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)' }
               }
               aria-pressed={isActive}
             >
@@ -69,10 +69,9 @@ export default function TaskMobileBoard({
                 style={{ background: col.color }}
                 aria-hidden="true"
               />
-              <span style={{ fontFamily: 'var(--font-head)' }}>{col.name}</span>
+              <span>{col.name}</span>
               <span
                 className="font-bold font-num text-[11px] opacity-80"
-                style={{ fontFamily: 'var(--font-num)' }}
               >
                 {count}
               </span>
@@ -85,7 +84,7 @@ export default function TaskMobileBoard({
       {selectedColumn && (
         <div className="flex items-center gap-2 px-4 pb-2 shrink-0">
           <span className="w-1 h-4 rounded-full shrink-0" style={{ background: selectedColumn.color }} aria-hidden="true" />
-          <span className="font-semibold text-[15px] text-text" style={{ fontFamily: 'var(--font-head)' }}>
+          <span className="font-semibold text-[15px] text-text">
             {selectedColumn.name}
           </span>
           <span className="text-[12px] text-text-muted font-num">{columnTasks.length}件</span>
@@ -117,8 +116,7 @@ export default function TaskMobileBoard({
       {canEdit && (
         <button
           onClick={() => onAdd(selectedColumnId)}
-          className="fixed bottom-20 right-4 flex items-center gap-2 px-4 h-11 rounded-full shadow-lg font-semibold text-[13px] transition-opacity hover:opacity-90 z-10"
-          style={{ background: 'var(--purple-d)', color: 'var(--purple-l)', boxShadow: 'var(--glow-primary)' }}
+          className="fixed right-4 bottom-20 z-10 flex h-11 items-center gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-text-on-primary transition-colors duration-(--duration-instant) hover:bg-primary-hover active:bg-primary-active"
           aria-label="タスクを追加"
         >
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">

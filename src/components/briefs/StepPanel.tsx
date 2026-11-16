@@ -158,7 +158,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
         {/* 担当・締切 */}
         <div className="grid grid-cols-1 gap-3">
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+            <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>
               担当
             </span>
             <Dropdown
@@ -182,7 +182,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
             {step.dueDateOverridden && canEdit && (
               <button
                 type="button"
-                className="mt-1 text-[11px] text-purple-l hover:underline"
+                className="mt-1 text-[11px] text-brand-2 hover:underline"
                 onClick={() => run(() => briefOps.setStepDueDate(step.briefId, step.id, null))}
               >
                 固定を解除して自動計算に戻す
@@ -205,7 +205,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
               disabled={!canEdit}
             />
             {missing.length > 0 && (
-              <p className="text-[11px] text-amber-l">
+              <p className="text-[11px] text-orange-text">
                 未入力: {missing.map((f) => f.label).join('、')}
                 {missing.some((f) => f.ownerRoleLabel) &&
                   `（${[...new Set(missing.map((f) => f.ownerRoleLabel).filter(Boolean))].join('・')} が入力）`}
@@ -227,7 +227,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
           ) : (
             <ul className="space-y-2">
               {comments.map((c) => (
-                <li key={c.id} className="rounded-[10px] px-3 py-2" style={{ background: 'var(--bg)' }}>
+                <li key={c.id} className="rounded-[10px] px-3 py-2" style={{ background: 'var(--canvas)' }}>
                   <div className="flex items-center gap-2 text-[11px] text-text-muted">
                     <span className="font-medium text-text-2">{c.authorName}</span>
                     <span>{formatDateTime(c.createdAt)}</span>

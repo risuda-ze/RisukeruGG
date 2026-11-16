@@ -45,7 +45,7 @@ export function TaskControlBar({
           onClick={onClearCategories}
           className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
             activeCategoryIds.length === 0
-              ? 'bg-purple-d text-purple-l'
+              ? 'bg-primary/35 text-brand-2'
               : 'bg-surface border border-border text-text-muted hover:text-text'
           }`}
         >
@@ -59,7 +59,7 @@ export function TaskControlBar({
             onClick={() => onCategoryToggle(cat.id)}
             className={`shrink-0 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
               activeCategoryIds.includes(cat.id)
-                ? 'bg-purple-d text-purple-l'
+                ? 'bg-primary/35 text-brand-2'
                 : 'bg-surface border border-border text-text-muted hover:text-text'
             }`}
           >

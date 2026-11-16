@@ -109,14 +109,13 @@ export function MobileToolbar() {
                 <span
                   className="flex items-center justify-center w-[50px] h-[50px] rounded-[16px] -mt-5 text-white"
                   style={{
-                    background: 'linear-gradient(135deg, var(--primary-400), var(--primary-700))',
+                    background: 'linear-gradient(135deg, var(--primary-hover), var(--primary-active))',
                     border: '3px solid var(--surface)',
-                    boxShadow: 'var(--glow-primary)',
                   }}
                 >
                   <Icon name={item.icon} size={22} />
                 </span>
-                <span className="text-[10px] font-semibold" style={{ color: 'var(--text-accent)' }}>
+                <span className="text-[10px] font-semibold" style={{ color: 'var(--brand-2)' }}>
                   {item.label}
                 </span>
               </Link>
@@ -128,14 +127,14 @@ export function MobileToolbar() {
               key={item.key}
               href={item.href}
               className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-colors"
-              style={{ color: active ? 'var(--text-accent)' : 'var(--text-muted)' }}
+              style={{ color: active ? 'var(--brand-2)' : 'var(--text-muted)' }}
               aria-label={item.label}
             >
               {/* アクティブインジケーター */}
               {active && (
                 <span
                   className="absolute top-2 w-11 h-7 rounded-[14px] -z-10"
-                  style={{ background: 'var(--primary-950)' }}
+                  style={{ background: 'var(--surface-2)' }}
                 />
               )}
               <Icon name={item.icon} size={21} />

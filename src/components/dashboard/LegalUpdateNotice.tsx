@@ -61,18 +61,18 @@ export function LegalUpdateNotice() {
 
   return (
     <Card accent="primary" className="flex items-start gap-3" role="status">
-      <span className="mt-0.5 shrink-0 text-purple-l">
+      <span className="mt-0.5 shrink-0 text-brand-2">
         <Icon name="info" size={20} />
       </span>
       <div className="min-w-0 flex-1 text-sm">
         <p className="font-semibold text-text">利用規約・プライバシーポリシーを改定しました</p>
         <p className="mt-1 text-[12px] leading-relaxed text-text-muted">
           機密情報の入力禁止と、Discord連携で送信される情報の取り扱いを明記しました。
-          <Link href="/terms" className="ml-1 text-purple-l hover:underline">
+          <Link href="/terms" className="ml-1 text-brand-2 hover:underline">
             利用規約
           </Link>
           <span className="mx-1">/</span>
-          <Link href="/privacy-policy" className="text-purple-l hover:underline">
+          <Link href="/privacy-policy" className="text-brand-2 hover:underline">
             プライバシーポリシー
           </Link>
         </p>

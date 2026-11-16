@@ -19,30 +19,30 @@ const LAST_UPDATED = '2026年9月6日';
 export default function TermsPage() {
   return (
     /* ── 全画面ダークテーマ背景（プライバシーポリシーページと統一） ────── */
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-canvas">
       {/* ── ページヘッダー ───────────────────────────────── */}
       <header className="border-b border-border bg-surface">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           {/* ロゴ + アプリ名 */}
           <div className="flex items-center gap-3">
             <svg viewBox="0 0 56 56" fill="none" className="h-8 w-8 shrink-0">
-              <rect width="56" height="56" rx="14" fill="var(--purple-d)" />
+              <rect width="56" height="56" rx="14" fill="color-mix(in oklab, var(--primary) 35%, transparent)" />
               <path
                 d="M14 28c0-7.7 6.3-14 14-14s14 6.3 14 14-6.3 14-14 14-14-6.3-14-14Z"
-                fill="var(--purple)"
+                fill="var(--primary)"
                 opacity=".3"
               />
-              <rect x="22.5" y="20" width="3" height="10" rx="1.5" fill="var(--purple-l)" />
-              <rect x="19" y="24" width="10" height="3" rx="1.5" fill="var(--purple-l)" />
-              <circle cx="38" cy="23" r="2.5" fill="var(--amber)" />
-              <circle cx="33" cy="31" r="2.5" fill="var(--amber)" />
+              <rect x="22.5" y="20" width="3" height="10" rx="1.5" fill="var(--brand-2)" />
+              <rect x="19" y="24" width="10" height="3" rx="1.5" fill="var(--brand-2)" />
+              <circle cx="38" cy="23" r="2.5" fill="var(--warning)" />
+              <circle cx="33" cy="31" r="2.5" fill="var(--warning)" />
             </svg>
             <span className="text-text font-semibold">リスケるGG</span>
           </div>
           {/* ログインに戻るリンク */}
           <Link
             href="/login"
-            className="text-sm text-text-muted hover:text-purple-l transition-colors flex items-center gap-1"
+            className="text-sm text-text-muted hover:text-brand-2 transition-colors flex items-center gap-1"
           >
             <Icon name="chevron_right" size={16} className="rotate-180" />
             ログインに戻る
@@ -243,7 +243,7 @@ export default function TermsPage() {
           <p className="text-xs text-text-muted">
             © {new Date().getFullYear()} リスケるGG. All rights reserved.
           </p>
-          <Link href="/login" className="text-xs text-text-muted hover:text-purple-l transition-colors">
+          <Link href="/login" className="text-xs text-text-muted hover:text-brand-2 transition-colors">
             ← ログインに戻る
           </Link>
         </div>

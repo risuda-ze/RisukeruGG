@@ -36,13 +36,13 @@ export default function LoginPage() {
 
   return (
     /* ── 全画面ダークテーマ背景 ────────────────────────────── */
-    <div className="relative flex min-h-screen items-center justify-center bg-bg overflow-hidden">
+    <div className="relative flex min-h-screen items-center justify-center bg-canvas overflow-hidden">
       {/* グリッドオーバーレイ */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={{
           backgroundImage:
-            'linear-gradient(var(--purple-l) 1px, transparent 1px), linear-gradient(90deg, var(--purple-l) 1px, transparent 1px)',
+            'linear-gradient(var(--brand-2) 1px, transparent 1px), linear-gradient(90deg, var(--brand-2) 1px, transparent 1px)',
           backgroundSize: '40px 40px',
         }}
       />
@@ -63,16 +63,16 @@ export default function LoginPage() {
           <div className="flex flex-col items-center mb-8">
             <div className="mb-4">
               <svg viewBox="0 0 56 56" fill="none" className="h-14 w-14">
-                <rect width="56" height="56" rx="14" fill="var(--purple-d)" />
+                <rect width="56" height="56" rx="14" fill="color-mix(in oklab, var(--primary) 35%, transparent)" />
                 <path
                   d="M14 28c0-7.7 6.3-14 14-14s14 6.3 14 14-6.3 14-14 14-14-6.3-14-14Z"
-                  fill="var(--purple)"
+                  fill="var(--primary)"
                   opacity=".3"
                 />
-                <rect x="22.5" y="20" width="3" height="10" rx="1.5" fill="var(--purple-l)" />
-                <rect x="19" y="24" width="10" height="3" rx="1.5" fill="var(--purple-l)" />
-                <circle cx="38" cy="23" r="2.5" fill="var(--amber)" />
-                <circle cx="33" cy="31" r="2.5" fill="var(--amber)" />
+                <rect x="22.5" y="20" width="3" height="10" rx="1.5" fill="var(--brand-2)" />
+                <rect x="19" y="24" width="10" height="3" rx="1.5" fill="var(--brand-2)" />
+                <circle cx="38" cy="23" r="2.5" fill="var(--warning)" />
+                <circle cx="33" cy="31" r="2.5" fill="var(--warning)" />
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-text tracking-tight">リスケるGG</h1>

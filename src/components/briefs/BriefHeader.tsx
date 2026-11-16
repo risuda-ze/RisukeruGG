@@ -109,7 +109,7 @@ export function BriefHeader({ brief, steps, members }: BriefHeaderProps) {
         </div>
         {/* 出演者 */}
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>出演者</span>
+          <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>出演者</span>
           <div className="flex flex-wrap gap-2">
             {members.map((m) => {
               const on = brief.performerIds.includes(m.userId);

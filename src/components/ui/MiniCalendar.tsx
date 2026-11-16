@@ -242,18 +242,17 @@ export function MiniCalendar({ value, onChange, min, allDay = false }: MiniCalen
             <div
               style={{
                 marginTop: 6,
-                background: 'var(--primary-950)',
-                border: `1px solid ${readoutEditing ? 'var(--primary)' : 'var(--primary-800)'}`,
+                background: 'var(--surface-2)',
+                border: `1px solid ${readoutEditing ? 'var(--primary)' : 'var(--border)'}`,
                 borderRadius: 'var(--radius-md)',
                 padding: '8px 10px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 3,
-                boxShadow: readoutEditing ? 'var(--glow-primary)' : 'none',
                 transition: 'border-color 150ms, box-shadow 150ms',
               }}
             >
-              <span style={{ fontSize: '0.64rem', color: 'var(--text-muted)', fontFamily: 'var(--font-head)', fontWeight: 600, letterSpacing: '0.05em' }}>
+              <span style={{ fontSize: '0.64rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em' }}>
                 確定日時
               </span>
               <input
@@ -264,8 +263,7 @@ export function MiniCalendar({ value, onChange, min, allDay = false }: MiniCalen
                   border: 'none',
                   outline: 'none',
                   background: 'transparent',
-                  color: readoutText ? 'var(--text-primary)' : 'var(--text-muted)',
-                  fontFamily: 'var(--font-head)',
+                  color: readoutText ? 'var(--text)' : 'var(--text-muted)',
                   fontSize: '0.7rem',
                   fontWeight: 600,
                   width: '100%',
@@ -293,8 +291,7 @@ export function MiniCalendar({ value, onChange, min, allDay = false }: MiniCalen
             style={{
               flex: 1, minWidth: 0, border: 'none', outline: 'none',
               background: 'transparent',
-              color: readoutText ? 'var(--text-primary)' : 'var(--text-muted)',
-              fontFamily: 'var(--font-head)', fontSize: '0.82rem', fontWeight: 600,
+              color: readoutText ? 'var(--text)' : 'var(--text-muted)', fontSize: '0.82rem', fontWeight: 600,
               cursor: 'default',
             }}
           />

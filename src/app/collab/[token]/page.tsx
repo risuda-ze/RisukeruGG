@@ -59,16 +59,16 @@ export default function CollabPublicPage() {
 
   return (
     /* ── 全画面ダークテーマ ────────────────────────────────── */
-    <div className="min-h-screen bg-bg flex flex-col">
+    <div className="min-h-screen bg-canvas flex flex-col">
       {/* ロゴヘッダー */}
       <header className="h-[56px] border-b border-border bg-surface flex items-center px-6">
         <div className="flex items-center gap-2">
           <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7 shrink-0">
-            <rect width="32" height="32" rx="8" fill="var(--purple-d)" />
-            <rect x="13" y="12" width="2" height="6" rx="1" fill="var(--purple-l)" />
-            <rect x="11" y="14" width="6" height="2" rx="1" fill="var(--purple-l)" />
-            <circle cx="22" cy="14" r="1.2" fill="var(--amber)" />
-            <circle cx="19" cy="17" r="1.2" fill="var(--amber)" />
+            <rect width="32" height="32" rx="8" fill="color-mix(in oklab, var(--primary) 35%, transparent)" />
+            <rect x="13" y="12" width="2" height="6" rx="1" fill="var(--brand-2)" />
+            <rect x="11" y="14" width="6" height="2" rx="1" fill="var(--brand-2)" />
+            <circle cx="22" cy="14" r="1.2" fill="var(--warning)" />
+            <circle cx="19" cy="17" r="1.2" fill="var(--warning)" />
           </svg>
           <span className="text-sm font-bold text-text">リスケるGG</span>
         </div>
@@ -106,7 +106,7 @@ export default function CollabPublicPage() {
               <p className="text-3xl mb-3">✅</p>
               <h1 className="text-base font-semibold text-text mb-2">日程が確定しました</h1>
               {session.confirmedDate && (
-                <p className="text-sm text-purple-l font-num">
+                <p className="text-sm text-brand-2 font-num">
                   {format(session.confirmedDate, 'M月d日(E) HH:mm', { locale: ja })}
                 </p>
               )}

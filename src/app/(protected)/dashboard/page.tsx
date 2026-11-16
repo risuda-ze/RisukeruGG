@@ -114,7 +114,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center bg-bg">
+      <div className="flex flex-1 items-center justify-center bg-canvas">
         <Spinner size="lg" />
       </div>
     );
@@ -208,7 +208,7 @@ export default function DashboardPage() {
             <CardHeader
               title="タスクボード"
               action={
-                <Link href="/tasks" className="text-purple-l hover:text-purple transition-colors">
+                <Link href="/tasks" className="text-brand-2 hover:text-primary transition-colors">
                   すべて見る →
                 </Link>
               }
@@ -227,7 +227,7 @@ export default function DashboardPage() {
                 action={
                   <Link
                     href="/collabs"
-                    className="text-purple-l hover:text-purple transition-colors"
+                    className="text-brand-2 hover:text-primary transition-colors"
                   >
                     すべて見る →
                   </Link>
@@ -249,7 +249,7 @@ export default function DashboardPage() {
               <CardHeader
                 title="チームメンバー"
                 action={
-                  <Link href="/team" className="text-purple-l hover:text-purple transition-colors">
+                  <Link href="/team" className="text-brand-2 hover:text-primary transition-colors">
                     管理 →
                   </Link>
                 }
@@ -261,8 +261,8 @@ export default function DashboardPage() {
                       <Avatar
                         initials={m.displayName.slice(0, 2)}
                         src={m.avatarUrl}
-                        bgClass="bg-purple-d/30"
-                        textClass="text-purple-l"
+                        bgClass="bg-primary/10"
+                        textClass="text-brand-2"
                         size="sm"
                       />
                       <span className="text-[12px] text-text truncate flex-1">{m.displayName}</span>

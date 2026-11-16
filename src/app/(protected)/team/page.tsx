@@ -36,28 +36,28 @@ const ROLE_LABELS: Record<UserRole, string> = {
 /* ロール別バッジ色 */
 const ROLE_BADGE: Record<UserRole, { bg: string; text: string; border: string }> = {
   operator: {
-    bg: 'var(--purple-sm)',
-    text: 'var(--purple-l)',
-    border: 'var(--purple)',
+    bg: 'color-mix(in oklab, var(--primary) 15%, transparent)',
+    text: 'var(--brand-2)',
+    border: 'var(--primary)',
   },
   member: {
-    bg: 'var(--warning-dim)',
-    text: 'var(--amber-l)',
-    border: 'var(--amber)',
+    bg: 'var(--warning-tint)',
+    text: 'var(--orange-text)',
+    border: 'var(--warning)',
   },
   rom: {
     bg: 'color-mix(in oklab, var(--text-muted) 16%, transparent)',
-    text: 'var(--muted-l)',
-    border: 'var(--border-l)',
+    text: 'var(--text-2)',
+    border: 'var(--border)',
   },
 };
 
 /* アバター背景色 */
 const AVATAR_PALETTES = [
-  { bg: 'var(--purple-d)', text: 'var(--purple-l)' },
-  { bg: 'var(--success-dim)', text: 'var(--green)' },
-  { bg: 'var(--warning-dim)', text: 'var(--amber-l)' },
-  { bg: 'var(--purple-sm)', text: 'var(--purple-l)' },
+  { bg: 'color-mix(in oklab, var(--primary) 35%, transparent)', text: 'var(--brand-2)' },
+  { bg: 'var(--success-tint)', text: 'var(--success)' },
+  { bg: 'var(--warning-tint)', text: 'var(--orange-text)' },
+  { bg: 'color-mix(in oklab, var(--primary) 15%, transparent)', text: 'var(--brand-2)' },
 ];
 
 export default function TeamPage() {
@@ -251,7 +251,7 @@ export default function TeamPage() {
                   <div
                     key={member.userId}
                     className="bg-surface border rounded-[14px] p-4 flex items-center gap-4 transition-all"
-                    style={{ borderColor: isMe ? 'var(--purple)' : 'var(--border)' }}
+                    style={{ borderColor: isMe ? 'var(--primary)' : 'var(--border)' }}
                   >
                     {/* アバター */}
                     <div
@@ -271,7 +271,7 @@ export default function TeamPage() {
                       {(isMe || member.role === 'operator') && (
                         <span
                           className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-surface z-10"
-                          style={{ background: 'var(--green)' }}
+                          style={{ background: 'var(--success)' }}
                         />
                       )}
                     </div>
@@ -307,7 +307,7 @@ export default function TeamPage() {
                             type="button"
                             onClick={() => setDialog({ type: 'discord', member })}
                             aria-label={`${member.displayName} の Discord ユーザー名を編集`}
-                            className="shrink-0 px-1 rounded-[4px] hover:text-purple-l hover:bg-purple-d/30 transition-colors"
+                            className="shrink-0 px-1 rounded-[4px] hover:text-brand-2 hover:bg-primary/10 transition-colors"
                           >
                             <Icon name="edit" size={12} />
                           </button>
@@ -379,7 +379,7 @@ export default function TeamPage() {
               </div>
               <div>
                 <p className="text-[11px] text-text-muted mb-1">チームコード</p>
-                <p className="text-[18px] font-mono font-bold text-purple-l tracking-widest">
+                <p className="text-[18px] font-mono font-bold text-brand-2 tracking-widest">
                   {currentTeam.teamCode}
                 </p>
               </div>

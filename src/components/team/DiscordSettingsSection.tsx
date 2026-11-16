@@ -423,7 +423,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
               </div>
               <span
                 className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                style={{ background: 'var(--success-dim)', color: 'var(--green)' }}
+                style={{ background: 'var(--success-tint)', color: 'var(--success)' }}
               >
                 接続済み
               </span>
@@ -436,7 +436,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
                 <select
                   value={editChannelId}
                   onChange={(e) => setEditChannelId(e.target.value)}
-                  className="w-full bg-surface border border-border rounded-[8px] px-3 py-2 text-[13px] text-text focus:outline-none focus:border-purple"
+                  className="w-full bg-surface border border-border rounded-[8px] px-3 py-2 text-[13px] text-text focus:outline-none focus:border-primary"
                 >
                   {guildChannels.map((ch) => (
                     <option key={ch.id} value={ch.id}>
@@ -495,7 +495,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
               <select
                 value={selectedChannelId}
                 onChange={(e) => setSelectedChannelId(e.target.value)}
-                className="w-full bg-surface border border-border rounded-[8px] px-3 py-2 text-[13px] text-text focus:outline-none focus:border-purple"
+                className="w-full bg-surface border border-border rounded-[8px] px-3 py-2 text-[13px] text-text focus:outline-none focus:border-primary"
               >
                 {availableChannels.map((ch) => (
                   <option key={ch.id} value={ch.id}>
@@ -726,7 +726,7 @@ function ToggleRow({
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className="relative shrink-0 w-10 h-6 rounded-full transition-colors focus:outline-none p-0 overflow-hidden"
-        style={{ background: checked ? 'var(--purple)' : 'var(--border)' }}
+        style={{ background: checked ? 'var(--primary)' : 'var(--border)' }}
       >
         <span
           className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"

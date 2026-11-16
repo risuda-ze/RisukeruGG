@@ -148,7 +148,7 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
             const open = expanded === i;
             const assignee = members.find((m) => m.userId === s.defaultAssigneeId);
             return (
-              <li key={i} className="rounded-[12px] border border-border" style={{ background: 'var(--bg)' }}>
+              <li key={i} className="rounded-[12px] border border-border" style={{ background: 'var(--canvas)' }}>
                 <div className="flex items-center gap-2 px-3 py-2">
                   <span className="text-[11px] text-text-muted w-5 text-right tabular-nums">{i + 1}</span>
                   <input
@@ -175,7 +175,7 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
                   <div className="px-3 pb-3 space-y-3 border-t border-border pt-3">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="flex flex-col gap-1.5">
-                        <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>既定の担当</span>
+                        <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>既定の担当</span>
                         <Dropdown options={memberOptions} value={s.defaultAssigneeId ?? ''} onChange={(v) => updateStep(i, { defaultAssigneeId: v || null })} size="sm" />
                       </div>
                       <Input label="役割（例: 編集）" value={s.roleLabel ?? ''} onChange={(e) => updateStep(i, { roleLabel: e.target.value || null })} maxLength={20} />
@@ -190,7 +190,7 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
                     </div>
                     {/* 先行工程 */}
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>先行工程（終わってから着手）</span>
+                      <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>先行工程（終わってから着手）</span>
                       <div className="flex flex-wrap gap-2">
                         {steps.filter((_, idx) => idx !== i).map((other) => {
                           const on = s.dependsOn.includes(other.key);
@@ -212,7 +212,7 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
                     {/* 必要な情報 */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>この工程に必要な情報</span>
+                        <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>この工程に必要な情報</span>
                         <Button size="sm" variant="subtle" onClick={() => updateStep(i, { requiredFields: [...s.requiredFields, emptyField(s.requiredFields.length)] })}>
                           <Icon name="add" size={14} />
                           項目
@@ -222,7 +222,7 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
                         <div key={fi} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-end">
                           <Input label={fi === 0 ? '項目名' : ''} value={f.label} onChange={(e) => updateField(i, fi, { label: e.target.value })} placeholder="例: 素材の場所" maxLength={40} />
                           <div className="flex flex-col gap-1.5">
-                            {fi === 0 && <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>型</span>}
+                            {fi === 0 && <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>型</span>}
                             <Dropdown options={typeOptions} value={f.type} onChange={(v) => updateField(i, fi, { type: v as FieldType })} size="sm" />
                           </div>
                           <Input label={fi === 0 ? '入力する人' : ''} value={f.ownerRoleLabel ?? ''} onChange={(e) => updateField(i, fi, { ownerRoleLabel: e.target.value || null })} placeholder="役割" maxLength={20} className="w-24" />
@@ -259,7 +259,7 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
           <div key={fi} className="grid grid-cols-[1fr_auto_auto] gap-2 items-end">
             <Input label={fi === 0 ? '項目名' : ''} value={f.label} onChange={(e) => setHeaderFields((prev) => prev.map((x, idx) => (idx === fi ? { ...x, label: e.target.value } : x)))} maxLength={40} />
             <div className="flex flex-col gap-1.5">
-              {fi === 0 && <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>型</span>}
+              {fi === 0 && <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>型</span>}
               <Dropdown options={typeOptions} value={f.type} onChange={(v) => setHeaderFields((prev) => prev.map((x, idx) => (idx === fi ? { ...x, type: v as FieldType } : x)))} size="sm" />
             </div>
             <button type="button" onClick={() => setHeaderFields((prev) => prev.filter((_, idx) => idx !== fi))} aria-label="項目を削除" className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })}>

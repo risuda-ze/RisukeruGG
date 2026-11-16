@@ -41,7 +41,7 @@ export function FieldInputs({ defs, values, onChange, disabled }: FieldInputsPro
           case 'select':
             return (
               <div key={def.key} className="flex flex-col gap-1.5">
-                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>
                   {label}
                 </span>
                 <Dropdown

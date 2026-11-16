@@ -38,7 +38,7 @@ export function StepRow({ step, members, selected, onSelect, onComplete, canEdit
       className="grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_minmax(0,1fr)_140px_110px_auto] items-center gap-x-3 gap-y-1 px-3 py-2.5 rounded-[10px] cursor-pointer transition-colors border"
       style={{
         borderColor: selected ? 'var(--primary)' : 'transparent',
-        background: selected ? 'var(--purple-xs)' : 'transparent',
+        background: selected ? 'color-mix(in oklab, var(--primary) 8%, transparent)' : 'transparent',
         opacity: closed ? 0.6 : 1,
       }}
     >
@@ -55,7 +55,7 @@ export function StepRow({ step, members, selected, onSelect, onComplete, canEdit
         style={{
           borderColor: closed ? 'var(--success)' : actionable ? 'var(--primary)' : 'var(--border)',
           background: closed ? 'var(--success)' : 'transparent',
-          color: closed ? 'var(--bg)' : 'var(--primary)',
+          color: closed ? 'var(--canvas)' : 'var(--primary)',
         }}
       >
         {closed && <Icon name="check" size={14} />}

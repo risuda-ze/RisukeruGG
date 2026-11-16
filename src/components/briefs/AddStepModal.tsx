@@ -84,7 +84,7 @@ export function AddStepModal({ open, onClose, briefId, steps, members }: AddStep
         <Input label="工程名" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} autoFocus error={error ?? undefined} />
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>担当</span>
+            <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>担当</span>
             <Dropdown
               options={[{ value: '', label: '未定' }, ...members.map((m) => ({ value: m.userId, label: m.displayName }))]}
               value={assigneeId}
@@ -104,7 +104,7 @@ export function AddStepModal({ open, onClose, briefId, steps, members }: AddStep
         </div>
         {steps.length > 0 && (
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>先行工程（終わってから着手）</span>
+            <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>先行工程（終わってから着手）</span>
             <div className="flex flex-wrap gap-2">
               {steps.map((s) => {
                 const on = dependsOn.includes(s.key);

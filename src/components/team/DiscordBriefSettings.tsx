@@ -79,7 +79,7 @@ export function DiscordBriefSettings({ teamId, idToken, config, onSaved }: Disco
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={loadingChannels}
-      className="w-full bg-surface border border-border rounded-[8px] px-3 py-2 text-[13px] text-text focus:outline-none focus:border-purple"
+      className="w-full bg-surface border border-border rounded-[8px] px-3 py-2 text-[13px] text-text focus:outline-none focus:border-primary"
     >
       <option value="">通知チャンネルと同じ{config.channelName ? `（#${config.channelName}）` : ''}</option>
       {channels.map((ch) => (
@@ -115,7 +115,7 @@ export function DiscordBriefSettings({ teamId, idToken, config, onSaved }: Disco
           <select
             value={digestTime}
             onChange={(e) => setDigestTime(e.target.value)}
-            className="w-full bg-surface border border-border rounded-[8px] px-3 py-2 text-[13px] text-text focus:outline-none focus:border-purple"
+            className="w-full bg-surface border border-border rounded-[8px] px-3 py-2 text-[13px] text-text focus:outline-none focus:border-primary"
           >
             {HOURS.map((h) => (
               <option key={h} value={h}>
@@ -127,7 +127,7 @@ export function DiscordBriefSettings({ teamId, idToken, config, onSaved }: Disco
       </div>
 
       {message && (
-        <p className="text-[12px]" style={{ color: message.type === 'success' ? 'var(--green)' : 'var(--live)' }}>
+        <p className="text-[12px]" style={{ color: message.type === 'success' ? 'var(--success)' : 'var(--live)' }}>
           {message.text}
         </p>
       )}
@@ -148,7 +148,7 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className="relative shrink-0 w-10 h-6 rounded-full transition-colors focus:outline-none p-0 overflow-hidden"
-        style={{ background: checked ? 'var(--purple)' : 'var(--border)' }}
+        style={{ background: checked ? 'var(--primary)' : 'var(--border)' }}
       >
         <span
           className="absolute top-1 w-4 h-4 rounded-full bg-white transition-all"

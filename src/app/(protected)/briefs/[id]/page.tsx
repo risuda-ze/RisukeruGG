@@ -154,7 +154,7 @@ export default function BriefDetailPage() {
         <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 max-w-lg">
           <Card>
             <p className="text-sm text-text-muted">ブリーフが見つかりません。</p>
-            <Link href="/briefs" className="text-[12px] text-purple-l hover:underline">一覧に戻る</Link>
+            <Link href="/briefs" className="text-[12px] text-brand-2 hover:underline">一覧に戻る</Link>
           </Card>
         </div>
       </div>

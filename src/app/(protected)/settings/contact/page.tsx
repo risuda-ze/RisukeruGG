@@ -89,7 +89,7 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-bg">
+    <div className="flex flex-col min-h-screen bg-canvas">
       <TopBar title="お問い合わせ" />
 
       <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 max-w-3xl">
@@ -97,7 +97,7 @@ export default function ContactPage() {
         {formState === 'success' ? (
           <Card>
             <div className="text-center py-8">
-              <div className="mb-4 flex justify-center" style={{ color: 'var(--green)' }}>
+              <div className="mb-4 flex justify-center" style={{ color: 'var(--success)' }}>
                 <Icon name="check" size={48} />
               </div>
               <h2 className="text-lg font-semibold text-text mb-2">送信しました</h2>
@@ -132,8 +132,8 @@ export default function ContactPage() {
                     key={option.value}
                     className={`flex items-center gap-3 p-3 rounded-[10px] border cursor-pointer transition-colors ${
                       type === option.value
-                        ? 'border-purple bg-purple/8'
-                        : 'border-border hover:border-purple/40 hover:bg-purple/4'
+                        ? 'border-primary bg-primary/8'
+                        : 'border-border hover:border-primary/40 hover:bg-primary/4'
                     }`}
                   >
                     <input
@@ -147,14 +147,14 @@ export default function ContactPage() {
                     <span
                       className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
                         type === option.value
-                          ? 'border-purple'
+                          ? 'border-primary'
                           : 'border-border'
                       }`}
                     >
                       {type === option.value && (
                         <span
                           className="w-2 h-2 rounded-full"
-                          style={{ background: 'var(--purple)' }}
+                          style={{ background: 'var(--primary)' }}
                         />
                       )}
                     </span>
@@ -187,7 +187,7 @@ export default function ContactPage() {
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="お問い合わせの件名を入力してください"
-                  className={`w-full rounded-[10px] border px-3 py-2.5 text-sm text-text bg-bg placeholder:text-text-muted/50 outline-none transition-colors focus:border-purple ${
+                  className={`w-full rounded-[10px] border px-3 py-2.5 text-sm text-text bg-canvas placeholder:text-text-muted/50 outline-none transition-colors focus:border-primary ${
                     subjectError ? 'border-live' : 'border-border'
                   }`}
                   disabled={formState === 'submitting'}
@@ -218,7 +218,7 @@ export default function ContactPage() {
                   onChange={(e) => setBody(e.target.value)}
                   placeholder="お問い合わせの内容を詳しくご記入ください"
                   rows={8}
-                  className={`w-full rounded-[10px] border px-3 py-2.5 text-sm text-text bg-bg placeholder:text-text-muted/50 outline-none transition-colors focus:border-purple resize-y min-h-[120px] ${
+                  className={`w-full rounded-[10px] border px-3 py-2.5 text-sm text-text bg-canvas placeholder:text-text-muted/50 outline-none transition-colors focus:border-primary resize-y min-h-[120px] ${
                     bodyError ? 'border-live' : 'border-border'
                   }`}
                   disabled={formState === 'submitting'}
