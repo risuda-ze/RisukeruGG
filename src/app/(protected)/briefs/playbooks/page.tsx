@@ -7,7 +7,7 @@ import { useBriefsStore } from '@/stores/briefs';
 import { useBriefOps } from '@/hooks/useBriefOps';
 import { createPlaybook, deletePlaybook, updatePlaybook } from '@/lib/repositories/playbooks';
 import { TopBar } from '@/components/layout/TopBar';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
@@ -57,7 +57,7 @@ export default function PlaybooksPage() {
     <div className="flex flex-col flex-1 overflow-hidden">
       <TopBar title="進め方" subtitle="チームの工程の型。新しいブリーフはここから工程が埋まります">
         <div className="flex items-center gap-2">
-          <Link href="/briefs" className="btn btn--secondary btn--sm">
+          <Link href="/briefs" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
             <Icon name="arrow_back" size={14} />
             ブリーフ一覧
           </Link>
@@ -126,7 +126,7 @@ export default function PlaybooksPage() {
                         <Button size="sm" variant="secondary" onClick={() => setEditor({ mode: 'edit', playbook: p })}>
                           編集
                         </Button>
-                        <button type="button" onClick={() => handleDelete(p)} aria-label="削除" className="btn btn--ghost btn--icon btn--sm">
+                        <button type="button" onClick={() => handleDelete(p)} aria-label="削除" className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })}>
                           <Icon name="delete_outline" size={16} />
                         </button>
                       </div>

@@ -6,15 +6,16 @@ import { useAuthStore } from '@/stores/auth';
 import { useBriefsStore, selectStepsOfBrief } from '@/stores/briefs';
 import { useBriefOps } from '@/hooks/useBriefOps';
 import { TopBar } from '@/components/layout/TopBar';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { BriefsLoadError } from '@/components/briefs/BriefsLoadError';
 import { Icon } from '@/components/ui/Icon';
-import { Badge } from '@/components/ui/Badge';
+import { Badge, badgeVariants } from '@/components/ui/Badge';
 import { BriefCard } from '@/components/briefs/BriefCard';
 import { NewBriefModal } from '@/components/briefs/NewBriefModal';
 import type { Brief } from '@/types/briefs';
+import { cn } from '@/lib/utils';
 
 type Filter = 'active' | 'mine' | 'all';
 
@@ -74,11 +75,11 @@ export default function BriefsPage() {
     <div className="flex flex-col flex-1 overflow-hidden">
       <TopBar title="タスク管理 v2" subtitle="動画1本を1枚紙で回す（β）">
         <div className="flex items-center gap-2">
-          <Link href="/briefs/mine" className="btn btn--secondary btn--sm hidden sm:inline-flex">
+          <Link href="/briefs/mine" className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }), 'hidden sm:inline-flex')}>
             <Icon name="task_alt" size={14} />
             自分の工程
           </Link>
-          <Link href="/briefs/playbooks" className="btn btn--secondary btn--sm hidden sm:inline-flex">
+          <Link href="/briefs/playbooks" className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }), 'hidden sm:inline-flex')}>
             <Icon name="settings" size={14} />
             進め方
           </Link>
@@ -105,7 +106,7 @@ export default function BriefsPage() {
               key={key}
               type="button"
               onClick={() => setFilter(key)}
-              className={`ds-badge ${filter === key ? 'ds-badge--primary' : 'ds-badge--neutral'} cursor-pointer`}
+              className={cn(badgeVariants({ variant: filter === key ? 'primary' : 'neutral' }), 'cursor-pointer')}
               aria-pressed={filter === key}
             >
               {label}
@@ -138,7 +139,7 @@ export default function BriefsPage() {
                   新しいブリーフ
                 </Button>
                 {playbooks.length === 0 && (
-                  <Link href="/briefs/playbooks" className="btn btn--secondary btn--sm">
+                  <Link href="/briefs/playbooks" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
                     進め方を作る
                   </Link>
                 )}

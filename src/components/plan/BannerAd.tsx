@@ -7,8 +7,7 @@
  * 第一弾は PARTY プランへのアップグレード訴求（広告なし・無制限）。
  * PARTY プラン相当（試用モード中を含む）は非表示。
  *
- * 枠の高さは固定し CLS を発生させない。デザインは globals.css の
- * デザイントークン・コンポーネントクラスに準拠する。
+ * 枠の高さは固定し CLS を発生させない。デザインは docs/DESIGN.md のトークンに準拠する。
  */
 
 import Link from 'next/link';
@@ -16,6 +15,8 @@ import { Icon } from '@/components/ui/Icon';
 import { trackEvent } from '@/lib/analytics';
 import { isPartyPlan } from '@/lib/plan';
 import type { PlanType } from '@/types/entities';
+import { badgeVariants } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils';
 
 interface BannerAdProps {
   plan: PlanType;
@@ -30,11 +31,11 @@ export function BannerAd({ plan }: BannerAdProps) {
       href="/settings/profile"
       onClick={() => trackEvent('upgrade_cta_click', { source: 'banner_ad' })}
       aria-label="PARTYプランのお知らせ: 広告なし・無制限で使えます"
-      className="ds-card ds-card--hover flex h-16 w-full items-center gap-3 px-4 no-underline"
+      className="flex h-16 w-full items-center gap-3 rounded-lg border border-border bg-card px-4 no-underline transition-colors duration-(--duration-fast) ease-out hover:border-border-strong"
     >
       <span
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-        style={{ background: 'var(--primary-950)', color: 'var(--primary-300)' }}
+        style={{ background: 'var(--surface-2)', color: 'var(--brand-2)' }}
       >
         <Icon name="auto_awesome" size={20} />
       </span>
@@ -47,7 +48,7 @@ export function BannerAd({ plan }: BannerAdProps) {
         </span>
       </span>
       <span
-        className="ds-badge ds-badge--primary shrink-0 max-[400px]:hidden"
+        className={cn(badgeVariants({ variant: 'primary' }), 'shrink-0 max-[400px]:hidden')}
         aria-hidden="true"
       >
         詳しく見る

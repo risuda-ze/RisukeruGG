@@ -14,6 +14,8 @@ import { planDueDateRecalc } from '@/lib/briefs/deadlines';
 import { formatShortDate, fromDateInputValue, toDateInputValue } from '@/lib/briefs/format';
 import { BRIEF_STATUS_LABELS, type Brief, type BriefStatus, type Step } from '@/types/briefs';
 import type { TeamMember } from '@/types/entities';
+import { badgeVariants } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils';
 
 interface BriefHeaderProps {
   brief: Brief;
@@ -117,7 +119,7 @@ export function BriefHeader({ brief, steps, members }: BriefHeaderProps) {
                   type="button"
                   disabled={!canEdit || busy}
                   onClick={() => togglePerformer(m.userId)}
-                  className={`ds-badge ${on ? 'ds-badge--primary' : 'ds-badge--neutral'} ${canEdit ? 'cursor-pointer' : ''}`}
+                  className={cn(badgeVariants({ variant: on ? 'primary' : 'neutral' }), `${canEdit ? 'cursor-pointer' : ''}`)}
                   aria-pressed={on}
                 >
                   {m.displayName}

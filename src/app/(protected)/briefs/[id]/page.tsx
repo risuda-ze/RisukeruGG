@@ -11,7 +11,7 @@ import { subscribeBriefEvents } from '@/lib/repositories/briefs';
 import { deriveHeaderFieldsFromBrief, derivePlaybookStepsFromBrief } from '@/lib/briefs/generate';
 import { formatDateTime, formatShortDate } from '@/lib/briefs/format';
 import { TopBar } from '@/components/layout/TopBar';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { BriefsLoadError } from '@/components/briefs/BriefsLoadError';
@@ -165,7 +165,7 @@ export default function BriefDetailPage() {
     <div className="flex flex-col flex-1 overflow-hidden">
       <TopBar title={brief.title} subtitle={`公開 ${formatShortDate(brief.publishAt)}`}>
         <div className="flex items-center gap-2">
-          <Link href="/briefs" className="btn btn--secondary btn--sm">
+          <Link href="/briefs" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
             <Icon name="arrow_back" size={14} />
             一覧
           </Link>

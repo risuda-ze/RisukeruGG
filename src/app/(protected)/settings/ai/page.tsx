@@ -10,7 +10,7 @@ import { TEAM_INSTRUCTIONS_MAX } from '@/lib/ai/systemPrompt';
 import { TopBar } from '@/components/layout/TopBar';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Icon } from '@/components/ui/Icon';
@@ -188,7 +188,7 @@ export default function AiSettingsPage() {
                         setDirty(true);
                       }}
                       aria-label="定型指示を削除"
-                      className="btn btn--ghost btn--icon btn--sm"
+                      className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })}
                     >
                       <Icon name="delete_outline" size={16} />
                     </button>

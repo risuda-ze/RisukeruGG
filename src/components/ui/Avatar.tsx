@@ -26,15 +26,15 @@ const sizeClasses: Record<AvatarSize, { wrap: string; text: string }> = {
 export function Avatar({
   initials,
   src,
-  bgClass = 'bg-purple-d/30',
-  textClass = 'text-purple-l',
+  bgClass = 'bg-surface-2',
+  textClass = 'text-text',
   size = 'md',
   online,
 }: AvatarProps) {
   const { wrap, text } = sizeClasses[size];
   return (
     <div
-      className={`ds-avatar relative inline-flex items-center justify-center rounded-full shrink-0 overflow-hidden ${wrap} ${bgClass}`}
+      className={`relative inline-flex shrink-0 items-center justify-center rounded-full border-2 border-border ${wrap} ${bgClass}`}
     >
       {src ? (
         /* eslint-disable-next-line @next/next/no-img-element */
@@ -46,7 +46,7 @@ export function Avatar({
       )}
       {online && (
         <span
-          className="absolute bottom-0 right-0 w-[9px] h-[9px] rounded-full bg-green border-2 border-surface z-10"
+          className="absolute bottom-0 right-0 w-[9px] h-[9px] rounded-full bg-success border-2 border-card z-10"
           aria-label="オンライン"
         />
       )}

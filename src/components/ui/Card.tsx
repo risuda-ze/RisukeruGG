@@ -1,27 +1,54 @@
 import { HTMLAttributes, ReactNode } from 'react';
+import { cva } from 'class-variance-authority';
+import { cn } from '@/lib/utils';
 
 /** アクセントレール（左3px）の色バリアント */
 export type CardAccent = 'primary' | 'success' | 'warning' | 'danger';
 
-const ACCENT_VAR: Record<CardAccent, string> = {
-  primary: 'var(--primary)',
-  success: 'var(--success)',
-  warning: 'var(--warning)',
-  danger: 'var(--danger)',
+/** カラーファミリー（docs/DESIGN.md 1.1）。specimen カードの面と枡線を決める */
+export type ColorFamily = 'pink' | 'orange' | 'green' | 'blue' | 'teal';
+
+const ACCENT_CLASS: Record<CardAccent, string> = {
+  primary: 'border-l-primary',
+  success: 'border-l-success',
+  warning: 'border-l-warning',
+  danger: 'border-l-danger',
 };
+
+/** specimen: ファミリーの tint 面 + 2px 同ファミリー枡線 */
+export const FAMILY_CLASS: Record<ColorFamily, string> = {
+  pink: 'bg-pink-tint border-pink-border',
+  orange: 'bg-orange-tint border-orange-border',
+  green: 'bg-green-tint border-green-border',
+  blue: 'bg-blue-tint border-blue-border',
+  teal: 'bg-teal-tint border-teal-border',
+};
+
+// 影は使わない。hover は枡線の色だけ変える（浮かせない）
+const cardVariants = cva('overflow-hidden rounded-lg transition-colors duration-(--duration-fast) ease-out', {
+  variants: {
+    variant: {
+      default: 'border border-border bg-card',
+      specimen: 'border-2',
+      flat: 'bg-surface',
+    },
+    interactive: { true: 'cursor-pointer hover:border-border-strong' },
+    padded: { true: 'p-4 md:p-6' },
+  },
+  defaultVariants: { variant: 'default' },
+});
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
-  className?: string;
-  /** 標準 padding(16px) を無効化 */
+  /** default: 一般カード / specimen: カテゴリ付き・統計・強調 / flat: セクション背景 */
+  variant?: 'default' | 'specimen' | 'flat';
+  /** specimen の配色（既定 blue） */
+  family?: ColorFamily;
+  /** 標準 padding（16px、md 以上 24px）を無効化 */
   noPadding?: boolean;
-  /** ホバーでリフト＋グロー */
-  hover?: boolean;
-  /** raised バリアント */
-  raised?: boolean;
   /** 左3pxのステータスレール */
   accent?: CardAccent;
-  /** クリック可能カード。ホバーでborder強調＋カーソル */
+  /** クリック可能カード。ホバーで枡線強調＋カーソル */
   interactive?: boolean;
 }
 
@@ -32,39 +59,25 @@ export interface CardHeaderProps {
 
 export function Card({
   children,
-  className = '',
+  className,
+  variant = 'default',
+  family = 'blue',
   noPadding = false,
-  hover = false,
-  raised = false,
   accent,
   interactive = false,
-  style,
   ...rest
 }: CardProps) {
-  const cls = [
-    'ds-card',
-    raised ? 'ds-card--raised' : '',
-    hover ? 'ds-card--hover' : '',
-    interactive ? 'ds-card--interactive' : '',
-    // 標準 padding は 16px（4pxグリッド整合）
-    noPadding ? '' : 'p-4',
-    'overflow-hidden',
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
-
-  // アクセントレールは外枠 border の左辺を上書きして表現する
-  const accentStyle = accent
-    ? {
-        borderLeftWidth: '3px',
-        borderLeftStyle: 'solid' as const,
-        borderLeftColor: ACCENT_VAR[accent],
-      }
-    : undefined;
-
   return (
-    <div className={cls} style={{ ...accentStyle, ...style }} {...rest}>
+    <div
+      data-slot="card"
+      className={cn(
+        cardVariants({ variant, interactive, padded: !noPadding }),
+        variant === 'specimen' && FAMILY_CLASS[family],
+        accent && ['border-l-[3px]', ACCENT_CLASS[accent]],
+        className
+      )}
+      {...rest}
+    >
       {children}
     </div>
   );
@@ -72,9 +85,9 @@ export function Card({
 
 export function CardHeader({ title, action }: CardHeaderProps) {
   return (
-    <div className="flex items-center justify-between px-[18px] py-[14px]" style={{ borderBottom: '1px solid var(--card-border)' }}>
-      <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-head)' }}>{title}</h3>
-      {action && <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{action}</div>}
+    <div className="flex items-center justify-between border-b border-border px-[18px] py-[14px]">
+      <h3 className="text-sm font-semibold tracking-normal text-text">{title}</h3>
+      {action && <div className="text-xs text-text-muted">{action}</div>}
     </div>
   );
 }

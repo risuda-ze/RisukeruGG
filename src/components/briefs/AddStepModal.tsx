@@ -9,6 +9,8 @@ import { useBriefOps } from '@/hooks/useBriefOps';
 import { addStepInputSchema } from '@/lib/validations/briefs';
 import type { Step } from '@/types/briefs';
 import type { TeamMember } from '@/types/entities';
+import { badgeVariants } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils';
 
 interface AddStepModalProps {
   open: boolean;
@@ -111,7 +113,7 @@ export function AddStepModal({ open, onClose, briefId, steps, members }: AddStep
                     key={s.id}
                     type="button"
                     onClick={() => toggleDep(s.key)}
-                    className={`ds-badge ${on ? 'ds-badge--primary' : 'ds-badge--neutral'} cursor-pointer`}
+                    className={cn(badgeVariants({ variant: on ? 'primary' : 'neutral' }), 'cursor-pointer')}
                     aria-pressed={on}
                   >
                     {s.title}

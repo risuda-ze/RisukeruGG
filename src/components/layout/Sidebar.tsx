@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation';
 import { useSidebarStore } from '@/stores/sidebar';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { TeamSwitcher } from '@/components/layout/TeamSwitcher';
+import { badgeVariants } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils';
 
 /* ── ナビゲーション定義 ─────────────────────────────────────── */
 interface NavItem {
@@ -167,11 +169,18 @@ export function Sidebar() {
                             <span className="whitespace-nowrap">{item.label}</span>
                           </span>
                         ) : (
-                          <Link href={item.href} className={`navlink${active ? ' navlink--active' : ''}`}>
+                          <Link
+                            href={item.href}
+                            aria-current={active ? 'page' : undefined}
+                            className={cn(
+                              'flex items-center gap-3 rounded-sm px-3.5 py-2.5 text-[0.9375rem] no-underline transition-colors duration-(--duration-fast) ease-out',
+                              active ? 'bg-card font-semibold text-text' : 'font-medium text-text-2 hover:bg-surface-2 hover:text-text'
+                            )}
+                          >
                             <Icon name={item.icon} size={18} />
                             <span className="flex-1 whitespace-nowrap">{item.label}</span>
                             {item.badge && (
-                              <span className="ds-badge ds-badge--info text-[10px] px-1.5 py-0" aria-label={item.badge}>
+                              <span className={cn(badgeVariants({ variant: 'info' }), 'text-[10px] px-1.5 py-0')} aria-label={item.badge}>
                                 {item.badge}
                               </span>
                             )}
@@ -199,12 +208,11 @@ export function Sidebar() {
                         ) : (
                           <Link
                             href={item.href}
-                            className="flex justify-center py-2 rounded-[6px] transition-colors"
-                            style={{
-                              background: active ? 'var(--primary)' : undefined,
-                              color: active ? '#fff' : 'var(--text-muted)',
-                              boxShadow: active ? 'var(--glow-primary)' : undefined,
-                            }}
+                            aria-current={active ? 'page' : undefined}
+                            className={cn(
+                              'flex justify-center rounded-sm py-2 transition-colors duration-(--duration-fast) ease-out',
+                              active ? 'bg-card text-text' : 'text-text-muted hover:bg-surface-2 hover:text-text'
+                            )}
                             aria-label={item.label}
                           >
                             <Icon name={item.icon} size={18} />

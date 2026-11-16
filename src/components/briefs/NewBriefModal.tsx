@@ -13,6 +13,8 @@ import { fromDateInputValue } from '@/lib/briefs/format';
 import { trackEvent } from '@/lib/analytics';
 import type { Playbook } from '@/types/briefs';
 import type { TeamMember } from '@/types/entities';
+import { badgeVariants } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils';
 
 interface NewBriefModalProps {
   open: boolean;
@@ -130,7 +132,7 @@ export function NewBriefModal({ open, onClose, playbooks, members }: NewBriefMod
                   key={m.userId}
                   type="button"
                   onClick={() => togglePerformer(m.userId)}
-                  className={`ds-badge ${on ? 'ds-badge--primary' : 'ds-badge--neutral'} cursor-pointer`}
+                  className={cn(badgeVariants({ variant: on ? 'primary' : 'neutral' }), 'cursor-pointer')}
                   aria-pressed={on}
                 >
                   {m.displayName}

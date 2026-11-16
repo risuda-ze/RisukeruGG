@@ -323,14 +323,6 @@
 @keyframes slide-in-left { from{transform:translateX(-16px);opacity:0} to{transform:translateX(0);opacity:1} }
 @keyframes pop           { 0%{transform:scale(0.85);opacity:0} 70%{transform:scale(1.08);opacity:1} 100%{transform:scale(1);opacity:1} }
 @keyframes scan          { from{background-position:-200% center} to{background-position:200% center} }
-@keyframes bar-grow      { from{ width:0 } }
-@keyframes hop {
-  0%   { transform: translateY(0); }
-  35%  { transform: translateY(-7px); }
-  60%  { transform: translateY(-1px); }
-  80%  { transform: translateY(-3px); }
-  100% { transform: translateY(0); }
-}
 
 /* opacity に依存しない scale アニメーション（バックグラウンドタブでのフリーズ防止） */
 @keyframes pop-scale {
@@ -424,186 +416,6 @@
   display: none;
 }
 
-/* ============================================================
-   デザインシステム コンポーネントクラス
-   ============================================================ */
-
-/* ── Button ─────────────────────────────────────────────────── */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  font-family: var(--font-head); font-weight: 600; font-size: 0.95rem; line-height: 1;
-  padding: 11px 24px; border-radius: var(--radius-md);
-  border: 1px solid transparent; cursor: pointer; white-space: nowrap;
-  min-height: 44px;
-  transition:
-    background var(--duration-instant) var(--ease-snap),
-    box-shadow var(--duration-instant) var(--ease-snap),
-    transform var(--duration-fast) var(--ease-snap),
-    border-color var(--duration-instant) var(--ease-snap),
-    color var(--duration-instant) var(--ease-snap);
-  -webkit-tap-highlight-color: transparent;
-  text-decoration: none;
-}
-.btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; box-shadow: var(--glow-primary); }
-.btn:hover { transform: translateY(-2px); }
-.btn:active { transform: scale(0.96) translateY(0); }
-.btn:disabled, .btn[disabled], .btn.is-disabled { opacity: 0.35; pointer-events: none; }
-
-.btn--primary { background: var(--primary); color: var(--text-on-primary); }
-.btn--primary:hover { background: var(--primary-hover); color: #fff; box-shadow: var(--glow-primary); }
-.btn--primary:active { background: var(--primary-active); }
-
-.btn--ghost { background: transparent; border-color: var(--primary); color: var(--primary-300); }
-.btn--ghost:hover { background: var(--surface); border-color: var(--primary-hover); color: var(--text); box-shadow: var(--glow-primary); }
-.btn--ghost:active { background: var(--surface-2); }
-
-.btn--danger { background: var(--danger); color: #fff; }
-.btn--danger:hover { background: #f3637e; box-shadow: var(--glow-danger); }
-.btn--danger:active { background: #d8425f; }
-
-.btn--success { background: var(--success); color: #062417; }
-.btn--success:hover { box-shadow: var(--glow-success); filter: brightness(1.06); }
-
-.btn--subtle { background: var(--card-raised); border-color: var(--border-light); color: var(--text-secondary); }
-.btn--subtle:hover { color: var(--text); border-color: var(--primary-hover); background: var(--surface); }
-
-.btn--secondary { background: var(--surface); border-color: var(--border-light); color: var(--text-secondary); }
-.btn--secondary:hover { background: var(--card-raised); border-color: var(--card-border); color: var(--text-primary); }
-
-.btn--amber { background: var(--amber); color: #fff; }
-.btn--amber:hover { filter: brightness(1.1); box-shadow: var(--glow-warning); }
-
-.btn--sm { padding: 7px 16px; font-size: 0.82rem; min-height: 36px; border-radius: var(--radius-sm); }
-.btn--lg { padding: 15px 34px; font-size: 1.1rem; min-height: 52px; }
-.btn--icon { padding: 0; width: 44px; height: 44px; min-height: 0; }
-.btn--icon.btn--sm { width: 36px; height: 36px; }
-
-/* ── Card ───────────────────────────────────────────────────── */
-.ds-card {
-  background: var(--card); border: 1px solid var(--card-border);
-  border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
-  transition:
-    border-color var(--duration-fast) var(--ease-out),
-    transform var(--duration-fast) var(--ease-out),
-    box-shadow var(--duration-fast) var(--ease-out);
-}
-.ds-card--raised { background: var(--card-raised); border-color: var(--card-border-raised); }
-.ds-card--hover:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-lg), var(--glow-primary); }
-/* クリック可能カード（accent の左レール色は inline style が優先されるため hover でも保持される） */
-.ds-card--interactive { cursor: pointer; }
-.ds-card--interactive:hover { border-color: var(--primary); box-shadow: var(--shadow-md), var(--glow-primary); }
-
-/* ── Badge ──────────────────────────────────────────────────── */
-.ds-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  border-radius: var(--radius-full); padding: 3px 10px;
-  font-family: var(--font-head); font-weight: 600; font-size: 0.7rem;
-  letter-spacing: 0.04em; line-height: 1.3; white-space: nowrap;
-  will-change: transform;
-}
-.ds-badge:hover { animation: hop 0.5s var(--ease-out); }
-.ds-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-.ds-badge--primary { background: var(--primary-950); color: var(--primary-300); border: 1px solid var(--primary-800); }
-.ds-badge--success { background: var(--success-dim); color: var(--success); }
-.ds-badge--warning { background: var(--warning-dim); color: var(--warning); }
-.ds-badge--danger  { background: var(--danger-dim);  color: var(--danger); }
-.ds-badge--info    { background: var(--info-dim);    color: var(--info); }
-.ds-badge--neutral { background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); }
-.ds-badge--amber   { background: var(--warning-dim); color: var(--warning); }
-
-/* ── Avatar ─────────────────────────────────────────────────── */
-.ds-avatar {
-  position: relative; flex-shrink: 0;
-  border-radius: 50%; display: inline-flex;
-  align-items: center; justify-content: center;
-  font-family: var(--font-head); font-weight: 700; color: #fff;
-  border: 2px solid var(--border-light); overflow: visible;
-  letter-spacing: -0.02em; will-change: transform;
-}
-.ds-avatar:hover { animation: hop 0.55s var(--ease-out); cursor: pointer; }
-.ds-avatar > .av-label { position: relative; z-index: 1; }
-.ds-avatar--ring { border-color: var(--primary); box-shadow: var(--glow-primary); }
-.ds-avatar .status-dot {
-  position: absolute; right: -1px; bottom: -1px;
-  width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--card);
-}
-.ds-avatar .status-dot--live  { background: var(--danger);  box-shadow: 0 0 6px var(--danger); }
-.ds-avatar .status-dot--on    { background: var(--success); }
-.ds-avatar .status-dot--idle  { background: var(--warning); }
-.ds-avatar .status-dot--off   { background: var(--text-disabled); }
-
-/* ── Progress ───────────────────────────────────────────────── */
-.ds-progress { height: 6px; border-radius: var(--radius-full); background: var(--surface); overflow: hidden; }
-.ds-progress__bar {
-  height: 100%; border-radius: var(--radius-full);
-  background: linear-gradient(90deg, var(--primary-600), var(--primary-300));
-  box-shadow: var(--glow-primary);
-  animation: bar-grow var(--duration-slow) var(--ease-out) both;
-}
-.ds-progress__bar--success { background: linear-gradient(90deg, #2fae72, var(--success)); box-shadow: var(--glow-success); }
-.ds-progress__bar--warning { background: linear-gradient(90deg, #cf8a1e, var(--warning)); box-shadow: var(--glow-warning); }
-
-/* ── Sidebar navlink ────────────────────────────────────────── */
-.navlink {
-  display: flex; align-items: center; gap: 12px;
-  padding: 11px 14px; border-radius: var(--radius-md); cursor: pointer;
-  color: var(--text-secondary);
-  font-family: var(--font-head); font-weight: 500; font-size: 0.98rem;
-  border: 1px solid transparent;
-  text-decoration: none;
-  transition:
-    background var(--duration-fast) var(--ease-out),
-    color var(--duration-fast) var(--ease-out),
-    border-color var(--duration-fast) var(--ease-out);
-}
-.navlink .ic { color: currentColor; opacity: 0.85; }
-.navlink:hover { background: var(--card-raised); color: var(--text-primary); border-color: var(--card-border); }
-.navlink--active,
-.navlink--active:hover {
-  background: var(--primary); color: var(--text-on-primary);
-  font-weight: 600; box-shadow: var(--glow-primary); border-color: transparent;
-}
-.navlink--active .ic { opacity: 1; }
-
-/* ── Bottom nav ─────────────────────────────────────────────── */
-.bottom-nav {
-  display: none; /* デフォルト非表示 (PC) */
-  align-items: stretch; justify-content: space-around;
-  background: var(--surface); border-top: 1px solid var(--border); height: 64px;
-}
-@media (max-width: 767px) {
-  .bottom-nav { display: flex; }
-}
-.bottom-nav-item {
-  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  color: var(--text-muted); cursor: pointer; position: relative; border: none; background: none;
-  font-family: var(--font-head); font-size: 0.6rem; font-weight: 600; letter-spacing: 0.02em;
-  text-decoration: none;
-  transition: color var(--duration-fast) var(--ease-spring);
-}
-.bottom-nav-item--active { color: var(--primary-300); }
-.bottom-nav-item--active .nav-pill {
-  position: absolute; top: 6px; width: 44px; height: 28px; border-radius: var(--radius-full);
-  background: var(--primary-950); z-index: -1;
-  animation: pop var(--duration-fast) var(--ease-spring) both;
-}
-
-/* ── Input/Field ────────────────────────────────────────────── */
-.ds-field {
-  display: flex; align-items: center; gap: 10px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 0 14px; height: 44px;
-  transition:
-    border-color var(--duration-instant) var(--ease-snap),
-    box-shadow var(--duration-instant) var(--ease-snap);
-}
-.ds-field:focus-within { border-color: var(--primary); box-shadow: var(--glow-primary); }
-.ds-field input {
-  flex: 1; background: transparent; border: none; outline: none;
-  color: var(--text-primary); font-family: var(--font-body); font-size: 0.9rem;
-}
-.ds-field input::placeholder { color: var(--text-muted); }
-
 /* ── MiniCalendar ───────────────────────────────────────────── */
 .minical { font-family: var(--font-head); width: 100%; }
 .minical__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
@@ -649,58 +461,11 @@
 }
 .minical__readout:focus-within { border-color: var(--primary); box-shadow: var(--glow-primary); }
 
-/* ── Custom Dropdown ────────────────────────────────────────── */
-.dropdown { position: relative; }
-.dropdown__trigger {
-  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  height: 44px; padding: 0 12px 0 14px;
-  background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius-md);
-  color: var(--text-primary); font-family: var(--font-head); font-weight: 500; font-size: 0.9rem;
-  cursor: pointer; white-space: nowrap; text-align: left;
-  transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
-}
-.dropdown__trigger:hover:not(:disabled) { background: var(--card-raised); }
-.dropdown__trigger:disabled { opacity: 0.45; cursor: not-allowed; }
-.dropdown__trigger.is-open { background: var(--primary-950); border-color: var(--card-border); box-shadow: none; }
-.dropdown__trigger .ic { color: var(--text-muted); flex-shrink: 0; transition: transform var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out); }
-.dropdown__trigger.is-open .ic { transform: rotate(180deg); color: var(--primary-300); }
-.dropdown__trigger--sm { height: 36px; font-size: 0.82rem; padding: 0 8px 0 12px; border-radius: var(--radius-sm); }
-.dropdown__menu {
-  position: absolute; top: calc(100% + 6px); left: 0; min-width: 100%; z-index: 50;
-  background: var(--card-raised); border: 1px solid var(--border-light, var(--border));
-  border-radius: var(--radius-md); box-shadow: 0 8px 32px rgba(0,0,0,0.45); padding: 6px;
-  display: flex; flex-direction: column; gap: 2px;
-  animation: slide-up var(--duration-fast) var(--ease-out) both;
-}
-.dropdown__menu--right { left: auto; right: 0; }
-.dropdown__menu--up { top: auto; bottom: calc(100% + 6px); animation: none; }
-.dropdown__menu--scroll { max-height: 188px; overflow-y: auto; }
-.dropdown__menu--scroll::-webkit-scrollbar { width: 6px; }
-.dropdown__menu--scroll::-webkit-scrollbar-thumb { background: var(--border, rgba(255,255,255,0.12)); border-radius: 3px; }
-.dropdown__item {
-  display: flex; align-items: center; gap: 10px; padding: 9px 11px;
-  border: none; background: transparent; color: var(--text-secondary);
-  font-family: var(--font-body); font-size: 0.88rem; text-align: left;
-  border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap; width: 100%;
-  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
-}
-.dropdown__item:hover { background: color-mix(in oklab, var(--info) 12%, transparent); color: var(--info); }
-.dropdown__item.is-active { color: var(--primary-300); }
-.dropdown__check { margin-left: auto; }
-
-/* ── Skeleton ───────────────────────────────────────────────── */
-.skeleton {
-  border-radius: var(--radius-sm);
-  background: linear-gradient(100deg, var(--surface) 30%, var(--card-raised) 50%, var(--surface) 70%);
-  background-size: 200% 100%;
-  animation: scan var(--duration-crawl) var(--ease-linear) infinite;
-}
-
 /* ── Native form controls ────────────────────────────────────── */
 /* select */
 select {
   appearance: none;
-  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%237070a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
+  background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238d86aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
@@ -714,8 +479,8 @@ select {
     box-shadow var(--duration-instant) var(--ease-snap);
 }
 select:focus {
-  border-color: var(--primary);
-  box-shadow: var(--glow-primary);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--brand) 25%, transparent);
 }
 select option {
   background: var(--card);
@@ -984,21 +749,6 @@ select option {
 }
 .smodal__resize:hover { opacity: 0.9; background: var(--surface); }
 
-/* ヒントバー */
-.hint {
-  display: flex; align-items: flex-start; gap: 9px; padding: 11px 14px; border-radius: var(--radius-md);
-  background: var(--primary-950); border: 1px solid var(--primary-800); color: var(--text-secondary);
-  font-size: 0.82rem; line-height: 1.5;
-}
-.hint b { color: var(--text-primary); font-weight: 600; }
-.hint--closable { padding-right: 40px; position: relative; }
-.hint__x {
-  position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border: none; border-radius: var(--radius-sm);
-  background: transparent; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
-}
-.hint__x:hover { background: var(--card-raised); color: var(--text-primary); }
-
 /* 広告バナー */
 .adbar {
   flex: 0 0 auto; display: flex; align-items: center; gap: 12px; padding: 9px 18px;
@@ -1142,7 +892,7 @@ select option {
 input[type="date"],
 input[type="time"],
 input[type="datetime-local"] {
-  background: var(--surface);
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
@@ -1157,8 +907,8 @@ input[type="datetime-local"] {
 input[type="date"]:focus,
 input[type="time"]:focus,
 input[type="datetime-local"]:focus {
-  border-color: var(--primary);
-  box-shadow: var(--glow-primary);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--brand) 25%, transparent);
 }
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator,

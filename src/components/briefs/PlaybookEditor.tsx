@@ -1,13 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { Icon } from '@/components/ui/Icon';
 import { playbookInputSchema, type PlaybookInput } from '@/lib/validations/briefs';
 import { FIELD_TYPE_LABELS, type FieldDef, type FieldType, type Playbook, type StepDef } from '@/types/briefs';
 import type { TeamMember } from '@/types/entities';
+import { badgeVariants } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils';
 
 interface PlaybookEditorProps {
   initial: Playbook | null;
@@ -159,13 +161,13 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
                   <span className="hidden sm:inline text-[11px] text-text-muted truncate max-w-[160px]">
                     {assignee?.displayName ?? '担当未定'} / 公開 {s.leadDays} 日前
                   </span>
-                  <button type="button" onClick={() => moveStep(i, -1)} aria-label="上へ" className="btn btn--ghost btn--icon btn--sm" disabled={i === 0}>
+                  <button type="button" onClick={() => moveStep(i, -1)} aria-label="上へ" className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })} disabled={i === 0}>
                     <Icon name="keyboard_arrow_up" size={16} />
                   </button>
-                  <button type="button" onClick={() => moveStep(i, 1)} aria-label="下へ" className="btn btn--ghost btn--icon btn--sm" disabled={i === steps.length - 1}>
+                  <button type="button" onClick={() => moveStep(i, 1)} aria-label="下へ" className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })} disabled={i === steps.length - 1}>
                     <Icon name="keyboard_arrow_down" size={16} />
                   </button>
-                  <button type="button" onClick={() => setExpanded(open ? null : i)} aria-label="詳細" className="btn btn--ghost btn--icon btn--sm">
+                  <button type="button" onClick={() => setExpanded(open ? null : i)} aria-label="詳細" className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })}>
                     <Icon name={open ? 'expand_less' : 'expand_more'} size={16} />
                   </button>
                 </div>
@@ -197,7 +199,7 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
                               key={other.key}
                               type="button"
                               onClick={() => updateStep(i, { dependsOn: on ? s.dependsOn.filter((k) => k !== other.key) : [...s.dependsOn, other.key] })}
-                              className={`ds-badge ${on ? 'ds-badge--primary' : 'ds-badge--neutral'} cursor-pointer`}
+                              className={cn(badgeVariants({ variant: on ? 'primary' : 'neutral' }), 'cursor-pointer')}
                               aria-pressed={on}
                             >
                               {other.title || '（無題）'}
@@ -224,7 +226,7 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
                             <Dropdown options={typeOptions} value={f.type} onChange={(v) => updateField(i, fi, { type: v as FieldType })} size="sm" />
                           </div>
                           <Input label={fi === 0 ? '入力する人' : ''} value={f.ownerRoleLabel ?? ''} onChange={(e) => updateField(i, fi, { ownerRoleLabel: e.target.value || null })} placeholder="役割" maxLength={20} className="w-24" />
-                          <button type="button" onClick={() => updateStep(i, { requiredFields: s.requiredFields.filter((_, idx) => idx !== fi) })} aria-label="項目を削除" className="btn btn--ghost btn--icon btn--sm">
+                          <button type="button" onClick={() => updateStep(i, { requiredFields: s.requiredFields.filter((_, idx) => idx !== fi) })} aria-label="項目を削除" className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })}>
                             <Icon name="delete_outline" size={16} />
                           </button>
                         </div>
@@ -260,7 +262,7 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
               {fi === 0 && <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>型</span>}
               <Dropdown options={typeOptions} value={f.type} onChange={(v) => setHeaderFields((prev) => prev.map((x, idx) => (idx === fi ? { ...x, type: v as FieldType } : x)))} size="sm" />
             </div>
-            <button type="button" onClick={() => setHeaderFields((prev) => prev.filter((_, idx) => idx !== fi))} aria-label="項目を削除" className="btn btn--ghost btn--icon btn--sm">
+            <button type="button" onClick={() => setHeaderFields((prev) => prev.filter((_, idx) => idx !== fi))} aria-label="項目を削除" className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })}>
               <Icon name="delete_outline" size={16} />
             </button>
           </div>

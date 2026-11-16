@@ -12,7 +12,7 @@ import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import { Icon } from '@/components/ui/Icon';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { ScheduleEntry, Category } from '@/types/entities';
 import { getEventLastDay } from '@/lib/utils/eventDays';
@@ -412,7 +412,7 @@ export function ScheduleModal({
           {/* ── フッター */}
           <div className="sform__footer">
             {!isNew && canEdit && (
-              <button onClick={handleDelete} className="btn btn--danger btn--sm">
+              <button onClick={handleDelete} className={buttonVariants({ variant: 'danger', size: 'sm' })}>
                 <Icon name="delete" size={15} />削除
               </button>
             )}

@@ -23,6 +23,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Icon } from '@/components/ui/Icon';
 import type { ScheduleEntry, MemberCalendarEvent } from '@/types/entities';
 import { getEventLastDay } from '@/lib/utils/eventDays';
+import { buttonVariants } from '@/components/ui/Button';
 
 export default function SchedulePage() {
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -223,7 +224,7 @@ export default function SchedulePage() {
             {canEdit && (
               <button
                 onClick={() => { setClickedDate(null); setShowCreate(true); }}
-                className="btn btn--primary btn--sm"
+                className={buttonVariants({ variant: 'primary', size: 'sm' })}
               >
                 <Icon name="add" size={16} />
                 <span className="hidden md:inline">予定を追加</span>
@@ -233,7 +234,7 @@ export default function SchedulePage() {
             {/* メンバーの予定表示切替 */}
             <button
               onClick={() => setShowMemberCalendars((v) => !v)}
-              className={`btn btn--sm ${showMemberCalendars ? 'btn--ghost' : 'btn--subtle'}`}
+              className={buttonVariants({ variant: showMemberCalendars ? 'ghost' : 'subtle', size: 'sm' })}
             >
               <Icon name="groups" size={15} />
               <span className="hidden md:inline">{showMemberCalendars ? 'メンバー表示中' : 'メンバーの予定'}</span>

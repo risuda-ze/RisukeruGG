@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { Select } from '@base-ui/react/select';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { cn } from '@/lib/utils';
 
 export interface DropdownOption {
   value: string;
@@ -26,6 +27,7 @@ export interface DropdownProps {
   className?: string;
 }
 
+/** 単一選択のドロップダウン。Base UI の Select（キーボード操作・先行入力・ポータル描画）に載せている */
 export function Dropdown({
   options,
   value,
@@ -37,81 +39,68 @@ export function Dropdown({
   icon,
   disabled,
   onChange,
-  className = '',
+  className,
 }: DropdownProps) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  // 外側クリックで閉じる
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
-  const selected = options.find((o) => o.value === value) ?? null;
-
-  const choose = (opt: DropdownOption) => {
-    setOpen(false);
-    onChange?.(opt.value);
-  };
-
-  const menuCls = ['dropdown__menu'];
-  if (align === 'right') menuCls.push('dropdown__menu--right');
-  if (up) menuCls.push('dropdown__menu--up');
-  if (scroll) menuCls.push('dropdown__menu--scroll');
-
+  const iconSize = size === 'sm' ? 15 : 17;
   return (
-    <div className={`dropdown ${className}`} ref={ref}>
-      <button
-        type="button"
-        className={[
-          'dropdown__trigger',
-          size === 'sm' ? 'dropdown__trigger--sm' : '',
-          open ? 'is-open' : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-        onClick={() => !disabled && setOpen((o) => !o)}
-        disabled={disabled}
+    <Select.Root
+      items={options}
+      value={value ?? null}
+      onValueChange={(next) => {
+        if (next != null) onChange?.(next);
+      }}
+      disabled={disabled}
+      modal={false}
+    >
+      <Select.Trigger
+        data-slot="dropdown-trigger"
+        className={cn(
+          'group flex w-full cursor-pointer items-center justify-between gap-2 rounded-sm border border-border bg-card text-left font-medium whitespace-nowrap text-text outline-none transition-colors duration-(--duration-fast) ease-out hover:bg-surface focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/25 data-disabled:cursor-not-allowed data-disabled:opacity-40 data-popup-open:border-brand',
+          size === 'sm' ? 'h-9 pr-2 pl-3 text-[0.8125rem]' : 'h-11 pr-3 pl-3.5 text-sm',
+          className
+        )}
       >
-        <span
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            color: selected ? 'var(--text-primary)' : 'var(--text-muted)',
-            minWidth: 0,
-          }}
-        >
-          {icon && <Icon name={icon} size={size === 'sm' ? 15 : 17} />}
-          <span className="truncate">{selected?.label ?? placeholder}</span>
+        <span className="flex min-w-0 items-center gap-2 group-data-placeholder:text-text-muted">
+          {icon && <Icon name={icon} size={iconSize} />}
+          <Select.Value placeholder={placeholder} className="truncate" />
         </span>
-        <Icon name="chevron_down" size={size === 'sm' ? 15 : 17} className="ic" />
-      </button>
+        <Select.Icon className="flex shrink-0 text-text-muted transition-transform duration-(--duration-fast) ease-out group-data-popup-open:rotate-180">
+          <Icon name="chevron_down" size={iconSize} />
+        </Select.Icon>
+      </Select.Trigger>
 
-      {open && (
-        <div className={menuCls.join(' ')}>
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              className={`dropdown__item${opt.value === value ? ' is-active' : ''}`}
-              onClick={() => choose(opt)}
-            >
-              <span>{opt.label}</span>
-              {opt.value === value && (
-                <Icon name="check" size={15} className="ic dropdown__check" />
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+      <Select.Portal>
+        <Select.Positioner
+          side={up ? 'top' : 'bottom'}
+          align={align === 'right' ? 'end' : 'start'}
+          sideOffset={6}
+          alignItemWithTrigger={false}
+          className="z-[500]"
+        >
+          <Select.Popup
+            data-slot="dropdown-menu"
+            className={cn(
+              'min-w-(--anchor-width) origin-(--transform-origin) overflow-y-auto rounded-md border border-border bg-card p-1.5 text-text outline-none transition-[opacity,transform] duration-(--duration-base) ease-out data-ending-style:opacity-0 data-starting-style:-translate-y-1 data-starting-style:opacity-0',
+              scroll ? 'max-h-[188px]' : 'max-h-(--available-height)'
+            )}
+          >
+            <Select.List className="flex flex-col gap-0.5">
+              {options.map((opt) => (
+                <Select.Item
+                  key={opt.value}
+                  value={opt.value}
+                  className="flex min-h-9 cursor-pointer items-center gap-2.5 rounded-sm px-2.5 py-2 text-[0.875rem] whitespace-nowrap text-text-2 outline-none select-none data-highlighted:bg-surface data-highlighted:text-text data-selected:font-semibold data-selected:text-text"
+                >
+                  <Select.ItemText>{opt.label}</Select.ItemText>
+                  <Select.ItemIndicator className="ml-auto flex">
+                    <Icon name="check" size={15} />
+                  </Select.ItemIndicator>
+                </Select.Item>
+              ))}
+            </Select.List>
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Portal>
+    </Select.Root>
   );
 }

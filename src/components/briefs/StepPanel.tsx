@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { DateInput } from '@/components/ui/DateInput';
 import { Textarea } from '@/components/ui/Textarea';
@@ -129,7 +129,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
             <StepAlertBadges step={step} />
           </div>
         </div>
-        <button type="button" onClick={onClose} aria-label="閉じる" className="btn btn--ghost btn--icon btn--sm">
+        <button type="button" onClick={onClose} aria-label="閉じる" className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })}>
           <Icon name="close" size={18} />
         </button>
       </div>
