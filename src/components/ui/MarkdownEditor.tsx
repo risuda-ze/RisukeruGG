@@ -18,7 +18,7 @@ interface MarkdownEditorProps {
 }
 
 const textareaClass =
-  'w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple resize-y';
+  'w-full bg-canvas border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-primary resize-y';
 
 /* ── コードブロックコンテキスト ──────────────────────────────────
  * pre コンポーネントが true を流すことで、内側の code がブロックか否かを判定。
@@ -50,7 +50,7 @@ function CodeComp({
 
   /* インラインコード */
   return (
-    <code className="bg-surface px-1.5 py-0.5 rounded text-[12px] font-mono text-purple-l">
+    <code className="bg-surface px-1.5 py-0.5 rounded text-[12px] font-mono text-brand-2">
       {children}
     </code>
   );
@@ -104,7 +104,7 @@ const MD_COMPONENTS: Components = {
 
   /* 引用 */
   blockquote: ({ children }) => (
-    <blockquote className="border-l-[3px] border-purple-l/40 pl-3 text-muted italic mb-2">
+    <blockquote className="border-l-[3px] border-brand-2/40 pl-3 text-text-muted italic mb-2">
       {children}
     </blockquote>
   ),
@@ -122,7 +122,7 @@ const MD_COMPONENTS: Components = {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-purple-l underline hover:text-purple transition-colors"
+      className="text-brand-2 underline hover:text-primary transition-colors"
     >
       {children}
     </a>
@@ -130,7 +130,7 @@ const MD_COMPONENTS: Components = {
 
   /* GFM チェックリスト */
   input: ({ checked }) => (
-    <input type="checkbox" checked={checked} readOnly className="mr-1.5 accent-purple-l" />
+    <input type="checkbox" checked={checked} readOnly className="mr-1.5 accent-brand-2" />
   ),
 };
 
@@ -151,7 +151,7 @@ export function MarkdownView({
           {value}
         </ReactMarkdown>
       ) : (
-        <span className="text-muted/50 italic text-[13px]">{placeholder ?? '内容なし'}</span>
+        <span className="text-text-muted/50 italic text-[13px]">{placeholder ?? '内容なし'}</span>
       )}
     </div>
   );
@@ -182,7 +182,7 @@ export function MarkdownEditor({
       {/* ラベル行 */}
       <div className="flex items-center justify-between min-h-[22px]">
         {label && (
-          <label className="text-[12px] font-semibold text-muted">{label}</label>
+          <label className="text-[12px] font-semibold text-text-muted">{label}</label>
         )}
         {/* 編集 / 完了 ボタン（readOnly でない場合のみ） */}
         {!readOnly && (
@@ -190,13 +190,13 @@ export function MarkdownEditor({
             type="button"
             onClick={() => setEditing((e) => !e)}
             className="flex items-center gap-1 text-[11px] transition-colors"
-            style={{ color: editing ? 'var(--primary-300)' : 'var(--text-muted)' }}
+            style={{ color: editing ? 'var(--brand-2)' : 'var(--text-muted)' }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.color = 'var(--primary-300)';
+              (e.currentTarget as HTMLElement).style.color = 'var(--brand-2)';
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.color = editing
-                ? 'var(--primary-300)'
+                ? 'var(--brand-2)'
                 : 'var(--text-muted)';
             }}
             title={editing ? 'プレビューに戻る' : '説明を編集'}
@@ -227,7 +227,7 @@ export function MarkdownEditor({
         <div
           className={[
             'min-h-[56px] px-3.5 py-2.5 rounded-[12px] text-[14px] text-text leading-relaxed',
-            readOnly ? '' : 'border border-border bg-bg cursor-text',
+            readOnly ? '' : 'border border-border bg-canvas cursor-text',
           ]
             .filter(Boolean)
             .join(' ')}
@@ -239,7 +239,7 @@ export function MarkdownEditor({
               {value}
             </ReactMarkdown>
           ) : (
-            <span className="text-muted/50 italic text-[13px]">
+            <span className="text-text-muted/50 italic text-[13px]">
               {readOnly ? '説明なし' : (placeholder ?? '内容なし')}
             </span>
           )}
@@ -248,7 +248,7 @@ export function MarkdownEditor({
 
       {/* 文字数カウンター（編集中のみ） */}
       {maxLength && !readOnly && editing && (
-        <p className="text-[11px] text-muted/50 self-end">
+        <p className="text-[11px] text-text-muted/50 self-end">
           {value.length} / {maxLength}
         </p>
       )}

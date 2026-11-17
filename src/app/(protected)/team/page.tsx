@@ -36,28 +36,28 @@ const ROLE_LABELS: Record<UserRole, string> = {
 /* ロール別バッジ色 */
 const ROLE_BADGE: Record<UserRole, { bg: string; text: string; border: string }> = {
   operator: {
-    bg: 'var(--purple-sm)',
-    text: 'var(--purple-l)',
-    border: 'var(--purple)',
+    bg: 'color-mix(in oklab, var(--primary) 15%, transparent)',
+    text: 'var(--brand-2)',
+    border: 'var(--primary)',
   },
   member: {
-    bg: 'var(--warning-dim)',
-    text: 'var(--amber-l)',
-    border: 'var(--amber)',
+    bg: 'var(--warning-tint)',
+    text: 'var(--orange-text)',
+    border: 'var(--warning)',
   },
   rom: {
-    bg: 'color-mix(in oklab, var(--muted) 16%, transparent)',
-    text: 'var(--muted-l)',
-    border: 'var(--border-l)',
+    bg: 'color-mix(in oklab, var(--text-muted) 16%, transparent)',
+    text: 'var(--text-2)',
+    border: 'var(--border)',
   },
 };
 
 /* アバター背景色 */
 const AVATAR_PALETTES = [
-  { bg: 'var(--purple-d)', text: 'var(--purple-l)' },
-  { bg: 'var(--success-dim)', text: 'var(--green)' },
-  { bg: 'var(--warning-dim)', text: 'var(--amber-l)' },
-  { bg: 'var(--purple-sm)', text: 'var(--purple-l)' },
+  { bg: 'color-mix(in oklab, var(--primary) 35%, transparent)', text: 'var(--brand-2)' },
+  { bg: 'var(--success-tint)', text: 'var(--success)' },
+  { bg: 'var(--warning-tint)', text: 'var(--orange-text)' },
+  { bg: 'color-mix(in oklab, var(--primary) 15%, transparent)', text: 'var(--brand-2)' },
 ];
 
 export default function TeamPage() {
@@ -178,17 +178,17 @@ export default function TeamPage() {
         <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 max-w-lg">
           <Card>
             <h3 className="text-sm font-semibold text-text mb-1">チームに参加または作成する</h3>
-            <p className="text-[12px] text-muted mb-5">
+            <p className="text-[12px] text-text-muted mb-5">
               チームメンバーとスケジュールを共有できます
             </p>
             <div className="mb-5">
-              <p className="text-[11px] font-medium text-muted mb-2 uppercase tracking-wide">
+              <p className="text-[11px] font-medium text-text-muted mb-2 uppercase tracking-wide">
                 チームコードで参加
               </p>
               <TeamJoinForm />
             </div>
             <div className="border-t border-border pt-4">
-              <p className="text-[11px] font-medium text-muted mb-2 uppercase tracking-wide">
+              <p className="text-[11px] font-medium text-text-muted mb-2 uppercase tracking-wide">
                 新しいチームを作成
               </p>
               <Button variant="secondary" size="sm" onClick={() => setShowCreateTeam(true)}>
@@ -251,7 +251,7 @@ export default function TeamPage() {
                   <div
                     key={member.userId}
                     className="bg-surface border rounded-[14px] p-4 flex items-center gap-4 transition-all"
-                    style={{ borderColor: isMe ? 'var(--purple)' : 'var(--border)' }}
+                    style={{ borderColor: isMe ? 'var(--primary)' : 'var(--border)' }}
                   >
                     {/* アバター */}
                     <div
@@ -271,7 +271,7 @@ export default function TeamPage() {
                       {(isMe || member.role === 'operator') && (
                         <span
                           className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-surface z-10"
-                          style={{ background: 'var(--green)' }}
+                          style={{ background: 'var(--success)' }}
                         />
                       )}
                     </div>
@@ -281,7 +281,7 @@ export default function TeamPage() {
                       <div className="text-[14px] font-bold text-text mb-1 truncate">
                         {member.displayName}
                         {isMe && (
-                          <span className="text-muted text-[11px] font-normal ml-1.5">
+                          <span className="text-text-muted text-[11px] font-normal ml-1.5">
                             （あなた）
                           </span>
                         )}
@@ -297,7 +297,7 @@ export default function TeamPage() {
                         {ROLE_LABELS[member.role]}
                       </div>
                       {/* Discord ユーザー名（TE-012）。本人とオペレーターが編集できる */}
-                      <div className="mt-1.5 flex items-center gap-1 text-[11px] text-muted min-w-0">
+                      <div className="mt-1.5 flex items-center gap-1 text-[11px] text-text-muted min-w-0">
                         <Icon name="discord" size={12} className="shrink-0" />
                         <span className="truncate">
                           {member.discordUsername ? `@${member.discordUsername}` : '未設定'}
@@ -307,7 +307,7 @@ export default function TeamPage() {
                             type="button"
                             onClick={() => setDialog({ type: 'discord', member })}
                             aria-label={`${member.displayName} の Discord ユーザー名を編集`}
-                            className="shrink-0 px-1 rounded-[4px] hover:text-purple-l hover:bg-purple-d/30 transition-colors"
+                            className="shrink-0 px-1 rounded-[4px] hover:text-brand-2 hover:bg-primary/10 transition-colors"
                           >
                             <Icon name="edit" size={12} />
                           </button>
@@ -330,7 +330,7 @@ export default function TeamPage() {
                         />
                         <button
                           onClick={() => setDialog({ type: 'remove', member })}
-                          className="text-[11px] text-muted hover:text-live transition-colors px-1.5 py-1 rounded-[4px] hover:bg-live/10"
+                          className="text-[11px] text-text-muted hover:text-live transition-colors px-1.5 py-1 rounded-[4px] hover:bg-live/10"
                         >
                           削除
                         </button>
@@ -345,7 +345,7 @@ export default function TeamPage() {
             <div className="mt-4">
               <button
                 onClick={() => setDialog({ type: 'leave' })}
-                className="text-[12px] text-muted hover:text-live transition-colors"
+                className="text-[12px] text-text-muted hover:text-live transition-colors"
               >
                 現在のチームから退出する
               </button>
@@ -365,7 +365,7 @@ export default function TeamPage() {
                       setEditNameValue(currentTeam.name);
                       setShowEditName(true);
                     }}
-                    className="text-[11px] text-muted hover:text-text transition-colors px-2 py-1 rounded-[6px] hover:bg-surface border border-border"
+                    className="text-[11px] text-text-muted hover:text-text transition-colors px-2 py-1 rounded-[6px] hover:bg-surface border border-border"
                   >
                     チーム名を編集
                   </button>
@@ -374,12 +374,12 @@ export default function TeamPage() {
             />
             <div className="p-[18px] space-y-4">
               <div>
-                <p className="text-[11px] text-muted mb-0.5">チーム名</p>
+                <p className="text-[11px] text-text-muted mb-0.5">チーム名</p>
                 <p className="text-[15px] font-bold text-text">{currentTeam.name}</p>
               </div>
               <div>
-                <p className="text-[11px] text-muted mb-1">チームコード</p>
-                <p className="text-[18px] font-mono font-bold text-purple-l tracking-widest">
+                <p className="text-[11px] text-text-muted mb-1">チームコード</p>
+                <p className="text-[18px] font-mono font-bold text-brand-2 tracking-widest">
                   {currentTeam.teamCode}
                 </p>
               </div>
@@ -392,7 +392,7 @@ export default function TeamPage() {
           <div className="bg-card border border-live/30 rounded-lg overflow-hidden">
             <CardHeader title="危険ゾーン" />
             <div className="p-[18px]">
-              <p className="text-[12px] text-muted mb-4">
+              <p className="text-[12px] text-text-muted mb-4">
                 この操作は元に戻せません。チームを解散すると全メンバーがソロ状態に戻ります。
               </p>
               <button
@@ -410,7 +410,7 @@ export default function TeamPage() {
         <Card noPadding>
           <CardHeader title="別のチームに所属する" />
           <div className="p-[18px]">
-            <p className="text-[12px] text-muted mb-4">
+            <p className="text-[12px] text-text-muted mb-4">
               チームコードを入力して、追加のチームに所属できます。現在のチームから脱退して参加することもできます。
             </p>
             <TeamJoinForm />
@@ -484,7 +484,7 @@ export default function TeamPage() {
             この操作は元に戻せません。チーム内のすべてのデータが削除され、全メンバーがソロ状態に戻ります。
           </div>
           <div>
-            <p className="text-[12px] text-muted mb-1.5">
+            <p className="text-[12px] text-text-muted mb-1.5">
               確認のため、チーム名「<strong className="text-text">{currentTeam?.name}</strong>
               」を入力してください。
             </p>

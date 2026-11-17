@@ -22,7 +22,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
   const sortedTasks = sortTasksByDueDate(tasks);
 
   if (tasks.length === 0) {
-    return <p className="text-[12px] text-muted py-4 text-center">タスクはありません</p>;
+    return <p className="text-[12px] text-text-muted py-4 text-center">タスクはありません</p>;
   }
 
   const getAssignee = (assigneeId: string | null) =>
@@ -47,7 +47,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
             <button
               key={task.id}
               onClick={() => setSelectedTask(task)}
-              className="text-left bg-card border border-border rounded-[10px] p-4 hover:border-purple/50 hover:bg-purple/5 transition-colors"
+              className="text-left bg-card border border-border rounded-[10px] p-4 hover:border-primary/50 hover:bg-primary/5 transition-colors"
             >
               {/* タスク名 */}
               <p className="text-sm font-semibold text-text mb-2 line-clamp-2">{task.title}</p>
@@ -64,7 +64,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
 
               {/* 期限 */}
               {task.dueDate && (
-                <p className="text-[11px] text-muted mt-2">
+                <p className="text-[11px] text-text-muted mt-2">
                   {format(task.dueDate, 'M月d日（E）', { locale: ja })}
                 </p>
               )}
@@ -75,11 +75,11 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
                   <Avatar
                     initials={assignee.displayName.slice(0, 2)}
                     src={assignee.avatarUrl}
-                    bgClass="bg-purple-d/30"
-                    textClass="text-purple-l"
+                    bgClass="bg-primary/10"
+                    textClass="text-brand-2"
                     size="sm"
                   />
-                  <span className="text-[11px] text-muted truncate">{assignee.displayName}</span>
+                  <span className="text-[11px] text-text-muted truncate">{assignee.displayName}</span>
                 </div>
               )}
             </button>
@@ -94,7 +94,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
         title={selectedTask?.title ?? ''}
         size="md"
         footer={
-          <Link href="/tasks" className="text-sm text-purple-l hover:text-purple transition-colors">
+          <Link href="/tasks" className="text-sm text-brand-2 hover:text-primary transition-colors">
             タスク管理で編集 →
           </Link>
         }
@@ -103,7 +103,7 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
           <div className="space-y-3">
             {selectedCategory && (
               <div className="flex items-center gap-2">
-                <span className="text-[12px] text-muted w-20">カテゴリ</span>
+                <span className="text-[12px] text-text-muted w-20">カテゴリ</span>
                 <span
                   className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide"
                   style={{
@@ -116,12 +116,12 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
               </div>
             )}
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-muted w-20">進捗</span>
+              <span className="text-[12px] text-text-muted w-20">進捗</span>
               <span className="text-[12px] text-text">{getColumnName(selectedTask.columnId)}</span>
             </div>
             {selectedTask.dueDate && (
               <div className="flex items-center gap-2">
-                <span className="text-[12px] text-muted w-20">期限</span>
+                <span className="text-[12px] text-text-muted w-20">期限</span>
                 <span className="text-[12px] text-text">
                   {format(selectedTask.dueDate, 'yyyy年M月d日（E）', { locale: ja })}
                 </span>
@@ -129,12 +129,12 @@ export function TaskBoardPreview({ tasks, columns, members }: TaskBoardPreviewPr
             )}
             {selectedAssignee && (
               <div className="flex items-center gap-2">
-                <span className="text-[12px] text-muted w-20">担当者</span>
+                <span className="text-[12px] text-text-muted w-20">担当者</span>
                 <div className="flex items-center gap-1.5">
                   <Avatar
                     initials={selectedAssignee.displayName.slice(0, 2)}
-                    bgClass="bg-purple-d/30"
-                    textClass="text-purple-l"
+                    bgClass="bg-primary/10"
+                    textClass="text-brand-2"
                     size="sm"
                   />
                   <span className="text-[12px] text-text">{selectedAssignee.displayName}</span>

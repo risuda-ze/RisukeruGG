@@ -45,8 +45,10 @@ function TaskCardComponent({
 
   return (
     <div
-      className={`tcard group ${isDone ? 'opacity-[.82]' : ''} ${isDragging ? 'rotate-1 shadow-lg' : ''}`}
-      style={{ '--tc': column?.color ?? 'var(--card-border)' } as React.CSSProperties}
+      data-testid="task-card"
+      // 外枠は Card 規格（radius-lg / padding 16px / 左 3px レール）に合わせる。D&D の制約で Card には載せ替えない
+      className={`group flex cursor-pointer flex-col gap-[9px] rounded-lg border border-l-[3px] border-border border-l-(--tc) bg-card p-4 animate-[pop-scale_180ms_var(--ease-spring)] transition-colors duration-(--duration-fast) ease-out hover:border-border-strong hover:border-l-(--tc) ${isDone ? 'opacity-[.82]' : ''} ${isDragging ? 'rotate-1 border-border-strong' : ''}`}
+      style={{ '--tc': column?.color ?? 'var(--border)' } as React.CSSProperties}
       onClick={() => onEdit(task)}
     >
       {/* カテゴリチップ */}
@@ -79,7 +81,7 @@ function TaskCardComponent({
               variant="ghost"
               size="sm"
               onClick={(e) => { e.stopPropagation(); onEdit(task); }}
-              className="px-1.5 py-1 text-muted hover:text-purple-l"
+              className="px-1.5 py-1 text-text-muted hover:text-brand-2"
               aria-label="タスクを編集"
             >
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5">
@@ -90,7 +92,7 @@ function TaskCardComponent({
               variant="ghost"
               size="sm"
               onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
-              className="px-1.5 py-1 text-muted hover:text-live"
+              className="px-1.5 py-1 text-text-muted hover:text-live"
               aria-label="タスクを削除"
             >
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5">
@@ -105,7 +107,7 @@ function TaskCardComponent({
       <div className="flex items-center gap-1.5 flex-wrap">
         {/* ① 締め切り日時: 終日フラグに応じて M/d または M/d HH:mm */}
         {task.dueDate && (
-          <span className="text-[10px] text-muted font-num">
+          <span className="text-[10px] text-text-muted font-num">
             {(task.dueDateAllDay ?? true)
               ? format(task.dueDate, 'M/d', { locale: ja })
               : format(task.dueDate, 'M/d HH:mm', { locale: ja })}
@@ -115,7 +117,7 @@ function TaskCardComponent({
         {assigneeName && (
           <div className="flex items-center gap-1">
             <Avatar initials={assigneeInitials} src={assignee?.avatarUrl} size="sm" />
-            <span className="text-[10px] text-muted font-num truncate max-w-[70px]">
+            <span className="text-[10px] text-text-muted font-num truncate max-w-[70px]">
               {assigneeName}
             </span>
           </div>

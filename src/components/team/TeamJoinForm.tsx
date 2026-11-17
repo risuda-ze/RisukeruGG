@@ -99,7 +99,7 @@ export function TeamJoinForm({ onSuccess }: TeamJoinFormProps) {
         <p className="text-sm text-text">
           チームコード <strong>{teamCode}</strong> のチームに参加します。
         </p>
-        <p className="mt-2 text-sm text-muted">
+        <p className="mt-2 text-sm text-text-muted">
           現在のチームに引き続き所属するか、脱退してから参加するかを選択してください。
         </p>
       </Modal>

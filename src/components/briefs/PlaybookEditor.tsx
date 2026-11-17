@@ -1,13 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { Icon } from '@/components/ui/Icon';
 import { playbookInputSchema, type PlaybookInput } from '@/lib/validations/briefs';
 import { FIELD_TYPE_LABELS, type FieldDef, type FieldType, type Playbook, type StepDef } from '@/types/briefs';
 import type { TeamMember } from '@/types/entities';
+import { badgeVariants } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils/cn';
 
 interface PlaybookEditorProps {
   initial: Playbook | null;
@@ -134,21 +136,21 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
       {/* 工程 */}
       <section className="space-y-2">
         <div className="flex items-center justify-between">
-          <h4 className="text-[12px] font-semibold text-muted uppercase tracking-wide">工程（上から順に）</h4>
+          <h4 className="text-[12px] font-semibold text-text-muted uppercase tracking-wide">工程（上から順に）</h4>
           <Button size="sm" variant="secondary" onClick={addStep}>
             <Icon name="add" size={14} />
             工程を追加
           </Button>
         </div>
-        {steps.length === 0 && <p className="text-[12px] text-muted">工程がありません。「工程を追加」から始めてください</p>}
+        {steps.length === 0 && <p className="text-[12px] text-text-muted">工程がありません。「工程を追加」から始めてください</p>}
         <ul className="space-y-2">
           {steps.map((s, i) => {
             const open = expanded === i;
             const assignee = members.find((m) => m.userId === s.defaultAssigneeId);
             return (
-              <li key={i} className="rounded-[12px] border border-border" style={{ background: 'var(--bg)' }}>
+              <li key={i} className="rounded-[12px] border border-border" style={{ background: 'var(--canvas)' }}>
                 <div className="flex items-center gap-2 px-3 py-2">
-                  <span className="text-[11px] text-muted w-5 text-right tabular-nums">{i + 1}</span>
+                  <span className="text-[11px] text-text-muted w-5 text-right tabular-nums">{i + 1}</span>
                   <input
                     value={s.title}
                     onChange={(e) => updateStep(i, { title: e.target.value })}
@@ -156,16 +158,16 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
                     className="flex-1 min-w-0 bg-transparent text-sm text-text outline-none"
                     maxLength={60}
                   />
-                  <span className="hidden sm:inline text-[11px] text-muted truncate max-w-[160px]">
+                  <span className="hidden sm:inline text-[11px] text-text-muted truncate max-w-[160px]">
                     {assignee?.displayName ?? '担当未定'} / 公開 {s.leadDays} 日前
                   </span>
-                  <button type="button" onClick={() => moveStep(i, -1)} aria-label="上へ" className="btn btn--ghost btn--icon btn--sm" disabled={i === 0}>
+                  <button type="button" onClick={() => moveStep(i, -1)} aria-label="上へ" className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })} disabled={i === 0}>
                     <Icon name="keyboard_arrow_up" size={16} />
                   </button>
-                  <button type="button" onClick={() => moveStep(i, 1)} aria-label="下へ" className="btn btn--ghost btn--icon btn--sm" disabled={i === steps.length - 1}>
+                  <button type="button" onClick={() => moveStep(i, 1)} aria-label="下へ" className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })} disabled={i === steps.length - 1}>
                     <Icon name="keyboard_arrow_down" size={16} />
                   </button>
-                  <button type="button" onClick={() => setExpanded(open ? null : i)} aria-label="詳細" className="btn btn--ghost btn--icon btn--sm">
+                  <button type="button" onClick={() => setExpanded(open ? null : i)} aria-label="詳細" className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })}>
                     <Icon name={open ? 'expand_less' : 'expand_more'} size={16} />
                   </button>
                 </div>
@@ -173,7 +175,7 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
                   <div className="px-3 pb-3 space-y-3 border-t border-border pt-3">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="flex flex-col gap-1.5">
-                        <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>既定の担当</span>
+                        <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>既定の担当</span>
                         <Dropdown options={memberOptions} value={s.defaultAssigneeId ?? ''} onChange={(v) => updateStep(i, { defaultAssigneeId: v || null })} size="sm" />
                       </div>
                       <Input label="役割（例: 編集）" value={s.roleLabel ?? ''} onChange={(e) => updateStep(i, { roleLabel: e.target.value || null })} maxLength={20} />
@@ -188,7 +190,7 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
                     </div>
                     {/* 先行工程 */}
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>先行工程（終わってから着手）</span>
+                      <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>先行工程（終わってから着手）</span>
                       <div className="flex flex-wrap gap-2">
                         {steps.filter((_, idx) => idx !== i).map((other) => {
                           const on = s.dependsOn.includes(other.key);
@@ -197,20 +199,20 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
                               key={other.key}
                               type="button"
                               onClick={() => updateStep(i, { dependsOn: on ? s.dependsOn.filter((k) => k !== other.key) : [...s.dependsOn, other.key] })}
-                              className={`ds-badge ${on ? 'ds-badge--primary' : 'ds-badge--neutral'} cursor-pointer`}
+                              className={cn(badgeVariants({ variant: on ? 'primary' : 'neutral' }), 'cursor-pointer')}
                               aria-pressed={on}
                             >
                               {other.title || '（無題）'}
                             </button>
                           );
                         })}
-                        {steps.length <= 1 && <span className="text-[12px] text-muted">他の工程がありません</span>}
+                        {steps.length <= 1 && <span className="text-[12px] text-text-muted">他の工程がありません</span>}
                       </div>
                     </div>
                     {/* 必要な情報 */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>この工程に必要な情報</span>
+                        <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>この工程に必要な情報</span>
                         <Button size="sm" variant="subtle" onClick={() => updateStep(i, { requiredFields: [...s.requiredFields, emptyField(s.requiredFields.length)] })}>
                           <Icon name="add" size={14} />
                           項目
@@ -220,18 +222,18 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
                         <div key={fi} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-end">
                           <Input label={fi === 0 ? '項目名' : ''} value={f.label} onChange={(e) => updateField(i, fi, { label: e.target.value })} placeholder="例: 素材の場所" maxLength={40} />
                           <div className="flex flex-col gap-1.5">
-                            {fi === 0 && <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>型</span>}
+                            {fi === 0 && <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>型</span>}
                             <Dropdown options={typeOptions} value={f.type} onChange={(v) => updateField(i, fi, { type: v as FieldType })} size="sm" />
                           </div>
                           <Input label={fi === 0 ? '入力する人' : ''} value={f.ownerRoleLabel ?? ''} onChange={(e) => updateField(i, fi, { ownerRoleLabel: e.target.value || null })} placeholder="役割" maxLength={20} className="w-24" />
-                          <button type="button" onClick={() => updateStep(i, { requiredFields: s.requiredFields.filter((_, idx) => idx !== fi) })} aria-label="項目を削除" className="btn btn--ghost btn--icon btn--sm">
+                          <button type="button" onClick={() => updateStep(i, { requiredFields: s.requiredFields.filter((_, idx) => idx !== fi) })} aria-label="項目を削除" className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })}>
                             <Icon name="delete_outline" size={16} />
                           </button>
                         </div>
                       ))}
                     </div>
                     <div className="flex justify-end">
-                      <button type="button" onClick={() => removeStep(i)} className="text-[12px] text-muted hover:text-live transition-colors">
+                      <button type="button" onClick={() => removeStep(i)} className="text-[12px] text-text-muted hover:text-live transition-colors">
                         この工程を削除
                       </button>
                     </div>
@@ -246,21 +248,21 @@ export function PlaybookEditor({ initial, members, onSave, onCancel }: PlaybookE
       {/* 見出し項目 */}
       <section className="space-y-2">
         <div className="flex items-center justify-between">
-          <h4 className="text-[12px] font-semibold text-muted uppercase tracking-wide">見出しに置く項目</h4>
+          <h4 className="text-[12px] font-semibold text-text-muted uppercase tracking-wide">見出しに置く項目</h4>
           <Button size="sm" variant="subtle" onClick={() => setHeaderFields((prev) => [...prev, { ...emptyField(prev.length), required: false }])}>
             <Icon name="add" size={14} />
             項目
           </Button>
         </div>
-        {headerFields.length === 0 && <p className="text-[12px] text-muted">例: 概要、素材リンク。見出しに入力欄として並びます</p>}
+        {headerFields.length === 0 && <p className="text-[12px] text-text-muted">例: 概要、素材リンク。見出しに入力欄として並びます</p>}
         {headerFields.map((f, fi) => (
           <div key={fi} className="grid grid-cols-[1fr_auto_auto] gap-2 items-end">
             <Input label={fi === 0 ? '項目名' : ''} value={f.label} onChange={(e) => setHeaderFields((prev) => prev.map((x, idx) => (idx === fi ? { ...x, label: e.target.value } : x)))} maxLength={40} />
             <div className="flex flex-col gap-1.5">
-              {fi === 0 && <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>型</span>}
+              {fi === 0 && <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>型</span>}
               <Dropdown options={typeOptions} value={f.type} onChange={(v) => setHeaderFields((prev) => prev.map((x, idx) => (idx === fi ? { ...x, type: v as FieldType } : x)))} size="sm" />
             </div>
-            <button type="button" onClick={() => setHeaderFields((prev) => prev.filter((_, idx) => idx !== fi))} aria-label="項目を削除" className="btn btn--ghost btn--icon btn--sm">
+            <button type="button" onClick={() => setHeaderFields((prev) => prev.filter((_, idx) => idx !== fi))} aria-label="項目を削除" className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })}>
               <Icon name="delete_outline" size={16} />
             </button>
           </div>

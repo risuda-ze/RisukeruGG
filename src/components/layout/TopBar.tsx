@@ -18,14 +18,14 @@ export function TopBar({ title, subtitle, children }: TopBarProps) {
       style={{
         height: subtitle ? '60px' : '54px',
         background: 'var(--surface)',
-        borderBottom: '1px solid var(--card-border)',
+        borderBottom: '1px solid var(--border)',
       }}
     >
       {/* 左: タイトル + 画面説明 */}
       <div className="flex-1 min-w-0">
         <span
           className="text-[15px] font-semibold truncate block"
-          style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-head)' }}
+          style={{ color: 'var(--text)' }}
         >
           {title}
         </span>
@@ -50,8 +50,8 @@ export function TopBar({ title, subtitle, children }: TopBarProps) {
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[8px] text-[12px] font-semibold transition-colors"
           style={{ color: 'var(--text-muted)' }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
-            (e.currentTarget as HTMLElement).style.background = 'var(--card-raised)';
+            (e.currentTarget as HTMLElement).style.color = 'var(--text)';
+            (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)';
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)';

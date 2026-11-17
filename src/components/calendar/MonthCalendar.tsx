@@ -31,7 +31,7 @@ interface MonthCalendarProps {
 /** 日曜始まりの曜日ヘッダーラベル */
 const DOW_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-const DEFAULT_EVENT_COLOR = '#3fb6e0';
+const DEFAULT_EVENT_COLOR = '#7d68c5'; // DESIGN.md primary（dark）
 const GCAL_EVENT_COLOR = '#4ade80';
 const MEMBER_EVENT_COLOR = '#60a5fa';
 
@@ -180,8 +180,8 @@ function WeekRow({
               key={day.toISOString()}
               className={[
                 'border-r border-border last:border-r-0 relative overflow-hidden transition-colors',
-                !isCurrentMonth ? 'opacity-40 bg-bg' : '',
-                isCurrentDay ? 'bg-[rgba(63,182,224,0.05)]' : '',
+                !isCurrentMonth ? 'opacity-40 bg-canvas' : '',
+                isCurrentDay ? 'bg-primary/5' : '',
                 onDateClick ? 'cursor-pointer' : '',
               ]
                 .filter(Boolean)
@@ -197,17 +197,16 @@ function WeekRow({
                 <span
                   className={[
                     'inline-flex items-center justify-center w-[22px] h-[22px] rounded-full text-[11px] font-medium',
-                    onDateLabelClick ? 'cursor-pointer hover:bg-purple-d/60' : 'cursor-default hover:bg-purple-d/40',
+                    onDateLabelClick ? 'cursor-pointer hover:bg-primary/20' : 'cursor-default hover:bg-primary/15',
                     'transition-colors',
                     isCurrentDay
-                      ? 'bg-purple text-white'
+                      ? 'bg-primary text-white'
                       : colIndex === 0
                         ? 'text-live hover:text-live'
                         : colIndex === 6
                           ? 'text-info hover:text-info'
-                          : 'text-muted hover:text-purple-l',
+                          : 'text-text-muted hover:text-brand-2',
                   ].join(' ')}
-                  style={isCurrentDay ? { boxShadow: 'var(--glow-primary)' } : undefined}
                   onMouseEnter={(e) => {
                     e.stopPropagation();
                     const rect = e.currentTarget.getBoundingClientRect();
@@ -247,7 +246,7 @@ function WeekRow({
                 {/* +N件：クリックで週表示に切り替え */}
                 {totalOverflow > 0 && (
                   <button
-                    className="text-[10px] text-muted px-1 py-0.5 font-semibold shrink-0 hover:text-purple-l transition-colors text-left"
+                    className="text-[10px] text-text-muted px-1 py-0.5 font-semibold shrink-0 hover:text-brand-2 transition-colors text-left"
                     onClick={(e) => { e.stopPropagation(); onDateLabelClick?.(day); }}
                   >
                     +{totalOverflow}件
@@ -376,7 +375,7 @@ function DayTooltipPanel({
       </div>
 
       {daySchedules.length === 0 ? (
-        <p className="px-3 py-3 text-[11px] text-muted italic">予定なし</p>
+        <p className="px-3 py-3 text-[11px] text-text-muted italic">予定なし</p>
       ) : (
         <div className="flex flex-col">
           {daySchedules.map((s) => {
@@ -395,7 +394,7 @@ function DayTooltipPanel({
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-medium text-text truncate">{s.title}</p>
-                  <p className="text-[10px] text-muted font-num">
+                  <p className="text-[10px] text-text-muted font-num">
                     {s.allDay
                       ? '終日'
                       : `${format(s.startAt, 'HH:mm')} – ${format(s.endAt, 'HH:mm')}`}
@@ -434,16 +433,21 @@ export function MonthCalendar({
   const singleDaySchedules = schedules.filter((s) => !s.allDay && !isMultiDayEvent(s));
 
   return (
-    <div className="cal">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card">
       {/* 曜日ヘッダー */}
-      <div className="cal__wd">
+      <div className="grid flex-none grid-cols-7 border-b border-border">
         {DOW_LABELS.map((d, i) => (
-          <span key={d} className={i === 0 ? 'is-sun' : i === 6 ? 'is-sat' : ''}>{d}</span>
+          <span
+            key={d}
+            className={`py-2.25 text-center text-[0.74rem] font-semibold ${i === 0 ? 'text-danger' : i === 6 ? 'text-info' : 'text-text-muted'}`}
+          >
+            {d}
+          </span>
         ))}
       </div>
 
       {/* 週行グリッド */}
-      <div className="cal__weeks">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         {Array.from({ length: weekCount }, (_, week) => {
           const weekDays = days.slice(week * 7, (week + 1) * 7);
           return (
