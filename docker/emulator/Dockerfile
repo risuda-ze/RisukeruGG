@@ -17,10 +17,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Firebase CLI のバージョン。ルート package.json の devDependencies.firebase-tools と揃える
+# （tests/unit/firebase/toolsVersion.test.ts で一致を検証）。
+# ここを書き換えたときだけ CLI とエミュレータ JAR の層が作り直される
+ARG FIREBASE_TOOLS_VERSION=15.36.0
+
 # Firebase CLI をグローバルインストール。pnpm は corepack 経由で
 # package.json の packageManager と同じバージョンを使う
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-RUN npm install -g firebase-tools@14 && corepack enable
+RUN npm install -g firebase-tools@${FIREBASE_TOOLS_VERSION} && corepack enable
+
+# エミュレータの JAR / UI をイメージに焼き込む（起動時のダウンロードを無くす）
+RUN firebase setup:emulators:firestore \
+    && firebase setup:emulators:storage \
+    && firebase setup:emulators:ui
 
 WORKDIR /workspace
 

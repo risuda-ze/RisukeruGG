@@ -113,6 +113,7 @@
 - [Node.js](https://nodejs.org/) 22以上
 - [pnpm](https://pnpm.io/) 11（`package.json` の `packageManager` に合わせる。`corepack enable` 推奨）
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- Java 21以上（Docker を使わずホストでエミュレータを起動する場合のみ）
 
 ### 手順
 
@@ -140,12 +141,42 @@ scripts\seed.bat
 
 アプリは http://localhost:3000、Firebase Emulator UI は http://localhost:4000 で確認できます。
 
+### Docker を使わずホストでエミュレータを起動する
+
+Docker が使えない場合は、手順 4 の代わりにホストで直接起動できます。
+
+```bash
+# ターミナル 1: Functions をビルドして Firebase Emulator を起動
+pnpm emulators
+
+# ターミナル 2: Next.js 開発サーバー
+pnpm dev
+
+# テストデータの投入（エミュレータ起動後）
+node scripts/seed.mjs
+```
+
+- **前提**: Java 21 以上が必要です（Firestore Emulator が使用）。Firebase CLI は devDependency の `firebase-tools` を使うため、グローバルインストールは不要です。
+- **ポート**: Docker と同じポート（4000 / 5001 / 8080 / 9098 / 9199）を使うため、Docker の emulator とは同時に起動できません。別の worktree を含め、同じマシンで複数同時に起動しないでください（終了時の書き出しが先に起動していた側に対して行われます）。
+- **データ**: 終了時に `.emulator-data/` へ書き出し、次回起動時に読み込みます。`Ctrl+C` で終了してください。強制終了すると書き出されず、その回のデータは残りません。
+- **worktree**: `.emulator-data/` は作業ディレクトリごとなので、git worktree ごとにシードが必要です。
+- **環境変数**: Next.js の API ルート（Admin SDK）をエミュレータに向けるため、`.env.local` に以下を追加します（Docker では compose が設定します）。
+
+  ```env
+  NEXT_PUBLIC_USE_EMULATORS=true
+  FIREBASE_AUTH_EMULATOR_HOST=localhost:9098
+  FIRESTORE_EMULATOR_HOST=localhost:8080
+  ```
+
+Firebase CLI のバージョンは `package.json` の `firebase-tools` と `docker/emulator/Dockerfile` の `FIREBASE_TOOLS_VERSION` の 2 箇所で固定しています。更新するときは両方を同じ値にしてください（ユニットテストで一致を検証しています）。
+
 ---
 
 ## コマンド一覧
 
 ```bash
 pnpm dev            # 開発サーバー起動 (localhost:3000)
+pnpm emulators      # Firebase Emulator をホストで起動（Docker を使わない場合）
 pnpm build          # プロダクションビルド
 pnpm typecheck      # TypeScript 型チェック
 pnpm lint           # ESLint 実行
