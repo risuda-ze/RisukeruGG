@@ -54,6 +54,9 @@ allowBuilds:
   '@firebase/util': true
   protobufjs: true
   '@sentry/cli': true
+  # firebase-tools の optional 依存（ネイティブ正規表現）。無くても firebase-tools は動くため
+  # ビルドしない。未指定だと Node 22.22+ / 24.15+ の環境で ERR_PNPM_IGNORED_BUILDS になる
+  re2: false
 
 minimumReleaseAgeExclude:
   - '@sentry/browser-utils@10.77.1'
