@@ -132,10 +132,10 @@ export default function TasksPage() {
   );
 
   if (loading) {
-    return <div className="flex flex-1 items-center justify-center bg-bg"><Spinner size="lg" /></div>;
+    return <div className="flex flex-1 items-center justify-center bg-canvas"><Spinner size="lg" /></div>;
   }
   if (!teamId) {
-    return <div className="flex flex-1 items-center justify-center text-muted text-sm px-4">チームに参加してからタスク管理を利用できます</div>;
+    return <div className="flex flex-1 items-center justify-center text-text-muted text-sm px-4">チームに参加してからタスク管理を利用できます</div>;
   }
 
   return (
@@ -158,14 +158,14 @@ export default function TasksPage() {
 
       {/* ライトプラン警告 */}
       {isLightPlanFull && (
-        <div className="mx-4 md:mx-7 mb-2 px-3 py-2 rounded-[8px] text-[12px] bg-amber-d/10 border border-amber/30 text-amber shrink-0">
+        <div className="mx-4 md:mx-7 mb-2 px-3 py-2 rounded-[8px] text-[12px] bg-warning/5 border border-warning/30 text-warning shrink-0">
           タスク作成上限に達しました（月5件）。PARTYプランにアップグレードしてください。
         </div>
       )}
 
       {/* ── PC: カンバンボード / モバイル: ステータスピル+リスト ── */}
       {columns.length === 0 ? (
-        <div className="text-center text-muted text-sm py-16">
+        <div className="text-center text-text-muted text-sm py-16">
           <p>カンバンカラムがありません</p>
           <p className="mt-1 text-[11px]">設定ページからカラムを追加してください</p>
         </div>

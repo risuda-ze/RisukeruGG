@@ -46,7 +46,7 @@ export function BetaGate({ children }: { children: React.ReactNode }) {
 
   if (status === 'checking') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-bg">
+      <div className="flex min-h-screen items-center justify-center bg-canvas">
         <Spinner size="lg" />
       </div>
     );
@@ -91,13 +91,13 @@ function BetaWaitingScreen() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-bg overflow-hidden">
+    <div className="relative flex min-h-screen items-center justify-center bg-canvas overflow-hidden">
       {/* グリッドオーバーレイ（ログイン画面と同系のトーン） */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={{
           backgroundImage:
-            'linear-gradient(var(--purple-l) 1px, transparent 1px), linear-gradient(90deg, var(--purple-l) 1px, transparent 1px)',
+            'linear-gradient(var(--brand-2) 1px, transparent 1px), linear-gradient(90deg, var(--brand-2) 1px, transparent 1px)',
           backgroundSize: '40px 40px',
         }}
       />
@@ -114,14 +114,14 @@ function BetaWaitingScreen() {
           <h1 className="text-xl font-bold text-text tracking-tight mb-3">
             正式公開までお待ちください
           </h1>
-          <p className="text-sm text-muted leading-relaxed mb-6">
+          <p className="text-sm text-text-muted leading-relaxed mb-6">
             リスケるGG は現在クローズドベータ期間中です。
             <br />
             ご利用には招待が必要です。利用を希望される場合は、下のボタンから申請してください。
           </p>
 
           {requestState === 'success' ? (
-            <div className="rounded-[10px] bg-green/10 border border-green/30 px-4 py-3 text-sm text-green mb-6">
+            <div className="rounded-[10px] bg-success/10 border border-success/30 px-4 py-3 text-sm text-success mb-6">
               申請を受け付けました。招待の準備が整い次第ご連絡します。
             </div>
           ) : (

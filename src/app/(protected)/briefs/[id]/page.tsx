@@ -11,7 +11,7 @@ import { subscribeBriefEvents } from '@/lib/repositories/briefs';
 import { deriveHeaderFieldsFromBrief, derivePlaybookStepsFromBrief } from '@/lib/briefs/generate';
 import { formatDateTime, formatShortDate } from '@/lib/briefs/format';
 import { TopBar } from '@/components/layout/TopBar';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { BriefsLoadError } from '@/components/briefs/BriefsLoadError';
@@ -153,8 +153,8 @@ export default function BriefDetailPage() {
         <TopBar title="ブリーフ" />
         <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 max-w-lg">
           <Card>
-            <p className="text-sm text-muted">ブリーフが見つかりません。</p>
-            <Link href="/briefs" className="text-[12px] text-purple-l hover:underline">一覧に戻る</Link>
+            <p className="text-sm text-text-muted">ブリーフが見つかりません。</p>
+            <Link href="/briefs" className="text-[12px] text-brand-2 hover:underline">一覧に戻る</Link>
           </Card>
         </div>
       </div>
@@ -165,7 +165,7 @@ export default function BriefDetailPage() {
     <div className="flex flex-col flex-1 overflow-hidden">
       <TopBar title={brief.title} subtitle={`公開 ${formatShortDate(brief.publishAt)}`}>
         <div className="flex items-center gap-2">
-          <Link href="/briefs" className="btn btn--secondary btn--sm">
+          <Link href="/briefs" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
             <Icon name="arrow_back" size={14} />
             一覧
           </Link>
@@ -202,7 +202,7 @@ export default function BriefDetailPage() {
               </div>
               <div className="px-2 pb-2">
                 {steps.length === 0 ? (
-                  <p className="text-[12px] text-muted px-2 pb-3">
+                  <p className="text-[12px] text-text-muted px-2 pb-3">
                     工程がありません。
                     {briefOps.canEdit && '「工程」ボタンから追加するか、進め方を作って次のブリーフから自動生成できます。'}
                   </p>
@@ -231,14 +231,14 @@ export default function BriefDetailPage() {
                 aria-expanded={showEvents}
               >
                 <span className="text-sm font-semibold text-text">変更の記録</span>
-                <Icon name={showEvents ? 'expand_less' : 'expand_more'} size={18} className="text-muted" />
+                <Icon name={showEvents ? 'expand_less' : 'expand_more'} size={18} className="text-text-muted" />
               </button>
               {showEvents && (
                 <ul className="mt-3 space-y-1.5">
-                  {events.length === 0 && <li className="text-[12px] text-muted">記録はまだありません</li>}
+                  {events.length === 0 && <li className="text-[12px] text-text-muted">記録はまだありません</li>}
                   {events.map((e) => (
                     <li key={e.id} className="text-[12px] text-text-2 flex gap-2">
-                      <span className="text-muted shrink-0 tabular-nums">{formatDateTime(e.createdAt)}</span>
+                      <span className="text-text-muted shrink-0 tabular-nums">{formatDateTime(e.createdAt)}</span>
                       <span>{describeEvent(e, members, stepTitle)}</span>
                     </li>
                   ))}

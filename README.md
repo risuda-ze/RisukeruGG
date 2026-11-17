@@ -38,51 +38,30 @@
 
 ## デザインシステム
 
-ネオン・シアンを基調としたダークテーマのゲーミングUIデザイン。
-（トークンの正は `src/app/globals.css`。本表は主要トークンの抜粋）
+紫がかったキャンバスにラベンダーの文字と枡線が乗る「標本カード」のデザイン（v3）。既定はダークテーマ、ライトは `[data-theme="light"]` の代替テーマ。
 
-### カラーパレット
+- **正本**: [docs/DESIGN.md](docs/DESIGN.md)。色・タイポグラフィ・余白・角丸・モーションと部品の規約はここに書く
+- **トークン**: `docs/DESIGN.md` の frontmatter から `src/app/tokens.css` を生成する（`pnpm tokens`。同期チェックは `pnpm tokens:check`）。`tokens.css` は手で編集しない
+- **部品**: shadcn（Base UI 版）と Animate UI（Base UI 版）を `src/components/ui/*` にコピー所有。アニメーションは `motion`、トーストは `sonner`
+- **フォント**: システムフォントのみ（Web フォントは読み込まない）
+- **影・グロー**: 使わない。奥行きは面の段差と枡線で表す
+- **確認ページ**: `pnpm dev` 起動中に http://localhost:3000/design-preview で全部品と両テーマを確認できる（本番ビルドでは 404）
+- **見比べ用**: [docs/DESIGN-theme-preview.html](docs/DESIGN-theme-preview.html)（両テーマの配色とコントラスト）
 
-| トークン           | 値        | 用途                               |
-| ------------------ | --------- | ---------------------------------- |
-| `--bg`             | `#0a0a18` | ページ背景                         |
-| `--surface`        | `#11112a` | サイドバー・ヘッダー背景           |
-| `--card`           | `#16163a` | カード背景                         |
-| `--card-raised`    | `#1c1c42` | 浮き上がりカード背景               |
-| `--primary`        | `#3fb6e0` | プライマリアクション・ナビアクティブ |
-| `--primary-300`    | `#8fe0ff` | アクセントテキスト・アイコン       |
-| `--success`        | `#3dd68c` | 完了・成功状態                     |
-| `--warning`        | `#ef9f27` | 警告・保留状態                     |
-| `--danger`         | `#f0506e` | エラー・削除・LIVE状態             |
-| `--info`           | `#5bc8fa` | 情報・ホバーアクセント             |
-| `--pink`           | `#ec4f95` | ボタンホバーシフト色               |
-| `--text-primary`   | `#e4e4ee` | 見出し・重要テキスト（13.5:1 AAA） |
-| `--text-secondary` | `#a8a8c0` | 本文・説明文（6.2:1 AA）           |
-| `--text-muted`     | `#7070a0` | 補足・プレースホルダー             |
+### 主要トークン（抜粋）
 
-### タイポグラフィ
+| 役割 | トークン | Dark（既定） | Light |
+| --- | --- | --- | --- |
+| ページ背景 | `--canvas` | `#100c1c` | `#fcf9f5` |
+| 面 1 | `--surface` | `#191528` | `#f3ecf7` |
+| カード | `--card` | `#211c33` | `#ffffff` |
+| 枡線 | `--border` | `#36314c` | `#eadff8` |
+| プライマリ | `--primary` | `#7d68c5` | `#745fbb` |
+| 文字 | `--text` | `#e8e4fd` | `#4d3e78` |
+| 文字 2 | `--text-2` | `#b8afe5` | `#6956a8` |
+| 危険 | `--danger` | `#e65850` | `#a53c3a` |
 
-- **見出し**: Space Grotesk（英数字）
-- **本文**: Zen Kaku Gothic New（日本語）
-- **数値**: Space Grotesk（タブラー数字）
-
-### グロー効果
-
-- `--glow-primary`: パープルグロー（ボタンフォーカス・アクティブナビ）
-- `--glow-pink`: ピンクグロー（ボタンホバー）
-- `--glow-success/warning/danger`: セマンティックグロー
-
-### コンポーネントクラス（グローバルCSS）
-
-| クラス               | 説明                                      |
-| -------------------- | ----------------------------------------- |
-| `.btn`, `.btn--*`    | ボタン（primary/ghost/danger/success/subtle） |
-| `.ds-card`, `.ds-card--hover` | カード（ホバーリフト付き）       |
-| `.ds-badge`, `.ds-badge--*`   | バッジ（各セマンティックカラー） |
-| `.navlink`, `.navlink--active` | サイドバーナビリンク           |
-| `.bottom-nav-item`   | ボトムナビアイテム（ピルインジケーター）  |
-| `.ds-progress`       | プログレスバー（グロー付き）              |
-| `.skeleton`          | スケルトンローディング                    |
+全トークン・カラーファミリー・コントラスト表は `docs/DESIGN.md` を参照。
 
 ---
 
@@ -340,10 +319,11 @@ Webhook イベントとプラン遷移:
 src/
 ├── app/                  # Next.js App Router ページ
 │   ├── (protected)/      # 認証保護ルート
-│   └── globals.css       # デザイントークン + コンポーネントCSS
+│   ├── globals.css       # Tailwind の設定・役割トークンの登録・ベーススタイル
+│   └── tokens.css        # テーマ値（docs/DESIGN.md から自動生成）
 ├── components/
 │   ├── layout/           # AppShell, Sidebar, TopBar, BottomNav
-│   └── ui/               # Button, Card, Badge, Avatar, Input, ...
+│   └── ui/               # Button, Card, Badge, Dialog, Drawer, Modal, Dropdown, ...
 ├── lib/
 │   ├── firebase/         # Firebase 初期化・認証
 │   └── repositories/     # Firestore データアクセス層
@@ -359,8 +339,8 @@ tests/
 
 - Firestoreへのアクセスは `src/lib/repositories/` 経由に限定
 - コレクション構造は常に `teams/{teamId}/...` サブコレクション
-- デザインシステムは `globals.css` で CSS カスタムプロパティ + コンポーネントクラスとして管理
-- コンポーネントは `.btn`, `.ds-card`, `.ds-badge` 等のCSSクラスを優先使用
+- デザインシステムの正本は `docs/DESIGN.md`。色・角丸・時間はトークン経由で指定し、生の値を書かない
+- UI は `src/components/ui/*` の部品（`Button` / `Card` / `Badge` / `Modal` 等）を使い、独自のボタン・カード・モーダルを実装しない
 - レスポンシブ: `md` (768px) ブレークポイントでサイドバー/ボトムナビを切り替え
 
 ---

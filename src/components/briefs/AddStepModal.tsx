@@ -9,6 +9,8 @@ import { useBriefOps } from '@/hooks/useBriefOps';
 import { addStepInputSchema } from '@/lib/validations/briefs';
 import type { Step } from '@/types/briefs';
 import type { TeamMember } from '@/types/entities';
+import { badgeVariants } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils/cn';
 
 interface AddStepModalProps {
   open: boolean;
@@ -82,7 +84,7 @@ export function AddStepModal({ open, onClose, briefId, steps, members }: AddStep
         <Input label="工程名" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} autoFocus error={error ?? undefined} />
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>担当</span>
+            <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>担当</span>
             <Dropdown
               options={[{ value: '', label: '未定' }, ...members.map((m) => ({ value: m.userId, label: m.displayName }))]}
               value={assigneeId}
@@ -102,7 +104,7 @@ export function AddStepModal({ open, onClose, briefId, steps, members }: AddStep
         </div>
         {steps.length > 0 && (
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>先行工程（終わってから着手）</span>
+            <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>先行工程（終わってから着手）</span>
             <div className="flex flex-wrap gap-2">
               {steps.map((s) => {
                 const on = dependsOn.includes(s.key);
@@ -111,7 +113,7 @@ export function AddStepModal({ open, onClose, briefId, steps, members }: AddStep
                     key={s.id}
                     type="button"
                     onClick={() => toggleDep(s.key)}
-                    className={`ds-badge ${on ? 'ds-badge--primary' : 'ds-badge--neutral'} cursor-pointer`}
+                    className={cn(badgeVariants({ variant: on ? 'primary' : 'neutral' }), 'cursor-pointer')}
                     aria-pressed={on}
                   >
                     {s.title}

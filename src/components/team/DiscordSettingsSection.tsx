@@ -1,5 +1,6 @@
 'use client';
 
+import { toast } from 'sonner';
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
@@ -33,7 +34,6 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
   const [config, setConfig] = useState<DiscordTeamConfig | null>(null);
   const [loadedTeamId, setLoadedTeamId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // チャンネル選択モード用の state
   const [dismissedNonce, setDismissedNonce] = useState<string | null>(null);
@@ -170,8 +170,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
   }
 
   function showToast(type: 'success' | 'error', message: string) {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 4000);
+    toast[type](message);
   }
 
   async function handleBotInvite() {
@@ -380,7 +379,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
       <Card noPadding>
         <CardHeader title="Discord 連携" />
         <div className="p-[18px]">
-          <p className="text-[13px] text-muted">読み込み中...</p>
+          <p className="text-[13px] text-text-muted">読み込み中...</p>
         </div>
       </Card>
     );
@@ -393,7 +392,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
     <Card noPadding>
       <CardHeader title="Discord 連携" />
       <div className="p-[18px] space-y-5">
-        <p className="text-[13px] text-muted">
+        <p className="text-[13px] text-text-muted">
           Discord サーバーに RisukeruGG Bot を追加すると、タスク・コラボ通知や AI
           アシスタントが使えます。
         </p>
@@ -404,24 +403,6 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
           </p>
         )}
 
-        {toast && (
-          <p
-            className="text-[12px] rounded-[8px] px-3 py-2 border"
-            style={{
-              color: toast.type === 'success' ? 'var(--green)' : 'var(--live)',
-              background:
-                toast.type === 'success'
-                  ? 'color-mix(in oklab, var(--success) 10%, transparent)'
-                  : 'color-mix(in oklab, var(--danger) 10%, transparent)',
-              borderColor:
-                toast.type === 'success'
-                  ? 'color-mix(in oklab, var(--success) 30%, transparent)'
-                  : 'color-mix(in oklab, var(--danger) 30%, transparent)',
-            }}
-          >
-            {toast.message}
-          </p>
-        )}
 
         {/* ── 接続済み表示 ── */}
         {isConnected && (
@@ -435,14 +416,14 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
               </div>
               <div className="flex-1">
                 <p className="text-[13px] font-semibold text-text">Discord Bot 接続済み</p>
-                <p className="text-[11px] text-muted">
+                <p className="text-[11px] text-text-muted">
                   通知チャンネル:{' '}
                   {config.channelName ? `#${config.channelName}` : `ID: ${config.channelId}`}
                 </p>
               </div>
               <span
                 className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                style={{ background: 'var(--success-dim)', color: 'var(--green)' }}
+                style={{ background: 'var(--success-tint)', color: 'var(--success)' }}
               >
                 接続済み
               </span>
@@ -455,7 +436,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
                 <select
                   value={editChannelId}
                   onChange={(e) => setEditChannelId(e.target.value)}
-                  className="w-full bg-surface border border-border rounded-[8px] px-3 py-2 text-[13px] text-text focus:outline-none focus:border-purple"
+                  className="w-full bg-surface border border-border rounded-[8px] px-3 py-2 text-[13px] text-text focus:outline-none focus:border-primary"
                 >
                   {guildChannels.map((ch) => (
                     <option key={ch.id} value={ch.id}>
@@ -474,7 +455,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
                   </Button>
                   <button
                     onClick={() => setChannelEditOpen(false)}
-                    className="text-[12px] text-muted hover:text-text transition-colors"
+                    className="text-[12px] text-text-muted hover:text-text transition-colors"
                   >
                     キャンセル
                   </button>
@@ -485,13 +466,13 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
                 <button
                   onClick={handleOpenChannelEdit}
                   disabled={loadingGuildChannels}
-                  className="text-[12px] text-muted hover:text-text transition-colors disabled:opacity-50"
+                  className="text-[12px] text-text-muted hover:text-text transition-colors disabled:opacity-50"
                 >
                   {loadingGuildChannels ? 'チャンネル取得中...' : '通知チャンネルを変更する'}
                 </button>
                 <button
                   onClick={handleDisconnect}
-                  className="text-[12px] text-muted hover:text-live transition-colors"
+                  className="text-[12px] text-text-muted hover:text-live transition-colors"
                 >
                   登録を解除する
                 </button>
@@ -507,14 +488,14 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
               <p className="text-[12px] font-semibold text-text mb-1">
                 ✅ Bot がサーバーに参加しました
               </p>
-              <p className="text-[11px] text-muted">通知を送るチャンネルを選択してください</p>
+              <p className="text-[11px] text-text-muted">通知を送るチャンネルを選択してください</p>
             </div>
             <div>
               <p className="text-[12px] font-semibold text-text mb-2">通知チャンネル</p>
               <select
                 value={selectedChannelId}
                 onChange={(e) => setSelectedChannelId(e.target.value)}
-                className="w-full bg-surface border border-border rounded-[8px] px-3 py-2 text-[13px] text-text focus:outline-none focus:border-purple"
+                className="w-full bg-surface border border-border rounded-[8px] px-3 py-2 text-[13px] text-text focus:outline-none focus:border-primary"
               >
                 {availableChannels.map((ch) => (
                   <option key={ch.id} value={ch.id}>
@@ -552,7 +533,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
             </Button>
 
             {/* Sprint 1 フォールバック: Webhook URL 設定 */}
-            <details className="text-[12px] text-muted">
+            <details className="text-[12px] text-text-muted">
               <summary className="cursor-pointer hover:text-text transition-colors">
                 Webhook URL で通知する（旧方式）
               </summary>
@@ -565,7 +546,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
                     placeholder="https://discord.com/api/webhooks/..."
                     type="url"
                   />
-                  <p className="text-[11px] text-muted mt-1">
+                  <p className="text-[11px] text-text-muted mt-1">
                     Discord のサーバー設定 → 連携サービス → ウェブフック → URL をコピー
                   </p>
                 </div>
@@ -745,7 +726,7 @@ function ToggleRow({
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className="relative shrink-0 w-10 h-6 rounded-full transition-colors focus:outline-none p-0 overflow-hidden"
-        style={{ background: checked ? 'var(--purple)' : 'var(--border)' }}
+        style={{ background: checked ? 'var(--primary)' : 'var(--border)' }}
       >
         <span
           className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"

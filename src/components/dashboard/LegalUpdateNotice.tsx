@@ -12,6 +12,8 @@ import { useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
+import { buttonVariants } from '@/components/ui/Button';
+import { cn } from '@/lib/utils/cn';
 
 /** 直近の改定日（terms / privacy-policy の LAST_UPDATED と揃える） */
 export const LEGAL_REVISION_DATE = '2026-09-06';
@@ -59,18 +61,18 @@ export function LegalUpdateNotice() {
 
   return (
     <Card accent="primary" className="flex items-start gap-3" role="status">
-      <span className="mt-0.5 shrink-0 text-purple-l">
+      <span className="mt-0.5 shrink-0 text-brand-2">
         <Icon name="info" size={20} />
       </span>
       <div className="min-w-0 flex-1 text-sm">
         <p className="font-semibold text-text">利用規約・プライバシーポリシーを改定しました</p>
-        <p className="mt-1 text-[12px] leading-relaxed text-muted">
+        <p className="mt-1 text-[12px] leading-relaxed text-text-muted">
           機密情報の入力禁止と、Discord連携で送信される情報の取り扱いを明記しました。
-          <Link href="/terms" className="ml-1 text-purple-l hover:underline">
+          <Link href="/terms" className="ml-1 text-brand-2 hover:underline">
             利用規約
           </Link>
           <span className="mx-1">/</span>
-          <Link href="/privacy-policy" className="text-purple-l hover:underline">
+          <Link href="/privacy-policy" className="text-brand-2 hover:underline">
             プライバシーポリシー
           </Link>
         </p>
@@ -79,7 +81,7 @@ export function LegalUpdateNotice() {
         type="button"
         onClick={dismiss}
         aria-label="この告知を閉じる"
-        className="btn btn--ghost btn--icon btn--sm shrink-0"
+        className={cn(buttonVariants({ variant: 'subtle', size: 'icon-sm' }), 'shrink-0')}
       >
         <Icon name="close" size={18} />
       </button>

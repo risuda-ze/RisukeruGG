@@ -20,20 +20,20 @@ export default function UrgencyChip({ level, dueDate }: UrgencyChipProps) {
         ? differenceInCalendarDays(startOfDay(new Date()), startOfDay(dueDate))
         : 0;
       label = `${days}日超過`;
-      style = { background: 'var(--danger-dim)', color: 'var(--danger)' };
+      style = { background: 'var(--danger-tint)', color: 'var(--danger)' };
       break;
     }
     case 'today':
       label = '今日まで';
-      style = { background: 'var(--warning-dim)', color: 'var(--warning)' };
+      style = { background: 'var(--warning-tint)', color: 'var(--warning)' };
       break;
     case 'soon':
       label = 'もうすぐ';
-      style = { background: 'var(--warning-dim)', color: 'var(--warning)' };
+      style = { background: 'var(--warning-tint)', color: 'var(--warning)' };
       break;
     case 'done':
       label = '完了';
-      style = { background: 'var(--success-dim)', color: 'var(--success)' };
+      style = { background: 'var(--success-tint)', color: 'var(--success)' };
       break;
   }
 

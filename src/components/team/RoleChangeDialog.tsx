@@ -60,7 +60,7 @@ export function RoleChangeDialog({
           <span className="font-medium">{ROLE_LABELS[newRole]}</span> に変更しますか？
         </p>
         {newRole === 'rom' && (
-          <p className="text-amber-l bg-amber/10 border border-amber/30 rounded-[8px] p-3">
+          <p className="text-orange-text bg-warning/10 border border-warning/30 rounded-[8px] p-3">
             ROM専になると、スケジュール・タスクの作成・編集ができなくなります。
           </p>
         )}
