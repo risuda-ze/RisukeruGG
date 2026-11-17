@@ -1,0 +1,123 @@
+# Google カレンダー連携の転換（ミラー廃止 → チーム予定の書き出し） 変更仕様
+
+Issue: #208
+
+## 背景・目的
+
+Google カレンダー連携の方向を転換する。
+
+- **やめること**: メンバーの Google カレンダー予定をチーム配下へミラーする方式（`MemberCalendarEvent`、SC-019 系）と、自分の Google 予定の読み取り表示（`source: 'google'`）
+- **やること**: RisukeruGG のカレンダーにはチームの予定だけを置く。「Google カレンダーに書き出す」ボタンを押すと Google の同意画面が開き、チームの予定が自分の Google カレンダーへ追加される（チーム → 個人の一方向）
+
+## 決定事項
+
+Issue #208 の論点に対する決定。★ はユーザー確認済み、それ以外は本仕様での既定。
+
+| # | 論点 | 決定 |
+| - | ---- | ---- |
+| 1 | 一回限りか継続同期か | ★ **一回限りの書き出し**。ボタン押下時点の予定を流し込む。以後の変更は再度ボタンを押すと反映される（再書き出し）。サーバー側の処理・リフレッシュトークン保管は持たない |
+| 2 | iCal 購読 URL | 採用しない |
+| 3 | スコープ | `https://www.googleapis.com/auth/calendar.app.created`（アプリが作成した副カレンダーとその予定だけを扱える）。ユーザーの既存予定は読めない・触れない |
+| 4 | 専用カレンダーか primary か | **専用の副カレンダー**「RisukeruGG - {チーム名}」をチームごとに 1 つ作る。primary には書かない |
+| 5 | 対象の予定 | ★ **チームの全予定**（`participantIds` で絞らない）。範囲は「書き出し当日 0:00（JST）以降に終了する予定」。過去分は入れない。ブリーフの公開予定日・工程締切は対象外 |
+| 6 | 対応づけ | Google イベントの `extendedProperties.private.risukeruScheduleId` に `scheduleId` を持たせる。Firestore に予定単位の対応表は持たない |
+| 7 | 逆方向の編集 | 取り込まない。Google 側での変更は次回の書き出しで上書きされる。説明文の末尾に「この予定は RisukeruGG から書き出されたものです。編集は RisukeruGG で行ってください」を付ける |
+| 8 | 通知の重複 | `reminders: { useDefault: false, overrides: [] }` で Google 側の通知を付けない（締切前の通知は Discord が担う） |
+| 9 | 失敗の見せ方 | 同意の拒否・トークン取得失敗・API エラーは画面上にエラー表示する。一部の予定だけ失敗した場合は「N 件中 M 件を書き出せませんでした」と件数を出し、再実行を促す。サイレント失敗させない |
+| 10 | ボタンの置き場 | スケジュール画面のメニュー（現「Googleカレンダーを接続」の位置）。対象はアクティブチーム。複数チーム所属時はチームを切り替えてそれぞれ書き出す |
+| 11 | 自分の Google 予定の読み取り表示 | ★ **同時に廃止** |
+
+### 継続同期を見送ったことによる制約
+
+- RisukeruGG 側で予定を追加・変更・削除しても、Google カレンダーには自動で反映されない。反映には再書き出しが必要
+- そのため UI には最終書き出し日時を表示し、再書き出しの導線を常に出しておく
+
+## 仕様
+
+### 書き出しの動作
+
+1. ユーザーがスケジュール画面のメニューから「Google カレンダーに書き出す」を押す（`operator` / `member` / `rom` すべて可。チーム側のデータは読むだけ）
+2. `calendar.app.created` スコープを付けた Google 認可ポップアップを開き、アクセストークンを取得する
+   - ログイン時にはカレンダースコープを要求しない（incremental auth）
+   - トークンはその場の書き出しにだけ使い、localStorage や Firestore へ保存しない
+3. 書き出し先カレンダーを決める
+   - `users/{uid}.googleCalendarExports.{teamId}.calendarId` があり、Google 側に実在すればそれを使う
+   - 無い、または Google 側で削除済み（404）なら、副カレンダー「RisukeruGG - {チーム名}」を新規作成して `calendarId` を保存する
+4. 専用カレンダー上の「当日 0:00（JST）以降に終了するイベント」を一覧し、`risukeruScheduleId` で対象予定と突き合わせる
+   - Google 側に無い予定 → 追加
+   - Google 側にある予定 → 内容を上書き
+   - Google 側にあるが RisukeruGG 側に無い（削除された）予定 → 削除
+   - 当日より前に終了したイベントには触れない（履歴として残る）
+5. 完了後 `exportedAt` を更新し、結果（追加・更新・削除の件数、失敗があれば失敗件数）を表示する
+
+同じ操作を何度行っても結果は同じになる（冪等）。専用カレンダーの中身はすべて RisukeruGG 由来なので、突き合わせの範囲はこのカレンダー内で閉じる。
+
+### イベントへの対応づけ
+
+| Google イベント | 値 |
+| --------------- | -- |
+| `summary` | `title` |
+| `start` / `end` | `allDay: false` は `dateTime`（`timeZone: Asia/Tokyo`）。`allDay: true` は `date`（保存値が既に「開始日 0:00 〜 最終日翌日 0:00」の排他的境界なのでそのまま日付へ変換） |
+| `description` | プラットフォーム・参加メンバー名・`description` 本文（Markdown のまま）・末尾に注意書き（決定事項 7） |
+| `extendedProperties.private.risukeruScheduleId` | `scheduleId` |
+| `reminders` | `{ useDefault: false, overrides: [] }` |
+
+### 保持する状態
+
+`users/{uid}` に次を追加する（正本: `docs/仕様・計画/user/model.md`）。
+
+```
+googleCalendarExports: {
+  [teamId]: { calendarId: string, exportedAt: timestamp }
+}
+```
+
+- 書き込みは本人のみ
+- アカウント削除（ゴースト化）時に除去する。Google 側の副カレンダーは消さない（ユーザーの持ち物）
+- チーム退出時も Google 側の副カレンダーは残る。不要ならユーザーが Google カレンダー上で削除する
+
+### UI
+
+- スケジュール画面メニュー: 「Googleカレンダーを接続 / 再接続」を「Google カレンダーに書き出す」に置き換える。書き出し済みなら最終書き出し日時を併記する
+- 「メンバーの予定を表示」トグル、メンバー予定の詳細モーダル、Google 未接続バナー・認証切れバナーは削除する
+- 書き出し中は進行表示を出し、二重実行を防ぐ
+
+## 廃止・片付け
+
+- 型・リポジトリ: `MemberCalendarEvent`、`src/lib/repositories/memberCalendars.ts`、`src/lib/googleCalendar.ts` の読み取り処理（`fetchGCalEvents`、`source: 'google'`）
+- 認証: `src/stores/auth.ts` のログイン時 `calendar` スコープ要求、`gcal_token` の localStorage 保存・復元、ログイン時・チーム切り替え時のミラー保存、`googleAccessToken` ステート
+- 画面: `schedule/page.tsx`・`MonthCalendar`・`WeekCalendar` のメンバー予定／Google 予定の表示
+- AI: `src/lib/ai/systemPrompt.ts` と `AIChatPage.tsx` の「メンバーの予定」コンテキスト
+- Functions: `syncGoogleCalendar`（常に空振りしている死んだコード）と `functions/src/index.ts` の export、`onUserCreate` の `googleCalendar` 初期化
+- Firestore ルール: `memberCalendars` と `collectionGroup('events')` の定義
+- データ: 既存の `teams/{teamId}/memberCalendars/**` と `users/{uid}.googleCalendar` を一度きりのスクリプトで削除し、適用後にスクリプトを除去する（既存方針）
+
+## 公開前に必須の対応
+
+- プライバシーポリシーへカレンダー項目を追記する（利用目的: チームの予定を利用者自身の Google カレンダーへ書き出すため。取得する権限: アプリが作成したカレンダーのみ。トークンを保存しないこと）
+- Google Cloud の OAuth 同意画面で、登録スコープを `calendar` から `calendar.app.created` へ差し替える。審査が必要な区分であれば申請する
+
+## 実装計画
+
+ブランチは `develop` 起点の `feature/`、マージ先は `develop`。各段階の後に `pnpm typecheck` / `pnpm lint` / `pnpm test` を実行する。
+
+1. **廃止**: 上記「廃止・片付け」のコード・ルール・Functions を削除する。ログイン時のカレンダースコープ要求を外す。この時点でアプリはカレンダー連携なしで動作する
+2. **書き出し**: 認可ポップアップでのトークン取得、専用カレンダーの作成、突き合わせと書き込み、`googleCalendarExports` の保存、UI（ボタン・進行表示・結果／エラー表示）。突き合わせ（追加・更新・削除の判定）と予定 → Google イベント変換は純関数にしてユニットテストを付ける
+3. **データ削除**: 削除スクリプトを本番へ適用し、スクリプトを除去する
+4. **公開前対応**: プライバシーポリシー追記、OAuth 同意画面のスコープ差し替え
+
+### 実装時に確認すること
+
+- トークン取得の方法。第一候補は Firebase Auth の `reauthenticateWithPopup`（`GoogleAuthProvider` に `calendar.app.created` を `addScope`）。ログイン中と別の Google アカウントを選ばれた場合はエラーとして表示する
+- `calendar.app.created` で `calendars.insert`・`calendars.get`・`events.list` / `insert` / `patch` / `delete` がすべて通ること。通らない操作があれば `calendar.events` 等への変更をこの仕様に戻して判断する
+- 予定件数が多いチームでの所要時間と Google API のレート制限（必要なら並列数を絞る）
+
+## 正本仕様の同期
+
+本変更仕様と同時に、次の正本を新方式へ書き換え済み。実装完了までは現行実装と差がある。
+
+- `docs/仕様・計画/schedule/*`: SC-008 系を書き出し方式へ書き換え、SC-019 系と `MemberCalendarEvent` を削除
+- `docs/仕様・計画/user/*`: US-005 を incremental auth へ変更、`googleCalendar` を `googleCalendarExports` へ置き換え
+- `docs/仕様・計画/ai/*`: 「メンバーの予定」コンテキスト（AI-010）を削除
+- `docs/仕様・計画/production/requirements.md`: PD-072 の理由書きを見直し
+- `docs/共通用語/共通用語.md`: 「Google カレンダー書き出し」を追加
