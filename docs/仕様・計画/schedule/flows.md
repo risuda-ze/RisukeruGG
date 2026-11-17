@@ -36,7 +36,7 @@
 
 ## Google カレンダー書き出しフロー
 
-1. ユーザーがスケジュール画面のメニューから「Google カレンダーに書き出す」を実行する
+1. ユーザーがスケジュール画面（PC はヘッダーのボタン、モバイルは ⋯ メニュー）から「Google カレンダーに書き出す」を実行する
 2. `calendar.app.created` スコープの Google 認可ポップアップを開き、アクセストークンを取得する（[user/flows.md](../user/flows.md) 参照。トークンは保存しない）
 3. `users/{uid}.googleCalendarExports.{teamId}.calendarId` のカレンダーが Google 側に実在すればそれを使う。無ければ副カレンダー「RisukeruGG - {チーム名}」を作成し `calendarId` を保存する
 4. 専用カレンダー上の「当日 0:00（JST）以降に終了するイベント」を一覧し、`risukeruScheduleId` でチームの対象予定と突き合わせる
