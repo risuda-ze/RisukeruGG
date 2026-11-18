@@ -39,7 +39,7 @@ export function BriefCard({ brief, steps, members }: BriefCardProps) {
             {BRIEF_STATUS_LABELS[brief.status]}
           </Badge>
         </div>
-        <div className="flex items-center gap-1.5 text-[12px] text-muted">
+        <div className="flex items-center gap-1.5 text-[12px] text-text-muted">
           <Icon name="event" size={14} />
           <span>公開 {formatShortDate(brief.publishAt)}</span>
           {publishDays !== null && publishDays >= 0 && brief.status !== 'published' && (
@@ -50,7 +50,7 @@ export function BriefCard({ brief, steps, members }: BriefCardProps) {
         {next && (
           <p className="text-[12px] text-text-2 truncate">
             次: {next.title}
-            {nextAssignee && <span className="text-muted">（{nextAssignee.displayName}）</span>}
+            {nextAssignee && <span className="text-text-muted">（{nextAssignee.displayName}）</span>}
           </p>
         )}
         {(blocked > 0 || overdue > 0 || unassigned > 0) && (

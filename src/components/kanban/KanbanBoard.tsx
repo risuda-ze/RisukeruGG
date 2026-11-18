@@ -61,9 +61,9 @@ export default function KanbanBoard({
       {showHint && (
         <div
           className="flex items-center gap-3 px-4 py-2.5 mb-3 rounded-[10px] text-[12px] shrink-0"
-          style={{ background: 'var(--purple-xs)', border: '1px solid var(--purple-sm)' }}
+          style={{ background: 'color-mix(in oklab, var(--primary) 8%, transparent)', border: '1px solid color-mix(in oklab, var(--primary) 15%, transparent)' }}
         >
-          <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0 text-purple-l">
+          <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0 text-brand-2">
             <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clipRule="evenodd" />
           </svg>
           <span className="flex-1 text-text-secondary">
@@ -71,7 +71,7 @@ export default function KanbanBoard({
           </span>
           <button
             onClick={onDismissHint}
-            className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-muted hover:text-text transition-colors"
+            className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-text-muted hover:text-text transition-colors"
             aria-label="ヒントを閉じる"
           >
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2} className="w-3 h-3">
@@ -137,13 +137,13 @@ function TaskStatusPanel({
         flex: '1 1 0',
         minWidth: '180px',
         background: 'var(--surface)',
-        border: '1px solid var(--card-border)',
+        border: '1px solid var(--border)',
       }}
     >
       {/* カラムヘッダー */}
       <div
         className="flex items-center gap-2.5 px-3.5 py-3 shrink-0"
-        style={{ borderBottom: '1px solid var(--card-border)' }}
+        style={{ borderBottom: '1px solid var(--border)' }}
       >
         {/* カラーバー */}
         <span
@@ -163,14 +163,13 @@ function TaskStatusPanel({
         )}
         <span
           className="font-semibold text-[14px] text-text flex-1 truncate"
-          style={{ fontFamily: 'var(--font-head)' }}
         >
           {column.name}
         </span>
         {/* 件数バッジ */}
         <span
-          className="min-w-[22px] h-[22px] px-1.5 rounded-full flex items-center justify-center text-[11px] font-bold font-num text-muted"
-          style={{ background: 'var(--card)', border: '1px solid var(--card-border)' }}
+          className="min-w-[22px] h-[22px] px-1.5 rounded-full flex items-center justify-center text-[11px] font-bold font-num text-text-muted"
+          style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
         >
           {tasks.length}
         </span>
@@ -191,7 +190,7 @@ function TaskStatusPanel({
             }}
           >
             {tasks.length === 0 && !snapshot.isDraggingOver && (
-              <p className="text-[11px] text-muted text-center py-3">タスクはありません</p>
+              <p className="text-[11px] text-text-muted text-center py-3">タスクはありません</p>
             )}
             {tasks.map((task, index) => (
               <Draggable key={task.id} draggableId={task.id} index={index} isDragDisabled={!canEdit}>
@@ -220,8 +219,8 @@ function TaskStatusPanel({
       {canEdit && (
         <button
           onClick={() => onAddTask(column.id)}
-          className="flex items-center justify-center gap-1.5 w-full py-2.5 text-[12px] text-muted hover:text-text transition-colors shrink-0"
-          style={{ borderTop: '1px dashed var(--border-light)' }}
+          className="flex items-center justify-center gap-1.5 w-full py-2.5 text-[12px] text-text-muted hover:text-text transition-colors shrink-0"
+          style={{ borderTop: '1px dashed var(--border)' }}
         >
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 3v10M3 8h10" />

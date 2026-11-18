@@ -6,15 +6,16 @@ import { useAuthStore } from '@/stores/auth';
 import { useBriefsStore, selectStepsOfBrief } from '@/stores/briefs';
 import { useBriefOps } from '@/hooks/useBriefOps';
 import { TopBar } from '@/components/layout/TopBar';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { BriefsLoadError } from '@/components/briefs/BriefsLoadError';
 import { Icon } from '@/components/ui/Icon';
-import { Badge } from '@/components/ui/Badge';
+import { Badge, badgeVariants } from '@/components/ui/Badge';
 import { BriefCard } from '@/components/briefs/BriefCard';
 import { NewBriefModal } from '@/components/briefs/NewBriefModal';
 import type { Brief } from '@/types/briefs';
+import { cn } from '@/lib/utils/cn';
 
 type Filter = 'active' | 'mine' | 'all';
 
@@ -63,7 +64,7 @@ export default function BriefsPage() {
         <TopBar title="タスク管理 v2" />
         <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 max-w-lg">
           <Card>
-            <p className="text-sm text-muted">チームに参加すると、動画ごとの1枚紙で制作を進められます。</p>
+            <p className="text-sm text-text-muted">チームに参加すると、動画ごとの1枚紙で制作を進められます。</p>
           </Card>
         </div>
       </div>
@@ -74,11 +75,11 @@ export default function BriefsPage() {
     <div className="flex flex-col flex-1 overflow-hidden">
       <TopBar title="タスク管理 v2" subtitle="動画1本を1枚紙で回す（β）">
         <div className="flex items-center gap-2">
-          <Link href="/briefs/mine" className="btn btn--secondary btn--sm hidden sm:inline-flex">
+          <Link href="/briefs/mine" className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }), 'hidden sm:inline-flex')}>
             <Icon name="task_alt" size={14} />
             自分の工程
           </Link>
-          <Link href="/briefs/playbooks" className="btn btn--secondary btn--sm hidden sm:inline-flex">
+          <Link href="/briefs/playbooks" className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }), 'hidden sm:inline-flex')}>
             <Icon name="settings" size={14} />
             進め方
           </Link>
@@ -105,15 +106,15 @@ export default function BriefsPage() {
               key={key}
               type="button"
               onClick={() => setFilter(key)}
-              className={`ds-badge ${filter === key ? 'ds-badge--primary' : 'ds-badge--neutral'} cursor-pointer`}
+              className={cn(badgeVariants({ variant: filter === key ? 'primary' : 'neutral' }), 'cursor-pointer')}
               aria-pressed={filter === key}
             >
               {label}
             </button>
           ))}
           <div className="sm:hidden ml-auto flex gap-2">
-            <Link href="/briefs/mine" className="text-[12px] text-purple-l">自分の工程</Link>
-            <Link href="/briefs/playbooks" className="text-[12px] text-purple-l">進め方</Link>
+            <Link href="/briefs/mine" className="text-[12px] text-brand-2">自分の工程</Link>
+            <Link href="/briefs/playbooks" className="text-[12px] text-brand-2">進め方</Link>
           </div>
         </div>
 
@@ -128,7 +129,7 @@ export default function BriefsPage() {
             <p className="text-sm text-text mb-1">
               {briefs.length === 0 ? 'まだブリーフがありません' : '条件に合うブリーフがありません'}
             </p>
-            <p className="text-[12px] text-muted mb-4">
+            <p className="text-[12px] text-text-muted mb-4">
               動画1本ごとに1枚紙を作ると、工程・担当・締切が自動で埋まります。
               {playbooks.length === 0 && ' まず「進め方」を作っておくと、次からは公開日を入れるだけで済みます。'}
             </p>
@@ -138,7 +139,7 @@ export default function BriefsPage() {
                   新しいブリーフ
                 </Button>
                 {playbooks.length === 0 && (
-                  <Link href="/briefs/playbooks" className="btn btn--secondary btn--sm">
+                  <Link href="/briefs/playbooks" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
                     進め方を作る
                   </Link>
                 )}
@@ -153,7 +154,7 @@ export default function BriefsPage() {
           </div>
         )}
 
-        <p className="mt-6 text-[11px] text-muted flex items-center gap-1">
+        <p className="mt-6 text-[11px] text-text-muted flex items-center gap-1">
           <Badge variant="info">β</Badge>
           従来のカンバン（タスク管理）はそのまま使えます。v2 は動画1本単位の進行管理に向いています。
         </p>

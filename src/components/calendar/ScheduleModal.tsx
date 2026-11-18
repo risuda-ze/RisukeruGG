@@ -10,9 +10,11 @@ import { DateField } from '@/components/ui/DateField';
 import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import { Icon } from '@/components/ui/Icon';
+import { DialogShell } from '@/components/ui/Dialog';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
+import { Switch } from '@/components/ui/Switch';
+import { Button, buttonVariants } from '@/components/ui/Button';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { ScheduleEntry, Category } from '@/types/entities';
 import { getEventLastDay } from '@/lib/utils/eventDays';
@@ -90,7 +92,6 @@ export function ScheduleModal({
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const isDragging = useRef(false);
   const dragStart = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 });
-  const mouseDownOnOverlay = useRef(false);
 
   /* ── リサイズ（pointer capture 方式） */
   const cardRef = useRef<HTMLDivElement>(null);
@@ -212,32 +213,27 @@ export function ScheduleModal({
   }
 
   /* ── スタイル定数 */
-  const avatarSm: React.CSSProperties = { background: 'var(--primary-800)', color: 'var(--primary-200)' };
-  const bubbleBase: React.CSSProperties = { background: 'var(--bg)', border: '1px solid var(--border)' };
+  const avatarSm: React.CSSProperties = { background: 'var(--border)', color: 'var(--text-2)' };
+  const bubbleBase: React.CSSProperties = { background: 'var(--canvas)', border: '1px solid var(--border)' };
 
   /* ─────────────────── レンダリング ─────────────────── */
   return (
-    <div
-      className="fixed inset-0 z-[280] flex items-end justify-center p-0 md:items-center md:p-8"
-      style={{ background: 'rgba(6,6,16,0.85)', backdropFilter: 'blur(6px)', animation: 'fade-in 200ms ease-out both' }}
-      onMouseDown={(e) => { mouseDownOnOverlay.current = e.target === e.currentTarget; }}
-      onClick={() => { if (mouseDownOnOverlay.current) onClose(); }}
+    <DialogShell
+      onClose={onClose}
+      label={isNew ? '予定を追加' : '予定を編集'}
+      data-testid="schedule-modal"
+      // ドラッグ移動は外枠の transform で行う（position=0 のときは transform を省略して不要な stacking context を避ける）
+      className="relative w-full md:w-auto"
+      style={
+        !isMobile && (position.x !== 0 || position.y !== 0)
+          ? { transform: `translate(${position.x}px, ${position.y}px)` }
+          : undefined
+      }
     >
-      {/* ── ドラッグ移動ラッパー（position=0 のときは transform を省略して不要な stacking context を避ける） */}
-      <div
-        className="w-full md:w-auto"
-        style={{
-          position: 'relative',
-          ...(!isMobile && (position.x !== 0 || position.y !== 0)
-            ? { transform: `translate(${position.x}px, ${position.y}px)` }
-            : {}),
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
         {/* ── モーダル本体（スマホは全幅ボトムシート） */}
         <div
           ref={cardRef}
-          className="smodal__card"
+          className="relative flex max-h-full max-w-full flex-col overflow-hidden rounded-lg border border-border bg-card animate-pop-modal"
           style={
             isMobile
               ? { width: '100%', height: '92dvh', minWidth: 0, borderRadius: '20px 20px 0 0' }
@@ -251,22 +247,26 @@ export function ScheduleModal({
 
           {/* ── ヘッダー（ドラッグハンドル / タイトル inline） */}
           <div
-            className="smodal__hd"
-            style={{ padding: '11px 18px 11px 22px', cursor: isMobile ? 'default' : 'grab', userSelect: 'none', alignItems: 'center' }}
+            className="flex flex-none items-center gap-3.5 border-b border-border py-2.75 pr-4.5 pl-5.5 select-none"
+            style={{ cursor: isMobile ? 'default' : 'grab' }}
             onPointerDown={isMobile ? undefined : handlePointerDown}
             onPointerMove={isMobile ? undefined : handlePointerMove}
             onPointerUp={isMobile ? undefined : handlePointerUp}
             onPointerCancel={isMobile ? undefined : handlePointerUp}
           >
-            <Icon name={isNew ? 'add' : 'edit'} size={17} style={{ color: 'var(--text-accent)', flexShrink: 0 } as React.CSSProperties} />
-            <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+            <Icon name={isNew ? 'add' : 'edit'} size={17} style={{ color: 'var(--brand-2)', flexShrink: 0 } as React.CSSProperties} />
+            <span style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text)', whiteSpace: 'nowrap' }}>
               {isNew ? '予定を追加' : '予定を編集'}
             </span>
             {/* サブ説明はスマホでは非表示（幅確保） */}
             <span className="hidden md:inline" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {isNew ? '— 新しい予定の内容を入力して保存してください。' : '— 予定の内容を編集して保存してください。'}
             </span>
-            <button onClick={onClose} className="smodal__close" title="閉じる" style={{ marginLeft: 'auto', flexShrink: 0 }}>
+            <button
+              onClick={onClose}
+              className="ml-auto flex size-9.5 flex-none cursor-pointer items-center justify-center rounded-md bg-surface text-text-2 transition-colors duration-(--duration-fast) ease-out hover:bg-surface-2 hover:text-text"
+              title="閉じる"
+            >
               <Icon name="close" size={18} />
             </button>
           </div>
@@ -290,25 +290,21 @@ export function ScheduleModal({
               <Input label="タイトル *" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} placeholder="予定のタイトルを入力" />
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>カテゴリ</label>
+                <label className="text-[12px] font-semibold" style={{ color: 'var(--text-2)' }}>カテゴリ</label>
                 <Dropdown value={categoryId} options={categories.map((c) => ({ value: c.id, label: c.name }))} placeholder="未選択" onChange={setCategoryId} scroll />
               </div>
 
               {/* 開始日時 / 終了日時 / 終日トグル — 横並び（スマホは折り返し） */}
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                 <div style={{ flex: '1 1 130px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>開始日時 *</label>
+                  <label className="text-[12px] font-semibold" style={{ color: 'var(--text-2)' }}>開始日時 *</label>
                   <DateField value={startAt} onChange={handleStartAtChange} hideTime={isAllDay} placeholder="開始日時を選択" />
                 </div>
                 <div style={{ flex: '1 1 130px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>終了日時</label>
+                  <label className="text-[12px] font-semibold" style={{ color: 'var(--text-2)' }}>終了日時</label>
                   <DateField value={endAt} onChange={(d) => setEndAt(d)} min={startAt ?? undefined} hideTime={isAllDay} placeholder="終了日時を選択" />
                 </div>
-                {/* 終日トグル（.allday CSS クラス） */}
-                <label className={`allday${isAllDay ? ' is-on' : ''}`} onClick={toggleAllDay} style={{ paddingBottom: 11, flexShrink: 0, cursor: 'pointer' }}>
-                  <span className="allday__txt">終日</span>
-                  <span className="allday__sw" />
-                </label>
+                <Switch label="終日" checked={isAllDay} onCheckedChange={toggleAllDay} className="pb-2.75" />
               </div>
 
               <MarkdownEditor label="説明" value={description} onChange={setDescription} placeholder="予定の詳細を入力..." maxLength={1000} rows={5} />
@@ -331,8 +327,8 @@ export function ScheduleModal({
 
               {/* 右カラムヘッダー */}
               <div className="flex items-center gap-2 shrink-0 px-5 py-3" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
-                <span className="material-icons text-[15px]" style={{ color: 'var(--text-accent)' }}>chat</span>
-                <span className="text-[12px] font-semibold tracking-[0.05em]" style={{ color: 'var(--text-secondary)' }}>コメント / メモ</span>
+                <span className="material-icons text-[15px]" style={{ color: 'var(--brand-2)' }}>chat</span>
+                <span className="text-[12px] font-semibold tracking-[0.05em]" style={{ color: 'var(--text-2)' }}>コメント / メモ</span>
               </div>
 
               {/* コメント一覧（スクロール可） */}
@@ -352,11 +348,11 @@ export function ScheduleModal({
                         <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5" style={avatarSm}>{comment.authorInitials}</div>
                         <div className="flex-1 px-3 py-2.5 rounded-[0_10px_10px_10px] text-[13px]" style={bubbleBase}>
                           <div className="flex justify-between text-[11px] mb-1" style={{ color: 'var(--text-muted)' }}>
-                            <strong style={{ color: 'var(--text-primary)' }}>{comment.authorName}</strong>
+                            <strong style={{ color: 'var(--text)' }}>{comment.authorName}</strong>
                             <span>{comment.time}</span>
                           </div>
-                          <p className="leading-relaxed mb-1.5" style={{ color: 'var(--text-primary)' }}>{comment.text}</p>
-                          <button className="text-[11px] font-semibold transition-colors" style={{ color: 'var(--text-muted)' }} onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--primary-300)'; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}>返信する</button>
+                          <p className="leading-relaxed mb-1.5" style={{ color: 'var(--text)' }}>{comment.text}</p>
+                          <button className="text-[11px] font-semibold transition-colors" style={{ color: 'var(--text-muted)' }} onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--brand-2)'; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}>返信する</button>
                         </div>
                       </div>
                       {/* 返信一覧 */}
@@ -364,13 +360,13 @@ export function ScheduleModal({
                         <div key={reply.id} className="flex gap-2.5 ml-9 relative">
                           <div className="absolute -left-[20px] top-0 bottom-4 w-px bg-border rounded" />
                           <div className="absolute -left-[20px] top-4 w-3 h-px bg-border rounded" />
-                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5" style={{ background: 'rgba(239,159,39,0.2)', color: 'var(--amber-l)' }}>{reply.authorInitials}</div>
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5" style={{ background: 'rgba(239,159,39,0.2)', color: 'var(--orange-text)' }}>{reply.authorInitials}</div>
                           <div className="flex-1 px-3 py-2 rounded-[0_10px_10px_10px] text-[12px]" style={bubbleBase}>
                             <div className="flex justify-between text-[11px] mb-1" style={{ color: 'var(--text-muted)' }}>
-                              <strong style={{ color: 'var(--text-primary)' }}>{reply.authorName}</strong>
+                              <strong style={{ color: 'var(--text)' }}>{reply.authorName}</strong>
                               <span>{reply.time}</span>
                             </div>
-                            <p style={{ color: 'var(--text-primary)' }}>{reply.text}</p>
+                            <p style={{ color: 'var(--text)' }}>{reply.text}</p>
                           </div>
                         </div>
                       ))}
@@ -410,13 +406,13 @@ export function ScheduleModal({
           </div>
 
           {/* ── フッター */}
-          <div className="sform__footer">
+          <div className="flex flex-none items-center gap-3 border-t border-border px-6.5 py-4">
             {!isNew && canEdit && (
-              <button onClick={handleDelete} className="btn btn--danger btn--sm">
+              <button onClick={handleDelete} className={buttonVariants({ variant: 'danger', size: 'sm' })}>
                 <Icon name="delete" size={15} />削除
               </button>
             )}
-            <div className="sform__footer-right">
+            <div className="ml-auto flex gap-3">
               <Button variant="ghost" onClick={onClose}>キャンセル</Button>
               {canEdit && (
                 <Button variant="primary" onClick={handleSave} loading={saving}>保存する</Button>
@@ -429,7 +425,7 @@ export function ScheduleModal({
         {/* ── リサイズハンドル（カード外・overflow:hidden の影響を受けない。スマホでは非表示） */}
         {!isMobile && (
         <div
-          className="smodal__resize"
+          className="pointer-events-auto absolute right-3 bottom-3 z-10 flex size-6 cursor-se-resize items-center justify-center rounded-sm text-text-muted opacity-45 transition-[opacity,background-color] duration-(--duration-fast) hover:bg-surface hover:opacity-90"
           onPointerDown={handleResizePointerDown}
           onPointerMove={handleResizePointerMove}
           onPointerUp={handleResizePointerUp}
@@ -439,7 +435,6 @@ export function ScheduleModal({
         </div>
         )}
 
-      </div>
-    </div>
+    </DialogShell>
   );
 }

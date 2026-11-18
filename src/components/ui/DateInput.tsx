@@ -73,7 +73,7 @@ export function DateInput({
       {/* ラベル */}
       <label
         className="text-sm font-medium"
-        style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-head)' }}
+        style={{ color: 'var(--text-2)' }}
       >
         {label}
         {required && <span style={{ color: 'var(--danger)', marginLeft: 2 }}>*</span>}
@@ -98,8 +98,7 @@ export function DateInput({
             flex: 1,
             textAlign: 'left',
             fontSize: '0.875rem',
-            color: displayText ? 'var(--text-primary)' : 'var(--text-muted)',
-            fontFamily: 'var(--font-body)',
+            color: displayText ? 'var(--text)' : 'var(--text-muted)',
           }}
         >
           {displayText || '日付を選択…'}
@@ -128,8 +127,8 @@ export function DateInput({
             top: 'calc(100% + 6px)',
             left: 0,
             zIndex: 60,
-            background: 'var(--card-raised)',
-            border: '1px solid var(--card-border)',
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border)',
             borderRadius: 'var(--radius-md)',
             boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
             padding: '16px',

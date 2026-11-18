@@ -11,7 +11,7 @@ export interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   return (
-    <div className="flex h-screen overflow-hidden bg-bg">
+    <div className="flex h-screen overflow-hidden bg-canvas">
       {/* ── デスクトップ: 固定サイドバー ─────────────────── */}
       <Sidebar />
 

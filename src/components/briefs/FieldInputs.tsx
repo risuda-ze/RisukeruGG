@@ -41,7 +41,7 @@ export function FieldInputs({ defs, values, onChange, disabled }: FieldInputsPro
           case 'select':
             return (
               <div key={def.key} className="flex flex-col gap-1.5">
-                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>
                   {label}
                 </span>
                 <Dropdown
@@ -50,7 +50,7 @@ export function FieldInputs({ defs, values, onChange, disabled }: FieldInputsPro
                   onChange={(v) => onChange(def.key, v || null)}
                   size="sm"
                 />
-                {hint && <span className="text-[11px] text-muted">{hint}</span>}
+                {hint && <span className="text-[11px] text-text-muted">{hint}</span>}
               </div>
             );
           case 'number':

@@ -22,7 +22,7 @@ export function BriefProgress({ steps, compact = false }: { steps: Step[]; compa
           style={{ width: `${ratio}%`, background: ratio === 100 ? 'var(--success)' : 'var(--primary)' }}
         />
       </div>
-      <span className={`shrink-0 tabular-nums text-muted ${compact ? 'text-[11px]' : 'text-[12px]'}`}>
+      <span className={`shrink-0 tabular-nums text-text-muted ${compact ? 'text-[11px]' : 'text-[12px]'}`}>
         {closed}/{total}
       </span>
     </div>

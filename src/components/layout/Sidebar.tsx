@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation';
 import { useSidebarStore } from '@/stores/sidebar';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { TeamSwitcher } from '@/components/layout/TeamSwitcher';
+import { badgeVariants } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils/cn';
 
 /* ── ナビゲーション定義 ─────────────────────────────────────── */
 interface NavItem {
@@ -73,12 +75,12 @@ export function Sidebar() {
       className={`shrink-0 hidden md:flex flex-col h-screen sticky top-0 transition-[width] duration-300 overflow-hidden ${
         collapsed ? 'w-[72px]' : 'w-[260px]'
       }`}
-      style={{ background: 'var(--surface)', borderRight: '1px solid var(--card-border)' }}
+      style={{ background: 'var(--surface)', borderRight: '1px solid var(--border)' }}
     >
       {/* ── ヘッダー ────────────────────────────────────────── */}
       <div
         className={`py-4 flex items-center min-w-0 ${collapsed ? 'px-2 justify-between' : 'px-4 gap-3'}`}
-        style={{ borderBottom: '1px solid var(--card-border)' }}
+        style={{ borderBottom: '1px solid var(--border)' }}
       >
         <Link href="/schedule" className="shrink-0" aria-label="スケジュールへ">
           <Image
@@ -95,7 +97,7 @@ export function Sidebar() {
           className={`text-sm font-bold tracking-tight whitespace-nowrap transition-[opacity,width] duration-300 ${
             collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 flex-1'
           }`}
-          style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-head)' }}
+          style={{ color: 'var(--text)' }}
         >
           リスケるGG
         </span>
@@ -105,8 +107,8 @@ export function Sidebar() {
           className="shrink-0 p-1 rounded-[6px] transition-colors"
           style={{ color: 'var(--text-muted)' }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
-            (e.currentTarget as HTMLElement).style.background = 'var(--card-raised)';
+            (e.currentTarget as HTMLElement).style.color = 'var(--text)';
+            (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)';
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)';
@@ -132,7 +134,7 @@ export function Sidebar() {
                 onClick={() => toggleSection(section.label)}
                 className="w-full flex items-center gap-2 px-2 py-1.5 rounded-[6px] transition-colors"
                 style={{ color: 'var(--text-muted)' }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}
               >
                 <Icon name={section.icon} size={18} />
@@ -167,11 +169,18 @@ export function Sidebar() {
                             <span className="whitespace-nowrap">{item.label}</span>
                           </span>
                         ) : (
-                          <Link href={item.href} className={`navlink${active ? ' navlink--active' : ''}`}>
+                          <Link
+                            href={item.href}
+                            aria-current={active ? 'page' : undefined}
+                            className={cn(
+                              'flex items-center gap-3 rounded-sm px-3.5 py-2.5 text-[0.9375rem] no-underline transition-colors duration-(--duration-fast) ease-out',
+                              active ? 'bg-card font-semibold text-text' : 'font-medium text-text-2 hover:bg-surface-2 hover:text-text'
+                            )}
+                          >
                             <Icon name={item.icon} size={18} />
                             <span className="flex-1 whitespace-nowrap">{item.label}</span>
                             {item.badge && (
-                              <span className="ds-badge ds-badge--info text-[10px] px-1.5 py-0" aria-label={item.badge}>
+                              <span className={cn(badgeVariants({ variant: 'info' }), 'text-[10px] px-1.5 py-0')} aria-label={item.badge}>
                                 {item.badge}
                               </span>
                             )}
@@ -199,12 +208,11 @@ export function Sidebar() {
                         ) : (
                           <Link
                             href={item.href}
-                            className="flex justify-center py-2 rounded-[6px] transition-colors"
-                            style={{
-                              background: active ? 'var(--primary)' : undefined,
-                              color: active ? '#fff' : 'var(--text-muted)',
-                              boxShadow: active ? 'var(--glow-primary)' : undefined,
-                            }}
+                            aria-current={active ? 'page' : undefined}
+                            className={cn(
+                              'flex justify-center rounded-sm py-2 transition-colors duration-(--duration-fast) ease-out',
+                              active ? 'bg-card text-text' : 'text-text-muted hover:bg-surface-2 hover:text-text'
+                            )}
                             aria-label={item.label}
                           >
                             <Icon name={item.icon} size={18} />
@@ -223,12 +231,12 @@ export function Sidebar() {
                   className="flex items-center gap-2 w-full px-2 py-[13px] mt-2 text-[10px] font-bold tracking-widest uppercase transition-colors"
                   style={{
                     borderTop: '1px solid var(--border)',
-                    color: pathname === '/settings/contact' ? 'var(--text-accent)' : 'var(--text-muted)',
+                    color: pathname === '/settings/contact' ? 'var(--brand-2)' : 'var(--text-muted)',
                   }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-2)'; }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLElement).style.color =
-                      pathname === '/settings/contact' ? 'var(--text-accent)' : 'var(--text-muted)';
+                      pathname === '/settings/contact' ? 'var(--brand-2)' : 'var(--text-muted)';
                   }}
                 >
                   <Icon name="mail_outline" size={14} style={{ opacity: 0.7, flexShrink: 0 } as React.CSSProperties} />
@@ -241,7 +249,7 @@ export function Sidebar() {
                 <Link
                   href="/settings/contact"
                   className="flex justify-center py-2 rounded-[6px] transition-colors"
-                  style={{ color: pathname === '/settings/contact' ? 'var(--text-accent)' : 'var(--text-muted)' }}
+                  style={{ color: pathname === '/settings/contact' ? 'var(--brand-2)' : 'var(--text-muted)' }}
                   aria-label="お問い合わせ"
                 >
                   <Icon name="mail_outline" size={18} />
@@ -253,7 +261,7 @@ export function Sidebar() {
       </nav>
 
       {/* ── チームスイッチャー ──────────────────────────── */}
-      <div className="px-2 py-2" style={{ borderTop: '1px solid var(--card-border)' }}>
+      <div className="px-2 py-2" style={{ borderTop: '1px solid var(--border)' }}>
         <TeamSwitcher collapsed={collapsed} />
       </div>
     </aside>

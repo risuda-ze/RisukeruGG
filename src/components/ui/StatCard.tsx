@@ -1,6 +1,6 @@
 /* ダッシュボード統計カード — 数値を大きく強調表示 */
 
-import { Card } from './Card';
+import { Card, type ColorFamily } from './Card';
 
 export type StatColor = 'purple' | 'amber' | 'live' | 'green';
 
@@ -9,27 +9,25 @@ export interface StatCardProps {
   label: string;
   /** 大きく表示する値 */
   value: string | number;
-  /** 値テキストの色バリアント */
+  /** 配色。purple は通常カード、それ以外はカラーファミリーの specimen カード */
   color?: StatColor;
   /** 値下部の補助テキスト */
   sub?: string;
 }
 
-const colorClasses: Record<StatColor, string> = {
-  purple: 'text-purple-l',
-  amber: 'text-amber-l',
-  live: 'text-live',
-  green: 'text-green',
+const FAMILY: Record<Exclude<StatColor, 'purple'>, { family: ColorFamily; text: string }> = {
+  amber: { family: 'orange', text: 'text-orange-text' },
+  live: { family: 'pink', text: 'text-pink-text' },
+  green: { family: 'green', text: 'text-green-text' },
 };
 
 export function StatCard({ label, value, color = 'purple', sub }: StatCardProps) {
+  const spec = color === 'purple' ? null : FAMILY[color];
   return (
-    <Card>
-      <p className="text-[11px] text-muted mb-1.5 tracking-wide">{label}</p>
-      <p className={`text-[26px] font-bold leading-none font-num ${colorClasses[color]}`}>
-        {value}
-      </p>
-      {sub && <p className="text-[11px] text-muted mt-1.5">{sub}</p>}
+    <Card variant={spec ? 'specimen' : 'default'} family={spec?.family} noPadding className="p-4">
+      <p className="eyebrow mb-2 text-text-2">{label}</p>
+      <p className={`font-num text-h1 font-medium ${spec?.text ?? 'text-text'}`}>{value}</p>
+      {sub && <p className="mt-2 text-caption text-text-2">{sub}</p>}
     </Card>
   );
 }
