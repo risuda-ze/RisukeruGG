@@ -18,7 +18,7 @@ User は、認証済み利用者のアカウント状態を表す。
 | `avatarUrl`     | string \| null     | アイコン画像 URL                  |
 | `deleted`       | false または未設定 | 有効なアカウントであることを示す  |
 | `deletedAt`     | null または未設定  | 削除前は値を持たない              |
-| `googleCalendarExports` | map / 未設定 | Google カレンダー書き出し（schedule の SC-008 系）が使う状態。キーは `teamId`、値は `{ calendarId: string, exportedAt: timestamp }`。`calendarId` は再書き出し時に同じ専用副カレンダーへ書き込むため、`exportedAt` は最終書き出し日時を画面に表示するために使う。書き込みは本人のみ。詳細は [schedule/model.md](../schedule/model.md) |
+| `googleCalendarExports` | map / 未設定 | Google カレンダー書き出し（schedule の SC-008 系）が使う状態。キーは `teamId`、値は `{ calendarId: string, exportedAt: timestamp | null }`。`calendarId` は再書き出し時に同じ専用副カレンダーへ書き込むため、`exportedAt` は最終書き出し日時を画面に表示するために使う。書き込みは本人のみ。詳細は [schedule/model.md](../schedule/model.md) |
 
 ### user 配下に配置する通知サブリソース
 

@@ -29,7 +29,7 @@ Firestore コレクション配置: `teams/{teamId}/schedules/{scheduleId}`
 
 - `users/{uid}.googleCalendarExports.{teamId}` に `calendarId` と `exportedAt` を保持する（正本は [user/model.md](../user/model.md)）
   - `calendarId`: 再書き出し時に同じ専用副カレンダーへ書き込むために使う（端末やブラウザが変わっても副カレンダーを重複して作らない）
-  - `exportedAt`: スケジュール画面の最終書き出し日時の表示（SC-008-7）に使う
+  - `exportedAt`: スケジュール画面の最終書き出し日時の表示（SC-008-7）に使う。一度も書き出しが完了していない間は `null`
 - 予定単位の対応は Google イベント側の `extendedProperties.private.risukeruScheduleId` に `scheduleId` を持たせて行う。Firestore に対応表は持たない
 
 ## 制約
