@@ -124,6 +124,7 @@ node scripts/seed.mjs
 - **ポート**: 4000 / 5001 / 8080 / 9098 / 9199 を使います。別の worktree を含め、同じマシンで複数同時に起動しないでください（終了時の書き出しが先に起動していた側に対して行われます）。
 - **データ**: 終了時に `.emulator-data/` へ書き出し、次回起動時に読み込みます。`Ctrl+C` で終了してください。強制終了すると書き出されず、その回のデータは残りません。Windows では `Ctrl+C` の直後に「バッチ ジョブを終了しますか (Y/N)?」と出ますが、書き出しは裏で続いています。`Export complete` の表示を待ってから `Y` で閉じてください。
 - **worktree**: `.emulator-data/` と `.env.local` は作業ディレクトリごとなので、git worktree ごとに `.env.local` の作成とシードが必要です。
+- **ログイン**: 「Googleでサインイン」を押すとエミュレータのサインイン画面が開きます。`Add new account` を選び、Email にテストアカウント（[テストデータ投入](#テストデータ投入) 参照。例: `taro@example.com`）のメールアドレスを入れて `Sign in with Google.com` を押すと、そのユーザーとしてログインできます。2 回目以降は一覧から選べます。
 - **環境変数**: エミュレータへの接続設定（`NEXT_PUBLIC_USE_EMULATORS` / `FIREBASE_AUTH_EMULATOR_HOST` / `FIRESTORE_EMULATOR_HOST`）は `.env.local.example` に入っています。Discord 連携や AI 機能を試す場合だけ、該当のキーを `.env.local` に追記します。
 
 ### Linux 環境での動作確認（任意）
