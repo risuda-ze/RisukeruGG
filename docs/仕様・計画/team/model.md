@@ -29,10 +29,10 @@ Team は共同作業単位を表す。TeamMember はユーザーとチームの�
 | `joinedAt`    | timestamp                       | チーム参加日時           |
 | `discordUsername` | string \| null              | Discord のユーザー名（`@` の後ろの一意な名前）。メンション用に本人またはオペレーターが任意登録（TE-012）。旧ドキュメントには存在せず null 扱い |
 | `discordUserId`   | string \| null              | `discordUsername` をサーバー内検索で解決した Discord ユーザー ID のキャッシュ。Bot（Admin SDK）が書き込み、ユーザー名変更時にクライアントが null に戻す |
-| `duties`          | string[]                    | **未実装（TE-013）**。担当分野のコード値の配列（重複なし）。旧ドキュメントには存在せず `[]` 扱い。候補にない値は読み取り時に捨てる |
-| `note`            | string \| null              | **未実装（TE-013）**。ひとこと（100 字以内・改行なし）。旧ドキュメントには存在せず null 扱い |
+| `duties`          | string[]                    | **未実装（TE-014）**。担当分野のコード値の配列（重複なし）。旧ドキュメントには存在せず `[]` 扱い。候補にない値は読み取り時に捨てる |
+| `note`            | string \| null              | **未実装（TE-014）**。ひとこと（100 字以内・改行なし）。旧ドキュメントには存在せず null 扱い |
 
-### 担当分野の候補（未実装・TE-013-1）
+### 担当分野の候補（未実装・TE-014-1）
 
 固定で、チームごとの追加・変更はできない。工程の「担当」（`Step.assigneeId`）や進め方の「役割」（`StepDef.roleLabel`）とは連動しない。
 
@@ -45,7 +45,7 @@ Team は共同作業単位を表す。TeamMember はユーザーとチームの�
 | `moderation` | 配信サポート |
 | `other`      | その他       |
 
-### Security Rules（未実装・TE-013-3）
+### Security Rules（未実装・TE-014-3）
 
 `teams/{teamId}/members/{uid}` の読み取り（同一チームの全ロール）と更新権限（本人またはオペレーター、`plan` は変更不可）は変更しない。create / update に次の検証を追加する。
 
