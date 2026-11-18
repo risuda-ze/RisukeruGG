@@ -36,13 +36,18 @@ export interface User {
   monthlyCollabCount: number;
   countResetAt: Date;
   createdAt: Date;
-  googleCalendar: {
-    connected: boolean;
-    syncError: string | null;
-    lastSyncedAt: Date | null;
-  } | null;
+  /** Google カレンダー書き出しの状態。キーは teamId（SC-008 系） */
+  googleCalendarExports?: Record<string, GoogleCalendarExport>;
   deleted?: boolean;
   deletedAt?: Date | null;
+}
+
+/** チームごとの Google カレンダー書き出し状態 */
+export interface GoogleCalendarExport {
+  /** 書き出し先の専用副カレンダー ID。再書き出しで同じカレンダーへ書くために使う */
+  calendarId: string;
+  /** 最終書き出し日時。一度も完了していなければ null */
+  exportedAt: Date | null;
 }
 
 export interface TeamMember {
@@ -108,23 +113,8 @@ export interface ScheduleEntry {
   updatedAt: Date;
   createdBy: string;
   createdAt: Date;
-  /** Googleカレンダーから取得した予定は 'google'、メンバーのFirestore同期予定は 'member'、チーム予定は undefined */
-  source?: 'google' | 'member';
   /** 終日フラグ。後方互換のため optional（未設定は false 扱い） */
   allDay?: boolean;
-}
-
-/** Googleカレンダーから同期してFirestoreに保存したメンバーの予定エントリ */
-export interface MemberCalendarEvent {
-  id: string;
-  title: string;
-  startAt: Date;
-  endAt: Date;
-  allDay: boolean;
-  sourceEventId: string;
-  syncedAt: Date;
-  userId: string;
-  teamId: string;
 }
 
 export interface Task {

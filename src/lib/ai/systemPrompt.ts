@@ -17,13 +17,6 @@ export interface AiChatContext {
   columns: Array<{ name: string }>;
   /** タスクカテゴリ一覧（task_update の categoryName 解決用） */
   categories?: Array<{ name: string }>;
-  memberCalendars?: Array<{
-    userId: string;
-    displayName: string;
-    startAt: string;
-    endAt: string;
-    allDay: boolean;
-  }>;
   /**
    * チームからの追加指示（AI 設定。AI-022）。用語や呼び方などチーム固有の指示を
    * 全能力に共通で注入する。サニタイズ・切り詰めは generateSystemPrompt 側で行う
@@ -219,9 +212,6 @@ ${formatCollabs(context.collabs)}
 
 【チームメンバー】
 ${formatMembers(context.members)}
-
-【メンバーの予定（2週間以内）】
-${formatMemberCalendars(context.memberCalendars ?? [])}
   `.trim();
 }
 
@@ -358,23 +348,4 @@ export function formatCollabs(collabs: Array<Record<string, unknown>>): string {
 export function formatMembers(members: Array<Record<string, unknown>>): string {
   if (members.length === 0) return 'メンバーなし';
   return members.map((m) => `- ${m.displayName}（${m.role}）`).join('\n');
-}
-
-export function formatMemberCalendars(
-  events: Array<{
-    userId: string;
-    displayName: string;
-    startAt: string;
-    endAt: string;
-    allDay: boolean;
-  }>
-): string {
-  if (events.length === 0) return 'メンバーの予定なし';
-  return events
-    .map((e) =>
-      e.allDay
-        ? `- ${e.displayName}: ${e.startAt.slice(0, 10)} 終日`
-        : `- ${e.displayName}: ${e.startAt} ～ ${e.endAt}`
-    )
-    .join('\n');
 }

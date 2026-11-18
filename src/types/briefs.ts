@@ -8,7 +8,6 @@
  *   teams/{teamId}/briefs/{briefId}/steps/{stepId}
  *   teams/{teamId}/briefs/{briefId}/steps/{stepId}/comments/{commentId}
  *   teams/{teamId}/briefs/{briefId}/briefEvents/{eventId}
- *     ※ memberCalendars の `events` コレクショングループと衝突しないよう `briefEvents` とする
  */
 
 /** 工程・見出しに置く入力項目の型 */

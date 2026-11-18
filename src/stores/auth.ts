@@ -9,7 +9,8 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client';
 import { subscribeTeam, subscribeMembers } from '@/lib/repositories/teams';
-import type { Team, TeamMember } from '@/types/entities';
+import { parseGoogleCalendarExports } from '@/lib/repositories/googleCalendarExports';
+import type { GoogleCalendarExport, Team, TeamMember } from '@/types/entities';
 
 interface AuthState {
   currentUser: FirebaseUser | null;
@@ -20,7 +21,8 @@ interface AuthState {
   members: TeamMember[];
   loading: boolean;
   idToken: string | null;
-  googleAccessToken: string | null;
+  /** Google カレンダー書き出しの状態。キーは teamId */
+  googleCalendarExports: Record<string, GoogleCalendarExport>;
 
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -38,63 +40,16 @@ export const useAuthStore = create<AuthState>((set) => ({
   members: [],
   loading: true,
   idToken: null,
-  googleAccessToken: null,
+  googleCalendarExports: {},
 
   signIn: async () => {
     const provider = new GoogleAuthProvider();
-    provider.addScope('https://www.googleapis.com/auth/calendar');
-    const result = await signInWithPopup(auth, provider);
-    const credential = GoogleAuthProvider.credentialFromResult(result);
-    if (credential?.accessToken) {
-      const accessToken = credential.accessToken;
-      const expiresAt = Date.now() + 3500 * 1000;
-      try {
-        localStorage.setItem('gcal_token', JSON.stringify({ token: accessToken, expiresAt }));
-      } catch {}
-      set({ googleAccessToken: accessToken });
-
-      // Googleカレンダー接続直後に同期を実行
-      // （onSnapshot は onAuthStateChanged より先に token が設定されないことがあるため、ここでも同期する）
-      // teamIds に含まれる全チームへ書き込む
-      const { teamIds: currentTeamIds } = useAuthStore.getState();
-      const user = useAuthStore.getState().currentUser;
-      if (currentTeamIds.length > 0 && user) {
-        const displayName = user.displayName ?? 'メンバー';
-        (async () => {
-          try {
-            const now = new Date();
-            now.setHours(0, 0, 0, 0);
-            const twoWeeksLater = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-            twoWeeksLater.setHours(23, 59, 59, 999);
-            const [{ fetchGCalEvents }, { saveMemberCalendarEvents }] = await Promise.all([
-              import('@/lib/googleCalendar'),
-              import('@/lib/repositories/memberCalendars'),
-            ]);
-            const { events } = await fetchGCalEvents(accessToken, now, twoWeeksLater);
-            const toSave = events.map((e) => ({
-              sourceEventId: e.id.replace(/^gcal_/, ''),
-              startAt: e.startAt,
-              endAt: e.endAt,
-              allDay: e.allDay ?? false,
-            }));
-            // 所属する全チームに同期
-            await Promise.all(
-              currentTeamIds.map((tid) =>
-                saveMemberCalendarEvents(tid, user.uid, displayName, toSave)
-              )
-            );
-          } catch {
-            // GCal同期エラーはサイレントに無視
-          }
-        })();
-      }
-    }
+    await signInWithPopup(auth, provider);
   },
 
   signOut: async () => {
     await firebaseSignOut(auth);
-    try { localStorage.removeItem('gcal_token'); } catch {}
-    set({ currentUser: null, currentTeamId: null, teamIds: [], currentTeam: null, members: [], idToken: null, googleAccessToken: null });
+    set({ currentUser: null, currentTeamId: null, teamIds: [], currentTeam: null, members: [], idToken: null, googleCalendarExports: {} });
   },
 
   _setUser: (user) => set({ currentUser: user }),
@@ -124,19 +79,6 @@ export function initAuthListener() {
     if (user) {
       useAuthStore.setState({ currentUser: user, loading: false });
 
-      // localStorageからGoogleアクセストークンを復元
-      try {
-        const stored = localStorage.getItem('gcal_token');
-        if (stored) {
-          const { token, expiresAt } = JSON.parse(stored) as { token: string; expiresAt: number };
-          if (Date.now() < expiresAt) {
-            useAuthStore.setState({ googleAccessToken: token });
-          } else {
-            localStorage.removeItem('gcal_token');
-          }
-        }
-      } catch {}
-
       const { doc, onSnapshot } = await import('firebase/firestore');
       const { db } = await import('@/lib/firebase/client');
 
@@ -151,7 +93,11 @@ export function initAuthListener() {
         const newTeamIds = (data.teamIds as string[] | undefined) ?? (newTeamId ? [newTeamId] : []);
         const prev = useAuthStore.getState().currentTeamId;
 
-        useAuthStore.setState({ currentTeamId: newTeamId, teamIds: newTeamIds });
+        useAuthStore.setState({
+          currentTeamId: newTeamId,
+          teamIds: newTeamIds,
+          googleCalendarExports: parseGoogleCalendarExports(data.googleCalendarExports),
+        });
 
         if (newTeamId !== prev) {
           unsubTeam?.();
@@ -166,41 +112,6 @@ export function initAuthListener() {
             unsubMembers = subscribeMembers(newTeamId, (members) =>
               useAuthStore.setState({ members })
             );
-
-            // Googleカレンダー同期: チームID確定時にアクセストークンがあれば同期
-            // teamIds に含まれる全チームへ書き込む
-            const { googleAccessToken } = useAuthStore.getState();
-            if (googleAccessToken) {
-              const displayName = user.displayName ?? 'メンバー';
-              const capturedTeamIds = newTeamIds;
-              (async () => {
-                try {
-                  const now = new Date();
-                  now.setHours(0, 0, 0, 0);
-                  const twoWeeksLater = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-                  twoWeeksLater.setHours(23, 59, 59, 999);
-                  const [{ fetchGCalEvents }, { saveMemberCalendarEvents }] = await Promise.all([
-                    import('@/lib/googleCalendar'),
-                    import('@/lib/repositories/memberCalendars'),
-                  ]);
-                  const { events } = await fetchGCalEvents(googleAccessToken, now, twoWeeksLater);
-                  const toSave = events.map((e) => ({
-                    sourceEventId: e.id.replace(/^gcal_/, ''),
-                    startAt: e.startAt,
-                    endAt: e.endAt,
-                    allDay: e.allDay ?? false,
-                  }));
-                  // 所属する全チームに同期
-                  await Promise.all(
-                    capturedTeamIds.map((tid) =>
-                      saveMemberCalendarEvents(tid, user.uid, displayName, toSave)
-                    )
-                  );
-                } catch {
-                  // Googleカレンダー同期エラーはサイレントに無視
-                }
-              })();
-            }
           } else {
             useAuthStore.setState({ currentTeam: null, members: [] });
           }
@@ -219,6 +130,7 @@ export function initAuthListener() {
         teamIds: [],
         currentTeam: null,
         members: [],
+        googleCalendarExports: {},
         loading: false,
       });
     }
