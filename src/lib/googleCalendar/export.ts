@@ -62,7 +62,7 @@ export interface ExportContext {
   categoryNames: Record<string, string>;
 }
 
-/** 書き出し対象: 当日 0:00（JST）以降に終了する予定（SC-008-4） */
+/** 書き出し対象: 当日 0:00（JST）より後に終了する予定（SC-008-4） */
 export function selectExportTargets(schedules: ScheduleEntry[], now: Date): ScheduleEntry[] {
   const from = startOfTodayJst(now).getTime();
   return schedules.filter((s) => s.endAt.getTime() > from);
@@ -141,7 +141,7 @@ export interface ExportPlan {
 /**
  * 専用カレンダーを現在のチーム予定に一致させるための操作を決める（SC-008-5）。
  * - Google 側に無い予定は追加、内容が違う予定は上書き、一致していれば何もしない
- * - RisukeruGG 側に無くなった予定は、当日 0:00（JST）以降に終了するものだけ削除する
+ * - RisukeruGG 側に無くなった予定は、当日 0:00（JST）より後に終了するものだけ削除する
  * - risukeruScheduleId を持たないイベント（利用者が Google 側で足したもの）には触れない
  */
 export function planExport(

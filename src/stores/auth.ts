@@ -10,6 +10,7 @@ import {
 import { auth } from '@/lib/firebase/client';
 import { subscribeTeam, subscribeMembers } from '@/lib/repositories/teams';
 import { parseGoogleCalendarExports } from '@/lib/repositories/googleCalendarExports';
+import { useGoogleCalendarExportStore } from '@/stores/googleCalendarExport';
 import type { GoogleCalendarExport, Team, TeamMember } from '@/types/entities';
 
 interface AuthState {
@@ -124,6 +125,7 @@ export function initAuthListener() {
       unsubUser = null;
       unsubTeam = null;
       unsubMembers = null;
+      useGoogleCalendarExportStore.getState().reset();
       useAuthStore.setState({
         currentUser: null,
         currentTeamId: null,

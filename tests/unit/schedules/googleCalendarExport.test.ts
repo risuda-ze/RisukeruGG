@@ -53,8 +53,8 @@ function asResource(id: string, event: GoogleEventInput): GoogleEventResource {
   return { ...event, id, start: time(event.start), end: time(event.end) };
 }
 
-describe('selectExportTargets（当日 0:00 JST 以降に終了する予定）', () => {
-  it('前日までに終了した予定は対象外、当日以降に終了する予定は対象', () => {
+describe('selectExportTargets（当日 0:00 JST より後に終了する予定）', () => {
+  it('前日までに終了した予定は対象外、当日より後に終了する予定は対象', () => {
     const targets = selectExportTargets(
       [
         schedule('past', {
@@ -242,7 +242,7 @@ describe('planExport', () => {
     expect(planExport(allDay, [asResource('g1', timed[0])], NOW).updates).toHaveLength(1);
   });
 
-  it('RisukeruGG 側で削除された予定は、当日以降に終了するものだけ削除する', () => {
+  it('RisukeruGG 側で削除された予定は、当日より後に終了するものだけ削除する', () => {
     const gone = desiredOf(
       schedule('future-gone'),
       schedule('past-gone', {

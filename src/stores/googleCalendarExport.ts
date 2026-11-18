@@ -16,6 +16,8 @@ interface GoogleCalendarExportState {
   setProgress: (done: number, total: number) => void;
   finish: (teamId: string, notice: ExportNotice) => void;
   dismissNotice: () => void;
+  /** ログアウト時に、前の利用者の進行・結果を消す */
+  reset: () => void;
 }
 
 export const useGoogleCalendarExportStore = create<GoogleCalendarExportState>((set) => ({
@@ -27,4 +29,5 @@ export const useGoogleCalendarExportStore = create<GoogleCalendarExportState>((s
   setProgress: (done, total) => set({ progress: { done, total } }),
   finish: (teamId, notice) => set({ running: false, progress: null, notice: { teamId, notice } }),
   dismissNotice: () => set({ notice: null }),
+  reset: () => set({ running: false, progress: null, notice: null }),
 }));
