@@ -132,12 +132,12 @@ node scripts/seed.mjs
 Vercel / CI（Linux）でだけ `pnpm install` やビルドが失敗する場合に、手元で再現するためのコマンドです。開発環境としての Docker はサポートしていませんが、Docker Desktop が入っていれば使い捨ての Linux + Node 22 環境に入れます。PowerShell でプロジェクトルートから実行してください。
 
 ```powershell
-docker run --rm -it -v "${PWD}:/work" -v /work/node_modules -v /work/functions/node_modules -v /work/.pnpm-store -w /work -e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 node:22-bookworm-slim bash -c "corepack enable && pnpm install --frozen-lockfile && bash"
+docker run --rm -it -v "${PWD}:/work" -v /work/node_modules -v /work/functions/node_modules -v /work/.pnpm-store -v /work/.next -w /work -e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 node:22-bookworm-slim bash -c "corepack enable && pnpm install --frozen-lockfile && bash"
 ```
 
-- **メモリ**: Docker（WSL2）の割り当てが 1GB だと `pnpm install` が `ERR_PNPM_ENOMEM` で失敗し、Docker の VM ごと落ちます。`%USERPROFILE%\.wslconfig` の `memory` を増やしてから実行してください（必要量は未計測）。
+- **メモリ**: Docker（WSL2）の割り当てが 1GB だと `pnpm install` が `ERR_PNPM_ENOMEM` で失敗し、Docker の VM ごと落ちます。`%USERPROFILE%\.wslconfig` の `memory` を増やしてから実行してください。5GB の割り当てでは install・型チェック・lint・テスト・ビルドまで通り、コンテナのメモリ使用量は最大で約 3.2GB でした。
 - 依存のインストールが通ればコンテナ内のシェルに入ります。続けて `pnpm build` や `pnpm test` を実行できます。`exit` で抜けるとコンテナは破棄されます。
-- `node_modules` と pnpm のストア（`.pnpm-store`）はコンテナ専用の一時ボリュームに置くため、ホスト（Windows）の `node_modules` は書き換わりません。それ以外のファイルはホストと共有なので、コンテナ内での変更（`.next/` の生成など）はホストに残ります。
+- `node_modules`・pnpm のストア（`.pnpm-store`）・ビルド出力（`.next`）はコンテナ専用の一時ボリュームに置くため、ホスト（Windows）側は書き換わりません。ホストに空の `.pnpm-store/` フォルダが残ることがありますが、削除して構いません。それ以外のファイルはホストと共有なので、コンテナ内で編集した内容はホストに残ります。
 
 ---
 
