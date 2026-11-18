@@ -109,30 +109,6 @@ test.describe('SC-012: 担当者プルダウンフィルタ', () => {
 });
 
 /**
- * SC-015: タスクカードフッターに締め切り日時が最初に表示される
- * dueDateAllDay=true → M/d 形式、false → M/d HH:mm 形式（どちらも先頭に表示）
- */
-test.describe('SC-015: タスクカードフッター日時フォーマット', () => {
-  /**
-   * 認証済みシナリオ: タスクカードフッターの日時フォーマットを確認。
-   * Firebase Emulator 接続後に有効化すること。
-   */
-  // test.use({ viewport: { width: 1440, height: 900 } });
-  // test('期限付きタスクカードフッターの先頭要素に日付が表示される (SC-015)', async ({ page }) => {
-  //   await page.goto('/tasks');
-  //   await page.waitForURL(/tasks/);
-  //
-  //   // 期限付きタスクカードのフッターを確認
-  //   const taskCards = page.locator('.tcard');
-  //   await expect(taskCards.first()).toBeVisible();
-  //
-  //   // dueDateAllDay=true → "M/d" のみ、false → "M/d HH:mm" の両形式に対応する正規表現
-  //   const footerFirstSpan = taskCards.first().locator('.flex.items-center.gap-1\\.5 > span').first();
-  //   await expect(footerFirstSpan).toHaveText(/^\d+\/\d+( \d{2}:\d{2})?$/);
-  // });
-});
-
-/**
  * TaskControlBar UI 構造確認（認証不要・ログインページベース）
  * ページロードが成功することを確認するスモークテスト。
  */

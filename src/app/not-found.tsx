@@ -25,7 +25,7 @@ export default function NotFound() {
   }, []);
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-bg overflow-hidden px-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-canvas overflow-hidden px-4">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -35,21 +35,21 @@ export default function NotFound() {
       />
       <div className="relative z-10 w-full max-w-sm text-center">
         <div className="rounded-[16px] bg-surface border border-border p-8 shadow-lg">
-          <p className="text-5xl font-bold text-purple-l tracking-tight">404</p>
+          <p className="text-5xl font-bold text-brand-2 tracking-tight">404</p>
           <h1 className="mt-4 text-lg font-bold text-text">ページが見つかりません</h1>
-          <p className="mt-2 text-sm text-muted">
+          <p className="mt-2 text-sm text-text-muted">
             お探しのページは移動または削除された可能性があります。
           </p>
           <div className="mt-6 flex flex-col gap-2">
             <Link
               href="/dashboard"
-              className="w-full rounded-[10px] bg-purple-d px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-purple"
+              className="w-full rounded-[10px] bg-primary/35 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary"
             >
               ダッシュボードへ戻る
             </Link>
             <Link
               href="/"
-              className="w-full rounded-[10px] border border-border px-4 py-3 text-sm text-muted transition-colors hover:text-text"
+              className="w-full rounded-[10px] border border-border px-4 py-3 text-sm text-text-muted transition-colors hover:text-text"
             >
               トップページへ
             </Link>

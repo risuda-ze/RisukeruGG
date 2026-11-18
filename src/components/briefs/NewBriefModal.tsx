@@ -13,6 +13,8 @@ import { fromDateInputValue } from '@/lib/briefs/format';
 import { trackEvent } from '@/lib/analytics';
 import type { Playbook } from '@/types/briefs';
 import type { TeamMember } from '@/types/entities';
+import { badgeVariants } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils/cn';
 
 interface NewBriefModalProps {
   open: boolean;
@@ -98,11 +100,11 @@ export function NewBriefModal({ open, onClose, playbooks, members }: NewBriefMod
           hint="工程の締切はこの日から逆算されます。あとから変更できます"
         />
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+          <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>
             進め方
           </span>
           {playbooks.length === 0 ? (
-            <p className="text-[12px] text-muted">
+            <p className="text-[12px] text-text-muted">
               進め方がまだありません。工程は作成後に手で追加できます（進め方は「進め方設定」から作れます）
             </p>
           ) : (
@@ -113,13 +115,13 @@ export function NewBriefModal({ open, onClose, playbooks, members }: NewBriefMod
             />
           )}
           {selectedPlaybook && (
-            <p className="text-[11px] text-muted">
+            <p className="text-[11px] text-text-muted">
               {selectedPlaybook.steps.length} 工程: {selectedPlaybook.steps.map((s) => s.title).join(' → ')}
             </p>
           )}
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+          <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>
             出演者
           </span>
           <div className="flex flex-wrap gap-2">
@@ -130,7 +132,7 @@ export function NewBriefModal({ open, onClose, playbooks, members }: NewBriefMod
                   key={m.userId}
                   type="button"
                   onClick={() => togglePerformer(m.userId)}
-                  className={`ds-badge ${on ? 'ds-badge--primary' : 'ds-badge--neutral'} cursor-pointer`}
+                  className={cn(badgeVariants({ variant: on ? 'primary' : 'neutral' }), 'cursor-pointer')}
                   aria-pressed={on}
                 >
                   {m.displayName}

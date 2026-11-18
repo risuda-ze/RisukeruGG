@@ -1,6 +1,5 @@
 'use client';
 
-import './collab.css';
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -11,39 +10,43 @@ import { CollabDetailModal } from '@/components/collab/CollabDetailModal';
 import { Spinner } from '@/components/ui/Spinner';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { cn } from '@/lib/utils/cn';
 import { COLLAB_STATUS_LABELS } from '@/types/entities';
 import type { CollabSession, CollabStatus } from '@/types/entities';
 
-// ステータス → CSSクラスサフィックス
-const STATUS_CLASS: Record<CollabStatus, string> = {
-  open: 'recruit',
-  confirmed: 'fixed',
-  expired: 'prep',
-  cancelled: 'prep',
+// ステータス → Badge の variant
+const STATUS_BADGE: Record<CollabStatus, 'primary' | 'success' | 'neutral'> = {
+  open: 'primary',
+  confirmed: 'success',
+  expired: 'neutral',
+  cancelled: 'neutral',
 };
 
-// アバター背景色（名前のcharCodeベース）
-const AVATAR_BG = [
-  { bg: '#0b2133', color: '#5ec5ea' },
-  { bg: '#0b2929', color: '#5ecfcf' },
-  { bg: '#1a1033', color: '#a08fe0' },
-  { bg: '#281a0b', color: '#e0b05e' },
+// アバター配色（名前のcharCodeベース）
+const AVATAR_CLASS = [
+  'bg-blue-tint text-blue-text',
+  'bg-teal-tint text-teal-text',
+  'bg-surface-2 text-text-2',
+  'bg-orange-tint text-orange-text',
 ];
-function avatarStyle(name: string) {
-  return AVATAR_BG[(name.charCodeAt(0) ?? 0) % AVATAR_BG.length];
+function avatarClass(name: string) {
+  return AVATAR_CLASS[(name.charCodeAt(0) || 0) % AVATAR_CLASS.length];
 }
+
+// カードの出現アニメーション
+const POP_IN = 'animate-[pop-scale_var(--duration-base)_var(--ease-spring)_both]';
 
 // ============================================================
 // CollabBadge
 // ============================================================
 function CollabBadge({ status }: { status: CollabStatus }) {
   return (
-    <span className={`cbbadge cbbadge--${STATUS_CLASS[status]}`}>
-      <span className="cbbadge__dot" />
-      <span className="cbbadge__main">{COLLAB_STATUS_LABELS[status]}</span>
-    </span>
+    <Badge variant={STATUS_BADGE[status]} dot className="shrink-0">
+      {COLLAB_STATUS_LABELS[status]}
+    </Badge>
   );
 }
 
@@ -58,30 +61,28 @@ function PartyAvatars({ participants, max = 4 }: PartyAvatarsProps) {
   const visible = participants.slice(0, max);
   const overflow = participants.length - visible.length;
   return (
-    <div className="cbava">
-      <div className="cbava__stack">
-        {visible.map((p) => {
-          const s = avatarStyle(p.name);
-          return (
-            <div
-              key={p.id}
-              className="avatar"
-              title={p.name}
-              style={{
-                width: 32, height: 32, borderRadius: '50%',
-                background: s.bg, color: s.color,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.72rem', fontWeight: 700, flexShrink: 0,
-              }}
-            >
-              {p.name.slice(0, 2).toUpperCase()}
-            </div>
-          );
-        })}
-        {overflow > 0 && <div className="cbava__more">+{overflow}</div>}
+    <div className="flex shrink-0 items-center">
+      <div className="flex items-center">
+        {visible.map((p) => (
+          <div
+            key={p.id}
+            title={p.name}
+            className={cn(
+              '-ml-2 flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-border text-caption font-bold tracking-normal first:ml-0',
+              avatarClass(p.name)
+            )}
+          >
+            {p.name.slice(0, 2).toUpperCase()}
+          </div>
+        ))}
+        {overflow > 0 && (
+          <div className="-ml-2 flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-border bg-surface text-caption font-bold tracking-normal text-text-2">
+            +{overflow}
+          </div>
+        )}
       </div>
       {participants.length > 0 && (
-        <span className="cbava__count">{participants.length}名</span>
+        <span className="ml-2 text-caption whitespace-nowrap text-text-muted">{participants.length}名</span>
       )}
     </div>
   );
@@ -92,6 +93,26 @@ function countResponded(collab: CollabSession): number {
   return Object.keys(collab.participantResponses ?? {}).filter(
     (pid) => Object.values(collab.participantResponses?.[pid] ?? {}).some((v) => v !== 'pending')
   ).length;
+}
+
+// ============================================================
+// ZoneEmpty（ゾーンが空のときの表示）
+// ============================================================
+function ZoneEmpty({ isFixed }: { isFixed: boolean }) {
+  return (
+    <Card
+      variant="flat"
+      noPadding
+      data-testid="collab-empty"
+      className="flex items-center gap-2.25 p-4.5 text-sm text-text-muted"
+    >
+      {isFixed
+        ? <Icon name="event_available" size={18} />
+        : <span className="material-icons" style={{ fontSize: 18 }}>pending_actions</span>
+      }
+      <span>{isFixed ? '確定したコラボはありません' : 'コラボ調整はありません'}</span>
+    </Card>
+  );
 }
 
 // ============================================================
@@ -111,11 +132,20 @@ function CollabRow({ collab, onOpen, onDelete }: CollabRowProps) {
   const pct = total > 0 ? (responded / total) * 100 : 0;
 
   return (
-    <div
-      className={`cbrow${isFixed ? ' cbrow--fixed' : ''}`}
+    <Card
+      accent={isFixed ? 'success' : 'primary'}
+      interactive
+      noPadding
+      data-testid="collab-row"
+      className={cn('flex items-center gap-4.5 px-4.5 py-3.75', POP_IN)}
       onClick={() => onOpen(collab)}
     >
-      <div className="cbrow__emblem">
+      <div
+        className={cn(
+          'flex size-10.5 shrink-0 items-center justify-center rounded-md',
+          isFixed ? 'bg-success-tint text-success' : 'bg-surface-2 text-brand-2'
+        )}
+      >
         {isFixed ? (
           <Icon name="event_available" size={22} />
         ) : (
@@ -125,12 +155,14 @@ function CollabRow({ collab, onOpen, onDelete }: CollabRowProps) {
         )}
       </div>
 
-      <div className="cbrow__main">
-        <div className="cbrow__titlerow">
-          <span className="cbrow__title">{collab.title}</span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span data-testid="collab-row-title" className="text-base leading-snug font-semibold text-text">
+            {collab.title}
+          </span>
           <CollabBadge status={collab.status} />
         </div>
-        <div className="cbrow__sub">
+        <div className="flex items-center gap-2 text-caption text-text-muted">
           {collab.partnerName && <span>{collab.partnerName}</span>}
           <span>{format(collab.createdAt, 'M/d作成', { locale: ja })}</span>
         </div>
@@ -138,48 +170,52 @@ function CollabRow({ collab, onOpen, onDelete }: CollabRowProps) {
 
       {participants.length > 0 && <PartyAvatars participants={participants} />}
 
-      <div className="cbresp">
+      <div className="flex min-w-30.5 shrink-0 flex-col items-end gap-1.25">
         {isFixed && collab.confirmedDate ? (
-          <div className="cbresp__fixed">
-            <Icon name="event_available" size={16} className="ic" />
-            <span className="cbresp__fixed-d">
+          <div className="inline-flex items-center gap-1.75 rounded-md border border-green-border bg-success-tint px-3 py-1.75 text-green-text">
+            <Icon name="event_available" size={16} />
+            <span className="font-num text-sm font-bold whitespace-nowrap">
               {format(collab.confirmedDate, 'M/d(E) HH:mm', { locale: ja })}
             </span>
           </div>
         ) : (
           <>
-            <span className="cbresp__label">回答状況</span>
-            <div className="cbresp__big">
-              <span className="cbresp__n">{remaining}</span>
-              <span className="cbresp__unit">人未回答&nbsp;/&nbsp;{total}人</span>
+            <span className="eyebrow whitespace-nowrap text-text-muted">回答状況</span>
+            <div className="font-num inline-flex items-baseline gap-0.75 whitespace-nowrap">
+              <span className="text-xl leading-none font-bold text-brand-2">{remaining}</span>
+              <span className="text-caption text-text-2">人未回答&nbsp;/&nbsp;{total}人</span>
             </div>
             {total > 0 && (
-              <div className="cbresp__bar">
-                <div className="cbresp__fill" style={{ width: `${pct}%` }} />
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface">
+                <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
               </div>
             )}
           </>
         )}
       </div>
 
-      <div className="cbrow__actions" onClick={(e) => e.stopPropagation()}>
-        <button
-          className="cbrow__act cbrow__act--detail"
+      <div className="flex shrink-0 items-center gap-1.75" onClick={(e) => e.stopPropagation()}>
+        <Button
+          variant="subtle"
+          size="sm"
+          className="gap-1.75 px-3.5"
           onClick={() => onOpen(collab)}
           title="詳細"
         >
           <Icon name="open_in_new" size={16} />
           詳細
-        </button>
-        <button
-          className="cbrow__act cbrow__act--del"
+        </Button>
+        <Button
+          variant="subtle"
+          size="icon-sm"
+          className="hover:bg-danger-tint hover:text-danger"
           onClick={() => onDelete(collab)}
           title="削除"
         >
           <Icon name="delete" size={16} />
-        </button>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -197,42 +233,39 @@ function MCollabCard({ collab, onOpen, onDelete }: CollabRowProps) {
     <Card
       accent={isFixed ? 'success' : 'primary'}
       interactive
-      className="mcbcard"
+      className={cn('flex flex-col gap-2.25', POP_IN)}
       onClick={() => onOpen(collab)}
     >
-      <div className="mcbcard__top">
-        <span className="mcbcard__title">{collab.title}</span>
+      <div className="flex items-start gap-2.5">
+        <span className="min-w-0 flex-1 text-sm leading-snug font-semibold text-text">{collab.title}</span>
         <CollabBadge status={collab.status} />
       </div>
-      <div className="mcbcard__sub">
+      <div className="flex items-center gap-2 text-caption text-text-muted">
         {collab.partnerName && (
-          <span className="mcbcard__date">
+          <span className="inline-flex items-center gap-1.25">
             <Icon name="groups" size={13} />
             {collab.partnerName}
           </span>
         )}
-        <span className="mcbcard__date">
+        <span className="inline-flex items-center gap-1.25">
           <Icon name="calendar_month" size={13} />
           {format(collab.createdAt, 'M/d', { locale: ja })}
         </span>
       </div>
       {isFixed && collab.confirmedDate ? (
-        <div
-          className="mcbcard__foot"
-          style={{ color: 'var(--success)', fontSize: '0.8rem', fontWeight: 700, gap: 6 }}
-        >
+        <div className="font-num flex items-center gap-1.5 text-sm font-bold text-success">
           <Icon name="event_available" size={15} />
           {format(collab.confirmedDate, 'M/d(E) HH:mm', { locale: ja })}
         </div>
       ) : total > 0 ? (
-        <div className="mcbcard__foot">
-          <div className="mcbcard__bar">
-            <div className="mcbcard__fill" style={{ width: `${pct}%` }} />
+        <div className="flex items-center gap-2.5">
+          <div className="h-1.25 flex-1 overflow-hidden rounded-full bg-surface">
+            <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
           </div>
-          <span className="mcbcard__resp">{responded}/{total}人回答</span>
+          <span className="shrink-0 text-caption whitespace-nowrap text-text-2">{responded}/{total}人回答</span>
           <span
             onClick={(e) => { e.stopPropagation(); onDelete(collab); }}
-            style={{ marginLeft: 'auto', color: 'var(--text-muted)', cursor: 'pointer' }}
+            className="ml-auto cursor-pointer text-text-muted"
             title="削除"
           >
             <Icon name="delete" size={15} />
@@ -255,27 +288,26 @@ interface CollabZoneProps {
 function CollabZone({ zone, sessions, onOpen, onDelete }: CollabZoneProps) {
   const isFixed = zone === 'fixed';
   return (
-    <div className={`cbzone${isFixed ? ' cbzone--fixed' : ''}`}>
-      <div className="cbzone__hd">
-        <div className="cbzone__mark">
+    <div data-testid="collab-zone" data-zone={zone} className="shrink-0">
+      <div className="mb-3 flex items-center gap-2.5">
+        <div
+          className={cn(
+            'flex size-6.5 shrink-0 items-center justify-center rounded-sm',
+            isFixed ? 'bg-success-tint text-success' : 'bg-surface-2 text-brand-2'
+          )}
+        >
           {isFixed
             ? <Icon name="event_available" size={15} />
             : <span className="material-icons" style={{ fontSize: 15 }}>pending_actions</span>
           }
         </div>
-        <span className="cbzone__title">{isFixed ? '予定確定' : '調整中'}</span>
-        <span className="cbzone__count">{sessions.length}</span>
-        {!isFixed && <span className="cbzone__desc">回答待ち・日程調整中</span>}
+        <span className="text-h3 whitespace-nowrap">{isFixed ? '予定確定' : '調整中'}</span>
+        <Badge variant="neutral" className="font-num">{sessions.length}</Badge>
+        {!isFixed && <span className="ml-auto text-sm text-text-muted">回答待ち・日程調整中</span>}
       </div>
-      <div className="cbzone__list">
+      <div className="flex flex-col gap-3">
         {sessions.length === 0 ? (
-          <div className="cbzone__empty">
-            {isFixed
-              ? <Icon name="event_available" size={18} />
-              : <span className="material-icons" style={{ fontSize: 18 }}>pending_actions</span>
-            }
-            <span>{isFixed ? '確定したコラボはありません' : 'コラボ調整はありません'}</span>
-          </div>
+          <ZoneEmpty isFixed={isFixed} />
         ) : (
           sessions.map((s) => (
             <CollabRow key={s.id} collab={s} onOpen={onOpen} onDelete={onDelete} />
@@ -305,8 +337,14 @@ function CollabBoard({
   const [hintVisible, setHintVisible] = useState(false);
   const activeSessions = activeZone === 'adjust' ? adjustSessions : fixedSessions;
 
+  // モバイルのゾーン切替ピル
+  const zonePills = [
+    { zone: 'adjust', label: '調整中', dot: 'bg-brand-2', count: adjustSessions.length },
+    { zone: 'fixed', label: '予定確定', dot: 'bg-success', count: fixedSessions.length },
+  ] as const;
+
   return (
-    <div className="cbboard">
+    <div data-testid="collab-board" className="flex min-h-0 flex-1 flex-col overflow-hidden px-7 pt-4.5">
       {/* コントロールバー */}
       <div className="flex items-center justify-end gap-2 px-4 md:px-7 py-2 shrink-0">
         {/* PC のみ表示。モバイルの作成導線は下部 FAB（タスク画面と同型）に集約 */}
@@ -318,8 +356,7 @@ function CollabBoard({
         )}
         <button
           onClick={() => setHintVisible((v) => !v)}
-          className="w-8 h-8 rounded-full flex items-center justify-center border border-border text-muted hover:text-text transition-colors"
-          style={{ background: 'var(--surface)' }}
+          className="w-8 h-8 rounded-full flex items-center justify-center border border-border bg-surface text-text-muted hover:text-text transition-colors"
           aria-label="使い方を表示"
           title="使い方を表示"
         >
@@ -329,13 +366,10 @@ function CollabBoard({
 
       {/* ヒントパネル */}
       {hintVisible && (
-        <div
-          className="mx-4 md:mx-7 mb-2 px-4 py-3 rounded-[10px] text-[12px] shrink-0 flex items-start justify-between gap-3"
-          style={{ background: 'var(--primary-950)', border: '1px solid var(--primary-800)', color: 'var(--text-secondary)' }}
-        >
+        <div className="mx-4 md:mx-7 mb-2 px-4 py-3 rounded-md border border-border bg-surface-2 text-caption text-text-2 shrink-0 flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1.5">
-            <span className="font-semibold" style={{ color: 'var(--text-accent)' }}>コラボ調整の使い方</span>
-            <ul className="flex flex-col gap-1" style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>
+            <span className="font-semibold text-brand-2">コラボ調整の使い方</span>
+            <ul className="flex flex-col gap-1 text-text-muted">
               <li>・「コラボ調整開始」から新しい日程調整を作成</li>
               <li>・URLをコピーして参加者に共有</li>
               <li>・参加者が日程に回答後、日程を確定できます</li>
@@ -343,7 +377,7 @@ function CollabBoard({
           </div>
           <button
             onClick={() => setHintVisible(false)}
-            className="shrink-0 text-muted hover:text-text transition-colors mt-0.5"
+            className="shrink-0 text-text-muted hover:text-text transition-colors mt-0.5"
             aria-label="閉じる"
           >
             <Icon name="close" size={14} />
@@ -353,40 +387,42 @@ function CollabBoard({
 
       {/* モバイル: ゾーン切替ピル */}
       {isMobile && (
-        <div className="mtpills">
-          <button
-            className={`mtpill${activeZone === 'adjust' ? ' is-on' : ''}`}
-            onClick={() => setActiveZone('adjust')}
-          >
-            <span className="mtpill__dot" style={{ background: 'var(--cb-accent)' }} />
-            調整中
-            <span className="mtpill__n">{adjustSessions.length}</span>
-          </button>
-          <button
-            className={`mtpill${activeZone === 'fixed' ? ' is-on' : ''}`}
-            onClick={() => setActiveZone('fixed')}
-          >
-            <span className="mtpill__dot" style={{ background: 'var(--success)' }} />
-            予定確定
-            <span className="mtpill__n">{fixedSessions.length}</span>
-          </button>
+        <div data-testid="collab-zone-tabs" className="flex shrink-0 gap-2 px-4 pt-3">
+          {zonePills.map((p) => {
+            const isOn = activeZone === p.zone;
+            return (
+              <button
+                key={p.zone}
+                className={cn(
+                  'inline-flex min-h-11 cursor-pointer items-center gap-1.75 rounded-full border px-4 py-2 text-sm font-semibold transition-colors duration-(--duration-fast) ease-out',
+                  isOn
+                    ? 'border-primary bg-surface-2 text-text'
+                    : 'border-border bg-surface text-text-2 hover:bg-surface-2 hover:text-text'
+                )}
+                onClick={() => setActiveZone(p.zone)}
+              >
+                <span className={cn('size-2 shrink-0 rounded-xs', p.dot)} />
+                {p.label}
+                <span
+                  className={cn(
+                    'font-num flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-caption font-bold',
+                    isOn ? 'bg-card text-text' : 'bg-surface-2 text-text-2'
+                  )}
+                >
+                  {p.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
 
-      <div className="cbscroll">
+      <div className="flex min-h-0 flex-1 flex-col gap-5.5 overflow-y-auto pb-4.5">
         {isMobile ? (
-          // モバイル: 選択ゾーンのみカードリスト
-          <div className="mtlist">
+          // モバイル: 選択ゾーンのみカードリスト。下端余白はモバイル FAB とボトムナビのクリアランス
+          <div className="flex flex-col gap-2.5 px-4 pt-3 pb-24">
             {activeSessions.length === 0 ? (
-              <div className="cbzone__empty">
-                {activeZone === 'fixed'
-                  ? <Icon name="event_available" size={18} />
-                  : <span className="material-icons" style={{ fontSize: 18 }}>pending_actions</span>
-                }
-                <span>
-                  {activeZone === 'fixed' ? '確定したコラボはありません' : 'コラボ調整はありません'}
-                </span>
-              </div>
+              <ZoneEmpty isFixed={activeZone === 'fixed'} />
             ) : (
               activeSessions.map((s) => (
                 <MCollabCard key={s.id} collab={s} onOpen={onOpen} onDelete={onDelete} />
@@ -416,8 +452,7 @@ function CollabBoard({
       {canEdit && isMobile && (
         <button
           onClick={onStartNew}
-          className="fixed bottom-20 right-4 flex items-center gap-2 px-4 h-11 rounded-full shadow-lg font-semibold text-[13px] transition-opacity hover:opacity-90 z-10"
-          style={{ background: 'var(--purple-d)', color: 'var(--purple-l)', boxShadow: 'var(--glow-primary)' }}
+          className="fixed right-4 bottom-20 z-10 flex h-11 items-center gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-text-on-primary transition-colors duration-(--duration-instant) hover:bg-primary-hover active:bg-primary-active"
           aria-label="コラボ作成"
         >
           <Icon name="add" size={16} />
@@ -481,9 +516,9 @@ export default function CollabsPage() {
 
   if (!teamId) {
     return (
-      <div className={`flex flex-col flex-1 overflow-hidden cb--fps${isMobile ? ' sch--mobile' : ''}`}>
+      <div className="flex flex-col flex-1 overflow-hidden">
         <TopBar title="コラボ調整" subtitle="コラボ相手との日程調整ができます" />
-        <div className="flex-1 flex items-center justify-center text-sm p-8" style={{ color: 'var(--text-muted)' }}>
+        <div className="flex-1 flex items-center justify-center text-sm p-8 text-text-muted">
           チームに参加してからコラボ機能を利用できます
         </div>
       </div>
@@ -491,7 +526,7 @@ export default function CollabsPage() {
   }
 
   return (
-    <div className={`flex flex-col flex-1 overflow-hidden cb--fps${isMobile ? ' sch--mobile' : ''}`}>
+    <div className="flex flex-col flex-1 overflow-hidden">
       <TopBar title="コラボ調整" subtitle="コラボ相手との日程調整ができます" />
       {loading ? (
         <div className="flex-1 flex items-center justify-center">

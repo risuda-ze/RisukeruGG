@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { DateInput } from '@/components/ui/DateInput';
 import { Textarea } from '@/components/ui/Textarea';
@@ -129,7 +129,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
             <StepAlertBadges step={step} />
           </div>
         </div>
-        <button type="button" onClick={onClose} aria-label="閉じる" className="btn btn--ghost btn--icon btn--sm">
+        <button type="button" onClick={onClose} aria-label="閉じる" className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })}>
           <Icon name="close" size={18} />
         </button>
       </div>
@@ -150,7 +150,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
           </div>
         )}
         {step.status === 'waiting' && (
-          <p className="text-[12px] text-muted">
+          <p className="text-[12px] text-text-muted">
             先行工程（{step.dependsOn.join('・') || 'なし'}）が終わると着手できます
           </p>
         )}
@@ -158,7 +158,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
         {/* 担当・締切 */}
         <div className="grid grid-cols-1 gap-3">
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+            <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>
               担当
             </span>
             <Dropdown
@@ -182,7 +182,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
             {step.dueDateOverridden && canEdit && (
               <button
                 type="button"
-                className="mt-1 text-[11px] text-purple-l hover:underline"
+                className="mt-1 text-[11px] text-brand-2 hover:underline"
                 onClick={() => run(() => briefOps.setStepDueDate(step.briefId, step.id, null))}
               >
                 固定を解除して自動計算に戻す
@@ -194,7 +194,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
         {/* 工程固有の項目 */}
         {step.requiredFields.length > 0 && (
           <section className="space-y-3">
-            <h4 className="text-[12px] font-semibold text-muted uppercase tracking-wide">この工程に必要な情報</h4>
+            <h4 className="text-[12px] font-semibold text-text-muted uppercase tracking-wide">この工程に必要な情報</h4>
             <FieldInputs
               defs={step.requiredFields}
               values={fields}
@@ -205,7 +205,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
               disabled={!canEdit}
             />
             {missing.length > 0 && (
-              <p className="text-[11px] text-amber-l">
+              <p className="text-[11px] text-orange-text">
                 未入力: {missing.map((f) => f.label).join('、')}
                 {missing.some((f) => f.ownerRoleLabel) &&
                   `（${[...new Set(missing.map((f) => f.ownerRoleLabel).filter(Boolean))].join('・')} が入力）`}
@@ -221,14 +221,14 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
 
         {/* コメント */}
         <section className="space-y-3">
-          <h4 className="text-[12px] font-semibold text-muted uppercase tracking-wide">やり取り</h4>
+          <h4 className="text-[12px] font-semibold text-text-muted uppercase tracking-wide">やり取り</h4>
           {comments.length === 0 ? (
-            <p className="text-[12px] text-muted">まだコメントはありません</p>
+            <p className="text-[12px] text-text-muted">まだコメントはありません</p>
           ) : (
             <ul className="space-y-2">
               {comments.map((c) => (
-                <li key={c.id} className="rounded-[10px] px-3 py-2" style={{ background: 'var(--bg)' }}>
-                  <div className="flex items-center gap-2 text-[11px] text-muted">
+                <li key={c.id} className="rounded-[10px] px-3 py-2" style={{ background: 'var(--canvas)' }}>
+                  <div className="flex items-center gap-2 text-[11px] text-text-muted">
                     <span className="font-medium text-text-2">{c.authorName}</span>
                     <span>{formatDateTime(c.createdAt)}</span>
                     {c.source === 'discord' && <Icon name="discord" size={12} />}
@@ -259,7 +259,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
           <div className="pt-2 border-t border-border">
             <button
               type="button"
-              className="text-[12px] text-muted hover:text-live transition-colors"
+              className="text-[12px] text-text-muted hover:text-live transition-colors"
               onClick={() => {
                 if (confirm(`工程「${step.title}」を削除しますか？`)) {
                   run(() => briefOps.removeStep(step.briefId, step.id)).then(onClose);

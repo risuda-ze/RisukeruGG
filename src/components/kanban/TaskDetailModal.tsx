@@ -12,9 +12,11 @@ import { useAuthStore } from '@/stores/auth';
 import { MarkdownView } from '@/components/ui/MarkdownEditor';
 import { DateField } from '@/components/ui/DateField';
 import { Icon } from '@/components/ui/Icon';
+import { DialogShell } from '@/components/ui/Dialog';
 import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import { useModalDrag } from '@/hooks/useModalDrag';
 import { Dropdown } from '@/components/ui/Dropdown';
+import { Switch } from '@/components/ui/Switch';
 import type { Task, TeamMember, Category, TaskStatus, CollabComment } from '@/types/entities';
 
 interface TaskDetailDraft {
@@ -92,7 +94,6 @@ export function TaskDetailModal({
   const [saveError, setSaveError] = useState('');
 
   const myName = currentUser?.displayName ?? 'あなた';
-  const mouseDownOnOverlay = useRef<boolean>(false);
 
   /* ドラッグ移動（PC のみ） */
   const { position, handleDragStart } = useModalDrag();
@@ -229,35 +230,26 @@ export function TaskDetailModal({
 
   /* アバタースタイル */
   function avatarBg(name: string) {
-    return ['var(--purple-d)', 'var(--success-dim)', 'var(--warning-dim)', 'var(--danger-dim)'][name.charCodeAt(0) % 4];
+    return ['color-mix(in oklab, var(--primary) 35%, transparent)', 'var(--success-tint)', 'var(--warning-tint)', 'var(--danger-tint)'][name.charCodeAt(0) % 4];
   }
   function avatarColor(name: string) {
-    return ['var(--purple-l)', 'var(--green)', 'var(--amber-l)', 'var(--danger)'][name.charCodeAt(0) % 4];
+    return ['var(--brand-2)', 'var(--success)', 'var(--orange-text)', 'var(--danger)'][name.charCodeAt(0) % 4];
   }
   function memberAvatarUrl(authorId: string) {
     return members.find((m) => m.userId === authorId)?.avatarUrl ?? null;
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[290] flex items-end md:items-center justify-center md:p-8"
-      style={{ background: 'rgba(6,6,16,0.85)', backdropFilter: 'blur(6px)' }}
-      onMouseDown={(e) => { mouseDownOnOverlay.current = e.target === e.currentTarget; }}
-      onClick={() => { if (mouseDownOnOverlay.current) handleCancel(); }}
+    <DialogShell
+      onClose={handleCancel}
+      label={isNew ? 'タスクを作成' : 'タスクの詳細'}
+      data-testid="task-detail-modal"
+      // モバイルは全画面、PC は 1180px のリサイズ可能なカード（ScheduleModal と同サイズ）
+      className="flex h-dvh max-h-dvh w-full flex-col overflow-hidden border border-border bg-card md:h-[min(720px,calc(100vh-64px))] md:max-h-[calc(100vh-64px)] md:min-h-[400px] md:w-[min(1180px,calc(100vw-64px))] md:min-w-[560px] md:resize md:rounded-lg"
+      style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
     >
-      {/* モーダル本体 — .task-modal でモバイル全画面 / PC 1180px（ScheduleModal と同サイズ）に切り替わる */}
-      <div
-        className="task-modal flex flex-col overflow-hidden"
-        style={{
-          background: 'var(--card-2)',
-          border: '1px solid var(--border-l)',
-          boxShadow: 'var(--shadow-xl)',
-          transform: `translate(${position.x}px, ${position.y}px)`,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
         {/* パープルバー */}
-        <div className="h-1.5 shrink-0" style={{ background: 'linear-gradient(90deg, var(--purple-d), var(--purple))' }} />
+        <div className="h-1.5 shrink-0" style={{ background: 'linear-gradient(90deg, color-mix(in oklab, var(--primary) 35%, transparent), var(--primary))' }} />
 
         {/* ヘッダー（ドラッグハンドル） */}
         <div
@@ -275,10 +267,10 @@ export function TaskDetailModal({
                     onBlur={isNew ? undefined : handleTitleConfirm}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !isNew) handleTitleConfirm();
-                      if (e.key === 'Escape' && !isNew) { setTitleValue(task!.title); setEditingTitle(false); }
+                      if (e.key === 'Escape' && !isNew) { e.stopPropagation(); setTitleValue(task!.title); setEditingTitle(false); }
                     }}
                     placeholder="タスクのタイトルを入力..."
-                    className="w-full text-[18px] font-bold bg-bg border border-purple rounded-[8px] px-2 py-1 text-text outline-none"
+                    className="w-full text-[18px] font-bold bg-canvas border border-primary rounded-[8px] px-2 py-1 text-text outline-none"
                     autoFocus
                   />
                   {titleError && <p className="text-[11px] text-live">{titleError}</p>}
@@ -287,7 +279,7 @@ export function TaskDetailModal({
                 <div className="flex items-center gap-2">
                   <h2 className="text-[18px] font-bold text-text leading-snug">{titleValue || '（タイトルなし）'}</h2>
                   {canEdit && (
-                    <button onClick={() => setEditingTitle(true)} className="shrink-0 text-muted hover:text-purple-l transition-colors" aria-label="タイトルを編集">
+                    <button onClick={() => setEditingTitle(true)} className="shrink-0 text-text-muted hover:text-brand-2 transition-colors" aria-label="タイトルを編集">
                       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M11.013 2.513a1.75 1.75 0 0 1 2.475 2.474L6.226 12.25a2.751 2.751 0 0 1-.892.566l-2.35.864a.75.75 0 0 1-.96-.96l.864-2.35a2.75 2.75 0 0 1 .566-.892l7.56-7.559Z" />
                       </svg>
@@ -297,7 +289,7 @@ export function TaskDetailModal({
               )}
             </div>
             <button onClick={handleCancel}
-              className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center border border-border text-muted hover:text-text transition-colors"
+              className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center border border-border text-text-muted hover:text-text transition-colors"
               style={{ background: 'var(--surface)' }} aria-label="閉じる">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l8 8M12 4l-8 8" />
@@ -313,7 +305,7 @@ export function TaskDetailModal({
             <div className="grid grid-cols-2 gap-4">
               {/* ステータス */}
               <div>
-                <label className="block text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-1.5">ステータス</label>
+                <label className="block text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase mb-1.5">ステータス</label>
                 {canEdit ? (
                   <div className="flex items-center gap-2">
                     {currentColumn?.icon && (
@@ -338,7 +330,7 @@ export function TaskDetailModal({
                         {currentColumn.icon}
                       </span>
                     ) : (
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: currentColumn?.color ?? 'var(--muted)' }} />
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: currentColumn?.color ?? 'var(--text-muted)' }} />
                     )}
                     <span className="text-[13px] text-text">{currentColumn?.name ?? '—'}</span>
                   </div>
@@ -346,7 +338,7 @@ export function TaskDetailModal({
               </div>
               {/* カテゴリ */}
               <div>
-                <label className="block text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-1.5">カテゴリ</label>
+                <label className="block text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase mb-1.5">カテゴリ</label>
                 {canEdit ? (
                   <div className="flex items-center gap-2">
                     {currentCategory?.icon && (
@@ -377,31 +369,31 @@ export function TaskDetailModal({
               </div>
               {/* 担当者 */}
               <div>
-                <label className="block text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-1.5">担当者</label>
+                <label className="block text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase mb-1.5">担当者</label>
                 {canEdit ? (
                   <>
                     <button type="button" onClick={() => setShowAssigneePicker((v) => !v)}
-                      className="w-full flex items-center gap-2 px-3 py-2 border border-border rounded-[8px] bg-bg text-left text-[13px] outline-none hover:border-border-l transition-colors">
+                      className="w-full flex items-center gap-2 px-3 py-2 border border-border rounded-[8px] bg-canvas text-left text-[13px] outline-none hover:border-border transition-colors">
                       {currentAssignee ? (
-                        <><Avatar initials={currentAssignee.displayName.slice(0, 2)} src={currentAssignee.avatarUrl} bgClass="bg-purple-d/30" textClass="text-purple-l" size="sm" />
+                        <><Avatar initials={currentAssignee.displayName.slice(0, 2)} src={currentAssignee.avatarUrl} bgClass="bg-primary/10" textClass="text-brand-2" size="sm" />
                           <span className="flex-1 text-text truncate">{currentAssignee.displayName}</span></>
-                      ) : <span className="flex-1 text-muted">なし</span>}
-                      <Icon name="chevron_down" size={14} className={`text-muted${showAssigneePicker ? ' rotate-180' : ''}`} />
+                      ) : <span className="flex-1 text-text-muted">なし</span>}
+                      <Icon name="chevron_down" size={14} className={`text-text-muted${showAssigneePicker ? ' rotate-180' : ''}`} />
                     </button>
                     {showAssigneePicker && (
                       <div className="mt-1 border border-border rounded-[10px] overflow-hidden z-10 relative">
                         <button type="button" onClick={() => handleAssigneeChange('')}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] transition-colors text-left ${!assigneeId ? 'bg-purple/10 text-purple-l' : 'hover:bg-surface text-muted'}`}>
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] transition-colors text-left ${!assigneeId ? 'bg-primary/10 text-brand-2' : 'hover:bg-surface text-text-muted'}`}>
                           <div className="w-6 h-6 rounded-full border border-dashed border-border flex items-center justify-center shrink-0"><Icon name="person_off" size={12} /></div>
                           <span className="flex-1">なし</span>
                           {!assigneeId && <Icon name="check" size={14} />}
                         </button>
                         {members.map((m) => (
                           <button type="button" key={m.userId} onClick={() => handleAssigneeChange(m.userId)}
-                            className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] transition-colors text-left border-t border-border ${assigneeId === m.userId ? 'bg-purple/10' : 'hover:bg-surface'}`}>
-                            <Avatar initials={m.displayName.slice(0, 2)} src={m.avatarUrl} bgClass="bg-purple-d/30" textClass="text-purple-l" size="sm" />
-                            <span className={`flex-1 truncate ${assigneeId === m.userId ? 'text-purple-l font-semibold' : 'text-text'}`}>{m.displayName}</span>
-                            {assigneeId === m.userId && <Icon name="check" size={14} className="text-purple-l" />}
+                            className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] transition-colors text-left border-t border-border ${assigneeId === m.userId ? 'bg-primary/10' : 'hover:bg-surface'}`}>
+                            <Avatar initials={m.displayName.slice(0, 2)} src={m.avatarUrl} bgClass="bg-primary/10" textClass="text-brand-2" size="sm" />
+                            <span className={`flex-1 truncate ${assigneeId === m.userId ? 'text-brand-2 font-semibold' : 'text-text'}`}>{m.displayName}</span>
+                            {assigneeId === m.userId && <Icon name="check" size={14} className="text-brand-2" />}
                           </button>
                         ))}
                       </div>
@@ -413,7 +405,7 @@ export function TaskDetailModal({
               <div>
                 {canEdit ? (
                   <>
-                    <label className="block text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-1.5">締切日</label>
+                    <label className="block text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase mb-1.5">締切日</label>
                     <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <DateField
@@ -423,19 +415,17 @@ export function TaskDetailModal({
                           placeholder="日付を選択"
                         />
                       </div>
-                      <label
-                        className={`allday${dueDateAllDay ? ' is-on' : ''}`}
-                        onClick={handleDueDateAllDayToggle}
-                        style={{ paddingBottom: 11, flexShrink: 0 }}
-                      >
-                        <span className="allday__txt">終日</span>
-                        <span className="allday__sw" />
-                      </label>
+                      <Switch
+                        label="終日"
+                        checked={dueDateAllDay}
+                        onCheckedChange={handleDueDateAllDayToggle}
+                        className="pb-2.75"
+                      />
                     </div>
                   </>
                 ) : (
                   <>
-                    <label className="block text-[11px] font-semibold text-muted tracking-[0.06em] uppercase mb-1.5">締切日</label>
+                    <label className="block text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase mb-1.5">締切日</label>
                     <span className="text-[13px] text-text font-num py-2 block">
                       {task?.dueDate
                         ? (task.dueDateAllDay ?? true)
@@ -451,9 +441,9 @@ export function TaskDetailModal({
             {/* 説明 */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[11px] font-semibold text-muted tracking-[0.06em] uppercase">詳細</label>
+                <label className="text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase">詳細</label>
                 {canEdit && !editingDesc && (
-                  <button onClick={() => setEditingDesc(true)} className="text-muted hover:text-purple-l transition-colors" aria-label="詳細を編集">
+                  <button onClick={() => setEditingDesc(true)} className="text-text-muted hover:text-brand-2 transition-colors" aria-label="詳細を編集">
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M11.013 2.513a1.75 1.75 0 0 1 2.475 2.474L6.226 12.25a2.751 2.751 0 0 1-.892.566l-2.35.864a.75.75 0 0 1-.96-.96l.864-2.35a2.75 2.75 0 0 1 .566-.892l7.56-7.559Z" />
                     </svg>
@@ -464,16 +454,16 @@ export function TaskDetailModal({
                 <div className="flex flex-col gap-2">
                   <textarea value={description} onChange={(e) => setDescription(e.target.value)}
                     placeholder="詳細を入力..." rows={4}
-                    className="w-full bg-bg border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-purple resize-y" />
+                    className="w-full bg-canvas border border-border text-text px-3.5 py-2.5 rounded-[12px] text-[14px] outline-none transition-colors focus:border-primary resize-y" />
                   <div className="flex gap-2 justify-end">
                     <button onClick={() => { setDescription(task?.description ?? ''); setEditingDesc(false); }}
-                      className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-muted hover:text-text">
+                      className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold border border-border text-text-muted hover:text-text">
                       キャンセル
                     </button>
                     {!isNew && (
                       <button onClick={() => setEditingDesc(false)}
                         className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold"
-                        style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}>
+                        style={{ background: 'color-mix(in oklab, var(--primary) 35%, transparent)', color: 'var(--brand-2)' }}>
                         完了
                       </button>
                     )}
@@ -491,12 +481,12 @@ export function TaskDetailModal({
           {!isNew && (
             <div className="md:w-[340px] md:shrink-0 flex flex-col overflow-hidden max-h-[280px] md:max-h-none" style={{ borderColor: 'var(--border)' }}>
               <div className="px-5 py-3 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
-                <p className="text-[11px] font-semibold text-muted tracking-[0.06em] uppercase">コメント / メモ</p>
+                <p className="text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase">コメント / メモ</p>
               </div>
               {/* コメントリスト */}
               <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3" style={{ minHeight: 0 }}>
                 {comments.length === 0 && (
-                  <div className="flex items-center gap-2 p-3 rounded-[10px] text-[12px] text-muted" style={{ background: 'var(--surface)', border: '1px dashed var(--border)' }}>
+                  <div className="flex items-center gap-2 p-3 rounded-[10px] text-[12px] text-text-muted" style={{ background: 'var(--surface)', border: '1px dashed var(--border)' }}>
                     <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 shrink-0 opacity-50"><path d="M2 2h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H9l-3 3v-3H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Z" /></svg>
                     まだコメントはありません
                   </div>
@@ -515,14 +505,14 @@ export function TaskDetailModal({
                         </div>
                       )}
                       <div className={`max-w-[78%] flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'}`}>
-                        <div className="flex items-center gap-1.5 text-[10px] text-muted">
+                        <div className="flex items-center gap-1.5 text-[10px] text-text-muted">
                           {!isMe && <span className="font-semibold text-text-secondary">{c.authorName}</span>}
                           <span>{format(c.createdAt, 'HH:mm', { locale: ja })}</span>
                         </div>
                         <div className="px-3 py-2 text-[13px] leading-relaxed text-text"
                           style={{
-                            background: isMe ? 'var(--primary-950)' : 'var(--surface)',
-                            border: `1px solid ${isMe ? 'var(--primary-800)' : 'var(--border)'}`,
+                            background: isMe ? 'var(--surface-2)' : 'var(--surface)',
+                            border: `1px solid ${isMe ? 'var(--border)' : 'var(--border)'}`,
                             borderRadius: isMe ? '13px 4px 13px 13px' : '4px 13px 13px 13px',
                           }}>
                           {c.text}
@@ -537,17 +527,15 @@ export function TaskDetailModal({
                 <div
                   ref={commentFieldRef}
                   className="flex-1 flex items-center px-4"
-                  style={{ height: 46, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', transition: 'border-color var(--duration-fast), box-shadow var(--duration-fast)' }}
+                  style={{ height: 46, background: 'var(--canvas)', border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', transition: 'border-color var(--duration-fast), box-shadow var(--duration-fast)' }}
                   onFocusCapture={() => {
                     if (commentFieldRef.current) {
                       commentFieldRef.current.style.borderColor = 'var(--primary)';
-                      commentFieldRef.current.style.boxShadow = 'var(--glow-primary)';
                     }
                   }}
                   onBlurCapture={() => {
                     if (commentFieldRef.current) {
                       commentFieldRef.current.style.borderColor = 'var(--border)';
-                      commentFieldRef.current.style.boxShadow = '';
                     }
                   }}
                 >
@@ -556,12 +544,12 @@ export function TaskDetailModal({
                     onChange={(e) => setCommentText(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(); } }}
                     placeholder="コメントを入力..."
-                    className="flex-1 bg-transparent text-[13px] text-text outline-none placeholder:text-muted"
+                    className="flex-1 bg-transparent text-[13px] text-text outline-none placeholder:text-text-muted"
                   />
                 </div>
                 <button onClick={addComment} disabled={!commentText.trim() || sendingComment}
                   className="shrink-0 w-[46px] h-[46px] rounded-full flex items-center justify-center disabled:opacity-40 transition-opacity"
-                  style={{ background: 'var(--primary)', boxShadow: 'var(--glow-primary)' }} aria-label="コメントを送信">
+                  style={{ background: 'var(--primary)' }} aria-label="コメントを送信">
                   <svg viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth={2} className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 13V3M4 7l4-4 4 4" />
                   </svg>
@@ -577,7 +565,7 @@ export function TaskDetailModal({
           {!isNew && canEdit && (
             <button onClick={handleDelete}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] text-[13px] font-semibold border transition-colors"
-              style={{ background: 'var(--danger-dim)', color: 'var(--danger)', borderColor: 'color-mix(in oklab, var(--danger) 30%, transparent)' }}>
+              style={{ background: 'var(--danger-tint)', color: 'var(--danger)', borderColor: 'color-mix(in oklab, var(--danger) 30%, transparent)' }}>
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2 4h12M5 4V2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5V4m2 0-1 9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1L3 4" />
               </svg>
@@ -587,7 +575,7 @@ export function TaskDetailModal({
           {/* AIに相談（編集モード・canEdit のみ）: タスクをピン留めして AI チャットへ */}
           {!isNew && canEdit && (
             <button onClick={handleConsultAI}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] text-[13px] font-semibold border border-purple/20 text-purple bg-purple/5 hover:bg-purple/10 transition-colors mr-auto">
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] text-[13px] font-semibold border border-primary/20 text-primary bg-primary/5 hover:bg-primary/10 transition-colors mr-auto">
               <Icon name="auto_awesome" size={14} />
               AIに相談
             </button>
@@ -596,17 +584,16 @@ export function TaskDetailModal({
           <div className="ml-auto flex items-center gap-2">
             {saveError && <p className="text-[11px] text-live">{saveError}</p>}
             <button onClick={handleCancel}
-              className="px-4 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-muted hover:text-text transition-colors">
+              className="px-4 py-2 rounded-[10px] text-[13px] font-semibold border border-border text-text-muted hover:text-text transition-colors">
               キャンセル
             </button>
             <button onClick={handleSave} disabled={saving}
               className="px-5 py-2 rounded-[10px] text-[13px] font-semibold disabled:opacity-40 transition-opacity"
-              style={{ background: 'var(--purple-d)', color: 'var(--purple-l)' }}>
+              style={{ background: 'color-mix(in oklab, var(--primary) 35%, transparent)', color: 'var(--brand-2)' }}>
               {saving ? (isNew ? '作成中...' : '保存中...') : '保存'}
             </button>
           </div>
         </div>
-      </div>
-    </div>
+    </DialogShell>
   );
 }
