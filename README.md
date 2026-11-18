@@ -107,7 +107,7 @@ pnpm install
 
 # 3. 環境変数ファイルの作成
 cp .env.local.example .env.local
-# .env.local を編集して Firebase の設定を入力
+# そのままの値で Firebase Emulator に接続して動きます（編集不要）
 
 # 4. ターミナル 1: Functions をビルドして Firebase Emulator を起動
 pnpm emulators
@@ -122,26 +122,21 @@ node scripts/seed.mjs
 アプリは http://localhost:3000、Firebase Emulator UI は http://localhost:4000 で確認できます。
 
 - **ポート**: 4000 / 5001 / 8080 / 9098 / 9199 を使います。別の worktree を含め、同じマシンで複数同時に起動しないでください（終了時の書き出しが先に起動していた側に対して行われます）。
-- **データ**: 終了時に `.emulator-data/` へ書き出し、次回起動時に読み込みます。`Ctrl+C` で終了してください。強制終了すると書き出されず、その回のデータは残りません。
-- **worktree**: `.emulator-data/` は作業ディレクトリごとなので、git worktree ごとにシードが必要です。
-- **環境変数**: Next.js の API ルート（Admin SDK）をエミュレータに向けるため、`.env.local` に以下を追加します。
-
-  ```env
-  NEXT_PUBLIC_USE_EMULATORS=true
-  FIREBASE_AUTH_EMULATOR_HOST=localhost:9098
-  FIRESTORE_EMULATOR_HOST=localhost:8080
-  ```
+- **データ**: 終了時に `.emulator-data/` へ書き出し、次回起動時に読み込みます。`Ctrl+C` で終了してください。強制終了すると書き出されず、その回のデータは残りません。Windows では `Ctrl+C` の直後に「バッチ ジョブを終了しますか (Y/N)?」と出ますが、書き出しは裏で続いています。`Export complete` の表示を待ってから `Y` で閉じてください。
+- **worktree**: `.emulator-data/` と `.env.local` は作業ディレクトリごとなので、git worktree ごとに `.env.local` の作成とシードが必要です。
+- **環境変数**: エミュレータへの接続設定（`NEXT_PUBLIC_USE_EMULATORS` / `FIREBASE_AUTH_EMULATOR_HOST` / `FIRESTORE_EMULATOR_HOST`）は `.env.local.example` に入っています。Discord 連携や AI 機能を試す場合だけ、該当のキーを `.env.local` に追記します。
 
 ### Linux 環境での動作確認（任意）
 
 Vercel / CI（Linux）でだけ `pnpm install` やビルドが失敗する場合に、手元で再現するためのコマンドです。開発環境としての Docker はサポートしていませんが、Docker Desktop が入っていれば使い捨ての Linux + Node 22 環境に入れます。PowerShell でプロジェクトルートから実行してください。
 
 ```powershell
-docker run --rm -it -v "${PWD}:/work" -v /work/node_modules -v /work/functions/node_modules -w /work -e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 node:22-bookworm-slim bash -c "corepack enable && pnpm install --frozen-lockfile && bash"
+docker run --rm -it -v "${PWD}:/work" -v /work/node_modules -v /work/functions/node_modules -v /work/.pnpm-store -w /work -e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 node:22-bookworm-slim bash -c "corepack enable && pnpm install --frozen-lockfile && bash"
 ```
 
+- **メモリ**: Docker（WSL2）の割り当てが 1GB だと `pnpm install` が `ERR_PNPM_ENOMEM` で失敗し、Docker の VM ごと落ちます。`%USERPROFILE%\.wslconfig` の `memory` を増やしてから実行してください（必要量は未計測）。
 - 依存のインストールが通ればコンテナ内のシェルに入ります。続けて `pnpm build` や `pnpm test` を実行できます。`exit` で抜けるとコンテナは破棄されます。
-- `node_modules` はコンテナ専用の一時ボリュームに置くため、ホスト（Windows）の `node_modules` は書き換わりません。それ以外のファイルはホストと共有なので、コンテナ内での変更（`.next/` の生成など）はホストに残ります。
+- `node_modules` と pnpm のストア（`.pnpm-store`）はコンテナ専用の一時ボリュームに置くため、ホスト（Windows）の `node_modules` は書き換わりません。それ以外のファイルはホストと共有なので、コンテナ内での変更（`.next/` の生成など）はホストに残ります。
 
 ---
 

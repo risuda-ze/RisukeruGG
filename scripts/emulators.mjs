@@ -9,17 +9,31 @@
  */
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { createRequire } from 'node:module';
 
 const DATA_DIR = '.emulator-data';
-const importArg = existsSync(`${DATA_DIR}/firebase-export-metadata.json`)
-  ? ` --import ${DATA_DIR}`
-  : '';
 
-// firebase は devDependency の firebase-tools（pnpm 経由で PATH に入る）を使う
-const child = spawn(
-  `firebase emulators:start --project demo-risukeru${importArg} --export-on-exit ${DATA_DIR}`,
-  { stdio: 'inherit', shell: true }
-);
+// devDependency の firebase-tools を node で直接実行する。
+// firebase.cmd 経由にすると Windows で Ctrl+C 時に「バッチ ジョブを終了しますか」が
+// 余分に出るため、シェルを介さない
+const firebaseBin = createRequire(import.meta.url).resolve('firebase-tools/lib/bin/firebase.js');
+
+const args = [
+  firebaseBin,
+  'emulators:start',
+  '--project',
+  'demo-risukeru',
+  // firebase.json に hosting 定義があるが、ローカルでは Next.js を pnpm dev で動かすため起動しない
+  '--only',
+  'auth,functions,firestore,storage',
+  '--export-on-exit',
+  DATA_DIR,
+];
+if (existsSync(`${DATA_DIR}/firebase-export-metadata.json`)) {
+  args.push('--import', DATA_DIR);
+}
+
+const child = spawn(process.execPath, args, { stdio: 'inherit' });
 
 // Ctrl+C は子プロセスにも届く。export が終わるまで親は終了せずに待つ
 process.on('SIGINT', () => {});
