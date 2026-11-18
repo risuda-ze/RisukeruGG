@@ -76,6 +76,10 @@ User は、認証済み利用者のアカウント状態を表す。
 - `notificationSettings`
 - 通知配送チャネルごとの運用データ
 
+### ui 側で管理するもの
+
+- `theme`（テーマの選択。未実装・Issue #215。[ui/model.md](../ui/model.md) の `ThemePreference`）
+
 ## 状態遷移
 
 ```text
