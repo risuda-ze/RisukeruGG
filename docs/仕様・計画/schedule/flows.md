@@ -39,8 +39,8 @@
 1. ユーザーがスケジュール画面（PC はヘッダーのボタン、モバイルは ⋯ メニュー）から「Google カレンダーに書き出す」を実行する
 2. `calendar.app.created` スコープの Google 認可ポップアップを開き、アクセストークンを取得する（[user/flows.md](../user/flows.md) 参照。トークンは保存しない）
 3. `users/{uid}.googleCalendarExports.{teamId}.calendarId` のカレンダーが Google 側に実在すればそれを使う。無ければ副カレンダー「RisukeruGG - {チーム名}」を作成し、予定を書き込む前に `calendarId` を保存する
-4. 専用カレンダー上のイベントを一覧し、`risukeruScheduleId` でチームの対象予定（当日 0:00（JST）以降に終了する予定）と突き合わせる
-5. Google 側に無い予定は追加し、内容が違う予定は上書きする。RisukeruGG 側に無くなった予定は、当日 0:00（JST）以降に終了するものだけ削除する。`risukeruScheduleId` を持たないイベントには触れない
+4. 専用カレンダー上のイベントを一覧し、`risukeruScheduleId` でチームの対象予定（当日 0:00（JST）より後に終了する予定）と突き合わせる
+5. Google 側に無い予定は追加し、内容が違う予定は上書きする。RisukeruGG 側に無くなった予定は、当日 0:00（JST）より後に終了するものだけ削除する。`risukeruScheduleId` を持たないイベントには触れない
 6. すべて成功したら `exportedAt` を更新し、追加・更新・削除の件数を表示する
 
 ## Google カレンダー書き出し失敗フロー

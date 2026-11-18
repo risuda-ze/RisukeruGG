@@ -76,6 +76,26 @@ describe('selectExportTargets（当日 0:00 JST 以降に終了する予定）',
     expect(targets.map((s) => s.id)).toEqual(['overnight', 'today-done', 'future']);
   });
 
+  it.each([
+    ['JST 0:30（UTC では前日）', '2026-11-18T00:30:00'],
+    ['JST 23:59', '2026-11-18T23:59:00'],
+  ])('基準は JST の当日 0:00 で、実行環境のタイムゾーンに依らない: %s', (_label, now) => {
+    const targets = selectExportTargets(
+      [
+        schedule('before', {
+          startAt: jst('2026-11-17T22:00:00'),
+          endAt: jst('2026-11-17T23:59:59'),
+        }),
+        schedule('after', {
+          startAt: jst('2026-11-17T23:00:00'),
+          endAt: jst('2026-11-18T00:00:01'),
+        }),
+      ],
+      jst(now)
+    );
+    expect(targets.map((s) => s.id)).toEqual(['after']);
+  });
+
   it('当日 0:00 ちょうどに終了する予定（前日の終日予定）は対象外', () => {
     const targets = selectExportTargets(
       [
@@ -172,6 +192,21 @@ describe('planExport', () => {
     );
     const existing = desired.map((event, i) => asResource(`g${i}`, event));
     expect(planExport(desired, existing, NOW)).toEqual({ inserts: [], updates: [], deletes: [] });
+  });
+
+  it('Google が +09:00 表記・overrides 省略で返しても一致と判定する', () => {
+    const desired = desiredOf(schedule('s1'));
+    const fromGoogle: GoogleEventResource = {
+      ...asResource('g1', desired[0]),
+      start: { dateTime: '2026-11-20T21:00:00+09:00' },
+      end: { dateTime: '2026-11-20T23:00:00+09:00' },
+      reminders: { useDefault: false },
+    };
+    expect(planExport(desired, [fromGoogle], NOW)).toEqual({
+      inserts: [],
+      updates: [],
+      deletes: [],
+    });
   });
 
   it('RisukeruGG 側で変更された予定は上書きする', () => {

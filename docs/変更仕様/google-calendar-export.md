@@ -19,7 +19,7 @@ Issue #208 の論点に対する決定。★ はユーザー確認済み、そ�
 | 2 | iCal 購読 URL | 採用しない |
 | 3 | スコープ | `https://www.googleapis.com/auth/calendar.app.created`（アプリが作成した副カレンダーとその予定だけを扱える）。ユーザーの既存予定は読めない・触れない |
 | 4 | 専用カレンダーか primary か | **専用の副カレンダー**「RisukeruGG - {チーム名}」をチームごとに 1 つ作る。primary には書かない |
-| 5 | 対象の予定 | ★ **チームの全予定**（`participantIds` で絞らない）。範囲は「書き出し当日 0:00（JST）以降に終了する予定」。過去分は入れない。ブリーフの公開予定日・工程締切は対象外 |
+| 5 | 対象の予定 | ★ **チームの全予定**（`participantIds` で絞らない）。範囲は「書き出し当日 0:00（JST）より後に終了する予定」。過去分は入れない。ブリーフの公開予定日・工程締切は対象外 |
 | 6 | 対応づけ | Google イベントの `extendedProperties.private.risukeruScheduleId` に `scheduleId` を持たせる。Firestore に予定単位の対応表は持たない |
 | 7 | 逆方向の編集 | 取り込まない。Google 側での変更は次回の書き出しで上書きされる。説明文の末尾に「この予定は RisukeruGG から書き出されたものです。編集は RisukeruGG で行ってください」を付ける |
 | 8 | 通知の重複 | `reminders: { useDefault: false, overrides: [] }` で Google 側の通知を付けない（締切前の通知は Discord が担う） |
@@ -43,10 +43,10 @@ Issue #208 の論点に対する決定。★ はユーザー確認済み、そ�
 3. 書き出し先カレンダーを決める
    - `users/{uid}.googleCalendarExports.{teamId}.calendarId` があり、Google 側に実在すればそれを使う
    - 無い、または Google 側で削除済み（404 / 410）なら、副カレンダー「RisukeruGG - {チーム名}」を新規作成し、予定を書き込む前に `calendarId` を保存する（`exportedAt` は未設定のまま）
-4. 専用カレンダー上のイベントを一覧し、`risukeruScheduleId` で対象予定（当日 0:00（JST）以降に終了するチームの予定）と突き合わせる
+4. 専用カレンダー上のイベントを一覧し、`risukeruScheduleId` で対象予定（当日 0:00（JST）より後に終了するチームの予定）と突き合わせる
    - Google 側に無い予定 → 追加
    - Google 側にあり、内容（タイトル・説明・開始・終了・通知なし）が違う予定 → RisukeruGG の内容で上書き。一致していれば何も送らない
-   - Google 側にあるが RisukeruGG 側に無い（削除された）予定 → 当日 0:00（JST）以降に終了するものだけ削除。当日より前に終了したイベントには触れない（履歴として残る）
+   - Google 側にあるが RisukeruGG 側に無い（削除された）予定 → 当日 0:00（JST）より後に終了するものだけ削除。当日より前に終了したイベントには触れない（履歴として残る）
    - 同じ `risukeruScheduleId` のイベントが複数ある → 1 つだけ残して削除
    - `risukeruScheduleId` を持たないイベント（利用者が Google 側でこのカレンダーに足したもの）には触れない
 5. 追加・更新・削除は 1 件ずつ順に送る。1 件の失敗で残りを止めず、失敗件数を数える
@@ -88,8 +88,9 @@ googleCalendarExports: {
 - モバイル: ⋯ メニューの「Googleカレンダーを接続 / 再接続」を「Google カレンダーに書き出す」に置き換える。書き出し済みなら項目の下段に最終書き出し日時を出す
 - 「メンバーの予定」ボタン／メニュー項目、メンバー予定の詳細モーダル、Google 未接続バナー・認証切れバナーは削除する
 - 書き出し中はボタンを無効にして進行表示（処理済み件数 / 全件数）を出し、二重実行を防ぐ。モバイルはヘッダーにボタンが無いので、ヘッダー直下に進行表示を出す
-- 予定の読み込みが終わるまではボタンを無効にする（読み込み途中の一覧で書き出して Google 側の予定を消さないため）
+- 予定・カテゴリ・メンバーの読み込みが終わるまではボタンを無効にする（読み込み途中の一覧で書き出して Google 側の予定を消したり、説明からカテゴリ・参加メンバーが抜けたりしないため）
 - 完了・失敗はカレンダーヘッダー直下のバナーで表示する（× で閉じる）。一部失敗・失敗時は最終書き出し日時を更新しない
+- 書き出し中に別の画面へ移動しても書き出しは続け、スケジュール画面に戻ったときに進行または結果を表示する。結果は書き出したチームを表示しているときだけ出す（チームを切り替えると出さない）
 
 | 状況 | 表示 | 再実行 |
 | ---- | ---- | ------ |
@@ -143,7 +144,7 @@ googleCalendarExports: {
 | -- | ---------- | -------- | ---- |
 | AC-1 | ログインする | Google の同意画面でカレンダーの権限を求めない。アクセストークンを localStorage に保存しない | `src/stores/auth.ts` の `signIn` がスコープを追加しないこと（コード）。手動確認 |
 | AC-2 | スケジュール画面を開く（`operator` / `member` / `rom`） | 「Google カレンダーに書き出す」がある。「メンバーの予定」・Google 接続バナーが無い。チームの予定だけが表示される | `tests/e2e/visual.spec.ts`、手動確認 |
-| AC-3 | 未書き出しのチームで書き出す | `calendar.app.created` だけを要求する。「RisukeruGG - {チーム名}」を作って `calendarId` を保存し、当日 0:00（JST）以降に終了する予定をすべて追加する | `googleCalendarApi.test.ts`・`googleCalendarExport.test.ts`・`googleCalendarRun.test.ts` |
+| AC-3 | 未書き出しのチームで書き出す | `calendar.app.created` だけを要求する。「RisukeruGG - {チーム名}」を作って `calendarId` を保存し、当日 0:00（JST）より後に終了する予定をすべて追加する | `googleCalendarApi.test.ts`・`googleCalendarExport.test.ts`・`googleCalendarRun.test.ts` |
 | AC-4 | 変更なしで再書き出しする | 同じカレンダーを使い、追加・更新・削除は 0 件 | `googleCalendarExport.test.ts` |
 | AC-5 | RisukeruGG で予定を変更・削除・追加して再書き出しする | Google 側が同じ内容になる。当日より前に終了したイベントは消えない | `googleCalendarExport.test.ts` |
 | AC-6 | Google 側で予定を編集してから再書き出しする | RisukeruGG の内容で上書きされる。`risukeruScheduleId` を持たないイベントは変わらない | `googleCalendarExport.test.ts` |
@@ -152,6 +153,7 @@ googleCalendarExports: {
 | AC-9 | 一部の予定の送信が失敗する | 残りは続行する。失敗件数と「再実行」を表示し、最終書き出し日時を更新しない | `googleCalendarExport.test.ts`・`googleCalendarRun.test.ts`・`googleCalendarExportNotice.test.ts` |
 | AC-10 | 同意を拒否する／別アカウントを選ぶ／ポップアップが止められる／API が失敗する | 何も書き出さず、「UI」の表のとおりに表示する | `googleCalendarApi.test.ts`・`googleCalendarRun.test.ts`・`googleCalendarExportNotice.test.ts` |
 | AC-11 | すべて成功する | 追加・更新・削除の件数を表示し、最終書き出し日時を更新する。チームを切り替えるとそのチームの日時になる | `googleCalendarRun.test.ts`、手動確認 |
+| AC-14 | 書き出し中に別の画面へ移動して戻る／結果を出したままチームを切り替える | 戻ったときに進行または結果が出る。別のチームでは結果を出さない | 手動確認 |
 | AC-12 | AI チャットで質問する | コンテキストに「メンバーの予定」が含まれない | `tests/unit/ai/systemPrompt.test.ts`（スナップショット） |
 | AC-13 | プライバシーポリシーを開く | Google カレンダーへの書き出しで取り扱う情報の記載がある | `tests/e2e/privacy-policy.spec.ts` |
 
@@ -176,6 +178,8 @@ googleCalendarExports: {
 - [ ] 書き出し中はボタンが押せず、進行表示が出る（③）
 - [ ] 完了時、ヘッダー直下に追加・更新・削除の件数入りバナーが出て、最終書き出し日時が更新される（④）
 - [ ] バナーは × で閉じられる
+- [ ] 書き出し中に別の画面へ移動して戻ると、進行または結果が出る
+- [ ] 結果のバナーを出したままチームを切り替えると、バナーが消える
 - [ ] 一部失敗時、失敗件数と「再実行」が出て、最終書き出し日時は更新されない（⑤）
 - [ ] 同意を拒否／ポップアップを閉じたとき、エラーが表示され何も書き出されない（⑥）
 - [ ] ログイン中と別の Google アカウントを選んだとき、エラーが表示される（⑦）
