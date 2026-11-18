@@ -81,7 +81,7 @@
 | サーバーレス   | Firebase Cloud Functions                                |
 | ホスティング   | Vercel                                                  |
 | テスト         | Vitest（ユニット）/ Playwright（E2E）                   |
-| 開発環境       | Docker + Firebase Emulator Suite                        |
+| 開発環境       | Firebase Emulator Suite（ホストで起動）                 |
 
 ---
 
@@ -91,8 +91,9 @@
 
 - [Node.js](https://nodejs.org/) 22以上
 - [pnpm](https://pnpm.io/) 11（`package.json` の `packageManager` に合わせる。`corepack enable` 推奨）
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- Java 21以上（Docker を使わずホストでエミュレータを起動する場合のみ）
+- Java 21以上（Firestore Emulator が使用）
+
+Docker を使った開発環境はサポートしていません。Firebase CLI は devDependency の `firebase-tools`（バージョン固定）を使うため、グローバルインストールは不要です。
 
 ### 手順
 
@@ -108,38 +109,22 @@ pnpm install
 cp .env.local.example .env.local
 # .env.local を編集して Firebase の設定を入力
 
-# 4. Docker コンテナの起動（Firebase Emulator + Next.js）
-docker compose up -d
+# 4. ターミナル 1: Functions をビルドして Firebase Emulator を起動
+pnpm emulators
 
-# functions/package.json / pnpm-lock.yaml を更新した場合も、emulator 起動時に
-# Functions 依存関係が自動同期されます。
+# 5. ターミナル 2: Next.js 開発サーバー
+pnpm dev
 
-# 5. テストデータの投入（コンテナ起動後）
-scripts\seed.bat
+# 6. テストデータの投入（エミュレータ起動後）
+node scripts/seed.mjs
 ```
 
 アプリは http://localhost:3000、Firebase Emulator UI は http://localhost:4000 で確認できます。
 
-### Docker を使わずホストでエミュレータを起動する
-
-Docker が使えない場合は、手順 4 の代わりにホストで直接起動できます。
-
-```bash
-# ターミナル 1: Functions をビルドして Firebase Emulator を起動
-pnpm emulators
-
-# ターミナル 2: Next.js 開発サーバー
-pnpm dev
-
-# テストデータの投入（エミュレータ起動後）
-node scripts/seed.mjs
-```
-
-- **前提**: Java 21 以上が必要です（Firestore Emulator が使用）。Firebase CLI は devDependency の `firebase-tools` を使うため、グローバルインストールは不要です。
-- **ポート**: Docker と同じポート（4000 / 5001 / 8080 / 9098 / 9199）を使うため、Docker の emulator とは同時に起動できません。別の worktree を含め、同じマシンで複数同時に起動しないでください（終了時の書き出しが先に起動していた側に対して行われます）。
+- **ポート**: 4000 / 5001 / 8080 / 9098 / 9199 を使います。別の worktree を含め、同じマシンで複数同時に起動しないでください（終了時の書き出しが先に起動していた側に対して行われます）。
 - **データ**: 終了時に `.emulator-data/` へ書き出し、次回起動時に読み込みます。`Ctrl+C` で終了してください。強制終了すると書き出されず、その回のデータは残りません。
 - **worktree**: `.emulator-data/` は作業ディレクトリごとなので、git worktree ごとにシードが必要です。
-- **環境変数**: Next.js の API ルート（Admin SDK）をエミュレータに向けるため、`.env.local` に以下を追加します（Docker では compose が設定します）。
+- **環境変数**: Next.js の API ルート（Admin SDK）をエミュレータに向けるため、`.env.local` に以下を追加します。
 
   ```env
   NEXT_PUBLIC_USE_EMULATORS=true
@@ -147,7 +132,16 @@ node scripts/seed.mjs
   FIRESTORE_EMULATOR_HOST=localhost:8080
   ```
 
-Firebase CLI のバージョンは `package.json` の `firebase-tools` と `docker/emulator/Dockerfile` の `FIREBASE_TOOLS_VERSION` の 2 箇所で固定しています。更新するときは両方を同じ値にしてください（ユニットテストで一致を検証しています）。
+### Linux 環境での動作確認（任意）
+
+Vercel / CI（Linux）でだけ `pnpm install` やビルドが失敗する場合に、手元で再現するためのコマンドです。開発環境としての Docker はサポートしていませんが、Docker Desktop が入っていれば使い捨ての Linux + Node 22 環境に入れます。PowerShell でプロジェクトルートから実行してください。
+
+```powershell
+docker run --rm -it -v "${PWD}:/work" -v /work/node_modules -v /work/functions/node_modules -w /work -e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 node:22-bookworm-slim bash -c "corepack enable && pnpm install --frozen-lockfile && bash"
+```
+
+- 依存のインストールが通ればコンテナ内のシェルに入ります。続けて `pnpm build` や `pnpm test` を実行できます。`exit` で抜けるとコンテナは破棄されます。
+- `node_modules` はコンテナ専用の一時ボリュームに置くため、ホスト（Windows）の `node_modules` は書き換わりません。それ以外のファイルはホストと共有なので、コンテナ内での変更（`.next/` の生成など）はホストに残ります。
 
 ---
 
@@ -155,7 +149,7 @@ Firebase CLI のバージョンは `package.json` の `firebase-tools` と `dock
 
 ```bash
 pnpm dev            # 開発サーバー起動 (localhost:3000)
-pnpm emulators      # Firebase Emulator をホストで起動（Docker を使わない場合）
+pnpm emulators      # Functions をビルドして Firebase Emulator を起動
 pnpm build          # プロダクションビルド
 pnpm typecheck      # TypeScript 型チェック
 pnpm lint           # ESLint 実行
@@ -173,11 +167,13 @@ pnpm test:e2e:ui    # Playwright UI モード
 
 ## テストデータ投入
 
-Docker の Firebase Emulator が起動した状態で、以下のバッチファイルを実行してください。
+Firebase Emulator（`pnpm emulators`）が起動した状態で、以下を実行してください。
 
-```bat
-scripts\seed.bat
+```bash
+node scripts/seed.mjs
 ```
+
+Windows では `scripts\seed.bat` をダブルクリックしても同じです（エミュレータの起動確認つき）。
 
 投入されるテストデータ:
 

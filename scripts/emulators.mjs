@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 /**
- * Firebase Emulator をホストで直接起動する（Docker を使わない場合）
+ * Firebase Emulator をホストで起動する
  *
  * 使い方: pnpm emulators（Functions のビルド後にこのスクリプトが呼ばれる）
  *
- * データは .emulator-data/ に終了時 export し、次回起動時に import する
- * （docker/emulator/start.sh と同じ分岐）。
+ * データは .emulator-data/ に終了時 export し、次回起動時に import する。
  * Ctrl+C で終了すること。強制終了すると export されずデータが残らない。
  */
 import { spawn } from 'node:child_process';

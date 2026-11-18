@@ -5,7 +5,7 @@
  * 正しく表示されることを確認する。
  *
  * 実行前提:
- *   - Docker コンテナ (emulator / app) が起動済み
+ *   - Firebase Emulator (pnpm emulators) と開発サーバー (pnpm dev) が起動済み
  *   - node scripts/seed.mjs でシードデータ投入済み
  *
  * 実行方法:

@@ -6,7 +6,7 @@
  *   node scripts/seed.mjs
  *   または: scripts\seed.bat
  *
- * 前提: Docker コンテナ (emulator) が起動済みであること
+ * 前提: Firebase Emulator (pnpm emulators) が起動済みであること
  *   - Auth      http://localhost:9098
  *   - Firestore http://localhost:8080
  *   - Functions http://localhost:5001
