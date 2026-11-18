@@ -2,7 +2,7 @@
 
 **作成日**: 2026-11-18
 **状態**: 設計（仮決定を含む）・未実装（Issue #212。#204 から分離）
-**正本**: [docs/仕様・計画/team/](../仕様・計画/team/README.md)（TE-013〜TE-016）
+**正本**: [docs/仕様・計画/team/](../仕様・計画/team/README.md)（TE-014〜TE-017）
 
 ## 背景・目的
 
@@ -41,7 +41,7 @@ Issue #212 の「検討事項（1 周目）」はすべて未回答のため、*
 
 ## 決定事項の要約
 
-詳細は正本の [requirements](../仕様・計画/team/requirements.md)（TE-013〜TE-016）/ [model](../仕様・計画/team/model.md) / [flows](../仕様・計画/team/flows.md) を参照する。すべて仮決定で、番号は「仮決定一覧」に対応する。
+詳細は正本の [requirements](../仕様・計画/team/requirements.md)（TE-014〜TE-017）/ [model](../仕様・計画/team/model.md) / [flows](../仕様・計画/team/flows.md) を参照する。すべて仮決定で、番号は「仮決定一覧」に対応する。
 
 | 項目 | 決定 | 仮決定 |
 | --- | --- | --- |
