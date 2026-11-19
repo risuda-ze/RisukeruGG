@@ -4,18 +4,15 @@
 
 現時点では PWA・オフラインカテゴリに専用の永続モデルは明示していない。
 
-## ReleaseNote（未実装・Issue #216）
+## ReleaseNote（未実装）
 
-リリースノート 1 件。`src/lib/releaseNotes.ts` に `RELEASE_NOTES: ReleaseNote[]` として新しい順に持つ。Firestore には保存しない。
+リリースノート 1 件。GitHub Releases の公開済み Release 1 件から作る表示用のデータで、アプリ側には保存しない（Firestore にも持たない）。
 
-| フィールド | 型                    | 意味 |
-| ---------- | --------------------- | ---- |
-| `version`  | string                | バージョン番号（例: `0.2.0`）。先頭の 1 件は `package.json` の `version` と一致する |
-| `date`     | string                | 公開日（JST、`YYYY-MM-DD`）。そのまま表示する |
-| `summary`  | string \| undefined   | そのリリースのひとこと |
-| `added`    | string[] \| undefined | 追加: 新しくできるようになったこと |
-| `changed`  | string[] \| undefined | 変更: これまでの動きや見た目が変わったこと |
-| `fixed`    | string[] \| undefined | 修正: 直した不具合 |
+| フィールド    | 型     | 意味 |
+| ------------- | ------ | ---- |
+| `version`     | string | バージョン番号（例: `0.2.0`）。Release のタグ `v{version}` から先頭の `v` を除いたもの。見出しとアンカー `#v{version}` に使う |
+| `publishedAt` | string | Release の公開日時（ISO 8601）。JST の日付にして公開日として表示し、並び順（新しい順）にも使う |
+| `body`        | string | Release の本文（Markdown）。そのリリースの更新内容として描画する |
 
 ## 今後詳細化する項目
 
