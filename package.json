@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "functions:build": "pnpm --dir functions build",
+    "emulators": "pnpm functions:build && node scripts/emulators.mjs",
     "build": "next build",
     "start": "next start",
     "cleanup:discord-invite-temp": "node scripts/cleanup-discord-invite-temp.mjs",
@@ -61,6 +62,7 @@
     "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
+    "firebase-tools": "15.36.0",
     "jsdom": "^29.1.1",
     "prettier": "^3.8.3",
     "react-big-calendar": "^1.19.4",

@@ -32,7 +32,7 @@ model: opus
 - react-big-calendar — スケジュールカレンダー
 - @hello-pangea/dnd — カンバンドラッグ&ドロップ
 - Vitest (unit) / Playwright (E2E)
-- docker-compose — ローカル開発環境（Firebase エミュレータ含む）
+- Firebase Emulator Suite（`pnpm emulators`）— ローカル開発環境
 
 ### Evaluator への引き渡し事項
 
