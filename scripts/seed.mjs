@@ -250,7 +250,6 @@ async function main() {
       monthlyCollabCount: user.monthlyCollabCount,
       countResetAt: d(2026, 5, 1),
       createdAt: user.createdAt,
-      googleCalendar: null,
     });
   }
   console.log(`  ✓ users (${users.length}件)`);
@@ -1090,29 +1089,6 @@ async function main() {
   });
   console.log('  ✓ collabSessions (5件)');
 
-  // ── memberCalendars (同期予定) ────────────────────────────
-  await setDoc(`teams/${TEAM_ID}/memberCalendars/${UID3}/events/gcal_evt_001`, {
-    title: 'マネージャー健太 の予定',
-    startAt: d(2026, 5, 21, 11, 0),
-    endAt: d(2026, 5, 21, 12, 0),
-    allDay: false,
-    sourceEventId: 'gcal_evt_001',
-    syncedAt: NOW,
-    userId: UID3,
-    teamId: TEAM_ID,
-  });
-  await setDoc(`teams/${TEAM_ID}/memberCalendars/${UID4}/events/gcal_evt_002`, {
-    title: 'ROM三郎 の予定',
-    startAt: d(2026, 5, 22, 0, 0),
-    endAt: d(2026, 5, 23, 0, 0), // 排他的終了（5/22のみ表示）
-    allDay: true,
-    sourceEventId: 'gcal_evt_002',
-    syncedAt: NOW,
-    userId: UID4,
-    teamId: TEAM_ID,
-  });
-  console.log('  ✓ memberCalendars/events (2件)');
-
   // ── 完了サマリー ─────────────────────────────────────────
   console.log('\n=== シード完了 ===\n');
   console.log('テストアカウント (パスワード共通: password123):');
@@ -1140,7 +1116,6 @@ async function main() {
   console.log('    6/24 (水) — 複数日バー 3件（+1件 表示）');
   console.log('    6/25 (木) — 複数日バー 4件（+2件 表示）');
   console.log(`  タスク       : ${tasks.length}件 (未着手6・進行中4・完了4)`);
-  console.log('  memberCalendars/events: 2件');
   console.log('  コラボ       : 5件 (open/confirmed/expired/cancelled を含む)');
   console.log('\nFirebase Emulator UI: http://localhost:4000\n');
 }

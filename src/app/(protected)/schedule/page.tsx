@@ -1,31 +1,23 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import {
-  addMonths, subMonths, addWeeks, subWeeks, format, startOfWeek,
-  startOfMonth, endOfMonth, endOfWeek, isSameDay,
-} from 'date-fns';
-import { ja } from 'date-fns/locale';
+import { addMonths, subMonths, addWeeks, subWeeks, format } from 'date-fns';
 import { useAuthStore } from '@/stores/auth';
 import { useScheduleStore } from '@/stores/schedule';
 import { useCategoryStore } from '@/stores/categories';
-import { subscribeMemberCalendarEvents } from '@/lib/repositories/memberCalendars';
-import { fetchGCalEvents } from '@/lib/googleCalendar';
-import type { GCalFetchError } from '@/lib/googleCalendar';
 import { TopBar } from '@/components/layout/TopBar';
 import { MonthCalendar } from '@/components/calendar/MonthCalendar';
 import { WeekCalendar } from '@/components/calendar/WeekCalendar';
 import { ScheduleModal } from '@/components/calendar/ScheduleModal';
+import { GoogleCalendarExportNotice } from '@/components/calendar/GoogleCalendarExportNotice';
 import { Spinner } from '@/components/ui/Spinner';
 import { HintBar } from '@/components/ui/HintBar';
 import { useHintDismiss } from '@/hooks/useHintDismiss';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useGoogleCalendarExport } from '@/hooks/useGoogleCalendarExport';
 import { Icon } from '@/components/ui/Icon';
-import type { ScheduleEntry, MemberCalendarEvent } from '@/types/entities';
-import { getEventLastDay } from '@/lib/utils/eventDays';
+import type { ScheduleEntry } from '@/types/entities';
 import { buttonVariants } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { Modal } from '@/components/ui/Modal';
 import { cn } from '@/lib/utils/cn';
 
 type CalendarView = 'month' | 'week';
@@ -37,6 +29,8 @@ const MOBILE_NAV_ARROW =
   'flex h-11 w-9 flex-none cursor-pointer items-center justify-center text-text-2 transition-colors duration-(--duration-fast) ease-out active:text-text';
 const MORE_MENU_ITEM =
   'flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-sm px-2.5 text-left text-[0.86rem] text-text-2 transition-colors duration-(--duration-fast) ease-out hover:bg-surface hover:text-text active:bg-surface active:text-text';
+
+const EXPORT_LABEL = 'Google カレンダーに書き出す';
 
 /** 週/月の表示切替。compact はモバイルヘッダー用の詰めた寸法 */
 function ViewToggle({
@@ -71,9 +65,6 @@ export default function SchedulePage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const currentTeamId = useAuthStore((s) => s.currentTeamId);
   const members = useAuthStore((s) => s.members);
-  const googleAccessToken = useAuthStore((s) => s.googleAccessToken);
-  const signIn = useAuthStore((s) => s.signIn);
-  const authLoading = useAuthStore((s) => s.loading);
   const schedules = useScheduleStore((s) => s.schedules);
   const loading = useScheduleStore((s) => s.loading);
   const subscribe = useScheduleStore((s) => s.subscribe);
@@ -88,14 +79,10 @@ export default function SchedulePage() {
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleEntry | null>(null);
   /* セルクリック時の初期日付（ScheduleModal に渡す） */
   const [clickedDate, setClickedDate] = useState<Date | null>(null);
-  const [gcalEvents, setGcalEvents] = useState<ScheduleEntry[]>([]);
-  const [gcalError, setGcalError] = useState<GCalFetchError>(null);
-  const [showMemberCalendars, setShowMemberCalendars] = useState(false);
-  const [memberCalendarEvents, setMemberCalendarEvents] = useState<MemberCalendarEvent[]>([]);
   /* ヒントバーの表示/非表示（localStorage 永続化） */
   const { visible: hintVisible, dismiss: dismissHint, show: showHint } = useHintDismiss('riskeru_hint_schedule');
-  /* Googleカレンダー接続バナーの表示/非表示（×で閉じたら localStorage 永続化） */
-  const { visible: gcalBannerVisible, dismiss: dismissGcalBanner } = useHintDismiss('riskeru_gcal_banner_schedule');
+  /* Google カレンダーへの書き出し（SC-008 系） */
+  const gcalExport = useGoogleCalendarExport();
   /* モバイルヘッダーの「⋯」メニュー開閉 */
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
@@ -125,12 +112,6 @@ export default function SchedulePage() {
     };
   }, [currentTeamId, subscribe, subscribeCategories]);
 
-  // メンバーの予定をFirestoreからリアルタイム取得（トグルON時のみ購読）
-  useEffect(() => {
-    if (!currentTeamId || !showMemberCalendars) return;
-    return subscribeMemberCalendarEvents(currentTeamId, setMemberCalendarEvents);
-  }, [currentTeamId, showMemberCalendars]);
-
   // モバイルヘッダー「⋯」メニュー: 外側タップで閉じる
   useEffect(() => {
     if (!moreOpen) return;
@@ -141,25 +122,6 @@ export default function SchedulePage() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [moreOpen]);
 
-  // Googleカレンダーの個人予定を取得
-  useEffect(() => {
-    if (!googleAccessToken) {
-      setGcalEvents([]); // eslint-disable-line react-hooks/set-state-in-effect
-      return;
-    }
-    const timeMin = view === 'month'
-      ? startOfMonth(currentDate)
-      : startOfWeek(currentDate, { weekStartsOn: 0 });
-    const timeMax = view === 'month'
-      ? endOfMonth(currentDate)
-      : endOfWeek(currentDate, { weekStartsOn: 0 });
-
-    fetchGCalEvents(googleAccessToken, timeMin, timeMax).then(({ events, error }) => {
-      setGcalEvents(events);
-      setGcalError(error);
-    });
-  }, [googleAccessToken, currentDate, view]);
-
   /* Firestore購読が更新したらselectedScheduleを同期 */
   useEffect(() => {
     if (!selectedSchedule) return;
@@ -169,28 +131,12 @@ export default function SchedulePage() {
     }
   }, [schedules, selectedSchedule?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // メンバーの予定をScheduleEntry形式に変換 (T027/T029/T030)
-  const memberScheduleEntries: ScheduleEntry[] = (showMemberCalendars ? memberCalendarEvents : [])
-    // 自分のGoogleカレンダーが有効な場合、自分のFirestore同期予定は除外して重複を防ぐ
-    .filter((e) => !(e.userId === currentUser?.uid && googleAccessToken))
-    .map((e) => ({
-      id: `mcal_${e.id}`,
-      title: e.title,
-      categoryId: null,
-      startAt: e.startAt,
-      endAt: e.endAt,
-      description: '',
-      participantIds: [],
-      collabPartnerName: null,
-      linkedTaskIds: [],
-      updatedAt: e.syncedAt,
-      createdBy: e.userId,
-      createdAt: e.syncedAt,
-      source: 'member' as const,
-      allDay: e.allDay,
-    }));
-
-  const allSchedules = [...schedules, ...gcalEvents, ...memberScheduleEntries];
+  const lastExportedLabel = gcalExport.lastExportedAt
+    ? `最終書き出し ${format(gcalExport.lastExportedAt, 'M/d HH:mm')}`
+    : null;
+  const exportProgressLabel = gcalExport.progress
+    ? `書き出し中… ${gcalExport.progress.done} / ${gcalExport.progress.total}`
+    : '書き出し中…';
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
@@ -222,7 +168,7 @@ export default function SchedulePage() {
           <span className="text-h2 whitespace-nowrap">{year}年 <span className="font-num text-brand-2">{month}月</span></span>
 
           {/* 右グループ */}
-          <div className="ml-auto flex items-center gap-2.5">
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2.5">
             {/* 予定追加 */}
             {canEdit && (
               <button
@@ -234,17 +180,30 @@ export default function SchedulePage() {
               </button>
             )}
 
-            {/* メンバーの予定表示切替 */}
+            {/* Google カレンダーへの書き出し */}
+            {lastExportedLabel && (
+              <span className="font-num text-caption whitespace-nowrap text-text-2">{lastExportedLabel}</span>
+            )}
             <button
-              onClick={() => setShowMemberCalendars((v) => !v)}
-              className={buttonVariants({ variant: showMemberCalendars ? 'ghost' : 'subtle', size: 'sm' })}
+              onClick={gcalExport.run}
+              disabled={!gcalExport.ready || gcalExport.running}
+              className={buttonVariants({ variant: 'ghost', size: 'sm' })}
             >
-              <Icon name="groups" size={15} />
-              <span className="hidden md:inline">{showMemberCalendars ? 'メンバー表示中' : 'メンバーの予定'}</span>
+              {gcalExport.running ? (
+                <>
+                  <span className="inline-block size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  <span className="font-num">{exportProgressLabel}</span>
+                </>
+              ) : (
+                <>
+                  <Icon name="event_available" size={16} />
+                  <span>{EXPORT_LABEL}</span>
+                </>
+              )}
             </button>
 
             {/* 日付ナビ */}
-            <div className="inline-flex items-center gap-1 rounded-md border border-border bg-surface p-0.75">
+            <div className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-surface p-0.75">
               <button className={DATE_NAV_ARROW} onClick={goBack} aria-label={view === 'month' ? '前月' : '前の週'}>
                 <Icon name="chevron_left" size={18} />
               </button>
@@ -319,14 +278,6 @@ export default function SchedulePage() {
             </button>
             {moreOpen && (
               <div className="absolute top-[calc(100%+6px)] right-0 z-[130] w-61 rounded-md border border-border bg-card p-1.5 animate-pop-modal">
-                {/* メンバーの予定 表示/非表示 */}
-                <button
-                  className={MORE_MENU_ITEM}
-                  onClick={() => { setShowMemberCalendars((v) => !v); setMoreOpen(false); }}
-                >
-                  <Icon name="groups" size={18} />
-                  <span>{showMemberCalendars ? 'メンバーの予定を隠す' : 'メンバーの予定を表示'}</span>
-                </button>
                 {/* ヒント表示切替 */}
                 <button
                   className={MORE_MENU_ITEM}
@@ -335,16 +286,19 @@ export default function SchedulePage() {
                   <Icon name="help_outline" size={18} />
                   <span>{hintVisible ? 'ヒントを隠す' : 'ヒントを表示'}</span>
                 </button>
-                {/* Googleカレンダー接続 */}
+                {/* Google カレンダーへの書き出し */}
                 <button
-                  className={MORE_MENU_ITEM}
-                  onClick={async () => {
-                    setMoreOpen(false);
-                    try { await signIn(); setGcalError(null); } catch { /* ポップアップブロック等は無視 */ }
-                  }}
+                  className={cn(MORE_MENU_ITEM, 'disabled:pointer-events-none disabled:opacity-40')}
+                  disabled={!gcalExport.ready || gcalExport.running}
+                  onClick={() => { setMoreOpen(false); void gcalExport.run(); }}
                 >
-                  <Icon name="event" size={18} />
-                  <span>{googleAccessToken ? 'Googleカレンダー再接続' : 'Googleカレンダーを接続'}</span>
+                  <Icon name="event_available" size={18} />
+                  <span className="flex flex-col py-1">
+                    <span>{EXPORT_LABEL}</span>
+                    {lastExportedLabel && (
+                      <span className="font-num text-[0.6875rem] text-text-2">{lastExportedLabel}</span>
+                    )}
+                  </span>
                 </button>
               </div>
             )}
@@ -353,46 +307,31 @@ export default function SchedulePage() {
         )}
       </div>
 
+      {/* Google カレンダー書き出しの進行（モバイルはヘッダーにボタンが無いためここに出す） */}
+      {isMobile && gcalExport.running && (
+        <div
+          role="status"
+          className="flex shrink-0 items-center gap-2 border-b border-border bg-info-tint px-4 py-2.5 text-[0.8125rem] text-text"
+        >
+          <span className="inline-block size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          <span className="font-num">Google カレンダーに{exportProgressLabel}</span>
+        </div>
+      )}
+
+      {/* Google カレンダー書き出しの結果 */}
+      {gcalExport.notice && (
+        <GoogleCalendarExportNotice
+          notice={gcalExport.notice}
+          onDismiss={gcalExport.dismissNotice}
+          onRetry={gcalExport.run}
+        />
+      )}
+
       {/* ヒントバー（初回表示・?ボタンで再表示）: visible は useHintDismiss で一元管理 */}
       {hintVisible && (
         <HintBar onDismiss={dismissHint}>
           カレンダーの日付をクリックすると週表示に切り替わります。「予定を追加」ボタンまたはセルをクリックして予定を追加できます。
         </HintBar>
-      )}
-
-
-      {/* Googleカレンダー接続バナー（未接続・認証期限切れ共通・×で閉じたら永続非表示） */}
-      {!authLoading && !googleAccessToken && gcalBannerVisible && (
-        <div className="shrink-0 flex items-center gap-2 px-4 py-2 bg-warning/10 border-b border-warning/30 text-[12px] text-orange-text">
-          <span className="material-icons text-[16px]">
-            {gcalError === 'auth_expired' ? 'warning' : 'link_off'}
-          </span>
-          <span className="flex-1">
-            {gcalError === 'auth_expired'
-              ? 'Googleカレンダーの認証が切れています。'
-              : 'Googleカレンダーに接続すると、個人の予定をここに表示できます。'}
-          </span>
-          <button
-            onClick={async () => {
-              try {
-                await signIn();
-                setGcalError(null);
-              } catch {
-                /* ポップアップがブロックされた場合などは無視 */
-              }
-            }}
-            className="shrink-0 px-3 py-1 rounded-[6px] text-[11px] font-bold bg-warning/20 border border-warning/50 hover:bg-warning/30 transition-colors"
-          >
-            {gcalError === 'auth_expired' ? '再接続' : '接続する'}
-          </button>
-          <button
-            onClick={dismissGcalBanner}
-            aria-label="バナーを閉じる"
-            className="shrink-0 flex items-center justify-center w-6 h-6 rounded-[6px] text-orange-text/70 hover:text-orange-text hover:bg-warning/15 transition-colors"
-          >
-            <Icon name="close" size={15} />
-          </button>
-        </div>
       )}
 
       {/* カレンダー本体 */}
@@ -405,7 +344,7 @@ export default function SchedulePage() {
           <MonthCalendar
             year={year}
             month={month}
-            schedules={allSchedules}
+            schedules={schedules}
             categories={categories}
             onEventClick={setSelectedSchedule}
             onDateClick={canEdit ? (d) => { setClickedDate(d ?? null); setShowCreate(true); } : undefined}
@@ -417,7 +356,7 @@ export default function SchedulePage() {
         ) : (
           <WeekCalendar
             currentDate={currentDate}
-            schedules={allSchedules}
+            schedules={schedules}
             categories={categories}
             onEventClick={setSelectedSchedule}
             onDateClick={canEdit ? (d) => { setClickedDate(d ?? null); setShowCreate(true); } : undefined}
@@ -425,30 +364,8 @@ export default function SchedulePage() {
         )}
       </div>
 
-      {/* メンバーの予定の詳細（読み取り専用） */}
-      {selectedSchedule?.source === 'member' && (
-        <Modal open onClose={() => setSelectedSchedule(null)} title={selectedSchedule.title} size="sm">
-          <Badge variant="info" className="mb-3">
-            <Icon name="groups" size={13} />
-            メンバーの予定
-          </Badge>
-          <p className="text-[13px] text-text-2">
-            {selectedSchedule.allDay
-              ? isSameDay(selectedSchedule.startAt, getEventLastDay(selectedSchedule))
-                ? format(selectedSchedule.startAt, 'M月d日(E)', { locale: ja }) + ' 終日'
-                : format(selectedSchedule.startAt, 'M月d日(E)', { locale: ja }) +
-                  ' – ' +
-                  format(getEventLastDay(selectedSchedule), 'M月d日(E)', { locale: ja }) +
-                  ' 終日'
-              : format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja }) +
-                ' – ' +
-                format(selectedSchedule.endAt, 'HH:mm')}
-          </p>
-        </Modal>
-      )}
-
-      {/* スケジュール詳細オーバーレイ（チーム予定） */}
-      {selectedSchedule && !selectedSchedule.source && currentTeamId && (
+      {/* スケジュール詳細オーバーレイ */}
+      {selectedSchedule && currentTeamId && (
         <ScheduleModal
           schedule={selectedSchedule}
           teamId={currentTeamId}
@@ -459,25 +376,7 @@ export default function SchedulePage() {
         />
       )}
 
-      {/* Googleカレンダー予定の詳細（読み取り専用） */}
-      {selectedSchedule?.source === 'google' && (
-        <Modal open onClose={() => setSelectedSchedule(null)} title={selectedSchedule.title} size="sm">
-          <Badge variant="success" className="mb-3">
-            <Icon name="event" size={13} />
-            Googleカレンダー
-          </Badge>
-          <p className="text-[13px] text-text-2">
-            {format(selectedSchedule.startAt, 'M月d日(E) HH:mm', { locale: ja })}
-            {' – '}
-            {format(selectedSchedule.endAt, 'HH:mm')}
-          </p>
-          {selectedSchedule.description && (
-            <p className="mt-3 text-[12px] whitespace-pre-wrap text-text-2">{selectedSchedule.description}</p>
-          )}
-        </Modal>
-      )}
-
-      {/* スケジュール追加モーダル（チーム予定・新規作成） */}
+      {/* スケジュール追加モーダル（新規作成） */}
       {showCreate && currentTeamId && (
         <ScheduleModal
           schedule={null}

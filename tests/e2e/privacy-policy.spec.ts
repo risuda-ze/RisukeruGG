@@ -54,6 +54,15 @@ test.describe('プライバシーポリシー', () => {
     await expect(page.getByRole('cell', { name: 'Vercel Inc.' })).toBeVisible();
   });
 
+  // Google カレンダーへの書き出しで取り扱う情報が記載されていること（OAuth 同意画面の審査要件）
+  test('Google カレンダーへの書き出しで取り扱う情報が記載されている', async ({ page }) => {
+    await page.goto('/privacy-policy');
+    await expect(
+      page.getByRole('heading', { name: 'Google カレンダーへの書き出しで取り扱う情報' }),
+    ).toBeVisible();
+    await expect(page.getByText('当方のサーバーへの送信・保存は行いません')).toBeVisible();
+  });
+
   // ページ内に外部リンク（Google・Vercel プライバシーポリシー）があること
   test('外部プライバシーポリシーへのリンクがある', async ({ page }) => {
     await page.goto('/privacy-policy');

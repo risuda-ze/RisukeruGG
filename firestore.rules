@@ -127,14 +127,6 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // memberCalendars の events コレクショングループを横断読み取りするために必要
-    // （subscribeMemberCalendarEvents が collectionGroup('events') を使用するため）
-    // teamId フィールドで自分のチームに属するドキュメントのみ許可し、他チームへの漏洩を防ぐ
-    // write は既存のネストルール（/teams/{teamId}/memberCalendars/{userId}/events/{eventId}）が担保する
-    match /{path=**}/events/{eventId} {
-      allow read: if request.auth != null && isTeamMember(resource.data.teamId);
-    }
-
     // タスク管理 v2 の工程をチーム横断で読むために必要
     // （subscribeTeamSteps が collectionGroup('steps') を teamId で絞って使用する）
     // write は /teams/{teamId}/briefs/{briefId}/steps/{stepId} のネストルールが担保する
@@ -188,15 +180,6 @@ service cloud.firestore {
         allow update, delete: if isOwnerOrEditor(teamId);
         // 新規作成は Cloud Function (Admin SDK) 経由のみ。クライアント直接作成は不可。
         allow create: if false;
-      }
-
-      match /memberCalendars/{userId} {
-        allow read: if isTeamMember(teamId);
-
-        match /events/{eventId} {
-          allow read: if isTeamMember(teamId);
-          allow write: if request.auth != null && request.auth.uid == userId && passesBetaGate();
-        }
       }
 
       // Discord 通知設定 — operator のみ読み書き可

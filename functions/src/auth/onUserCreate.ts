@@ -34,7 +34,6 @@ export const onUserCreate = v1.auth.user().onCreate(async (user) => {
     monthlyCollabCount: 0,
     countResetAt: now,
     createdAt: now,
-    googleCalendar: null,
   });
 
   batch.set(soloTeamRef, {

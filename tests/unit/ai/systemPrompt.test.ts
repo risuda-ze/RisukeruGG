@@ -38,9 +38,6 @@ const fixedContext: AiChatContext = {
   ],
   columns: [{ name: 'TODO' }, { name: '進行中' }, { name: '完了' }],
   categories: [{ name: 'サムネ' }, { name: '編集' }],
-  memberCalendars: [
-    { userId: 'u2', displayName: 'さとう', startAt: '2026/09/08 19:00', endAt: '21:00', allDay: false },
-  ],
 };
 
 describe('generateSystemPrompt（スナップショット）', () => {

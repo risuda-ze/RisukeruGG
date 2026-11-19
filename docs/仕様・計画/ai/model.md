@@ -75,7 +75,6 @@ Firestore コレクション配置: `teams/{teamId}/ai/settings`（サブコレ�
 
 - 登録実行時に作成される ScheduleEntry / Task / CollabSession の定義・制約
 - コンテキストに含めるスケジュール・タスク・コラボの意味づけ
-- `MemberCalendarEvent`（メンバーの予定）の定義
 
 ### integration 側で管理するもの
 

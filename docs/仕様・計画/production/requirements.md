@@ -53,5 +53,5 @@
 
 - **PD-070**: Firestore ルールで `playbooks` / `briefs` / `steps` / `comments` の読み取りはチームメンバー、書き込みは `operator` / `member` に限定する。`briefEvents` は追記のみで改変・削除不可。コメントの更新・削除は本人または operator
 - **PD-071**: 自分の工程一覧・ダイジェストのため、`steps` は `teamId` を持ち、コレクショングループで `teamId` 一致のみ読めるようにする
-- **PD-072**: 差分のサブコレクション名は `briefEvents` とし、memberCalendars の `events` コレクショングループと衝突させない
+- **PD-072**: 差分のサブコレクション名は `briefEvents` とする（汎用名 `events` は使わず、コレクショングループ購読時に他用途のサブコレクションと衝突させない）
 - **PD-073**: プラン上限は当面設けない（値は保留。判定箇所は plan カテゴリで用意する）
