@@ -40,7 +40,7 @@
 | メンバー詳細 | 縦の時間軸に不可とメモ。「日単位で表示」の切り替え。他人の詳細は閲覧のみ |
 | 入力 | ドラッグ塗り（第 1 弾）、CSV・定期入力（第 2 弾。「展開 → プレビュー → 和集合で保存」の共通経路） |
 | 置き場所 | `/unavailability`。サイドバー「メイン」の「スケジュール」直下、モバイルは「その他」ドロワー |
-| プラン | 制限なし |
+| プラン | 制限なし（plan の正本に書く。本カテゴリの正本には書かない） |
 
 ## Issue から補った点
 
@@ -88,7 +88,7 @@ Issue #210 の本文に無い、または曖昧だった点を設計時に次の
 - `firestore.rules` に `teams/{teamId}/unavailability/{docId}` のブロックを追加、`firestore.indexes.json` に `month` のコレクショングループ用 `fieldOverrides` を追加
 - Functions: 月次削除（`onSchedule`、`0 0 1 * *`、`Asia/Tokyo`、`asia-northeast1`）。`leaveTeam` / `removeTeamMember` / `deleteAccount` に対象ユーザーのドキュメント削除を追加
 - ユニットテスト: 純関数（境界: 0 時・24 時・日またぎ・月またぎ・範囲外）、Zod、ルール
-- 正本の同期: team/flows（退出・Kick）、user/flows（アカウント削除）
+- 正本の同期: team/flows（退出・Kick）、user/flows（アカウント削除）、plan/requirements（PL-002 に「対応不可時間の入力は無制限」を追記）
 
 ### PR B: 閲覧
 
