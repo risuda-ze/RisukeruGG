@@ -25,20 +25,11 @@ interface WeekCalendarProps {
 const DOW_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 const DEFAULT_EVENT_COLOR = '#7d68c5'; // DESIGN.md primary（dark）
-const GCAL_EVENT_COLOR = '#4ade80';
-const MEMBER_EVENT_COLOR = '#60a5fa';
 
 function getEventStyle(
   categoryId: string | null,
-  categories: Category[],
-  source?: 'google' | 'member'
+  categories: Category[]
 ): { background: string; borderLeftColor: string } {
-  if (source === 'google') {
-    return { background: `${GCAL_EVENT_COLOR}55`, borderLeftColor: GCAL_EVENT_COLOR };
-  }
-  if (source === 'member') {
-    return { background: `${MEMBER_EVENT_COLOR}55`, borderLeftColor: MEMBER_EVENT_COLOR };
-  }
   const cat = categories.find((c) => c.id === categoryId);
   const color = cat?.color ?? DEFAULT_EVENT_COLOR;
   return { background: `${color}55`, borderLeftColor: color };
@@ -127,7 +118,7 @@ export function WeekCalendar({
         >
           {allDayInWeek.map((event) => {
             const cols = getEventWeekCols(event, days)!;
-            const evStyle = getEventStyle(event.categoryId, categories, event.source);
+            const evStyle = getEventStyle(event.categoryId, categories);
             const cat = categories.find((c) => c.id === event.categoryId);
             /* 週の外に伸びている場合は角丸/ボーダーを調整 */
             const startsBefore = startOfDay(event.startAt) < startOfDay(days[0]);
@@ -178,7 +169,7 @@ export function WeekCalendar({
               連日の予定
             </span>
             {multiDayStripInWeek.map((event) => {
-              const style = getEventStyle(event.categoryId, categories, event.source);
+              const style = getEventStyle(event.categoryId, categories);
               const last = getEventLastDay(event);
               const rangeLabel = isSameDay(event.startAt, last)
                 ? format(event.startAt, 'M/d(E)', { locale: ja })
@@ -259,7 +250,7 @@ export function WeekCalendar({
               ) : (
                 <div className="px-3 py-2 flex flex-col gap-1.5">
                   {daySchedules.map((s) => {
-                    const style = getEventStyle(s.categoryId, categories, s.source);
+                    const style = getEventStyle(s.categoryId, categories);
                     const cat = categories.find((c) => c.id === s.categoryId);
                     const isMulti = isMultiDayEvent(s);
                     const isContinuation = isMulti && !isSameDay(s.startAt, day);
@@ -335,7 +326,7 @@ export function WeekCalendar({
                 <span className="pt-1.5 text-center text-[0.74rem] text-text-disabled">＋ 追加</span>
               ) : (
                 daySingleSchedules.map((s) => {
-                  const evStyle = getEventStyle(s.categoryId, categories, s.source);
+                  const evStyle = getEventStyle(s.categoryId, categories);
                   const cat = categories.find((c) => c.id === s.categoryId);
                   return (
                     <button

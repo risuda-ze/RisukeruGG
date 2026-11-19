@@ -16,7 +16,8 @@ export const metadata: Metadata = {
 // プライバシーポリシーの制定日・最終改定日
 const EFFECTIVE_DATE = '2026年7月15日';
 // 2026-09-06 改定: Discord 連携で取得・送信する情報の明記、機密情報の取り扱いの節を追加
-const LAST_UPDATED = '2026年9月6日';
+// 2026-11-19 改定: Google カレンダーへの書き出しで取り扱う情報を追加
+const LAST_UPDATED = '2026年11月19日';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -114,6 +115,27 @@ export default function PrivacyPolicyPage() {
           </ul>
 
           <h3 className="text-sm font-semibold text-text mb-2">
+            Google カレンダーへの書き出しで取り扱う情報
+          </h3>
+          <ul className="list-disc list-inside text-sm text-text-muted space-y-1 mb-4 ml-2">
+            <li>
+              ユーザーが「Google カレンダーに書き出す」操作を行ったときに限り、Google
+              カレンダーへのアクセス権限（本サービスが作成したカレンダーと、その中の予定の作成・変更・削除）の許可を求めます。この権限では、ユーザーが既にお持ちのカレンダーや予定を閲覧・変更することはできません。
+            </li>
+            <li>
+              書き出しのために Google
+              から発行されるアクセストークンは、その操作の間だけユーザーのブラウザ内で使用し、当方のサーバーへの送信・保存は行いません。
+            </li>
+            <li>
+              当方が保存するのは、書き出し先カレンダーの ID と最終書き出し日時のみです。
+            </li>
+            <li>
+              書き出しを行うと、チームの予定（タイトル・日時・説明・カテゴリ・参加メンバーの表示名・コラボ相手）が、操作したユーザー自身の
+              Google カレンダーに登録されます。
+            </li>
+          </ul>
+
+          <h3 className="text-sm font-semibold text-text mb-2">
             サービス利用時に自動取得する情報
           </h3>
           <ul className="list-disc list-inside text-sm text-text-muted space-y-1 ml-2">
@@ -133,6 +155,7 @@ export default function PrivacyPolicyPage() {
             <li>ユーザー認証および本人確認</li>
             <li>チーム機能・コラボ機能の提供</li>
             <li>通知およびメンション（Discord 連携経由）の配信</li>
+            <li>Google カレンダーへの予定の書き出し（ユーザーが操作した場合のみ）</li>
             <li>利用状況の集計・分析によるサービス改善</li>
             <li>お問い合わせへの対応</li>
             <li>不正アクセスの検知・防止</li>

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { format, addDays, startOfDay } from 'date-fns';
+import { format } from 'date-fns';
 import { getEventLastDay } from '@/lib/utils/eventDays';
 import { ja } from 'date-fns/locale';
 import { useAIChatStore } from '@/stores/aiChat';
@@ -12,12 +12,11 @@ import { useAuthStore } from '@/stores/auth';
 import { useTasksStore } from '@/stores/tasks';
 import { useCategoryStore } from '@/stores/categories';
 import { useScheduleStore } from '@/stores/schedule';
-import { subscribeMemberCalendarEvents } from '@/lib/repositories/memberCalendars';
 import { subscribeTeamAiSettings, EMPTY_AI_SETTINGS } from '@/lib/repositories/aiSettings';
 import { createSchedule } from '@/lib/repositories/schedules';
 import { createTask, updateTask } from '@/lib/repositories/tasks';
 import { createCollabSession } from '@/lib/repositories/collabs';
-import type { MemberCalendarEvent, Task, TeamAiSettings } from '@/types/entities';
+import type { Task, TeamAiSettings } from '@/types/entities';
 import { Icon } from '@/components/ui/Icon';
 
 // ── 定数 ───────────────────────────────────────────────────────
@@ -303,15 +302,9 @@ export function AIChatPage() {
   const columns = useTasksStore((s) => s.columns);
   const categories = useCategoryStore((s) => s.categories);
   const schedules = useScheduleStore((s) => s.schedules);
-  const [memberCalendarEvents, setMemberCalendarEvents] = useState<MemberCalendarEvent[]>([]);
   // チームの AI 設定（追加指示・定型指示。AI-022 / AI-023）
   const [aiSettings, setAiSettings] = useState<TeamAiSettings>(EMPTY_AI_SETTINGS);
 
-  // メンバーの予定をFirestoreから購読（AIコンテキスト用）
-  useEffect(() => {
-    if (!currentTeamId) return;
-    return subscribeMemberCalendarEvents(currentTeamId, setMemberCalendarEvents);
-  }, [currentTeamId]);
   useEffect(() => {
     if (!currentTeamId) return;
     return subscribeTeamAiSettings(currentTeamId, setAiSettings);
@@ -371,22 +364,6 @@ export function AIChatPage() {
     const now = new Date();
     // 7日前以降のスケジュールを日付昇順で最大60件渡す（来週・空き時間の確認に対応）
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const todayStart = startOfDay(now);
-    const twoWeeksLater = addDays(todayStart, 14);
-
-    // メンバーごとに最大20件、今日〜14日先、自分のイベントは除外
-    const memberCalendarsForAI = memberCalendarEvents
-      .filter(
-        (e) =>
-          e.userId !== currentUser?.uid &&
-          e.startAt >= todayStart &&
-          e.startAt <= twoWeeksLater
-      )
-      .reduce<Record<string, typeof memberCalendarEvents>>((acc, e) => {
-        acc[e.userId] = acc[e.userId] ?? [];
-        if (acc[e.userId].length < 20) acc[e.userId].push(e);
-        return acc;
-      }, {});
 
     return {
       tasks: tasks.map((t) => ({
@@ -418,15 +395,6 @@ export function AIChatPage() {
       categories: categories.map((c) => ({ name: c.name })),
       // チームからの追加指示（空なら渡さない）
       teamInstructions: aiSettings.teamInstructions || undefined,
-      memberCalendars: Object.values(memberCalendarsForAI)
-        .flat()
-        .map((e) => ({
-          userId: e.userId,
-          displayName: members.find((m) => m.userId === e.userId)?.displayName ?? e.userId,
-          startAt: format(e.startAt, 'yyyy/MM/dd HH:mm'),
-          endAt: format(e.endAt, 'HH:mm'),
-          allDay: e.allDay,
-        })),
       // ピン留めタスクは description を切り詰めず全文渡す
       pinnedTask: pinnedTask
         ? {
@@ -445,7 +413,7 @@ export function AIChatPage() {
           }
         : undefined,
     };
-  }, [tasks, columns, categories, schedules, members, memberCalendarEvents, currentUser?.uid, pinnedTask, aiSettings.teamInstructions]);
+  }, [tasks, columns, categories, schedules, members, pinnedTask, aiSettings.teamInstructions]);
 
   // ── ストリーミング完了後: アシスタントメッセージから提案を解析 ───────
   useEffect(() => {

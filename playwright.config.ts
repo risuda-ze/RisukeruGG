@@ -26,7 +26,7 @@ export default defineConfig({
       ],
       use: { ...devices['Desktop Chrome'] },
     },
-    // ローカル専用: Firebase Emulator + Docker + シードデータが必須
+    // ローカル専用: Firebase Emulator + シードデータが必須
     // `pnpm test:e2e --project=emulator` で実行する
     {
       name: 'emulator',

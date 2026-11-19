@@ -32,8 +32,6 @@ interface MonthCalendarProps {
 const DOW_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 const DEFAULT_EVENT_COLOR = '#7d68c5'; // DESIGN.md primary（dark）
-const GCAL_EVENT_COLOR = '#4ade80';
-const MEMBER_EVENT_COLOR = '#60a5fa';
 
 /** イベントバーの高さ (px) */
 const EVENT_H = 24;
@@ -46,14 +44,11 @@ const MAX_TRACKS = 2;
 /** 単日カード・複数日バーの左右余白 (px) */
 const CELL_PAD = 4;
 
-/** カテゴリ/ソースに基づくイベントカラーを返す */
+/** カテゴリに基づくイベントカラーを返す */
 function getEventColor(
   categoryId: string | null,
-  categories: Category[],
-  source?: 'google' | 'member'
+  categories: Category[]
 ): string {
-  if (source === 'google') return GCAL_EVENT_COLOR;
-  if (source === 'member') return MEMBER_EVENT_COLOR;
   const cat = categories.find((c) => c.id === categoryId);
   return cat?.color ?? DEFAULT_EVENT_COLOR;
 }
@@ -225,7 +220,7 @@ function WeekRow({
               {/* 単日イベント（最大 singleLimit 件）+ オーバーフロー表示 */}
               <div className="flex flex-col gap-[2px] px-1 pb-1 overflow-y-auto h-full">
                 {visibleSingles.map((s) => {
-                  const color = getEventColor(s.categoryId, categories, s.source);
+                  const color = getEventColor(s.categoryId, categories);
                   const cat = categories.find((c) => c.id === s.categoryId);
                   return (
                     <button
@@ -263,7 +258,7 @@ function WeekRow({
         const track = tracks[id];
         if (track >= MAX_TRACKS) return null;
 
-        const color = getEventColor(s.categoryId, categories, s.source);
+        const color = getEventColor(s.categoryId, categories);
         const cat = categories.find((c) => c.id === s.categoryId);
         const startsBefore = startOfDay(s.startAt) < startOfDay(weekStart);
         const endsAfter = getEventLastDay(s) > startOfDay(weekEnd);
@@ -379,7 +374,7 @@ function DayTooltipPanel({
       ) : (
         <div className="flex flex-col">
           {daySchedules.map((s) => {
-            const color = getEventColor(s.categoryId, categories, s.source);
+            const color = getEventColor(s.categoryId, categories);
             const cat = categories.find((c) => c.id === s.categoryId);
             return (
               <div

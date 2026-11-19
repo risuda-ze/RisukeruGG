@@ -12,11 +12,7 @@ function Fail([string]$message) {
 }
 
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-    Fail "Node.js is not installed. Please install Node.js 20+ first."
-}
-
-if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    Fail "Docker is not installed. Please install/start Docker Desktop first."
+    Fail "Node.js is not installed. Please install Node.js 22+ first."
 }
 
 Write-Host "Checking Firebase Emulator (http://localhost:4000) ..."
@@ -24,7 +20,7 @@ try {
     $null = Invoke-WebRequest -Uri "http://localhost:4000" -UseBasicParsing -TimeoutSec 5
     Write-Host "  OK - Emulator is running." -ForegroundColor Green
 } catch {
-    Fail "Firebase Emulator is not running. Run: docker compose up -d"
+    Fail "Firebase Emulator is not running. Run: pnpm emulators"
 }
 Write-Host ""
 
