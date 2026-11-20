@@ -1,24 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
 import { useAuthStore } from '@/stores/auth';
 import { TopBar } from '@/components/layout/TopBar';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Input, fieldLabelClass } from '@/components/ui/Input';
+import { Avatar } from '@/components/ui/Avatar';
+import { Card } from '@/components/ui/Card';
+import { Badge, badgeVariants } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils/cn';
 import { RoleChangeDialog } from '@/components/team/RoleChangeDialog';
 import { RemoveMemberDialog } from '@/components/team/RemoveMemberDialog';
 import { DiscordUsernameDialog } from '@/components/team/DiscordUsernameDialog';
 import { LeaveTeamDialog } from '@/components/team/LeaveTeamDialog';
 import { TeamJoinForm } from '@/components/team/TeamJoinForm';
-import { Card, CardHeader } from '@/components/ui/Card';
 import { createTeam, dissolveTeam } from '@/lib/repositories/teams';
 import { trackEvent } from '@/lib/analytics';
 import { Icon } from '@/components/ui/Icon';
 import { Dropdown } from '@/components/ui/Dropdown';
-import type { TeamMember, UserRole } from '@/types/entities';
+import { ROLE_BADGE, ROLE_LABELS } from '@/lib/utils/teamRoles';
+import { MEMBER_DUTIES, MEMBER_DUTY_LABELS } from '@/types/entities';
+import type { MemberDuty, TeamMember } from '@/types/entities';
 
 type DialogState =
   | { type: 'roleChange'; member: TeamMember; newRole: 'member' | 'rom' | 'operator' }
@@ -27,40 +34,50 @@ type DialogState =
   | { type: 'discord'; member: TeamMember }
   | null;
 
-const ROLE_LABELS: Record<UserRole, string> = {
-  operator: 'オペレーター',
-  member: 'メンバー',
-  rom: 'ROM専',
-};
+type Tab = 'members' | 'team';
 
-/* ロール別バッジ色 */
-const ROLE_BADGE: Record<UserRole, { bg: string; text: string; border: string }> = {
-  operator: {
-    bg: 'color-mix(in oklab, var(--primary) 15%, transparent)',
-    text: 'var(--brand-2)',
-    border: 'var(--primary)',
-  },
-  member: {
-    bg: 'var(--warning-tint)',
-    text: 'var(--orange-text)',
-    border: 'var(--warning)',
-  },
-  rom: {
-    bg: 'color-mix(in oklab, var(--text-muted) 16%, transparent)',
-    text: 'var(--text-2)',
-    border: 'var(--border)',
-  },
-};
+/** 所属者（メンバー・スタッフ）一覧の列。広い幅では表の列、狭い幅では 1 列の縦積み */
+const MEMBER_GRID =
+  'px-4 md:px-7 @4xl:grid-cols-[minmax(13rem,1.4fr)_11rem_minmax(12rem,1.4fr)_minmax(14rem,1.2fr)_7rem] @4xl:items-center @4xl:gap-x-6';
 
-/* アバター背景色 */
-const AVATAR_PALETTES = [
-  { bg: 'color-mix(in oklab, var(--primary) 35%, transparent)', text: 'var(--brand-2)' },
-  { bg: 'var(--success-tint)', text: 'var(--success)' },
-  { bg: 'var(--warning-tint)', text: 'var(--orange-text)' },
-  { bg: 'color-mix(in oklab, var(--primary) 15%, transparent)', text: 'var(--brand-2)' },
-];
+/** 一覧の 1 項目。狭い幅では左に項目名を出し、表の幅では列見出しに任せる */
+function MemberField({
+  label,
+  hideEmpty = false,
+  children,
+}: {
+  label: string;
+  hideEmpty?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        'flex min-w-0 items-center gap-4 pl-[54px] @4xl:pl-0',
+        hideEmpty && 'hidden @4xl:flex'
+      )}
+    >
+      <span className="eyebrow w-16 shrink-0 text-text-2 @4xl:sr-only">{label}</span>
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
 
 export default function TeamPage() {
+  return (
+    <Suspense fallback={null}>
+      <TeamPageInner />
+    </Suspense>
+  );
+}
+
+function TeamPageInner() {
+  // /team?tab=team でチームタブを直接開ける
+  const initialTab: Tab = useSearchParams().get('tab') === 'team' ? 'team' : 'members';
+  const [tab, setTab] = useState<Tab>(initialTab);
+  const [query, setQuery] = useState('');
+  // 担当分野は複数選択。選んだもののいずれかを持つ人に絞る（TE-016）
+  const [dutyFilter, setDutyFilter] = useState<ReadonlySet<MemberDuty>>(new Set());
   const currentUser = useAuthStore((s) => s.currentUser);
   const currentTeam = useAuthStore((s) => s.currentTeam);
   const members = useAuthStore((s) => s.members);
@@ -83,6 +100,14 @@ export default function TeamPage() {
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const isOperator = myMember?.role === 'operator';
   const isSolo = members.length <= 1 && !teamId;
+  const q = query.trim().toLowerCase();
+  const filteredMembers = members.filter(
+    (m) =>
+      (dutyFilter.size === 0 || m.duties.some((d) => dutyFilter.has(d))) &&
+      (!q ||
+        m.displayName.toLowerCase().includes(q) ||
+        (m.discordUsername ?? '').toLowerCase().includes(q))
+  );
 
   async function handleSaveName(e: React.FormEvent) {
     e.preventDefault();
@@ -228,195 +253,288 @@ export default function TeamPage() {
   }
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
-      {/* トップバー */}
-      <TopBar title="チームメンバー" subtitle={`${members.length}名`} />
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <TopBar title="メンバー・スタッフ" subtitle={`${members.length}名`} />
 
-      <div className="flex-1 overflow-y-auto px-4 py-6 md:px-7 space-y-4">
-        {/* メンバーカード */}
-        <Card noPadding>
-          <CardHeader title="メンバー" />
-          <div className="p-[18px]">
-            <div
-              className="grid gap-3"
-              style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))' }}
-            >
-              {members.map((member, i) => {
-                const palette = AVATAR_PALETTES[i % AVATAR_PALETTES.length];
-                const isMe = member.userId === currentUser?.uid;
-                const roleBadge = ROLE_BADGE[member.role];
-                const initials = member.displayName.slice(0, 2).toUpperCase();
+      {/* タブ。対応不可時間と同じく、カードを使わず全幅の帯で区切る */}
+      <div role="tablist" className="flex shrink-0 gap-1 border-b border-border px-4 md:px-7">
+        {(
+          [
+            ['members', 'メンバー・スタッフ'],
+            ['team', 'チーム'],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={tab === key}
+            onClick={() => setTab(key)}
+            className={cn(
+              '-mb-px flex min-h-11 cursor-pointer items-center border-b-2 px-4 text-sm font-semibold transition-colors duration-(--duration-fast)',
+              tab === key
+                ? 'border-brand text-text'
+                : 'border-transparent text-text-2 hover:text-text'
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-                return (
-                  <div
-                    key={member.userId}
-                    className="bg-surface border rounded-[14px] p-4 flex items-center gap-4 transition-all"
-                    style={{ borderColor: isMe ? 'var(--primary)' : 'var(--border)' }}
-                  >
-                    {/* アバター */}
-                    <div
-                      className="w-11 h-11 rounded-full flex items-center justify-center text-[15px] font-bold shrink-0 relative overflow-hidden"
-                      style={{ background: palette.bg, color: palette.text }}
-                    >
-                      {member.avatarUrl ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
-                          src={member.avatarUrl}
-                          alt={member.displayName}
-                          className="absolute inset-0 w-full h-full object-cover"
-                        />
-                      ) : (
-                        initials
-                      )}
-                      {(isMe || member.role === 'operator') && (
-                        <span
-                          className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-surface z-10"
-                          style={{ background: 'var(--success)' }}
-                        />
-                      )}
-                    </div>
-
-                    {/* 情報 */}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[14px] font-bold text-text mb-1 truncate">
-                        {member.displayName}
-                        {isMe && (
-                          <span className="text-text-muted text-[11px] font-normal ml-1.5">
-                            （あなた）
-                          </span>
-                        )}
-                      </div>
-                      <div
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border"
-                        style={{
-                          background: roleBadge.bg,
-                          color: roleBadge.text,
-                          borderColor: roleBadge.border,
-                        }}
-                      >
-                        {ROLE_LABELS[member.role]}
-                      </div>
-                      {/* Discord ユーザー名（TE-012）。本人とオペレーターが編集できる */}
-                      <div className="mt-1.5 flex items-center gap-1 text-[11px] text-text-muted min-w-0">
-                        <Icon name="discord" size={12} className="shrink-0" />
-                        <span className="truncate">
-                          {member.discordUsername ? `@${member.discordUsername}` : '未設定'}
-                        </span>
-                        {(isOperator || isMe) && (
-                          <button
-                            type="button"
-                            onClick={() => setDialog({ type: 'discord', member })}
-                            aria-label={`${member.displayName} の Discord ユーザー名を編集`}
-                            className="shrink-0 px-1 rounded-[4px] hover:text-brand-2 hover:bg-primary/10 transition-colors"
-                          >
-                            <Icon name="edit" size={12} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* オペレーター向けアクション */}
-                    {isOperator && !isMe && (
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <Dropdown
-                          value={member.role}
-                          options={[
-                            { value: 'operator', label: 'オペレーター' },
-                            { value: 'member', label: 'メンバー' },
-                            { value: 'rom', label: 'ROM専' },
-                          ]}
-                          onChange={(v) => handleRoleChange(member, v)}
-                          size="sm"
-                        />
-                        <button
-                          onClick={() => setDialog({ type: 'remove', member })}
-                          className="text-[11px] text-text-muted hover:text-live transition-colors px-1.5 py-1 rounded-[4px] hover:bg-live/10"
-                        >
-                          削除
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+      {tab === 'members' && (
+        <>
+          {/* 絞り込み */}
+          <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-surface px-4 py-3 md:px-7">
+            <div className="relative w-full sm:w-64">
+              <Icon
+                name="search"
+                size={16}
+                className="pointer-events-none absolute top-1/2 left-3 z-10 -translate-y-1/2 text-text-muted"
+              />
+              <Input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="名前・Discord 名で絞り込み"
+                aria-label="メンバー・スタッフを絞り込み"
+                className="pl-9"
+              />
             </div>
-
-            {/* 退出ボタン（全ロール） */}
-            <div className="mt-4">
-              <button
-                onClick={() => setDialog({ type: 'leave' })}
-                className="text-[12px] text-text-muted hover:text-live transition-colors"
-              >
-                現在のチームから退出する
-              </button>
+            <div
+              role="group"
+              aria-label="担当分野で絞り込み"
+              className="-mx-4 flex w-[calc(100%+2rem)] gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:w-auto sm:flex-wrap sm:px-0"
+            >
+              {MEMBER_DUTIES.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  aria-pressed={dutyFilter.has(d)}
+                  onClick={() => {
+                    const next = new Set(dutyFilter);
+                    if (!next.delete(d)) next.add(d);
+                    setDutyFilter(next);
+                  }}
+                  className={cn(
+                    badgeVariants({ variant: dutyFilter.has(d) ? 'primary' : 'neutral' }),
+                    'shrink-0 cursor-pointer'
+                  )}
+                >
+                  {MEMBER_DUTY_LABELS[d]}
+                </button>
+              ))}
             </div>
           </div>
-        </Card>
 
-        {/* チームの基本情報 */}
-        {currentTeam && (
-          <Card noPadding>
-            <CardHeader
-              title="チームの基本情報"
-              action={
-                isOperator ? (
-                  <button
+          {/*
+            所属者の一覧（DESIGN.md Table / List）。行は交互に canvas / surface、hover で surface-2。
+            幅に余裕があるときは列をそろえた表、狭いときは項目名つきの縦積みにする（コンテナ幅で切り替え）
+          */}
+          <div className="@container flex-1 overflow-y-auto">
+            {filteredMembers.length === 0 ? (
+              <p className="px-4 py-10 text-center text-sm text-text-2 md:px-7">
+                条件に合うメンバー・スタッフはいません
+              </p>
+            ) : (
+              <>
+                <div
+                  aria-hidden
+                  className={cn(
+                    MEMBER_GRID,
+                    'hidden border-b border-border bg-surface-2 py-2.5 @4xl:grid'
+                  )}
+                >
+                  {['名前', 'ロール', '担当分野', 'Discord', '操作'].map((label) => (
+                    <span key={label} className="eyebrow text-text-2">
+                      {label}
+                    </span>
+                  ))}
+                </div>
+                <ul>
+                  {filteredMembers.map((member) => {
+                    const isMe = member.userId === currentUser?.uid;
+                    const canEditDiscord = isOperator || isMe;
+                    const canManage = isOperator && !isMe;
+                    return (
+                      <li
+                        key={member.userId}
+                        className={cn(
+                          MEMBER_GRID,
+                          'relative grid gap-y-3 py-5 transition-colors duration-(--duration-instant) odd:bg-canvas even:bg-surface hover:bg-surface-2 @4xl:py-4'
+                        )}
+                      >
+                        {/* 名前。行全体を詳細へのリンクにする（操作は z-10 で上に出す） */}
+                        <div className="flex min-w-0 items-center gap-3">
+                          <Avatar initials={member.displayName} src={member.avatarUrl} size="lg" />
+                          <div className="min-w-0">
+                            <Link
+                              href={`/team/${member.userId}`}
+                              className="block truncate text-base font-semibold text-text no-underline after:absolute after:inset-0 hover:underline"
+                            >
+                              {member.displayName}
+                            </Link>
+                            {isMe && <span className="text-caption text-text-2">あなた</span>}
+                          </div>
+                        </div>
+
+                        <MemberField label="ロール">
+                          {canManage ? (
+                            <div className="relative z-10">
+                              <Dropdown
+                                value={member.role}
+                                options={[
+                                  { value: 'operator', label: 'オペレーター' },
+                                  { value: 'member', label: 'メンバー' },
+                                  { value: 'rom', label: 'ROM専' },
+                                ]}
+                                onChange={(v) => handleRoleChange(member, v)}
+                                size="sm"
+                              />
+                            </div>
+                          ) : (
+                            <Badge variant={ROLE_BADGE[member.role]}>
+                              {ROLE_LABELS[member.role]}
+                            </Badge>
+                          )}
+                        </MemberField>
+
+                        <MemberField label="担当分野">
+                          {member.duties.length > 0 ? (
+                            <ul aria-label="担当分野" className="flex flex-wrap gap-1">
+                              {member.duties.map((d) => (
+                                <li key={d}>
+                                  <Badge variant="info">{MEMBER_DUTY_LABELS[d]}</Badge>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <span className="text-sm text-text-muted">未設定</span>
+                          )}
+                        </MemberField>
+
+                        {/* Discord ユーザー名（TE-012）。本人とメンバー（operator）が編集できる */}
+                        <MemberField label="Discord">
+                          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+                            <span
+                              className={cn(
+                                'truncate text-sm',
+                                member.discordUsername ? 'text-text' : 'text-text-muted'
+                              )}
+                            >
+                              {member.discordUsername ? `@${member.discordUsername}` : '未設定'}
+                            </span>
+                            {canEditDiscord && (
+                              <Button
+                                variant="subtle"
+                                size="sm"
+                                className="relative z-10"
+                                onClick={() => setDialog({ type: 'discord', member })}
+                                aria-label={`${member.displayName} の Discord ユーザー名を編集`}
+                              >
+                                <Icon name="edit" size={14} />
+                                編集
+                              </Button>
+                            )}
+                          </div>
+                        </MemberField>
+
+                        <MemberField label="操作" hideEmpty={!canManage}>
+                          {canManage && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="relative z-10 text-danger hover:bg-danger-tint"
+                              onClick={() => setDialog({ type: 'remove', member })}
+                              aria-label={`${member.displayName} をチームから削除`}
+                            >
+                              <Icon name="person_off" size={14} />
+                              削除
+                            </Button>
+                          )}
+                        </MemberField>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
+      {tab === 'team' && (
+        <div className="flex-1 overflow-y-auto">
+          {/* チームの基本情報 */}
+          {currentTeam && (
+            <section className="border-b border-border px-4 py-6 md:px-7">
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <h2 className={fieldLabelClass}>チームの基本情報</h2>
+                {isOperator && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => {
                       setEditNameValue(currentTeam.name);
                       setShowEditName(true);
                     }}
-                    className="text-[11px] text-text-muted hover:text-text transition-colors px-2 py-1 rounded-[6px] hover:bg-surface border border-border"
                   >
                     チーム名を編集
-                  </button>
-                ) : undefined
-              }
-            />
-            <div className="p-[18px] space-y-4">
-              <div>
-                <p className="text-[11px] text-text-muted mb-0.5">チーム名</p>
-                <p className="text-[15px] font-bold text-text">{currentTeam.name}</p>
+                  </Button>
+                )}
               </div>
-              <div>
-                <p className="text-[11px] text-text-muted mb-1">チームコード</p>
-                <p className="text-[18px] font-mono font-bold text-brand-2 tracking-widest">
-                  {currentTeam.teamCode}
-                </p>
-              </div>
-            </div>
-          </Card>
-        )}
+              <dl className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <dt className={fieldLabelClass}>チーム名</dt>
+                  <dd className="mt-1 text-base text-text">{currentTeam.name}</dd>
+                </div>
+                <div>
+                  <dt className={fieldLabelClass}>チームコード</dt>
+                  <dd className="font-num mt-1 text-h3 tracking-widest text-text">
+                    {currentTeam.teamCode}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+          )}
 
-        {/* チームを解散する（オペレーターのみ） */}
-        {isOperator && (
-          <div className="bg-card border border-live/30 rounded-lg overflow-hidden">
-            <CardHeader title="危険ゾーン" />
-            <div className="p-[18px]">
-              <p className="text-[12px] text-text-muted mb-4">
-                この操作は元に戻せません。チームを解散すると全メンバーがソロ状態に戻ります。
-              </p>
-              <button
-                onClick={openDissolveModal}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-[12px] text-[13px] font-semibold transition-colors border border-live/40 text-live hover:bg-live/10"
-              >
-                <Icon name="group_remove" size={18} />
-                チームを解散する
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 別のチームに所属する */}
-        <Card noPadding>
-          <CardHeader title="別のチームに所属する" />
-          <div className="p-[18px]">
-            <p className="text-[12px] text-text-muted mb-4">
+          {/* 別のチームに所属する */}
+          <section className="border-b border-border px-4 py-6 md:px-7">
+            <h2 className={cn(fieldLabelClass, 'mb-1')}>別のチームに所属する</h2>
+            <p className="mb-4 text-sm text-text-2">
               チームコードを入力して、追加のチームに所属できます。現在のチームから脱退して参加することもできます。
             </p>
-            <TeamJoinForm />
-          </div>
-        </Card>
-      </div>
+            <div className="max-w-md">
+              <TeamJoinForm />
+            </div>
+          </section>
+
+          {/* 退出（全ロール） */}
+          <section className="border-b border-border px-4 py-6 md:px-7">
+            <h2 className={cn(fieldLabelClass, 'mb-1')}>チームから退出</h2>
+            <p className="mb-4 text-sm text-text-2">
+              退出すると、このチームの予定やタスクは見られなくなります。
+            </p>
+            <Button variant="ghost" size="sm" onClick={() => setDialog({ type: 'leave' })}>
+              現在のチームから退出する
+            </Button>
+          </section>
+
+          {/* チームを解散する（メンバー＝operator のみ） */}
+          {isOperator && (
+            <section className="px-4 py-6 md:px-7">
+              <h2 className={cn(fieldLabelClass, 'mb-1 text-danger')}>危険ゾーン</h2>
+              <p className="mb-4 text-sm text-text-2">
+                この操作は元に戻せません。チームを解散すると全メンバーがソロ状態に戻ります。
+              </p>
+              <Button variant="danger" size="sm" onClick={openDissolveModal}>
+                <Icon name="group_remove" size={18} />
+                チームを解散する
+              </Button>
+            </section>
+          )}
+        </div>
+      )}
 
       {/* ── チーム名編集モーダル ──────────────────────────────── */}
       <Modal

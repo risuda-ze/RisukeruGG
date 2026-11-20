@@ -28,10 +28,9 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm typecheck
-      # root の tsconfig は functions を exclude しているため、別途ビルドで型を検証する
-      - run: pnpm functions:build
+      # lint / typecheck / functions ビルド（root の tsconfig は functions を exclude しているため別途ビルドで型検証）。
+      # エージェントの push 前 hook（pnpm verify）と同じスクリプトを使う
+      - run: pnpm check:static
 
   unit-tests:
     name: Unit Tests (Vitest)

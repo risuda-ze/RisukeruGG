@@ -282,6 +282,8 @@ async function main() {
     avatarUrl: null,
     plan: 'party',
     joinedAt: d(2026, 4, 1),
+    duties: ['cast', 'planning'],
+    note: '土日は配信しています',
   });
   await setDoc(`teams/${TEAM_ID}/members/${UID2}`, {
     role: 'operator',
@@ -289,6 +291,8 @@ async function main() {
     avatarUrl: null,
     plan: 'party',
     joinedAt: d(2026, 4, 3),
+    duties: ['edit', 'thumbnail'],
+    note: '平日夜は編集できます',
   });
   await setDoc(`teams/${TEAM_ID}/members/${UID3}`, {
     role: 'member',
