@@ -73,6 +73,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // メンバーの担当分野・ひとこと（TE-014）の値検証。未設定（キーなし）は許可
+    function validMemberProfile(d) {
+      return (!('duties' in d) || (d.duties is list && d.duties.size() <= 6 &&
+                d.duties.hasOnly(['cast', 'planning', 'edit', 'thumbnail', 'moderation', 'other']))) &&
+             (!('note' in d) || d.note == null || (d.note is string && d.note.size() <= 100));
+    }
+
     function isTeamMember(teamId) {
       return request.auth != null &&
              exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)) &&
@@ -141,7 +148,10 @@ service cloud.firestore {
 
       match /members/{memberId} {
         allow read: if isTeamMember(teamId);
-        allow create, delete: if isTeamOwner(teamId) ||
+        allow create: if (isTeamOwner(teamId) ||
+                        (request.auth != null && request.auth.uid == memberId && passesBetaGate())) &&
+                        validMemberProfile(request.resource.data);
+        allow delete: if isTeamOwner(teamId) ||
                         (request.auth != null && request.auth.uid == memberId && passesBetaGate());
         // plan はサーバー（Stripe Webhook / Admin SDK）が伝播する参照用スナップショット。
         // クライアントからの書き換えを禁止する（T4 / PL-009）。
@@ -149,7 +159,8 @@ service cloud.firestore {
                         (request.auth != null && request.auth.uid == memberId && passesBetaGate())) &&
                         !request.resource.data.diff(resource.data)
                            .affectedKeys()
-                           .hasAny(['plan']);
+                           .hasAny(['plan']) &&
+                        validMemberProfile(request.resource.data);
       }
 
       match /taskStatuses/{columnId} {

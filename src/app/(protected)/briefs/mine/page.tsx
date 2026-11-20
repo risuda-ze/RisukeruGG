@@ -11,7 +11,7 @@ import { BriefsLoadError } from '@/components/briefs/BriefsLoadError';
 import { Icon } from '@/components/ui/Icon';
 import { StepAlertBadges, StepStatusBadge } from '@/components/briefs/StepStatusBadge';
 import { formatShortDate } from '@/lib/briefs/format';
-import { isStepClosed } from '@/lib/briefs/transitions';
+import { selectAssignedSteps } from '@/lib/briefs/assignedSteps';
 import { buttonVariants } from '@/components/ui/Button';
 
 /**
@@ -33,24 +33,10 @@ export default function MyStepsPage() {
     return subscribe(teamId);
   }, [teamId, subscribe]);
 
-  const mine = useMemo(() => {
-    const uid = currentUser?.uid;
-    const briefById = new Map(briefs.map((b) => [b.id, b]));
-    return steps
-      .filter((s) => s.assigneeId === uid && !isStepClosed(s.status))
-      .filter((s) => {
-        const b = briefById.get(s.briefId);
-        return b && b.status !== 'archived';
-      })
-      .sort((a, b) => {
-        // 締切あり → 近い順、締切なしは末尾。同日なら着手可能を先に
-        const ad = a.dueDate?.getTime() ?? Number.POSITIVE_INFINITY;
-        const bd = b.dueDate?.getTime() ?? Number.POSITIVE_INFINITY;
-        if (ad !== bd) return ad - bd;
-        return (a.status === 'waiting' ? 1 : 0) - (b.status === 'waiting' ? 1 : 0);
-      })
-      .map((s) => ({ step: s, brief: briefById.get(s.briefId)! }));
-  }, [steps, briefs, currentUser?.uid]);
+  const mine = useMemo(
+    () => selectAssignedSteps(steps, briefs, currentUser?.uid),
+    [steps, briefs, currentUser?.uid]
+  );
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
