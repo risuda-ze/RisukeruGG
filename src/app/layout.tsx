@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { AuthProvider } from '@/components/AuthProvider';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import { AnalyticsListener } from '@/components/AnalyticsListener';
 import { Toaster } from '@/components/ui/Toaster';
 import './globals.css';
@@ -66,12 +67,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className="h-full">
+    // next-themes が描画前に data-theme を付けるため、属性の不一致警告を抑える
+    <html lang="ja" className="h-full" suppressHydrationWarning>
       <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" precedence="default" />
       <body className="min-h-full flex flex-col antialiased">
-        <AnalyticsListener />
-        <AuthProvider>{children}</AuthProvider>
-        <Toaster />
+        <ThemeProvider>
+          <AnalyticsListener />
+          <AuthProvider>{children}</AuthProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

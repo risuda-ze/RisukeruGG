@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { Drawer, DrawerClose, DrawerContent, DrawerTitle } from '@/components/ui/Drawer';
 
 /* ── ツールバーのアイテム定義 ─────────────────────────── */
@@ -76,6 +77,9 @@ export function MobileToolbar() {
                 <span className="text-[14px] font-medium">{item.label}</span>
               </Link>
             ))}
+            <div className="mt-2 border-t border-border pt-2">
+              <ThemeToggle className="min-h-11 py-3" />
+            </div>
           </div>
         </DrawerContent>
       </Drawer>
