@@ -20,7 +20,7 @@ import { datesBetween, groupByMember, orderMembers } from '@/lib/unavailability/
 import { useAuthStore } from '@/stores/auth';
 import type { UnavailabilityMonth } from '@/types/unavailability';
 
-/** 画面ヘルプに出す注意事項（UN-043）。入力の操作は、入力機能を足すときにここへ追記する */
+/** 画面ヘルプに出す注意事項と入力方法（UN-043） */
 const HELP_ITEMS = [
   '入力するのは「対応不可」の時間帯だけです。入力のない時間帯は対応可能とみなします。',
   '「未入力」のメンバーは、まだ一度も入力していません。いつでも空いているという意味ではありません。',
@@ -30,6 +30,9 @@ const HELP_ITEMS = [
   '予定の内容は入力しません。補足があるときはメモに書きます。',
   '× はその日に 1 時間でも対応不可があることを表します。日付の下の人数は、表示中のメンバーのうち対応不可がある人数です。',
   'セルを押すと、そのメンバーの詳細（時間帯とメモ）が開きます。',
+  '入力するときは、自分の行のセルを押して詳細を開きます。時刻の右の列をドラッグすると対応不可を塗れます。対応不可の上からドラッグを始めると消せます。日をまたいで続けて塗れます。',
+  'メモは、詳細の右の欄か「メモを追加」を押して追加します。自分のメモを押すと編集・削除できます。メモは 1 ヶ月に 200 件までです。',
+  '塗り・消しとメモの変更は、「保存」を押すまで確定しません。未保存の変更は破線で表示されます。',
 ];
 
 /** チーム全員の 1 ヶ月分の購読。月ごとに 1 つ置き、足した月だけ購読が増える（UN-090） */
@@ -254,7 +257,9 @@ export function UnavailabilityBoard({ teamId }: { teamId: string }) {
         <MemberDetail
           // 別のセルから開き直したときは、表示位置を作り直す
           key={`${detail.userId}:${detail.date}`}
+          teamId={teamId}
           member={detailMember}
+          editable={detail.userId === selfId}
           data={byMember.get(detail.userId)}
           dates={dates}
           today={today}

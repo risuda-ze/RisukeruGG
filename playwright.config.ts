@@ -36,6 +36,7 @@ export default defineConfig({
         '**/e2e/tasks/task-settings-icon.spec.ts',
         '**/e2e/collabs/collab-ui-redesign.spec.ts',
         '**/e2e/unavailability/unavailability-view.spec.ts',
+        '**/e2e/unavailability/unavailability-edit.spec.ts',
       ],
       use: { ...devices['Desktop Chrome'] },
     },

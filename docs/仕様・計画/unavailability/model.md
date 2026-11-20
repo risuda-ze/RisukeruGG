@@ -31,7 +31,7 @@ Firestore コレクション配置: `teams/{teamId}/unavailability/{userId}_{yyy
 
 | フィールド | 型 / 例               | 意味 |
 | ---------- | --------------------- | ---- |
-| `id`       | string                | メモの ID（クライアントで生成。月ドキュメント内で一意）。編集・削除の対象を特定する |
+| `id`       | string                | メモの ID（クライアントが `crypto.randomUUID()` で生成。月ドキュメント内で一意）。編集・削除の対象を特定する |
 | `date`     | string / `2026-11-14` | 対象日。月ドキュメントの `month` に属する |
 | `start`    | number / 0〜23        | 開始時（その時を含む） |
 | `end`      | number / 1〜24        | 終了時（排他的境界）。`start < end` |
