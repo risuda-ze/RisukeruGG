@@ -284,7 +284,7 @@ export function MemberDetail({
                     {/* 日時と対応不可の列は、メモ欄を横スクロールしても残す（UN-064） */}
                     <div
                       style={{ width: axisW }}
-                      className="sticky left-0 z-20 flex shrink-0 border-r border-border bg-card"
+                      className="sticky left-0 z-20 flex shrink-0 bg-card"
                     >
                       {/* 日付と時刻は幅を固定し、時刻は 2 桁・等幅数字で縦に揃える */}
                       <div className="font-num text-caption flex shrink-0 items-center pr-2 pl-3 whitespace-nowrap md:pl-6">

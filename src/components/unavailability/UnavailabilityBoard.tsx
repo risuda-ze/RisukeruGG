@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Badge } from '@/components/ui/Badge';
+import { Avatar } from '@/components/ui/Avatar';
+import { Badge, badgeVariants } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Input, fieldLabelClass } from '@/components/ui/Input';
@@ -12,6 +13,7 @@ import { UnavailabilityGrid } from '@/components/unavailability/UnavailabilityGr
 import type { PeriodFocus } from '@/components/unavailability/UnavailabilityGrid';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { toJstDateString } from '@/lib/googleCalendar/export';
+import { cn } from '@/lib/utils/cn';
 import { subscribeUnavailabilityMonth } from '@/lib/repositories/unavailability';
 import { monthOf, storageWindow } from '@/lib/unavailability/range';
 import { datesBetween, groupByMember, orderMembers } from '@/lib/unavailability/view';
@@ -152,21 +154,26 @@ export function UnavailabilityBoard({ teamId }: { teamId: string }) {
           <div id="un-filter" className="flex flex-col gap-4 pt-1 pb-4">
             <fieldset>
               <legend className={fieldLabelClass}>メンバー</legend>
-              <div className="mt-1 flex flex-wrap gap-x-5">
-                {orderMembers(members, selfId, new Set()).map((member) => (
-                  <label
-                    key={member.userId}
-                    className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-text"
-                  >
-                    <input
-                      type="checkbox"
-                      className="size-4 accent-primary"
-                      checked={selected.has(member.userId)}
-                      onChange={() => toggleMember(member.userId)}
-                    />
-                    {member.displayName}
-                  </label>
-                ))}
+              {/* 他画面（ブリーフの出演者など）と同じ、押して選ぶボタン。アイコンと名前を並べる */}
+              <div className="mt-1 flex flex-wrap gap-2">
+                {orderMembers(members, selfId, new Set()).map((member) => {
+                  const on = selected.has(member.userId);
+                  return (
+                    <button
+                      key={member.userId}
+                      type="button"
+                      onClick={() => toggleMember(member.userId)}
+                      aria-pressed={on}
+                      className={cn(
+                        badgeVariants({ variant: on ? 'primary' : 'neutral' }),
+                        'min-h-11 cursor-pointer gap-2 py-1 pr-3 pl-1.5'
+                      )}
+                    >
+                      <Avatar initials={member.displayName} src={member.avatarUrl} size="sm" />
+                      {member.displayName}
+                    </button>
+                  );
+                })}
               </div>
             </fieldset>
             <div className="flex flex-wrap items-end gap-3">

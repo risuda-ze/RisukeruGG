@@ -6,10 +6,20 @@ import { UnavailabilityBoard } from '@/components/unavailability/UnavailabilityB
 import { subscribeUnavailabilityMonth } from '@/lib/repositories/unavailability';
 
 vi.mock('@/lib/repositories/unavailability', () => ({ subscribeUnavailabilityMonth: vi.fn() }));
+const store = vi.hoisted(() => ({ members: [] as unknown[] }));
 vi.mock('@/stores/auth', () => ({
   useAuthStore: (selector: (state: unknown) => unknown) =>
-    selector({ currentUser: { uid: 'me' }, members: [] }),
+    selector({ currentUser: { uid: 'me' }, members: store.members }),
 }));
+
+const member = (userId: string, displayName: string) => ({
+  userId,
+  displayName,
+  avatarUrl: null,
+  role: 'member',
+  plan: 'light',
+  joinedAt: new Date('2026-01-01T00:00:00Z'),
+});
 
 describe('UnavailabilityBoard', () => {
   let container: HTMLDivElement;
@@ -33,6 +43,27 @@ describe('UnavailabilityBoard', () => {
     container.remove();
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    store.members = [];
+    vi.mocked(subscribeUnavailabilityMonth).mockClear();
+  });
+
+  it('メンバーはアイコンと名前のボタンを押して選ぶ（UN-042）', () => {
+    vi.mocked(subscribeUnavailabilityMonth).mockReturnValue(() => {});
+    store.members = [member('me', '配信太郎'), member('u2', '運営花子')];
+
+    act(() => root.render(<UnavailabilityBoard teamId="t1" />));
+    act(() => container.querySelector<HTMLElement>('button[aria-controls="un-filter"]')?.click());
+
+    const buttons = [...container.querySelectorAll<HTMLElement>('#un-filter button[aria-pressed]')];
+    expect(buttons.map((button) => button.textContent)).toEqual(['配信配信太郎', '運営運営花子']);
+    expect(container.querySelector('#un-filter input[type="checkbox"]')).toBeNull();
+
+    act(() => buttons[1].click());
+    expect(buttons[1]).toHaveAttribute('aria-pressed', 'true');
+    expect(buttons[0]).toHaveAttribute('aria-pressed', 'false');
+
+    act(() => buttons[1].click());
+    expect(buttons[1]).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('当月だけを先に購読し、ヘッダーは折り畳んで表示する（UN-041, UN-090）', () => {
