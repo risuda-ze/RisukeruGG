@@ -10,6 +10,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Switch } from '@/components/ui/Switch';
+import { BulkInput } from '@/components/unavailability/BulkInput';
 import { NoteForm } from '@/components/unavailability/NoteForm';
 import type { NoteFields } from '@/components/unavailability/NoteForm';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -25,7 +26,9 @@ import {
   isDirty,
   noteKey,
   paintHours,
+  pruneDraft,
 } from '@/lib/unavailability/draft';
+import type { UnavailabilityDraft } from '@/lib/unavailability/draft';
 import { countHours } from '@/lib/unavailability/mask';
 import { monthOf } from '@/lib/unavailability/range';
 import {
@@ -131,6 +134,7 @@ export function MemberDetail({
     null
   );
   const [confirmingClose, setConfirmingClose] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const rowH = dayMode ? DAY_H : HOUR_H;
   const hoursPerRow = dayMode ? 24 : 1;
@@ -231,11 +235,18 @@ export function MemberDetail({
     if (from !== null || to !== null) setTarget({ from, to });
   };
 
+  /**
+   * 未保存の変更を更新する。保存済みと同じになった変更（塗ってから消した等）はその場で取り除く。
+   * 残しておくと、あとで保存済みの内容が変わったとき（CSV・定期入力など）に「変更」として効いてしまう
+   */
+  const updateDraft = (change: (prev: UnavailabilityDraft) => UnavailabilityDraft) =>
+    setDraft((prev) => pruneDraft(data, change(prev)));
+
   // ── 塗り・消し（UN-070）
   const canPaint = editable && !saving;
   /** 範囲を塗る・消す変更を、未保存の変更に足す */
   const commitPaint = (from: number, to: number, paint: boolean) =>
-    setDraft((prev) => ({
+    updateDraft((prev) => ({
       ...prev,
       days: {
         ...prev.days,
@@ -289,13 +300,13 @@ export function MemberDetail({
     const editing = allNotes.find((drafted) => drafted.key === noteForm.key);
     const note = { ...fields, id: editing ? editing.note.id : crypto.randomUUID() };
     const key = noteForm.key ?? noteKey(note);
-    setDraft((prev) => ({ ...prev, notes: { ...prev.notes, [key]: note } }));
+    updateDraft((prev) => ({ ...prev, notes: { ...prev.notes, [key]: note } }));
     setNoteForm(null);
   };
   const deleteNote = () => {
     const key = noteForm?.key;
     if (!key) return;
-    setDraft((prev) => ({ ...prev, notes: { ...prev.notes, [key]: null } }));
+    updateDraft((prev) => ({ ...prev, notes: { ...prev.notes, [key]: null } }));
     setNoteForm(null);
   };
 
@@ -319,6 +330,17 @@ export function MemberDetail({
     } else {
       toast.error('保存に失敗しました。入力した内容は残っています。もう一度お試しください。');
     }
+  };
+
+  /** CSV・定期入力を開く。直接 Firestore へ追記する経路なので、未保存の変更がある間は始めさせない */
+  const openBulk = () => {
+    if (dirty) {
+      toast.info(
+        '先に「保存」を押して、未保存の変更を確定してください。CSV・定期入力はそのあとで使えます。'
+      );
+      return;
+    }
+    setBulkOpen(true);
   };
 
   /** 未保存の変更があれば、黙って破棄せず確認する */
@@ -357,8 +379,10 @@ export function MemberDetail({
         <button
           type="button"
           onClick={requestClose}
+          // 保存の結果が出るまでは閉じさせない（失敗したときに未保存の内容を残すため）
+          disabled={saving}
           aria-label="閉じる"
-          className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-sm text-text-2 transition-colors duration-(--duration-fast) hover:bg-surface-2 hover:text-text"
+          className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-sm text-text-2 transition-colors duration-(--duration-fast) hover:bg-surface-2 hover:text-text disabled:pointer-events-none disabled:opacity-40"
         >
           <Icon name="close" size={18} />
         </button>
@@ -591,10 +615,13 @@ export function MemberDetail({
             variant="ghost"
             onClick={() => openAddNote(topRow * hoursPerRow)}
             disabled={saving}
-            className="mr-auto px-4"
+            className="px-4"
           >
             <Icon name="add" size={16} />
             メモを追加
+          </Button>
+          <Button variant="ghost" onClick={openBulk} disabled={saving} className="mr-auto px-4">
+            CSV・定期入力
           </Button>
           {dirty && (
             <span data-testid="un-unsaved" className="text-caption text-warning">
@@ -605,6 +632,16 @@ export function MemberDetail({
             保存
           </Button>
         </div>
+      )}
+
+      {bulkOpen && (
+        <BulkInput
+          teamId={teamId}
+          userId={member.userId}
+          today={today}
+          savedDays={savedDays}
+          onClose={() => setBulkOpen(false)}
+        />
       )}
 
       {noteForm && (

@@ -34,8 +34,8 @@ const hourOptions = (from: number, to: number) =>
     value: String(from + i),
     label: `${String(from + i).padStart(2, '0')}:00`,
   }));
-const START_OPTIONS = hourOptions(0, 23);
-const END_OPTIONS = hourOptions(1, 24);
+export const START_OPTIONS = hourOptions(0, 23);
+export const END_OPTIONS = hourOptions(1, 24);
 
 /** メモの追加・編集フォーム（UN-030〜UN-035）。確定しても Firestore には書かず、未保存の変更として親に渡す */
 export function NoteForm({

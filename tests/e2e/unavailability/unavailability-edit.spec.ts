@@ -11,7 +11,7 @@ import { signInWithEmulator } from '../../helpers/auth';
  * 実行方法:
  *   pnpm test:e2e:emulator tests/e2e/unavailability/unavailability-edit.spec.ts
  *
- * どちらのテストも、書いた内容を最後に消して保存し直す（シードの状態に戻す）。
+ * どのテストも、書いた内容を最後に消して保存し直す（シードの状態に戻す）。
  */
 
 const PASSWORD = 'password123';
@@ -45,6 +45,23 @@ async function openAs(page: Page, email: string) {
 const myCell = (page: Page, date: string) =>
   page.getByTestId('un-member-row').first().locator(`[data-testid="un-cell"][data-date="${date}"]`);
 
+/** 詳細の、指定した日時の行 */
+const hourRow = (page: Page, date: string, h: number) =>
+  page
+    .getByTestId('un-detail')
+    .locator(`[data-testid="un-hour"][data-date="${date}"][data-hour="${h}"]`);
+
+/** 対応不可の列を、from 時から to 時までドラッグする */
+async function dragHours(page: Page, date: string, from: number, to: number) {
+  const start = await hourRow(page, date, from).getByTestId('un-paint').boundingBox();
+  const end = await hourRow(page, date, to).getByTestId('un-paint').boundingBox();
+  if (!start || !end) throw new Error('塗るセルが見つからない');
+  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2, { steps: 5 });
+  await page.mouse.up();
+}
+
 test('③ 自分の詳細で塗って保存すると、一覧の × と最終更新が更新される（UN-070, UN-071）', async ({
   page,
 }) => {
@@ -55,17 +72,8 @@ test('③ 自分の詳細で塗って保存すると、一覧の × と最終更
   await myCell(page, date).click();
 
   const detail = page.getByTestId('un-detail');
-  const hour = (h: number) =>
-    detail.locator(`[data-testid="un-hour"][data-date="${date}"][data-hour="${h}"]`);
-  const drag = async (from: number, to: number) => {
-    const start = await hour(from).getByTestId('un-paint').boundingBox();
-    const end = await hour(to).getByTestId('un-paint').boundingBox();
-    if (!start || !end) throw new Error('塗るセルが見つからない');
-    await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2, { steps: 5 });
-    await page.mouse.up();
-  };
+  const hour = (h: number) => hourRow(page, date, h);
+  const drag = (from: number, to: number) => dragHours(page, date, from, to);
   const save = detail.getByRole('button', { name: '保存', exact: true });
 
   // 変更が無い間は保存できない
@@ -158,4 +166,58 @@ test('④ メモを追加・削除して保存できる。他人の詳細では�
   await expect(detail.getByRole('button', { name: '保存', exact: true })).toHaveCount(0);
   await expect(detail.getByTestId('un-paint')).toHaveCount(0);
   await expect(detail.getByTestId('un-note-slot')).toHaveCount(0);
+});
+
+test('⑤ 定期入力をプレビューして保存すると、一覧に反映される（UN-085, UN-086）', async ({
+  page,
+}) => {
+  // サポート里奈: シードでは 2 日後に対応不可が無い
+  await openAs(page, 'rina@example.com');
+  const date = day(2);
+  const weekday = '日月火水木金土'[new Date(`${date}T00:00:00Z`).getUTCDay()];
+  const detail = page.getByTestId('un-detail');
+
+  await myCell(page, date).click();
+  await detail.getByRole('button', { name: 'CSV・定期入力' }).click();
+
+  // 2 日後の 1 日だけを対象に、その曜日の 10〜12 時を指定する
+  const bulk = page.getByTestId('un-bulk');
+  await bulk.locator('#un-bulk-from').fill(date);
+  await bulk.locator('#un-bulk-to').fill(date);
+  await bulk.getByRole('button', { name: `${weekday}曜日` }).click();
+  await bulk.locator('[data-slot="dropdown-trigger"]').nth(1).click();
+  await page.getByRole('option', { name: '12:00' }).click();
+  await bulk.locator('[data-slot="dropdown-trigger"]').nth(0).click();
+  await page.getByRole('option', { name: '10:00' }).click();
+  await page.getByRole('button', { name: 'プレビュー' }).click();
+
+  // プレビュー: 対象日と時間帯を確認して保存する
+  const preview = page.getByRole('dialog', { name: '取り込み内容の確認' });
+  await expect(preview.getByTestId('un-bulk-day')).toHaveCount(1);
+  await expect(preview.getByTestId('un-bulk-day')).toHaveAttribute('data-date', date);
+  await expect(preview.getByTestId('un-bulk-day')).toContainText('10:00〜12:00');
+  await preview.getByRole('button', { name: '保存' }).click();
+  await expect(page.getByText('1 日分の対応不可を保存しました')).toBeVisible();
+  await expect(preview).toHaveCount(0);
+
+  // 詳細と一覧に反映される
+  await expect(hourRow(page, date, 10).getByTestId('un-block')).toHaveAttribute(
+    'data-kind',
+    'saved'
+  );
+  await expect(hourRow(page, date, 11).getByTestId('un-block')).toHaveAttribute(
+    'data-kind',
+    'saved'
+  );
+  await expect(hourRow(page, date, 12)).toHaveAttribute('data-unavailable', 'false');
+  await detail.getByRole('button', { name: '閉じる' }).click();
+  await expect(myCell(page, date)).toHaveText('×');
+
+  // 消して保存し、元に戻す
+  await myCell(page, date).click();
+  await dragHours(page, date, 10, 11);
+  await detail.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(hourRow(page, date, 10).getByTestId('un-block')).toHaveCount(0);
+  await detail.getByRole('button', { name: '閉じる' }).click();
+  await expect(myCell(page, date)).toHaveText('');
 });
