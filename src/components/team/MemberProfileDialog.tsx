@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
+import { badgeVariants } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input, fieldLabelClass } from '@/components/ui/Input';
 import { cn } from '@/lib/utils/cn';
@@ -74,10 +75,8 @@ export function MemberProfileDialog({ teamId, member, onClose }: Props) {
                 aria-pressed={duties.includes(d)}
                 onClick={() => toggle(d)}
                 className={cn(
-                  'min-h-9 cursor-pointer rounded-sm border px-3 text-sm transition-colors duration-(--duration-fast)',
-                  duties.includes(d)
-                    ? 'border-primary bg-primary text-text-on-primary'
-                    : 'border-border bg-card text-text-2 hover:border-border-strong hover:text-text'
+                  badgeVariants({ variant: duties.includes(d) ? 'primary' : 'neutral' }),
+                  'cursor-pointer'
                 )}
               >
                 {MEMBER_DUTY_LABELS[d]}

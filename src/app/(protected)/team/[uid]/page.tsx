@@ -11,12 +11,12 @@ import { Badge } from '@/components/ui/Badge';
 import { Button, buttonVariants } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { fieldLabelClass } from '@/components/ui/Input';
-import { DutyChips } from '@/components/team/DutyChips';
 import { MemberProfileDialog } from '@/components/team/MemberProfileDialog';
-import { ROLE_BADGE_VARIANT, ROLE_LABELS, sectionTitleClass } from '@/components/team/memberStyle';
+import { ROLE_BADGE, ROLE_LABELS } from '@/lib/utils/teamRoles';
 import { StepAlertBadges, StepStatusBadge } from '@/components/briefs/StepStatusBadge';
 import { formatShortDate } from '@/lib/briefs/format';
 import { selectAssignedSteps } from '@/lib/briefs/assignedSteps';
+import { MEMBER_DUTY_LABELS } from '@/types/entities';
 
 /**
  * メンバー詳細（TE-015〜TE-017）。担当分野・ひとこと・担当中の工程を表示する。
@@ -68,14 +68,14 @@ export default function MemberDetailPage() {
       <div className="flex-1 overflow-y-auto">
         {/* 見出し: アバター・名前・ロール */}
         <section className="flex items-center gap-4 border-b border-border bg-surface px-4 py-5 md:px-7">
-          <Avatar initials={member.displayName.slice(0, 2)} src={member.avatarUrl} size="lg" />
+          <Avatar initials={member.displayName} src={member.avatarUrl} size="lg" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-baseline gap-x-2">
               <h2 className="text-h2 truncate text-text">{member.displayName}</h2>
               {isMe && <span className="text-caption text-text-2">あなた</span>}
             </div>
             <div className="mt-1.5">
-              <Badge variant={ROLE_BADGE_VARIANT[member.role]}>{ROLE_LABELS[member.role]}</Badge>
+              <Badge variant={ROLE_BADGE[member.role]}>{ROLE_LABELS[member.role]}</Badge>
             </div>
           </div>
           {(isMe || isOperator) && (
@@ -88,13 +88,19 @@ export default function MemberDetailPage() {
 
         {/* プロフィール */}
         <section className="border-b border-border px-4 py-6 md:px-7">
-          <h3 className={`${sectionTitleClass} mb-4`}>プロフィール</h3>
+          <h3 className={`${fieldLabelClass} mb-4`}>プロフィール</h3>
           <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
             <div>
               <dt className={fieldLabelClass}>担当分野</dt>
               <dd className="mt-1.5">
                 {member.duties.length > 0 ? (
-                  <DutyChips duties={member.duties} />
+                  <ul aria-label="担当分野" className="flex flex-wrap gap-1">
+                    {member.duties.map((d) => (
+                      <li key={d}>
+                        <Badge variant="info">{MEMBER_DUTY_LABELS[d]}</Badge>
+                      </li>
+                    ))}
+                  </ul>
                 ) : (
                   <span className="text-sm text-text-muted">未設定</span>
                 )}
@@ -128,7 +134,7 @@ export default function MemberDetailPage() {
 
         {/* 担当中の工程。行は交互背景のリスト（DESIGN.md Table / List） */}
         <section className="pt-6">
-          <h3 className={`${sectionTitleClass} mb-3 px-4 md:px-7`}>
+          <h3 className={`${fieldLabelClass} mb-3 px-4 md:px-7`}>
             担当中の工程
             <span className="font-num ml-2">{assigned.length}</span>
           </h3>

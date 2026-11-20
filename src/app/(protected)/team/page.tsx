@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { Input, fieldLabelClass } from '@/components/ui/Input';
 import { Avatar } from '@/components/ui/Avatar';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { Badge, badgeVariants } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils/cn';
 import { RoleChangeDialog } from '@/components/team/RoleChangeDialog';
 import { RemoveMemberDialog } from '@/components/team/RemoveMemberDialog';
@@ -23,8 +23,7 @@ import { createTeam, dissolveTeam } from '@/lib/repositories/teams';
 import { trackEvent } from '@/lib/analytics';
 import { Icon } from '@/components/ui/Icon';
 import { Dropdown } from '@/components/ui/Dropdown';
-import { DutyChips } from '@/components/team/DutyChips';
-import { ROLE_BADGE_VARIANT, ROLE_LABELS, sectionTitleClass } from '@/components/team/memberStyle';
+import { ROLE_BADGE, ROLE_LABELS } from '@/lib/utils/teamRoles';
 import { MEMBER_DUTIES, MEMBER_DUTY_LABELS } from '@/types/entities';
 import type { MemberDuty, TeamMember } from '@/types/entities';
 
@@ -290,15 +289,15 @@ function TeamPageInner() {
               <Icon
                 name="search"
                 size={16}
-                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-text-muted"
+                className="pointer-events-none absolute top-1/2 left-3 z-10 -translate-y-1/2 text-text-muted"
               />
-              <input
+              <Input
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="名前・Discord 名で絞り込み"
                 aria-label="メンバーを絞り込み"
-                className="h-11 w-full rounded-sm border border-border bg-card pr-3 pl-9 text-sm text-text placeholder:text-text-muted focus:border-brand focus:outline-none"
+                className="pl-9"
               />
             </div>
             <div
@@ -313,10 +312,8 @@ function TeamPageInner() {
                   aria-pressed={dutyFilter === d}
                   onClick={() => setDutyFilter(dutyFilter === d ? null : d)}
                   className={cn(
-                    'min-h-9 shrink-0 cursor-pointer whitespace-nowrap rounded-sm border px-3 text-sm transition-colors duration-(--duration-fast)',
-                    dutyFilter === d
-                      ? 'border-primary bg-primary text-text-on-primary'
-                      : 'border-border bg-card text-text-2 hover:border-border-strong hover:text-text'
+                    badgeVariants({ variant: dutyFilter === d ? 'primary' : 'neutral' }),
+                    'shrink-0 cursor-pointer'
                   )}
                 >
                   {MEMBER_DUTY_LABELS[d]}
@@ -364,11 +361,7 @@ function TeamPageInner() {
                       >
                         {/* メンバー。行全体を詳細へのリンクにする（操作は z-10 で上に出す） */}
                         <div className="flex min-w-0 items-center gap-3">
-                          <Avatar
-                            initials={member.displayName.slice(0, 2)}
-                            src={member.avatarUrl}
-                            size="lg"
-                          />
+                          <Avatar initials={member.displayName} src={member.avatarUrl} size="lg" />
                           <div className="min-w-0">
                             <Link
                               href={`/team/${member.userId}`}
@@ -395,7 +388,7 @@ function TeamPageInner() {
                               />
                             </div>
                           ) : (
-                            <Badge variant={ROLE_BADGE_VARIANT[member.role]}>
+                            <Badge variant={ROLE_BADGE[member.role]}>
                               {ROLE_LABELS[member.role]}
                             </Badge>
                           )}
@@ -403,7 +396,13 @@ function TeamPageInner() {
 
                         <MemberField label="担当分野">
                           {member.duties.length > 0 ? (
-                            <DutyChips duties={member.duties} />
+                            <ul aria-label="担当分野" className="flex flex-wrap gap-1">
+                              {member.duties.map((d) => (
+                                <li key={d}>
+                                  <Badge variant="info">{MEMBER_DUTY_LABELS[d]}</Badge>
+                                </li>
+                              ))}
+                            </ul>
                           ) : (
                             <span className="text-sm text-text-muted">未設定</span>
                           )}
@@ -465,7 +464,7 @@ function TeamPageInner() {
           {currentTeam && (
             <section className="border-b border-border px-4 py-6 md:px-7">
               <div className="mb-4 flex items-center justify-between gap-2">
-                <h2 className={sectionTitleClass}>チームの基本情報</h2>
+                <h2 className={fieldLabelClass}>チームの基本情報</h2>
                 {isOperator && (
                   <Button
                     variant="ghost"
@@ -496,7 +495,7 @@ function TeamPageInner() {
 
           {/* 別のチームに所属する */}
           <section className="border-b border-border px-4 py-6 md:px-7">
-            <h2 className={cn(sectionTitleClass, 'mb-1')}>別のチームに所属する</h2>
+            <h2 className={cn(fieldLabelClass, 'mb-1')}>別のチームに所属する</h2>
             <p className="mb-4 text-sm text-text-2">
               チームコードを入力して、追加のチームに所属できます。現在のチームから脱退して参加することもできます。
             </p>
@@ -507,7 +506,7 @@ function TeamPageInner() {
 
           {/* 退出（全ロール） */}
           <section className="border-b border-border px-4 py-6 md:px-7">
-            <h2 className={cn(sectionTitleClass, 'mb-1')}>チームから退出</h2>
+            <h2 className={cn(fieldLabelClass, 'mb-1')}>チームから退出</h2>
             <p className="mb-4 text-sm text-text-2">
               退出すると、このチームの予定やタスクは見られなくなります。
             </p>
@@ -519,7 +518,7 @@ function TeamPageInner() {
           {/* チームを解散する（オペレーターのみ） */}
           {isOperator && (
             <section className="px-4 py-6 md:px-7">
-              <h2 className={cn(sectionTitleClass, 'mb-1 text-danger')}>危険ゾーン</h2>
+              <h2 className={cn(fieldLabelClass, 'mb-1 text-danger')}>危険ゾーン</h2>
               <p className="mb-4 text-sm text-text-2">
                 この操作は元に戻せません。チームを解散すると全メンバーがソロ状態に戻ります。
               </p>

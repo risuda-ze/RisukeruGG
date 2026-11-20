@@ -51,14 +51,7 @@ export interface GoogleCalendarExport {
 }
 
 /** 担当分野の候補（固定。チームごとの追加・変更はできない） */
-export const MEMBER_DUTIES = [
-  'cast',
-  'planning',
-  'edit',
-  'thumbnail',
-  'moderation',
-  'other',
-] as const;
+export const MEMBER_DUTIES = ['cast', 'planning', 'edit', 'thumbnail', 'moderation', 'other'] as const;
 export type MemberDuty = (typeof MEMBER_DUTIES)[number];
 
 export const MEMBER_DUTY_LABELS: Record<MemberDuty, string> = {
@@ -217,24 +210,24 @@ export interface CollabSession {
 // teams/{teamId}/discord/config サブコレクションの型
 // Team インターフェースには追加しない（サブコレクション方式で operator のみアクセス制限するため）
 export interface DiscordTeamConfig {
-  webhookUrl: string; // Sprint 1 のみ使用。guildId 設定後は Bot 通知が優先される
-  guildId?: string; // DiscordサーバーID（Bot 招待完了後に書き込む）
-  channelId?: string; // Bot 通知先チャンネルID（Bot 招待完了後に書き込む）
-  channelName?: string; // 通知先チャンネル名（表示用。旧データには存在しない場合がある）
-  notifyOnTaskCreate: boolean; // タスク作成時に通知（Discord 経由の作成は除く）
-  notifyOnTaskUpdate: boolean; // タスク変更時に通知（主要フィールドの変更のみ）
-  notifyOnCollabCreate: boolean; // コラボ調整作成時に通知
+  webhookUrl: string;             // Sprint 1 のみ使用。guildId 設定後は Bot 通知が優先される
+  guildId?: string;               // DiscordサーバーID（Bot 招待完了後に書き込む）
+  channelId?: string;             // Bot 通知先チャンネルID（Bot 招待完了後に書き込む）
+  channelName?: string;           // 通知先チャンネル名（表示用。旧データには存在しない場合がある）
+  notifyOnTaskCreate: boolean;    // タスク作成時に通知（Discord 経由の作成は除く）
+  notifyOnTaskUpdate: boolean;    // タスク変更時に通知（主要フィールドの変更のみ）
+  notifyOnCollabCreate: boolean;  // コラボ調整作成時に通知
   notifyOnCollabResponse: boolean; // コラボ調整への回答時に通知
-  notifyBefore1h: boolean; // スケジュール開始1時間前にリマインダー通知
-  notifyBefore15min: boolean; // スケジュール開始15分前にリマインダー通知
+  notifyBefore1h: boolean;        // スケジュール開始1時間前にリマインダー通知
+  notifyBefore15min: boolean;     // スケジュール開始15分前にリマインダー通知
   /* ── タスク管理 v2（ブリーフ）連携（IN-023〜） ── */
-  briefThreadsEnabled?: boolean; // ブリーフごとにスレッドを立てる（既定 true）
-  briefChannelId?: string; // スレッドの親チャンネル。未設定は channelId
+  briefThreadsEnabled?: boolean;  // ブリーフごとにスレッドを立てる（既定 true）
+  briefChannelId?: string;        // スレッドの親チャンネル。未設定は channelId
   briefChannelName?: string;
-  digestEnabled?: boolean; // 朝ダイジェスト（既定 true）
-  digestChannelId?: string; // ダイジェスト送信先。未設定は channelId
+  digestEnabled?: boolean;        // 朝ダイジェスト（既定 true）
+  digestChannelId?: string;       // ダイジェスト送信先。未設定は channelId
   digestChannelName?: string;
-  digestTime?: string; // 'HH:00'（JST）。既定 '09:00'
+  digestTime?: string;            // 'HH:00'（JST）。既定 '09:00'
 }
 
 /** チームの定型指示（AI 設定。AI-023）。Web ではチップ、Discord では /risukerugg の preset 候補になる */
@@ -256,8 +249,8 @@ export interface TeamAiSettings {
 // discord_sessions/{guildId} の型（Sprint 3 AI ボット用）
 // セッションはサーバー単位で管理する。
 export interface DiscordSession {
-  guildId: string; // DiscordサーバーID（セッションキー）
-  teamId: string; // 対応するRisukeruGGチームID
+  guildId: string;    // DiscordサーバーID（セッションキー）
+  teamId: string;     // 対応するRisukeruGGチームID
   messages: Array<{
     role: 'user' | 'assistant';
     content: string;
@@ -267,5 +260,6 @@ export interface DiscordSession {
   // プロポーザルを発行した Discord ユーザーの ID。confirm/revise/cancel を本人以外が
   // 操作できないようにするためのバインドキー。
   initiatorDiscordUserId?: string;
-  updatedAt: Date; // 30分無操作でセッション自動リセット（sessionManager 側で判定）
+  updatedAt: Date;  // 30分無操作でセッション自動リセット（sessionManager 側で判定）
 }
+

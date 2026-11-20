@@ -174,7 +174,11 @@ export async function getTeamIdByGuildId(guildId: string): Promise<string | null
   // collectionGroup クエリは Firestore インデックスが必要な場合がある
   // teams/{teamId}/discord/config の guildId フィールドを横断検索
   const { collectionGroup, query, where, limit, getDocs } = await import('firebase/firestore');
-  const q = query(collectionGroup(db, 'discord'), where('guildId', '==', guildId), limit(1));
+  const q = query(
+    collectionGroup(db, 'discord'),
+    where('guildId', '==', guildId),
+    limit(1)
+  );
   const snap = await getDocs(q);
   if (snap.empty) return null;
   // discord サブコレクションの親（teams/{teamId}）の ID を返す
@@ -190,3 +194,4 @@ export async function isGuildAlreadyLinked(guildId: string): Promise<boolean> {
   const teamId = await getTeamIdByGuildId(guildId);
   return teamId !== null;
 }
+
