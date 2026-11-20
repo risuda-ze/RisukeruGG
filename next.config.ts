@@ -2,6 +2,8 @@ import type { NextConfig } from 'next';
 import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
+  // AGENTS.mdはリポジトリ独自の日本語ガイドを維持する。
+  agentRules: false,
   experimental: {},
   turbopack: {},
   async redirects() {

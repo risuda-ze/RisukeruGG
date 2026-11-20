@@ -53,6 +53,17 @@ export const deleteCompletedTasks = onSchedule(
         for (const taskDoc of tasksSnap.docs) {
           const updatedAt = taskDoc.get('updatedAt') as Timestamp | undefined;
           if (updatedAt && updatedAt.toMillis() < cutoff.toMillis()) {
+            const requestId = taskDoc.get('videoRequestId') ?? taskDoc.get('thumbnailRequestId');
+            if (requestId) {
+              const request = (
+                await teamDoc.ref.collection('videoRequests').doc(requestId).get()
+              ).data();
+              if (
+                request?.thumbnailTaskId &&
+                (request.status !== 'completed' || request.thumbnailStatus !== 'completed')
+              )
+                continue;
+            }
             staleTaskRefs.push(taskDoc.ref);
           }
         }

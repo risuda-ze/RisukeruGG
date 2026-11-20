@@ -22,6 +22,7 @@ export * from './unavailability/purgeOldUnavailability';
 
 // Phase 5: US3 — タスク管理
 export * from './tasks/createTask';
+export * from './tasks/deleteTask';
 export * from './tasks/deleteCompletedTasks';
 
 // スケジュール管理
@@ -44,6 +45,7 @@ export * from './notifications/taskDiscordNotifications';
 export * from './briefs/discordTriggers';
 export * from './briefs/briefDigest';
 export * from './videoRequests/videoRequests';
+export * from './videoRequests/taskDeletionTrigger';
 
 // お問い合わせフォーム
 export * from './contact/sendContactEmail';
@@ -55,4 +57,3 @@ export * from './beta/requestBetaAccess';
 export * from './stripe/createCheckoutSession';
 export * from './stripe/createPortalSession';
 export * from './stripe/stripeWebhook';
-
