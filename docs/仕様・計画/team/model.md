@@ -82,6 +82,7 @@ teamCodes/{teamCode}              ← チームコード → teamId の逆引き
 
 - チームには少なくとも 1 人のオペレーターが必要（複数も可）
 - `operatorUids` は `TeamMember.role === 'operator'` を持つメンバーの UID リストと同期する（非正規化）
+- `TeamMember` の作成・削除と `role` / `plan` の変更は Callable Function（Admin SDK）だけが行う。クライアントが直接更新できるのは `displayName` / `avatarUrl` / `discordUsername` / `discordUserId` のみで、対象は本人のドキュメント（オペレーターは全メンバー）。Security Rules の許可リストで強制する（`scripts/check-member-rules.mjs` で検証）
 - メンバーが 1 人（自分のみ）のチームをソロチームと呼ぶ
 - ソロチームのオペレーターが退出した場合、チームドキュメントとチームコードドキュメントは自動削除される
 - `removeTeamMember` で削除後にメンバー数が 0 になった場合も同様に自動削除される（防御的処理）
