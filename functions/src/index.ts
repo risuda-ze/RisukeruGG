@@ -43,6 +43,7 @@ export * from './notifications/taskDiscordNotifications';
 // タスク管理 v2（ブリーフ）× Discord: スレッド同期・朝ダイジェスト
 export * from './briefs/discordTriggers';
 export * from './briefs/briefDigest';
+export * from './videoRequests/videoRequests';
 
 // お問い合わせフォーム
 export * from './contact/sendContactEmail';

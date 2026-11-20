@@ -300,6 +300,17 @@ service cloud.firestore {
         }
       }
 
+      // 動画依頼。作成・更新は Cloud Functions、Bot は Admin SDK で処理する。
+      match /videoRequests/{requestId} {
+        allow read: if isTeamMember(teamId);
+        allow write: if false;
+
+        match /discordEvents/{eventId} {
+          allow read: if isTeamMember(teamId);
+          allow write: if false;
+        }
+      }
+
     }
   }
 }
