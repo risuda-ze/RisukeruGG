@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { hoursToMask } from '@/lib/unavailability/mask';
 import { storageWindow } from '@/lib/unavailability/range';
 import {
   centerOffset,
@@ -6,12 +7,14 @@ import {
   datesBetween,
   dayLabel,
   groupByMember,
+  isEveryoneFree,
   jstHour,
   lastUpdatedLabel,
   layoutNotes,
   monthsAround,
   orderMembers,
   scrollOffsetFor,
+  slotMaskOf,
   virtualRange,
   weekCenter,
 } from '@/lib/unavailability/view';
@@ -179,5 +182,77 @@ describe('layoutNotes（UN-064）', () => {
         note('c', '2026-11-21', 9, 12),
       ])
     ).toEqual({ a: 0, b: 0, c: 0 });
+  });
+});
+
+describe('時間帯フィルタ（UN-056）', () => {
+  const byMember = groupByMember([
+    monthDoc(
+      'a',
+      '2026-11',
+      { '2026-11-20': hoursToMask(9, 12) | hoursToMask(20, 24), '2026-11-21': hoursToMask(0, 2) },
+      '2026-11-20T00:00:00'
+    ),
+    monthDoc(
+      'b',
+      '2026-11',
+      { '2026-11-20': hoursToMask(18, 22), '2026-11-21': hoursToMask(0, 24) },
+      '2026-11-20T00:00:00'
+    ),
+    monthDoc('a', '2026-12', {}, '2026-11-20T00:00:00'),
+  ]);
+  const loaded = new Set(['2026-11', '2026-12']);
+  const free = (ids: string[], date: string, start: number, end: number, months = loaded) => {
+    const mask = slotMaskOf(start, end);
+    if (mask === null) throw new Error('時間帯が無効');
+    return isEveryoneFree(ids, byMember, date, mask, months);
+  };
+
+  it('表示中のメンバー全員がその時間帯に対応不可でない日は空き', () => {
+    expect(free(['a', 'b'], '2026-11-20', 13, 15)).toBe(true);
+    expect(free(['a', 'b'], '2026-11-22', 0, 24)).toBe(true);
+  });
+
+  it('1 人でも重なれば空きではない', () => {
+    expect(free(['a', 'b'], '2026-11-20', 10, 14)).toBe(false); // a の 9〜12 時と重なる
+    expect(free(['a', 'b'], '2026-11-21', 13, 15)).toBe(false); // b が終日
+  });
+
+  it('メンバーで絞り込んだら、絞り込み後のメンバーだけで判定する', () => {
+    expect(free(['a'], '2026-11-21', 13, 15)).toBe(true);
+    expect(free(['b'], '2026-11-20', 9, 12)).toBe(true);
+  });
+
+  it('終了は排他的境界。ちょうど隣り合う時間帯は重ならない', () => {
+    expect(free(['a', 'b'], '2026-11-20', 12, 18)).toBe(true); // a は 12 時まで、b は 18 時から
+    expect(free(['a', 'b'], '2026-11-20', 11, 18)).toBe(false);
+    expect(free(['a', 'b'], '2026-11-20', 12, 19)).toBe(false);
+    expect(free(['a'], '2026-11-20', 0, 9)).toBe(true);
+    expect(free(['a'], '2026-11-20', 23, 24)).toBe(false);
+  });
+
+  it('月ドキュメントが無い（未入力の）メンバーは、対応不可なしとして判定する', () => {
+    expect(free(['a', 'none'], '2026-11-20', 13, 15)).toBe(true);
+    expect(free(['none'], '2026-11-20', 0, 24)).toBe(true);
+  });
+
+  it('まだ読み込んでいない月の日は空きにしない', () => {
+    expect(free(['a', 'b'], '2026-10-15', 13, 15)).toBe(false);
+    expect(free(['a', 'b'], '2026-12-05', 13, 15)).toBe(true);
+    expect(free(['a', 'b'], '2026-12-05', 13, 15, new Set(['2026-11']))).toBe(false);
+  });
+
+  it('表示中のメンバーが 0 人なら空きにしない', () => {
+    expect(free([], '2026-11-22', 13, 15)).toBe(false);
+  });
+
+  it('時間帯は開始と終了の両方があり、開始が終了より前のときだけ有効', () => {
+    expect(slotMaskOf(13, 15)).toBe(hoursToMask(13, 15));
+    expect(slotMaskOf(0, 24)).toBe(hoursToMask(0, 24));
+    expect(slotMaskOf(13, null)).toBeNull();
+    expect(slotMaskOf(null, 15)).toBeNull();
+    expect(slotMaskOf(null, null)).toBeNull();
+    expect(slotMaskOf(15, 15)).toBeNull();
+    expect(slotMaskOf(15, 13)).toBeNull();
   });
 });

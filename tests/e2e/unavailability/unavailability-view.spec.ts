@@ -98,3 +98,45 @@ test('ヘルプボタンを押すと注意事項が出る（UN-043）', async ({
   await help.getByRole('button', { name: '閉じる' }).click();
   await expect(help).toHaveCount(0);
 });
+
+test('時間帯を指定すると、表示中のメンバー全員が対応できる日に「空き」が付く（UN-056）', async ({
+  page,
+}) => {
+  await expect(page.getByTestId('un-member-row').first()).toBeVisible({ timeout: 15000 });
+  const jstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  const tomorrow = new Date(
+    Date.UTC(jstNow.getUTCFullYear(), jstNow.getUTCMonth(), jstNow.getUTCDate() + 1)
+  )
+    .toISOString()
+    .slice(0, 10);
+  const dayHead = (date: string) => page.locator(`[data-testid="un-day"][data-date="${date}"]`);
+
+  // 指定前は印が無い
+  await expect(page.getByTestId('un-free')).toHaveCount(0);
+
+  // 13:00〜15:00 を指定する
+  await page.getByRole('button', { name: '検索条件' }).click();
+  const filter = page.locator('#un-filter');
+  await filter.locator('[data-slot="dropdown-trigger"]').nth(0).click();
+  await page.getByRole('option', { name: '13:00' }).click();
+  // 開始だけでは効かない
+  await expect(page.getByTestId('un-free')).toHaveCount(0);
+  await filter.locator('[data-slot="dropdown-trigger"]').nth(1).click();
+  await page.getByRole('option', { name: '15:00' }).click();
+
+  // シード: 当日は誰も 13〜15 時に対応不可が無い。翌日は運営花子が終日対応不可
+  await expect(dayHead(today)).toHaveAttribute('data-free', 'true');
+  await expect(dayHead(today)).toContainText('空き');
+  await expect(dayHead(tomorrow)).toHaveAttribute('data-free', 'false');
+  await expect(dayHead(tomorrow)).not.toContainText('空き');
+
+  // 配信太郎だけに絞り込むと、翌日（太郎は 0〜2 時だけ対応不可）も空きになる
+  await filter.locator('fieldset button', { hasText: TEST_USER.displayName }).click();
+  await expect(page.getByTestId('un-member-row')).toHaveCount(1);
+  await expect(dayHead(tomorrow)).toHaveAttribute('data-free', 'true');
+
+  // 条件を解除すると、時間帯も解除されて印が消える
+  await filter.getByRole('button', { name: '条件を解除' }).click();
+  await expect(page.getByTestId('un-free')).toHaveCount(0);
+  await expect(page.getByTestId('un-member-row')).toHaveCount(6);
+});

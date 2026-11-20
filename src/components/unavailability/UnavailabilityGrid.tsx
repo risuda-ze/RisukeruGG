@@ -10,6 +10,7 @@ import {
   centerOffset,
   countUnavailable,
   dayLabel,
+  isEveryoneFree,
   lastUpdatedLabel,
   monthsAround,
   scrollOffsetFor,
@@ -40,6 +41,8 @@ interface UnavailabilityGridProps {
   vertical: boolean;
   /** 表示位置。オブジェクトが変わるたびに移動する。両方未指定なら当日の週を中央にする */
   focus: PeriodFocus;
+  /** 時間帯フィルタの時間帯マスク。指定が無ければ null */
+  slotMask: number | null;
   onNeedMonths: (months: string[]) => void;
   onCellClick: (userId: string, date: string) => void;
 }
@@ -75,6 +78,7 @@ export function UnavailabilityGrid({
   loadedMonths,
   vertical,
   focus,
+  slotMask,
   onNeedMonths,
   onCellClick,
 }: UnavailabilityGridProps) {
@@ -121,6 +125,8 @@ export function UnavailabilityGrid({
       isToday: date === today,
       ...dayLabel(date),
       count: loaded ? countUnavailable(memberIds, byMember, date) : null,
+      // 時間帯フィルタ: 表示中のメンバー全員がその時間帯に対応できる日
+      free: slotMask !== null && isEveryoneFree(memberIds, byMember, date, slotMask, loadedMonths),
     };
   });
 
@@ -142,6 +148,7 @@ export function UnavailabilityGrid({
         className={cn(
           'flex h-11 shrink-0 cursor-pointer items-center justify-center border-l border-border text-base font-bold transition-colors duration-(--duration-instant) hover:bg-surface-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand',
           vertical && 'w-18',
+          day.free && !unavailable && 'bg-success-tint',
           unavailable && 'bg-danger-tint text-danger',
           !day.loaded && 'text-text-disabled',
           // 当日の列を枡線で示す（行＝日のときは日付セルの面で示す）
@@ -164,6 +171,15 @@ export function UnavailabilityGrid({
     </span>
   );
 
+  /** 時間帯フィルタで空いている日の印。色だけに頼らず文言で示す */
+  const freeMark = (day: (typeof days)[number]) =>
+    day.free && (
+      <span data-testid="un-free" className="text-caption font-bold text-green-text">
+        空き
+      </span>
+    );
+  const filtering = slotMask !== null;
+
   const memberLabel = (member: TeamMember) =>
     lastUpdatedLabel(byMember.get(member.userId)?.updatedAt, today);
 
@@ -176,7 +192,8 @@ export function UnavailabilityGrid({
       {ready && !vertical && (
         <div style={{ width: LABEL_W + dates.length * itemSize }}>
           {/* 見出し: 日付と、その日の不可人数 */}
-          <div className="sticky top-0 z-30 flex h-16 bg-surface-2">
+          {/* 時間帯フィルタの間は、「空き」の印を出す行を足す */}
+          <div className={cn('sticky top-0 z-30 flex bg-surface-2', filtering ? 'h-20' : 'h-16')}>
             <div style={{ width: LABEL_W }} className="sticky left-0 z-10 shrink-0 bg-surface-2" />
             <div style={{ width: start * itemSize }} className="shrink-0" />
             {days.map((day) => (
@@ -184,10 +201,13 @@ export function UnavailabilityGrid({
                 key={day.date}
                 data-testid="un-day"
                 data-date={day.date}
+                data-free={day.free}
                 style={{ width: itemSize }}
                 className={cn(
-                  'flex shrink-0 flex-col items-center justify-between border-l border-border py-1.5',
-                  day.isToday && 'border-l-border-strong bg-card'
+                  'flex shrink-0 flex-col items-center border-l border-border py-1.5',
+                  filtering ? 'justify-start gap-0.5' : 'justify-between',
+                  day.isToday && 'border-l-border-strong bg-card',
+                  day.free && 'bg-success-tint'
                 )}
               >
                 <span
@@ -199,6 +219,7 @@ export function UnavailabilityGrid({
                   {day.isToday ? '今日' : day.weekday}
                 </span>
                 {countLabel(day)}
+                {freeMark(day)}
               </div>
             ))}
           </div>
@@ -215,7 +236,8 @@ export function UnavailabilityGrid({
                 className={cn(
                   'flex',
                   bg,
-                  isSelf && 'sticky top-16 z-20 border-b border-border-strong'
+                  isSelf && 'sticky z-20 border-b border-border-strong',
+                  isSelf && (filtering ? 'top-20' : 'top-16')
                 )}
               >
                 <div
@@ -260,7 +282,12 @@ export function UnavailabilityGrid({
         >
           {/* 見出し: メンバー */}
           <div style={{ height: HEAD_H }} className="sticky top-0 z-30 flex shrink-0 bg-surface-2">
-            <div className="sticky left-0 z-10 w-28 shrink-0 bg-surface-2" />
+            <div
+              className={cn(
+                'sticky left-0 z-10 shrink-0 bg-surface-2',
+                filtering ? 'w-38' : 'w-28'
+              )}
+            />
             {members.map((member) => (
               <div
                 key={member.userId}
@@ -289,12 +316,15 @@ export function UnavailabilityGrid({
                 key={day.date}
                 data-testid="un-day"
                 data-date={day.date}
+                data-free={day.free}
                 className={cn('flex shrink-0', bg)}
               >
                 <div
                   className={cn(
-                    'sticky left-0 z-10 flex h-11 w-28 shrink-0 items-center justify-between gap-1 px-3 whitespace-nowrap',
-                    day.isToday ? 'bg-card' : bg
+                    'sticky left-0 z-10 flex h-11 shrink-0 items-center justify-between gap-1 px-3 whitespace-nowrap',
+                    // 時間帯フィルタの間は、「空き」の印のぶん広げる
+                    filtering ? 'w-38' : 'w-28',
+                    day.free ? 'bg-success-tint' : day.isToday ? 'bg-card' : bg
                   )}
                 >
                   <span
@@ -305,6 +335,7 @@ export function UnavailabilityGrid({
                       {day.isToday ? '今日' : day.weekday}
                     </span>
                   </span>
+                  {freeMark(day)}
                   {countLabel(day)}
                 </div>
                 {members.map((member) => cell(member, day, {}))}

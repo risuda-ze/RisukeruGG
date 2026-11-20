@@ -4,11 +4,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge, badgeVariants } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Dropdown } from '@/components/ui/Dropdown';
 import { Icon } from '@/components/ui/Icon';
 import { Input, fieldLabelClass } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { MemberDetail } from '@/components/unavailability/MemberDetail';
+import { END_OPTIONS, START_OPTIONS } from '@/components/unavailability/NoteForm';
 import { UnavailabilityGrid } from '@/components/unavailability/UnavailabilityGrid';
 import type { PeriodFocus } from '@/components/unavailability/UnavailabilityGrid';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -16,7 +18,7 @@ import { toJstDateString } from '@/lib/googleCalendar/export';
 import { cn } from '@/lib/utils/cn';
 import { subscribeUnavailabilityMonth } from '@/lib/repositories/unavailability';
 import { monthOf, storageWindow } from '@/lib/unavailability/range';
-import { datesBetween, groupByMember, orderMembers } from '@/lib/unavailability/view';
+import { datesBetween, groupByMember, orderMembers, slotMaskOf } from '@/lib/unavailability/view';
 import { useAuthStore } from '@/stores/auth';
 import type { UnavailabilityMonth } from '@/types/unavailability';
 
@@ -34,6 +36,7 @@ const HELP_ITEMS = [
   'メモは、詳細の右の欄か「メモを追加」を押して追加します。自分のメモを押すと編集・削除できます。メモは 1 ヶ月に 200 件までです。',
   '塗り・消しとメモの変更は、「保存」を押すまで確定しません。未保存の変更は破線で表示されます。',
   '同じ曜日・同じ時間帯をまとめて入れるときは、自分の詳細の「CSV・定期入力」から定期入力を使います。期間・曜日・時間帯を指定し、内容を確認してから保存します。',
+  '集まれる日を探すときは、検索条件の「時間帯」で開始と終了を指定します。表示中のメンバー全員がその時間帯に対応できる日に「空き」が付きます。メンバーを選んでいるときは、選んだメンバーだけで判定します。',
   'CSV（1 行目が date,start,end、文字コードは UTF-8）からも取り込めます。同じ画面から当月の CSV をダウンロードでき、書式の見本になります。CSV・定期入力は追記で、入力済みの対応不可は消えません。',
 ];
 
@@ -80,6 +83,8 @@ export function UnavailabilityBoard({ teamId }: { teamId: string }) {
   const [helpOpen, setHelpOpen] = useState(false);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [focus, setFocus] = useState<PeriodFocus>({ from: '', to: '' });
+  /** 時間帯フィルタ。空文字は未指定 */
+  const [slot, setSlot] = useState({ start: '', end: '' });
   const [detail, setDetail] = useState<{ userId: string; date: string } | null>(null);
 
   const onData = useCallback(
@@ -107,7 +112,25 @@ export function UnavailabilityBoard({ teamId }: { teamId: string }) {
   );
   const detailMember = detail && members.find((m) => m.userId === detail.userId);
 
-  const filtering = selected.size > 0 || focus.from !== '' || focus.to !== '';
+  // 時間帯は、開始と終了の両方があり、開始が終了より前のときだけ効く
+  const slotStart = slot.start === '' ? null : Number(slot.start);
+  const slotEnd = slot.end === '' ? null : Number(slot.end);
+  const slotMask = slotMaskOf(slotStart, slotEnd);
+  const slotHint =
+    slotStart === null && slotEnd === null
+      ? null
+      : slotStart === null || slotEnd === null
+        ? '開始と終了の両方を指定すると、全員が対応できる日に「空き」が付きます。'
+        : slotMask === null
+          ? '終了は開始より後にしてください。'
+          : `表示中のメンバー全員が ${START_OPTIONS[slotStart].label}〜${END_OPTIONS[slotEnd - 1].label} に対応できる日に「空き」が付きます。`;
+
+  const filtering =
+    selected.size > 0 ||
+    focus.from !== '' ||
+    focus.to !== '' ||
+    slot.start !== '' ||
+    slot.end !== '';
   const toggleMember = (userId: string) => {
     const next = new Set(selected);
     if (!next.delete(userId)) next.add(userId);
@@ -116,6 +139,7 @@ export function UnavailabilityBoard({ teamId }: { teamId: string }) {
   const clearFilter = () => {
     setSelected(new Set());
     setFocus({ from: '', to: '' });
+    setSlot({ start: '', end: '' });
   };
   const dateRange = { min: dates[0], max: dates[dates.length - 1] };
 
@@ -198,10 +222,40 @@ export function UnavailabilityBoard({ teamId }: { teamId: string }) {
                 onChange={(e) => setFocus({ ...focus, to: e.target.value })}
                 {...dateRange}
               />
+              {/* label で包み、ドロップダウンのボタンに名前を付ける */}
+              <label className="flex w-32 flex-col gap-1.5">
+                <span className={fieldLabelClass}>時間帯（開始）</span>
+                <Dropdown
+                  options={START_OPTIONS}
+                  value={slot.start === '' ? null : slot.start}
+                  placeholder="指定なし"
+                  onChange={(value) => setSlot({ ...slot, start: value })}
+                  scroll
+                />
+              </label>
+              <label className="flex w-32 flex-col gap-1.5">
+                <span className={fieldLabelClass}>時間帯（終了）</span>
+                <Dropdown
+                  options={END_OPTIONS}
+                  value={slot.end === '' ? null : slot.end}
+                  placeholder="指定なし"
+                  onChange={(value) => setSlot({ ...slot, end: value })}
+                  scroll
+                />
+              </label>
               <Button variant="ghost" onClick={clearFilter}>
                 条件を解除
               </Button>
             </div>
+            {slotHint && (
+              <p
+                data-testid="un-slot-hint"
+                role="status"
+                className={`text-caption ${slotMask === null ? 'text-warning' : 'text-text-2'}`}
+              >
+                {slotHint}
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -233,6 +287,7 @@ export function UnavailabilityBoard({ teamId }: { teamId: string }) {
           loadedMonths={loadedMonths}
           vertical={isMobile}
           focus={focus}
+          slotMask={slotMask}
           onNeedMonths={onNeedMonths}
           onCellClick={onCellClick}
         />

@@ -1,6 +1,7 @@
 import { addDays, differenceInCalendarDays, format, parseISO, startOfWeek } from 'date-fns';
 import { toJstDateString } from '@/lib/googleCalendar/export';
 import type { DayMasks, UnavailabilityMonth, UnavailabilityNote } from '@/types/unavailability';
+import { hoursToMask, isFreeDuring } from './mask';
 import { monthOf } from './range';
 
 // 一覧・メンバー詳細の表示用の純関数。日付は JST の暦日ラベル（`yyyy-mm-dd`）として扱う
@@ -72,6 +73,33 @@ export function countUnavailable(
   date: string
 ): number {
   return memberIds.filter((id) => (byMember.get(id)?.days[date] ?? 0) !== 0).length;
+}
+
+/**
+ * 時間帯フィルタの時間帯マスク（UN-056）。開始時・終了時の両方があり、開始が終了より前のときだけ有効。
+ * 片方だけ・開始が終了以降は null（フィルタなし）。
+ */
+export function slotMaskOf(start: number | null, end: number | null): number | null {
+  return start !== null && end !== null && start < end ? hoursToMask(start, end) : null;
+}
+
+/**
+ * その日、表示中のメンバーの誰も、指定した時間帯に対応不可でないか（UN-056）。
+ * 月ドキュメントが無いメンバーは対応不可なしとして数える（空白＝対応可能）。
+ * まだ読み込んでいない月の日と、表示中のメンバーが 0 人のときは false（空いていると見せない）。
+ */
+export function isEveryoneFree(
+  memberIds: string[],
+  byMember: ReadonlyMap<string, MemberUnavailability>,
+  date: string,
+  slotMask: number,
+  loadedMonths: ReadonlySet<string>
+): boolean {
+  return (
+    memberIds.length > 0 &&
+    loadedMonths.has(monthOf(date)) &&
+    memberIds.every((id) => isFreeDuring(byMember.get(id)?.days[date] ?? 0, slotMask))
+  );
 }
 
 /** 「最終更新」の表示。月ドキュメントが 1 つも無ければ「未入力」 */
