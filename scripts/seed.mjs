@@ -18,6 +18,7 @@
  *   - タスク: ステータス・担当・期限・連携有無の組み合わせを網羅
  *   - 通知: 10件（すべて未読）
  *   - コラボセッション: 2件
+ *   - 対応不可時間: teamAlpha の 5 人ぶん（実行日基準。1 人は未入力）
  */
 
 const PROJECT_ID = 'demo-risukeru';
@@ -1088,6 +1089,53 @@ async function main() {
     createdAt: d(2026, 5, 6),
   });
   console.log('  ✓ collabSessions (5件)');
+
+  // ── 対応不可時間 ──────────────────────────────────────────
+  // 画面は実行時点の JST 当日を基準に前月〜翌月を表示するため、ここだけ固定の基準日ではなく実行日からの相対で作る
+  const jstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  /** JST の当日から offset 日後の `yyyy-mm-dd` */
+  const day = (offset) =>
+    new Date(Date.UTC(jstNow.getUTCFullYear(), jstNow.getUTCMonth(), jstNow.getUTCDate() + offset))
+      .toISOString()
+      .slice(0, 10);
+  /** start 時〜end 時（end は排他的）の日マスク */
+  const hours = (start, end) => (2 ** (end - start) - 1) * 2 ** start;
+  /** 月ドキュメントに分けて書く。days / notes が空でも当月のドキュメントは作る（入力済みで不可なし） */
+  async function seedUnavailability(uid, updatedDaysAgo, days, notes = []) {
+    const months = new Set([day(0), ...Object.keys(days), ...notes.map((n) => n.date)].map((v) => v.slice(0, 7)));
+    for (const month of months) {
+      await setDoc(`teams/${TEAM_ID}/unavailability/${uid}_${month}`, {
+        userId: uid,
+        month,
+        days: Object.fromEntries(Object.entries(days).filter(([date]) => date.startsWith(month))),
+        notes: notes.filter((n) => n.date.startsWith(month)),
+        updatedAt: new Date(Date.now() - updatedDaysAgo * 24 * 60 * 60 * 1000),
+      });
+    }
+    return months.size;
+  }
+  let unavailabilityDocs = 0;
+  // 配信太郎: 当日 9〜12 時・20〜24 時（E2E が参照する）、メモは同一時間帯の横並びを含む
+  unavailabilityDocs += await seedUnavailability(
+    UID1,
+    0,
+    { [day(0)]: hours(9, 12) | hours(20, 24), [day(2)]: hours(0, 24), [day(-3)]: hours(13, 18) },
+    [
+      { id: 'note1', date: day(0), start: 9, end: 12, text: '移動中のため返信は遅れます' },
+      { id: 'note2', date: day(0), start: 10, end: 11, text: '通話は不可' },
+      { id: 'note3', date: day(0), start: 20, end: 22, text: 'チャットなら返せます' },
+    ]
+  );
+  unavailabilityDocs += await seedUnavailability(UID2, 3, { [day(0)]: hours(18, 22), [day(1)]: hours(0, 24) });
+  unavailabilityDocs += await seedUnavailability(UID3, 10, {
+    [day(5)]: hours(10, 15),
+    [day(-25)]: hours(19, 23),
+    [day(25)]: hours(8, 12),
+  });
+  unavailabilityDocs += await seedUnavailability(UID5, 0, { [day(0)]: hours(0, 6) });
+  // ROM美香: 入力済みだが対応不可なし。ROM三郎（UID4）はドキュメントを作らない（未入力）
+  unavailabilityDocs += await seedUnavailability(UID6, 1, {});
+  console.log(`  ✓ unavailability (${unavailabilityDocs}件)`);
 
   // ── 完了サマリー ─────────────────────────────────────────
   console.log('\n=== シード完了 ===\n');
