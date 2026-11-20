@@ -2533,6 +2533,7 @@ const LP_HTML = `
         <a href="/terms">利用規約</a>
         <a href="/privacy-policy">プライバシーポリシー</a>
         <a href="/tokushoho">特定商取引法に基づく表記</a>
+        <a href="/release-notes">リリースノート</a>
       </div>
       <div class="footer-copy">© 2026 リスケるGG — 撮影も、コラボも、編集もGGなスケジュールを</div>
     </footer>

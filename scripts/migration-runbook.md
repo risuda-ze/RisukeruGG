@@ -23,6 +23,12 @@
 | --- | --- | --- |
 | `pnpm cleanup:discord-invite-temp` | `cleanup-discord-invite-temp.mjs` | Bot 招待フローの途中失敗で残った一時データ（`discord_bot_invite_requests` / `discord_bot_invite_pending`）の削除。スキーマ移行ではなく任意メンテナンス |
 
+### 適用待ちの一回性スクリプト
+
+| コマンド | スクリプト | 目的 |
+| --- | --- | --- |
+| `node scripts/delete-member-calendars.mjs` | `delete-member-calendars.mjs` | メンバー予定ミラーの廃止に伴う既存データ（`teams/{teamId}/memberCalendars/**`・`users/{uid}.googleCalendar`）の削除。本番適用後にスクリプトとこの表の行を削除する |
+
 共通仕様:
 
 - **Firebase Admin SDK 使用**（本番接続）
@@ -58,3 +64,23 @@ pnpm cleanup:discord-invite-temp -- --apply
 ```
 
 実行タイミング: 必要時のみ（Bot 招待フローの失敗が続いた後など）。定期実行は不要。
+
+---
+
+## delete-member-calendars — メンバー予定ミラーの既存データ削除（一回性）
+
+実行タイミング: Google カレンダー書き出し（`docs/変更仕様/google-calendar-export.md`）を本番へデプロイした後に 1 回。デプロイ前に実行すると、旧バージョンのアプリがログイン時にデータを書き戻す。
+
+### dry-run
+
+```powershell
+node scripts/delete-member-calendars.mjs
+```
+
+### 本適用
+
+```powershell
+node scripts/delete-member-calendars.mjs --apply
+```
+
+適用後にもう一度 dry-run を実行し、対象が 0 件になったことを確認する。確認できたらスクリプトを削除する。

@@ -16,7 +16,6 @@ export * from './auth/deleteAccount';
 export * from './plan/resetMonthlyPlanCounts';
 
 // Phase 4: US2 — カレンダー同期
-export * from './calendar/syncGoogleCalendar';
 
 // Phase 5: US3 — タスク管理
 export * from './tasks/createTask';

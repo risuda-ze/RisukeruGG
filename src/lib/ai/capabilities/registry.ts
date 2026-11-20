@@ -39,7 +39,7 @@ export const AI_CAPABILITIES: AiCapability[] = [
   {
     id: 'query_team_data',
     name: 'チームのデータに答える',
-    description: '今日・今週・来週の予定、空き時間、タスクの進捗、メンバーの予定などをチームのデータから答える。',
+    description: '今日・今週・来週の予定、空き時間、タスクの進捗などをチームのデータから答える。',
     surfaces: ['web', 'discord'],
     stage: 'available',
     promptId: 'assistant',

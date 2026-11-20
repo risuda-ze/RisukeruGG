@@ -5,7 +5,7 @@
  * 正しく表示されることを確認する。
  *
  * 実行前提:
- *   - Docker コンテナ (emulator / app) が起動済み
+ *   - Firebase Emulator (pnpm emulators) と開発サーバー (pnpm dev) が起動済み
  *   - node scripts/seed.mjs でシードデータ投入済み
  *
  * 実行方法:
@@ -77,18 +77,17 @@ test.describe('各ページ表示確認 (シードデータ)', () => {
     await page.screenshot({ path: 'screenshots/schedule.png', fullPage: true });
   });
 
-  test('メンバーの予定トグルが表示され、ON に切り替えられる', async ({ page }) => {
+  test('Google カレンダーへの書き出しボタンが表示され、メンバーの予定・接続バナーは出ない', async ({ page }) => {
     await page.goto('/team');
     await switchToTeam(page, '配信チームα', 'ALPHA001');
 
     await page.goto('/schedule');
 
-    const memberToggle = page.getByRole('button', { name: 'メンバーの予定' });
-    await expect(memberToggle).toBeVisible();
-
-    await memberToggle.click();
-    /* クリック後はテキストが「メンバー表示中」に変わり btn--ghost クラスが付与される */
-    await expect(page.getByRole('button', { name: 'メンバー表示中' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Google カレンダーに書き出す' })).toBeVisible();
+    /* 未書き出しのチームでは最終書き出し日時を出さない */
+    await expect(page.getByText('最終書き出し')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /メンバーの予定|メンバー表示中/ })).toHaveCount(0);
+    await expect(page.getByText(/Googleカレンダーに接続|認証が切れています/)).toHaveCount(0);
   });
 
   // ── タスク (カンバン) ──────────────────────────────────────
