@@ -73,6 +73,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // メンバーの担当分野・ひとこと（TE-014）の値検証。未設定（キーなし）は許可
+    function validMemberProfile(d) {
+      return (!('duties' in d) || (d.duties is list && d.duties.size() <= 6 &&
+                d.duties.hasOnly(['cast', 'planning', 'edit', 'thumbnail', 'moderation', 'other']))) &&
+             (!('note' in d) || d.note == null || (d.note is string && d.note.size() <= 100));
+    }
+
     function isTeamMember(teamId) {
       return request.auth != null &&
              exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)) &&
@@ -141,15 +148,19 @@ service cloud.firestore {
 
       match /members/{memberId} {
         allow read: if isTeamMember(teamId);
-        allow create, delete: if isTeamOwner(teamId) ||
-                        (request.auth != null && request.auth.uid == memberId && passesBetaGate());
-        // plan はサーバー（Stripe Webhook / Admin SDK）が伝播する参照用スナップショット。
-        // クライアントからの書き換えを禁止する（T4 / PL-009）。
+        // 参加・退出・Kick は Callable Function（Admin SDK）経由のみ。
+        // クライアントからの作成を許すと、teamId を知る第三者が任意の role で自分を追加できる。
+        allow create, delete: if false;
+        // クライアントが書けるのは表示用プロフィール、Discord 名（TE-012）、担当分野・ひとこと（TE-014）だけ。
+        // role（ロール変更は updateMemberRole）と plan（T4 / PL-009）はサーバーのみが書く。
+        // 許可リスト方式にして、本人が自分の role を operator に書き換える昇格を防ぐ。
         allow update: if (isTeamOwner(teamId) ||
-                        (request.auth != null && request.auth.uid == memberId && passesBetaGate())) &&
-                        !request.resource.data.diff(resource.data)
+                        (isTeamMember(teamId) && request.auth.uid == memberId)) &&
+                        request.resource.data.diff(resource.data)
                            .affectedKeys()
-                           .hasAny(['plan']);
+                           .hasOnly(['displayName', 'avatarUrl', 'discordUsername', 'discordUserId',
+                                     'duties', 'note']) &&
+                        validMemberProfile(request.resource.data);
       }
 
       match /taskStatuses/{columnId} {
