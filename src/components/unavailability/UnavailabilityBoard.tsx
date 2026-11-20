@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Input, fieldLabelClass } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { MemberDetail } from '@/components/unavailability/MemberDetail';
 import { UnavailabilityGrid } from '@/components/unavailability/UnavailabilityGrid';
@@ -16,6 +17,18 @@ import { monthOf, storageWindow } from '@/lib/unavailability/range';
 import { datesBetween, groupByMember, orderMembers } from '@/lib/unavailability/view';
 import { useAuthStore } from '@/stores/auth';
 import type { UnavailabilityMonth } from '@/types/unavailability';
+
+/** 画面ヘルプに出す注意事項（UN-043）。入力の操作は、入力機能を足すときにここへ追記する */
+const HELP_ITEMS = [
+  '入力するのは「対応不可」の時間帯だけです。入力のない時間帯は対応可能とみなします。',
+  '「未入力」のメンバーは、まだ一度も入力していません。いつでも空いているという意味ではありません。',
+  '表示・保存されるのは前月 1 日〜翌月末日です。それより前のものは毎月 1 日に削除されます。',
+  '入力できるのは翌月末日までです。',
+  '対応不可とメモを入力できるのは本人だけです。チームのメンバー全員が見られます。',
+  '予定の内容は入力しません。補足があるときはメモに書きます。',
+  '× はその日に 1 時間でも対応不可があることを表します。日付の下の人数は、表示中のメンバーのうち対応不可がある人数です。',
+  'セルを押すと、そのメンバーの詳細（時間帯とメモ）が開きます。',
+];
 
 /** チーム全員の 1 ヶ月分の購読。月ごとに 1 つ置き、足した月だけ購読が増える（UN-090） */
 function MonthSubscription({
@@ -57,6 +70,7 @@ export function UnavailabilityBoard({ teamId }: { teamId: string }) {
   const [error, setError] = useState<Error | null>(null);
 
   const [filterOpen, setFilterOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [focus, setFocus] = useState<PeriodFocus>({ from: '', to: '' });
   const [detail, setDetail] = useState<{ userId: string; date: string } | null>(null);
@@ -112,18 +126,28 @@ export function UnavailabilityBoard({ teamId }: { teamId: string }) {
 
       {/* ヘッダー（検索条件）。初期表示は折り畳む */}
       <div className="shrink-0 border-b border-border bg-surface px-4 md:px-7">
-        <button
-          type="button"
-          aria-expanded={filterOpen}
-          aria-controls="un-filter"
-          onClick={() => setFilterOpen((open) => !open)}
-          className="flex min-h-11 w-full cursor-pointer items-center gap-2 text-sm font-semibold text-text-2 transition-colors duration-(--duration-fast) hover:text-text"
-        >
-          <Icon name="search" size={16} />
-          <span>検索条件</span>
-          {filtering && <Badge variant="info">指定中</Badge>}
-          <Icon name={filterOpen ? 'expand_less' : 'expand_more'} size={18} className="ml-auto" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-expanded={filterOpen}
+            aria-controls="un-filter"
+            onClick={() => setFilterOpen((open) => !open)}
+            className="flex min-h-11 flex-1 cursor-pointer items-center gap-2 text-left text-sm font-semibold text-text-2 transition-colors duration-(--duration-fast) hover:text-text"
+          >
+            {/* 開閉の矢印は左端に置く */}
+            <Icon name={filterOpen ? 'expand_less' : 'expand_more'} size={18} />
+            <span>検索条件</span>
+            {filtering && <Badge variant="info">指定中</Badge>}
+          </button>
+          <button
+            type="button"
+            onClick={() => setHelpOpen(true)}
+            aria-label="ヘルプを表示"
+            className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-md text-text-2 transition-colors duration-(--duration-fast) hover:bg-surface-2 hover:text-text"
+          >
+            <Icon name="help_outline" size={18} />
+          </button>
+        </div>
         {filterOpen && (
           <div id="un-filter" className="flex flex-col gap-4 pt-1 pb-4">
             <fieldset>
@@ -201,6 +225,23 @@ export function UnavailabilityBoard({ teamId }: { teamId: string }) {
           onCellClick={onCellClick}
         />
       )}
+
+      <Modal
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        title="対応不可時間の使い方"
+        footer={
+          <Button variant="ghost" onClick={() => setHelpOpen(false)}>
+            閉じる
+          </Button>
+        }
+      >
+        <ul data-testid="un-help" className="flex list-disc flex-col gap-2 pl-5 leading-relaxed">
+          {HELP_ITEMS.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </Modal>
 
       {detail && detailMember && !error && (
         <MemberDetail

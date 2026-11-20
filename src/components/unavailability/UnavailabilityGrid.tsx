@@ -177,13 +177,7 @@ export function UnavailabilityGrid({
         <div style={{ width: LABEL_W + dates.length * itemSize }}>
           {/* 見出し: 日付と、その日の不可人数 */}
           <div className="sticky top-0 z-30 flex h-16 bg-surface-2">
-            <div
-              style={{ width: LABEL_W }}
-              className="sticky left-0 z-10 flex shrink-0 flex-col justify-between bg-surface-2 px-4 py-2"
-            >
-              <span className="eyebrow text-text-2">メンバー</span>
-              <span className="text-caption text-text-2">対応不可の人数</span>
-            </div>
+            <div style={{ width: LABEL_W }} className="sticky left-0 z-10 shrink-0 bg-surface-2" />
             <div style={{ width: start * itemSize }} className="shrink-0" />
             {days.map((day) => (
               <div
@@ -266,10 +260,7 @@ export function UnavailabilityGrid({
         >
           {/* 見出し: メンバー */}
           <div style={{ height: HEAD_H }} className="sticky top-0 z-30 flex shrink-0 bg-surface-2">
-            <div className="sticky left-0 z-10 flex w-28 shrink-0 flex-col justify-end bg-surface-2 px-3 py-2 whitespace-nowrap">
-              <span className="eyebrow text-text-2">日付</span>
-              <span className="text-caption text-text-2">対応不可の人数</span>
-            </div>
+            <div className="sticky left-0 z-10 w-28 shrink-0 bg-surface-2" />
             {members.map((member) => (
               <div
                 key={member.userId}

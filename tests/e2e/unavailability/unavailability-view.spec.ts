@@ -64,22 +64,37 @@ test('② セルをクリックするとメンバー詳細が開き、シード�
 
   const detail = page.getByTestId('un-detail');
   await expect(detail).toBeVisible();
-  await expect(detail).toContainText(`${TEST_USER.displayName} の対応不可`);
+  // タイトルはメンバー名と最終更新（UN-067）
+  await expect(detail.getByTestId('un-detail-name')).toHaveText(TEST_USER.displayName);
+  await expect(detail.getByTestId('un-detail-updated')).toHaveText('最終更新 今日');
 
   // シード: 当日 20〜24 時が対応不可、19 時は空き
   const hour = (h: number) =>
     detail.locator(`[data-testid="un-hour"][data-date="${today}"][data-hour="${h}"]`);
+  const block = (h: number) => hour(h).getByTestId('un-block');
   await hour(20).scrollIntoViewIfNeeded();
   await expect(hour(20)).toHaveAttribute('data-unavailable', 'true');
-  await expect(hour(20)).toContainText('対応不可');
   await expect(hour(19)).toHaveAttribute('data-unavailable', 'false');
 
-  // 対応不可の行は danger 色で塗られ、空きの行は塗られない
-  const fill = (h: number) =>
-    hour(h)
-      .locator('div')
-      .last()
-      .evaluate((el) => getComputedStyle(el).backgroundColor);
-  expect(await fill(20)).not.toBe('rgba(0, 0, 0, 0)');
-  expect(await fill(19)).toBe('rgba(0, 0, 0, 0)');
+  // 対応不可の時間は danger 色のブロックで塗られ、空きの時間には無い
+  await expect(block(20)).toBeVisible();
+  await expect(block(19)).toHaveCount(0);
+  expect(await block(20).evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe(
+    'rgba(0, 0, 0, 0)'
+  );
+
+  // 連続する時間は 1 つのブロックにつながる（UN-066）: 20 時の下端と 21 時の上端に隙間が無い
+  const box20 = await block(20).boundingBox();
+  const box21 = await block(21).boundingBox();
+  expect(box20 && box21 && Math.abs(box20.y + box20.height - box21.y)).toBeLessThanOrEqual(1);
+});
+
+test('ヘルプボタンを押すと注意事項が出る（UN-043）', async ({ page }) => {
+  await expect(page.getByTestId('un-member-row').first()).toBeVisible({ timeout: 15000 });
+  await page.getByRole('button', { name: 'ヘルプを表示' }).click();
+
+  const help = page.getByRole('dialog', { name: '対応不可時間の使い方' });
+  await expect(help).toContainText('前月 1 日〜翌月末日');
+  await help.getByRole('button', { name: '閉じる' }).click();
+  await expect(help).toHaveCount(0);
 });

@@ -7,6 +7,7 @@ import { DialogShell } from '@/components/ui/Dialog';
 import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/Input';
 import { Switch } from '@/components/ui/Switch';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useScrollWindow } from '@/hooks/useScrollWindow';
 import { countHours } from '@/lib/unavailability/mask';
 import { monthOf } from '@/lib/unavailability/range';
@@ -40,9 +41,19 @@ interface MemberDetailProps {
 
 const HOUR_H = 40;
 const DAY_H = 44;
-/** 横スクロールしても残す、時刻と対応不可の列の幅 */
-const AXIS_W = 200;
-const LANE_W = 220;
+/** 横スクロールしても残す、日時と対応不可の列の幅。モバイルはメモ 1 列が横スクロールなしで収まる幅にする */
+const AXIS_W = { pc: 228, mobile: 176 };
+const LANE_W = { pc: 220, mobile: 200 };
+
+/** 表示範囲の先頭からの時間数 → その 1 時間が対応不可か。範囲外は false */
+function isUnavailableAt(
+  dates: string[],
+  data: MemberUnavailability | undefined,
+  hourIndex: number
+): boolean {
+  const date = dates[Math.floor(hourIndex / 24)];
+  return date !== undefined && ((data?.days[date] ?? 0) & (1 << (hourIndex % 24))) !== 0;
+}
 
 /**
  * メンバー詳細（閲覧）。縦の時間軸に対応不可とメモを並べる（UN-060〜UN-065）。
@@ -59,6 +70,9 @@ export function MemberDetail({
   onClose,
 }: MemberDetailProps) {
   const [dayMode, setDayMode] = useState(false);
+  const isMobile = useMediaQuery(767);
+  const axisW = isMobile ? AXIS_W.mobile : AXIS_W.pc;
+  const laneW = isMobile ? LANE_W.mobile : LANE_W.pc;
   const { el, setEl, win } = useScrollWindow(false);
   const ready = win !== null;
   // 表示位置。表示範囲の先頭からの時間数で持つ（to は排他的境界）
@@ -116,15 +130,13 @@ export function MemberDetail({
   const viewport = win?.size ?? 0;
   const { start, end } = virtualRange(win?.offset ?? 0, viewport, rowH, count, viewport);
   const rows = Array.from({ length: Math.max(0, end - start) }, (_, i) => start + i);
-  const topDate =
-    dates[Math.min(dates.length - 1, Math.floor(((win?.offset ?? 0) / rowH) * (hoursPerRow / 24)))];
-  const top = dayLabel(topDate);
+  // いちばん上に全体が見えている行。時間単位の表示では、この行に日付を出す
+  const topRow = Math.ceil((win?.offset ?? 0) / rowH);
 
   const toggleDayMode = (next: boolean) => {
     // 切り替え前に先頭にあった日時を、切り替え後も先頭にする
-    const topRow = Math.floor((el?.scrollTop ?? 0) / rowH);
     setDayMode(next);
-    setTarget({ from: topRow * hoursPerRow, to: null });
+    setTarget({ from: Math.floor((el?.scrollTop ?? 0) / rowH) * hoursPerRow, to: null });
   };
 
   /** `yyyy-mm-ddTHH:mm` → 表示範囲の先頭からの時間数。未指定・範囲外は null */
@@ -139,7 +151,7 @@ export function MemberDetail({
     if (from !== null || to !== null) setTarget({ from, to });
   };
 
-  const title = `${member.displayName} の対応不可`;
+  const lastUpdated = lastUpdatedLabel(data?.updatedAt, today);
   const inputRange = {
     min: `${dates[0]}T00:00`,
     max: `${dates[dates.length - 1]}T23:00`,
@@ -149,16 +161,21 @@ export function MemberDetail({
   return (
     <DialogShell
       onClose={onClose}
-      label={title}
+      label={`${member.displayName}（${lastUpdated}）`}
       data-testid="un-detail"
       // モバイルは下寄せの全幅シート、PC は固定幅のカード
       className="flex h-[92dvh] w-full flex-col overflow-hidden rounded-t-lg border border-border bg-card md:h-[min(780px,calc(100vh-64px))] md:w-[min(760px,calc(100vw-64px))] md:rounded-lg"
     >
       <div className="flex shrink-0 items-center gap-3 border-b border-border py-2 pr-2 pl-4 md:pl-6">
         <Avatar initials={member.displayName} src={member.avatarUrl} />
-        <div className="min-w-0 flex-1">
-          <h2 className="text-h3 truncate">{title}</h2>
-          <p className="text-caption text-text-muted">{lastUpdatedLabel(data?.updatedAt, today)}</p>
+        {/* タイトルはメンバー名と最終更新。同じ大きさ・同じ色で横に並べる */}
+        <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-4">
+          <h2 data-testid="un-detail-name" className="text-h3 truncate text-text">
+            {member.displayName}
+          </h2>
+          <span data-testid="un-detail-updated" className="text-h3 text-text">
+            {lastUpdated}
+          </span>
         </div>
         <button
           type="button"
@@ -193,12 +210,6 @@ export function MemberDetail({
           onCheckedChange={toggleDayMode}
           className="h-11"
         />
-        <span
-          data-testid="un-detail-top-date"
-          className="font-num text-caption ml-auto self-center text-text-2"
-        >
-          {top.md}（{top.weekday}）から表示中
-        </span>
       </div>
 
       <div
@@ -211,7 +222,7 @@ export function MemberDetail({
             className="relative min-w-full"
             style={{
               height: count * rowH,
-              width: dayMode ? undefined : AXIS_W + laneCount * LANE_W,
+              width: dayMode ? undefined : axisW + laneCount * laneW,
             }}
           >
             <div style={{ height: start * rowH }} />
@@ -253,7 +264,10 @@ export function MemberDetail({
               rows.map((row) => {
                 const date = dates[Math.floor(row / 24)];
                 const hour = row % 24;
-                const unavailable = ((data?.days[date] ?? 0) & (1 << hour)) !== 0;
+                const unavailable = isUnavailableAt(dates, data, row);
+                // 前後の 1 時間（日をまたぐ場合を含む）も対応不可なら、区切らずにつなげる
+                const joinsPrev = isUnavailableAt(dates, data, row - 1);
+                const joinsNext = isUnavailableAt(dates, data, row + 1);
                 const { md, weekday } = dayLabel(date);
                 return (
                   <div
@@ -267,30 +281,40 @@ export function MemberDetail({
                       hour === 23 ? 'border-border-strong' : 'border-border'
                     )}
                   >
-                    {/* 時刻と対応不可の列は、メモ欄を横スクロールしても残す（UN-064） */}
+                    {/* 日時と対応不可の列は、メモ欄を横スクロールしても残す（UN-064） */}
                     <div
-                      style={{ width: AXIS_W }}
-                      className="sticky left-0 z-20 flex shrink-0 bg-card"
+                      style={{ width: axisW }}
+                      className="sticky left-0 z-20 flex shrink-0 border-r border-border bg-card"
                     >
-                      <div className="font-num text-caption flex flex-1 items-center justify-end gap-2 pr-3 text-text-2">
-                        {hour === 0 && (
-                          <span className="font-bold text-text">
-                            {md}（{weekday}）
+                      {/* 日付と時刻は幅を固定し、時刻は 2 桁・等幅数字で縦に揃える */}
+                      <div className="font-num text-caption flex shrink-0 items-center pr-2 pl-3 whitespace-nowrap md:pl-6">
+                        <span data-testid="un-hour-date" className="w-18 font-bold text-text">
+                          {(hour === 0 || row === topRow) && `${md}（${weekday}）`}
+                        </span>
+                        <span className="w-10 text-right text-text-2">
+                          {String(hour).padStart(2, '0')}:00
+                        </span>
+                      </div>
+                      <div className="relative min-w-0 flex-1">
+                        {unavailable && (
+                          // 文字は入れず、色とつながりで示す。予定カードと同じ左レール + 淡い面
+                          <div
+                            data-testid="un-block"
+                            className={cn(
+                              'absolute inset-x-1.5 border-l-[3px] border-danger bg-[color-mix(in_oklab,var(--danger)_45%,transparent)]',
+                              joinsPrev ? 'top-0' : 'top-1 rounded-t-sm',
+                              // つながる行では、行の罫線（下 1px）まで覆う
+                              joinsNext ? '-bottom-px' : 'bottom-1 rounded-b-sm'
+                            )}
+                          >
+                            <span className="sr-only">対応不可</span>
+                          </div>
+                        )}
+                        {!loadedMonths.has(monthOf(date)) && hour === 0 && (
+                          <span className="absolute inset-0 flex items-center px-1.5 text-[0.6875rem] text-text-muted">
+                            読み込み中…
                           </span>
                         )}
-                        <span>{hour}:00</span>
-                      </div>
-                      <div
-                        // 文字サイズと文字色を併用するため cn を通さない（cn がサイズを落とす）
-                        className={`text-caption flex w-22 shrink-0 items-center border-l-[3px] px-2 font-semibold ${
-                          unavailable
-                            ? 'border-danger bg-[color-mix(in_oklab,var(--danger)_45%,transparent)] text-text'
-                            : 'border-border text-text-muted'
-                        }`}
-                      >
-                        {loadedMonths.has(monthOf(date))
-                          ? unavailable && '対応不可'
-                          : hour === 0 && '読み込み中…'}
                       </div>
                     </div>
                   </div>
@@ -314,8 +338,8 @@ export function MemberDetail({
                       onClick={() => setExpandedNote(expanded ? null : key)}
                       style={{
                         top: row * HOUR_H + 2,
-                        left: AXIS_W + lane * LANE_W + 6,
-                        width: LANE_W - 12,
+                        left: axisW + lane * laneW + 8,
+                        width: laneW - 16,
                         ...(expanded ? { minHeight: height } : { height }),
                       }}
                       className={`text-caption absolute cursor-pointer overflow-hidden rounded-md rounded-tl-xs border border-blue-border bg-blue-tint px-2.5 py-1 text-left leading-snug text-blue-text ${

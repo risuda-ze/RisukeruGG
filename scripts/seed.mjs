@@ -1115,11 +1115,16 @@ async function main() {
     return months.size;
   }
   let unavailabilityDocs = 0;
-  // 配信太郎: 当日 9〜12 時・20〜24 時（E2E が参照する）、メモは同一時間帯の横並びを含む
+  // 配信太郎: 当日 9〜12 時・20 時〜翌 2 時（E2E が参照する）、メモは同一時間帯の横並びを含む
   unavailabilityDocs += await seedUnavailability(
     UID1,
     0,
-    { [day(0)]: hours(9, 12) | hours(20, 24), [day(2)]: hours(0, 24), [day(-3)]: hours(13, 18) },
+    {
+      [day(0)]: hours(9, 12) | hours(20, 24),
+      [day(1)]: hours(0, 2), // 当日 20 時から日をまたいで続く
+      [day(2)]: hours(0, 24),
+      [day(-3)]: hours(13, 18),
+    },
     [
       { id: 'note1', date: day(0), start: 9, end: 12, text: '移動中のため返信は遅れます' },
       { id: 'note2', date: day(0), start: 10, end: 11, text: '通話は不可' },
