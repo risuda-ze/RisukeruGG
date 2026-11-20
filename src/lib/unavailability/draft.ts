@@ -152,18 +152,29 @@ export function buildSaves(
   }));
 }
 
-/** 保存に成功した月の変更を、未保存の変更から取り除く。メモの差分は、書き換える月がすべて成功したものだけ取り除く */
+/**
+ * 保存に成功した月の変更を、未保存の変更から取り除く。メモの差分は、書き換える月がすべて成功したものだけ取り除く。
+ * 取り除くのは保存を始めた時点の変更（`submitted`）と同じものだけで、保存中に足した・変えた分は残す。
+ */
 export function dropSavedMonths(
   draft: UnavailabilityDraft,
+  submitted: UnavailabilityDraft,
   savedMonths: ReadonlySet<string>
 ): UnavailabilityDraft {
   return {
     days: Object.fromEntries(
-      Object.entries(draft.days).filter(([date]) => !savedMonths.has(monthOf(date)))
+      Object.entries(draft.days).filter(
+        ([date, mask]) => !(savedMonths.has(monthOf(date)) && submitted.days[date] === mask)
+      )
     ),
     notes: Object.fromEntries(
       Object.entries(draft.notes).filter(
-        ([key, note]) => !monthsTouchedBy(key, note).every((month) => savedMonths.has(month))
+        ([key, note]) =>
+          !(
+            key in submitted.notes &&
+            submitted.notes[key] === note &&
+            monthsTouchedBy(key, note).every((month) => savedMonths.has(month))
+          )
       )
     ),
   };

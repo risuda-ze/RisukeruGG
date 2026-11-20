@@ -202,13 +202,32 @@ describe('dropSavedMonths', () => {
         '2026-11-20:a': note('a', '2026-12-05'), // 11 月 → 12 月へ移動
       },
     };
-    expect(dropSavedMonths(draft, new Set(['2026-11']))).toEqual({
+    expect(dropSavedMonths(draft, draft, new Set(['2026-11']))).toEqual({
       days: { '2026-12-01': 1 },
       notes: {
         '2026-12-02:x': note('x', '2026-12-02'),
         '2026-11-20:a': note('a', '2026-12-05'),
       },
     });
-    expect(dropSavedMonths(draft, new Set(['2026-11', '2026-12']))).toEqual(EMPTY_DRAFT);
+    expect(dropSavedMonths(draft, draft, new Set(['2026-11', '2026-12']))).toEqual(EMPTY_DRAFT);
+  });
+
+  it('保存中に足した・変えた分は、同じ月の保存が成功しても残す（UN-036）', () => {
+    const edited = note('a', '2026-11-20', 9, 10, '保存前の本文');
+    const submitted = {
+      days: { '2026-11-20': 1, '2026-11-21': 3 },
+      notes: { '2026-11-20:a': edited },
+    };
+    // 保存中に、メモを 1 件追加し、編集中だったメモを書き直し、1 日を塗り直した
+    const added = note('new', '2026-11-25');
+    const reEdited = note('a', '2026-11-20', 9, 10, '保存中に書き直した本文');
+    const current = {
+      days: { '2026-11-20': 1, '2026-11-21': 7 },
+      notes: { '2026-11-20:a': reEdited, '2026-11-25:new': added },
+    };
+    expect(dropSavedMonths(current, submitted, new Set(['2026-11']))).toEqual({
+      days: { '2026-11-21': 7 },
+      notes: { '2026-11-20:a': reEdited, '2026-11-25:new': added },
+    });
   });
 });

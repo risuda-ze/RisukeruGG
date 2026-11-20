@@ -312,7 +312,9 @@ export function MemberDetail({
 
   // ── 保存（UN-071）。月ドキュメントごとに 1 回書く。読み取りはしない
   const save = async () => {
-    const saves = buildSaves(data, draft);
+    // 保存中に足された変更を消さないよう、保存を始めた時点の変更を控えておく
+    const submitted = draft;
+    const saves = buildSaves(data, submitted);
     setSaving(true);
     const results = await Promise.allSettled(
       saves.map(({ month, changes }) =>
@@ -323,7 +325,7 @@ export function MemberDetail({
       saves.filter((_, i) => results[i].status === 'fulfilled').map(({ month }) => month)
     );
     // 書けた月の変更だけ取り除く。失敗した月の変更は画面に残す
-    setDraft((prev) => dropSavedMonths(prev, savedMonths));
+    setDraft((prev) => dropSavedMonths(prev, submitted, savedMonths));
     setSaving(false);
     if (savedMonths.size === saves.length) {
       toast.success('対応不可時間を保存しました');
