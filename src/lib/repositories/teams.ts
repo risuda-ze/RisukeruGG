@@ -1,7 +1,8 @@
 import { doc, getDoc, collection, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '@/lib/firebase/client';
-import type { Team, TeamMember, UserRole, DiscordTeamConfig } from '@/types/entities';
+import { MEMBER_DUTIES } from '@/types/entities';
+import type { Team, TeamMember, UserRole, DiscordTeamConfig, MemberDuty } from '@/types/entities';
 
 const functions = getFunctions(undefined, 'asia-northeast1');
 
@@ -33,6 +34,11 @@ function toTeamMember(id: string, data: Record<string, unknown>): TeamMember {
     // Discord メンション用（TE-012）。旧ドキュメントには存在しないため null 既定
     discordUsername: (data.discordUsername as string | null | undefined) ?? null,
     discordUserId: (data.discordUserId as string | null | undefined) ?? null,
+    // 担当分野・ひとこと（TE-014）。旧ドキュメントは未設定として読み、候補にない値は捨てる
+    duties: Array.isArray(data.duties)
+      ? MEMBER_DUTIES.filter((d) => (data.duties as unknown[]).includes(d))
+      : [],
+    note: typeof data.note === 'string' ? data.note : null,
   };
 }
 
@@ -51,6 +57,16 @@ export async function updateMemberDiscordUsername(
     discordUsername,
     discordUserId: null,
   });
+}
+
+/** メンバーの担当分野・ひとことを更新する（TE-014）。本人またはオペレーターが呼ぶ（Firestore ルールで強制） */
+export async function updateMemberProfile(
+  teamId: string,
+  memberId: string,
+  profile: { duties: MemberDuty[]; note: string | null }
+): Promise<void> {
+  const { updateDoc } = await import('firebase/firestore');
+  await updateDoc(doc(db, 'teams', teamId, 'members', memberId), profile);
 }
 
 export async function getTeam(teamId: string): Promise<Team | null> {

@@ -19,6 +19,18 @@ async function patch(path, fields, auth, mask) {
   });
   return res.status;
 }
+// 文字列以外（配列・null）も送れる版。担当分野・ひとこと（TE-014）の検証用
+async function patchRaw(path, fields, auth) {
+  const q = Object.keys(fields).map((f) => `updateMask.fieldPaths=${f}`).join('&');
+  const res = await fetch(`${BASE}/${path}?${q}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth}` },
+    body: JSON.stringify({ fields }),
+  });
+  return res.status;
+}
+const arr = (...v) => ({ arrayValue: { values: v.map((x) => ({ stringValue: x })) } });
+const str = (v) => ({ stringValue: v });
 const del = async (path, auth) =>
   (await fetch(`${BASE}/${path}`, { method: 'DELETE', headers: { Authorization: `Bearer ${auth}` } })).status;
 
@@ -37,9 +49,15 @@ assert.equal(await patch('teams/t1/members/outsider', { role: 'operator' }, outs
 assert.equal(await patch('teams/t1/members/op', { displayName: 'x' }, mem, ['displayName']), 403, '他人の更新');
 assert.equal(await patch('teams/t1/members/mem', { role: 'operator' }, op, ['role']), 403, 'operator でも role は Functions 経由');
 assert.equal(await del('teams/t1/members/mem', mem), 403, '本人の直接削除');
+assert.equal(await patchRaw('teams/t1/members/mem', { duties: arr('dancer') }, mem), 403, '候補外の担当分野');
+assert.equal(await patchRaw('teams/t1/members/mem', { note: str('あ'.repeat(101)) }, mem), 403, '101 字のひとこと');
+assert.equal(await patchRaw('teams/t1/members/op', { note: str('x') }, mem), 403, '他人のひとこと');
 
 // 許可されるべき操作
 assert.equal(await patch('teams/t1/members/mem', { displayName: 'new' }, mem, ['displayName']), 200, '本人の表示名');
 assert.equal(await patch('teams/t1/members/mem', { discordUsername: 'd' }, op, ['discordUsername']), 200, 'operator の Discord 名');
+
+assert.equal(await patchRaw('teams/t1/members/mem', { duties: arr('cast', 'edit'), note: str('よろしく') }, mem), 200, '本人の担当分野・ひとこと');
+assert.equal(await patchRaw('teams/t1/members/mem', { note: { nullValue: null } }, op), 200, 'operator がひとことを消す');
 
 console.log('members rules: OK');

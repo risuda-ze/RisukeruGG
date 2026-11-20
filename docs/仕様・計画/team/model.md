@@ -29,10 +29,10 @@ Team は共同作業単位を表す。TeamMember はユーザーとチームの�
 | `joinedAt`    | timestamp                       | チーム参加日時           |
 | `discordUsername` | string \| null              | Discord のユーザー名（`@` の後ろの一意な名前）。メンション用に本人またはオペレーターが任意登録（TE-012）。旧ドキュメントには存在せず null 扱い |
 | `discordUserId`   | string \| null              | `discordUsername` をサーバー内検索で解決した Discord ユーザー ID のキャッシュ。Bot（Admin SDK）が書き込み、ユーザー名変更時にクライアントが null に戻す |
-| `duties`          | string[]                    | **未実装（TE-014）**。担当分野のコード値の配列（重複なし）。旧ドキュメントには存在せず `[]` 扱い。候補にない値は読み取り時に捨てる |
-| `note`            | string \| null              | **未実装（TE-014）**。ひとこと（100 字以内・改行なし）。旧ドキュメントには存在せず null 扱い |
+| `duties`          | string[]                    | 担当分野のコード値の配列（重複なし）。旧ドキュメントには存在せず `[]` 扱い。候補にない値は読み取り時に捨てる |
+| `note`            | string \| null              | ひとこと（100 字以内・改行なし）。旧ドキュメントには存在せず null 扱い |
 
-### 担当分野の候補（未実装・TE-014-1）
+### 担当分野の候補（TE-014-1）
 
 固定で、チームごとの追加・変更はできない。工程の「担当」（`Step.assigneeId`）や進め方の「役割」（`StepDef.roleLabel`）とは連動しない。
 
@@ -45,9 +45,9 @@ Team は共同作業単位を表す。TeamMember はユーザーとチームの�
 | `moderation` | 配信サポート |
 | `other`      | その他       |
 
-### Security Rules（未実装・TE-014-3）
+### Security Rules（TE-014-3）
 
-`teams/{teamId}/members/{uid}` の読み取り（同一チームの全ロール）と更新権限（本人またはオペレーター、`plan` は変更不可）は変更しない。create / update に次の検証を追加する。
+クライアントは更新の許可リスト（下記「業務ルール」）で `duties` / `note` を書ける。更新時に次の値を検証する。
 
 - `duties` がある場合: list で、要素は候補のコード値のみ（`hasOnly`）、件数は 6 以下
 - `note` がある場合: null、または 100 字以下の string
@@ -82,7 +82,7 @@ teamCodes/{teamCode}              ← チームコード → teamId の逆引き
 
 - チームには少なくとも 1 人のオペレーターが必要（複数も可）
 - `operatorUids` は `TeamMember.role === 'operator'` を持つメンバーの UID リストと同期する（非正規化）
-- `TeamMember` の作成・削除と `role` / `plan` の変更は Callable Function（Admin SDK）だけが行う。クライアントが直接更新できるのは `displayName` / `avatarUrl` / `discordUsername` / `discordUserId` のみで、対象は本人のドキュメント（オペレーターは全メンバー）。Security Rules の許可リストで強制する（`scripts/check-member-rules.mjs` で検証）
+- `TeamMember` の作成・削除と `role` / `plan` の変更は Callable Function（Admin SDK）だけが行う。クライアントが直接更新できるのは `displayName` / `avatarUrl` / `discordUsername` / `discordUserId` / `duties` / `note` のみで、対象は本人のドキュメント（オペレーターは全メンバー）。Security Rules の許可リストで強制する（`scripts/check-member-rules.mjs` で検証）
 - メンバーが 1 人（自分のみ）のチームをソロチームと呼ぶ
 - ソロチームのオペレーターが退出した場合、チームドキュメントとチームコードドキュメントは自動削除される
 - `removeTeamMember` で削除後にメンバー数が 0 になった場合も同様に自動削除される（防御的処理）

@@ -50,6 +50,21 @@ export interface GoogleCalendarExport {
   exportedAt: Date | null;
 }
 
+/** 担当分野の候補（固定。チームごとの追加・変更はできない） */
+export const MEMBER_DUTIES = ['cast', 'planning', 'edit', 'thumbnail', 'moderation', 'other'] as const;
+export type MemberDuty = (typeof MEMBER_DUTIES)[number];
+
+export const MEMBER_DUTY_LABELS: Record<MemberDuty, string> = {
+  cast: '出演',
+  planning: '企画',
+  edit: '編集',
+  thumbnail: 'サムネ',
+  moderation: '配信サポート',
+  other: 'その他',
+};
+
+export const MEMBER_NOTE_MAX = 100;
+
 export interface TeamMember {
   userId: string;
   role: UserRole;
@@ -64,6 +79,10 @@ export interface TeamMember {
   discordUsername: string | null;
   /** `discordUsername` をサーバー内検索で解決した Discord ユーザー ID のキャッシュ。ユーザー名変更時は null に戻す */
   discordUserId: string | null;
+  /** 担当分野（TE-014）。候補は `MEMBER_DUTIES`。重複なし。未設定は [] */
+  duties: MemberDuty[];
+  /** ひとこと（TE-014）。100 字以内・改行なし。未設定は null */
+  note: string | null;
 }
 
 export interface Team {
