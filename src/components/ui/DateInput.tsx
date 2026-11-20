@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useLayoutEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useState, useRef, useEffect } from 'react';
 import { Icon } from '@/components/ui/Icon';
 import { MiniCalendar } from '@/components/ui/MiniCalendar';
 
@@ -54,39 +53,15 @@ export function DateInput({
 }: DateInputProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const popupRef = useRef<HTMLDivElement>(null);
-  const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
 
   // 外側クリックで閉じる
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (!ref.current?.contains(target) && !popupRef.current?.contains(target)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
-  // スクロール領域の中でもカレンダーが見切れないよう、body直下へ表示する。
-  useLayoutEffect(() => {
-    if (!open) return;
-    const updatePosition = () => {
-      const rect = triggerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      setPopupPosition({
-        top: rect.bottom + 6,
-        left: Math.max(8, Math.min(rect.left, window.innerWidth - 292)),
-      });
-    };
-    updatePosition();
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition, true);
-    return () => {
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition, true);
-    };
   }, [open]);
 
   const dateValue = parseDate(value);
@@ -94,20 +69,18 @@ export function DateInput({
   const displayText = dateValue ? formatDisplay(dateValue) : '';
 
   return (
-    <div
-      className={`flex flex-col gap-1.5 ${className ?? ''}`}
-      ref={ref}
-      style={{ position: 'relative' }}
-    >
+    <div className={`flex flex-col gap-1.5 ${className ?? ''}`} ref={ref} style={{ position: 'relative' }}>
       {/* ラベル */}
-      <label className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>
+      <label
+        className="text-sm font-medium"
+        style={{ color: 'var(--text-2)' }}
+      >
         {label}
         {required && <span style={{ color: 'var(--danger)', marginLeft: 2 }}>*</span>}
       </label>
 
       {/* トリガーボタン */}
       <button
-        ref={triggerRef}
         type="button"
         className="ds-field"
         style={{
@@ -119,11 +92,7 @@ export function DateInput({
         }}
         onClick={() => setOpen((o) => !o)}
       >
-        <Icon
-          name="calendar_month"
-          size={16}
-          style={{ color: 'var(--text-muted)', flexShrink: 0 }}
-        />
+        <Icon name="calendar_month" size={16} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
         <span
           style={{
             flex: 1,
@@ -147,49 +116,37 @@ export function DateInput({
       </button>
 
       {/* エラー・ヒント */}
-      {error && (
-        <p className="text-xs" style={{ color: 'var(--danger)' }}>
-          {error}
-        </p>
-      )}
-      {hint && !error && (
-        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-          {hint}
-        </p>
-      )}
+      {error && <p className="text-xs" style={{ color: 'var(--danger)' }}>{error}</p>}
+      {hint && !error && <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{hint}</p>}
 
       {/* MiniCalendar ドロップダウン（allDay） */}
-      {open &&
-        typeof document !== 'undefined' &&
-        createPortal(
-          <div
-            ref={popupRef}
-            style={{
-              position: 'fixed',
-              top: popupPosition.top,
-              left: popupPosition.left,
-              zIndex: 1000,
-              background: 'var(--surface-2)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-md)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
-              padding: '16px',
-              minWidth: '260px',
-              animation: 'slide-up 120ms ease-out both',
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            left: 0,
+            zIndex: 60,
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
+            padding: '16px',
+            minWidth: '260px',
+            animation: 'slide-up 120ms ease-out both',
+          }}
+        >
+          <MiniCalendar
+            value={dateValue}
+            min={minDate ?? undefined}
+            allDay
+            onChange={(date) => {
+              if (date) onChange(formatDate(date));
+              setOpen(false);
             }}
-          >
-            <MiniCalendar
-              value={dateValue}
-              min={minDate ?? undefined}
-              allDay
-              onChange={(date) => {
-                if (date) onChange(formatDate(date));
-                setOpen(false);
-              }}
-            />
-          </div>,
-          document.body
-        )}
+          />
+        </div>
+      )}
     </div>
   );
 }

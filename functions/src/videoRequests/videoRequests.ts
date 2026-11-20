@@ -2,6 +2,8 @@ import { onCall, type CallableRequest, HttpsError } from 'firebase-functions/v2/
 import { FieldValue } from 'firebase-admin/firestore';
 import { db, getAuthContext, requireOperator, requireOwnerOrEditor } from '../lib/validateAuth';
 
+import { videoRequestColumns } from './columns';
+
 const REGION = 'asia-northeast1';
 
 interface CreateVideoRequestData {
@@ -67,16 +69,17 @@ async function findTaskStatusId(
   return statuses.docs.find((status) => predicate(status.data()))?.id ?? null;
 }
 
-async function findInProgressTaskStatusId(teamId: string): Promise<string | null> {
-  return findTaskStatusId(teamId, (status) => ['進行中', '作業中'].includes(status.name));
-}
-
-async function findPendingTaskStatusId(teamId: string): Promise<string | null> {
-  return findTaskStatusId(teamId, (status) => status.name === '未着手');
-}
-
-async function findReviewTaskStatusId(teamId: string): Promise<string | null> {
-  return findTaskStatusId(teamId, (status) => status.name === '見てくれぃ');
+async function getProgressColumnId(teamId: string, request: FirebaseFirestore.DocumentData) {
+  const config = request.progressTaskColumnId
+    ? null
+    : await db.doc(`teams/${teamId}/settings/videoRequests`).get();
+  const id = request.progressTaskColumnId ?? config?.get('progressColumnId');
+  if (!id || !(await db.doc(`teams/${teamId}/taskStatuses/${id}`).get()).exists)
+    throw new HttpsError(
+      'failed-precondition',
+      'カテゴリ設定で動画依頼の制作中列を指定してください'
+    );
+  return id as string;
 }
 
 async function findDoneTaskStatusId(teamId: string): Promise<string | null> {
@@ -163,26 +166,24 @@ export const createVideoRequest = onCall(
     validateInput(input);
     const ctx = await getAuthContext(request, input.teamId);
     requireOwnerOrEditor(ctx);
-    const pendingColumnId = await findPendingTaskStatusId(input.teamId);
-    const reviewColumnId = await findReviewTaskStatusId(input.teamId);
-    if (!pendingColumnId || !reviewColumnId) {
-      throw new HttpsError(
-        'failed-precondition',
-        '未着手または見てくれぃのタスク状態が見つかりません'
-      );
-    }
     const videoRequestRef = db.collection(`teams/${input.teamId}/videoRequests`).doc();
     const taskRef = db.collection(`teams/${input.teamId}/tasks`).doc();
     const thumbnailTask = taskRef.parent.doc();
     const now = FieldValue.serverTimestamp();
     await db.runTransaction(async (tx) => {
-      const column = await tx.get(db.doc(`teams/${input.teamId}/taskStatuses/${pendingColumnId}`));
-      if (!column.exists) throw new HttpsError('not-found', '選択したタスク状態が見つかりません');
-      const reviewColumn = await tx.get(
-        db.doc(`teams/${input.teamId}/taskStatuses/${reviewColumnId}`)
+      const config = (await tx.get(db.doc(`teams/${input.teamId}/settings/videoRequests`))).data();
+      if (!config)
+        throw new HttpsError('failed-precondition', 'カテゴリ設定で動画依頼の列を指定してください');
+      const mapping = videoRequestColumns(config);
+      if (!mapping)
+        throw new HttpsError('failed-precondition', '動画依頼の3つの列を設定してください');
+      const { pendingColumnId, progressColumnId, reviewColumnId } = mapping;
+      const ids = [pendingColumnId, progressColumnId, reviewColumnId];
+      const columns = await Promise.all(
+        ids.map((id) => tx.get(db.doc(`teams/${input.teamId}/taskStatuses/${id}`)))
       );
-      if (!reviewColumn.exists)
-        throw new HttpsError('not-found', '納品時のタスク状態が見つかりません');
+      if (columns.some((col) => !col.exists || col.get('role') === 'done'))
+        throw new HttpsError('failed-precondition', '動画依頼の列設定を確認してください');
       const editorMemberIds = input.editorDiscordIds ? [] : [...new Set(input.editorMemberIds)];
       const editorDiscordIds = input.editorDiscordIds
         ? [...new Set(input.editorDiscordIds)]
@@ -201,18 +202,19 @@ export const createVideoRequest = onCall(
         createdBy: ctx.uid,
         createdAt: now,
       });
-      tx.set(thumbnailTask, {
-        thumbnailRequestId: videoRequestRef.id,
-        title: `サムネイル制作: ${input.title.trim()}`,
-        columnId: pendingColumnId,
-        dueDate: parseDate(input.finalPackageDueAt),
-        createdBy: ctx.uid,
-        createdAt: now,
-        updatedAt: now,
-      });
+      if (config.createThumbnailTask)
+        tx.set(thumbnailTask, {
+          thumbnailRequestId: videoRequestRef.id,
+          title: `サムネイル制作: ${input.title.trim()}`,
+          columnId: pendingColumnId,
+          dueDate: parseDate(input.finalPackageDueAt),
+          createdBy: ctx.uid,
+          createdAt: now,
+          updatedAt: now,
+        });
       tx.set(videoRequestRef, {
-        thumbnailTaskId: thumbnailTask.id,
-        thumbnailStatus: 'pending_discord',
+        thumbnailTaskId: config.createThumbnailTask ? thumbnailTask.id : null,
+        thumbnailStatus: config.createThumbnailTask ? 'pending_discord' : null,
         teamId: input.teamId,
         title: input.title.trim(),
         editorMemberIds,
@@ -229,6 +231,7 @@ export const createVideoRequest = onCall(
         deliveryUrls: [],
         status: 'pending_discord',
         taskId: taskRef.id,
+        progressTaskColumnId: progressColumnId,
         taskColumnId: pendingColumnId,
         reviewTaskColumnId: reviewColumnId,
         discord: {
@@ -330,9 +333,6 @@ export const updateVideoRequest = onCall(
           dueDate: next.finalPackageDueAt,
           updatedAt: now,
         };
-        if (currentData.status === 'review_requested')
-          taskUpdate.columnId = currentData.reviewTaskColumnId;
-        else if (currentData.status !== 'completed') taskUpdate.columnId = currentData.taskColumnId;
         tx.update(db.doc(`teams/${input.teamId}/tasks/${currentData.taskId}`), taskUpdate);
       }
       if (discord?.status === 'created' && changes.length > 0) {
@@ -371,11 +371,6 @@ export const reviewThumbnail = onCall(
     const message = request.data.message?.trim();
     if (action !== 'approve' && (action !== 'revise' || !message || message.length > 1500))
       throw new HttpsError('invalid-argument', '修正内容を入力してください');
-    const columnId =
-      action === 'approve'
-        ? await findDoneTaskStatusId(teamId)
-        : await findInProgressTaskStatusId(teamId);
-    if (!columnId) throw new HttpsError('failed-precondition', '移動先のタスク状態がありません');
     const ref = db.doc(`teams/${teamId}/videoRequests/${videoRequestId}`);
     const now = FieldValue.serverTimestamp();
     await db.runTransaction(async (tx) => {
@@ -387,6 +382,11 @@ export const reviewThumbnail = onCall(
       ) {
         throw new HttpsError('failed-precondition', '現在のサムネの状態ではこの操作はできません');
       }
+      const columnId =
+        action === 'approve'
+          ? await findDoneTaskStatusId(teamId)
+          : await getProgressColumnId(teamId, data);
+      if (!columnId) throw new HttpsError('failed-precondition', '移動先の列を設定してください');
       tx.update(ref, {
         thumbnailStatus: action === 'approve' ? 'completed' : 'in_progress',
         updatedAt: now,
@@ -418,7 +418,7 @@ export const requestVideoRevision = onCall(
     const ref = db.doc(`teams/${teamId}/videoRequests/${videoRequestId}`);
     const snap = await ref.get();
     if (!snap.exists) throw new HttpsError('not-found', '動画依頼が見つかりません');
-    const progressColumnId = await findInProgressTaskStatusId(teamId);
+    const progressColumnId = await getProgressColumnId(teamId, snap.data()!);
     const event = ref.collection('discordEvents').doc();
     const now = FieldValue.serverTimestamp();
     await db.runTransaction(async (tx) => {

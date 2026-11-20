@@ -178,6 +178,16 @@ service cloud.firestore {
                         validMemberProfile(request.resource.data);
       }
 
+      match /settings/videoRequests {
+        allow read: if isTeamMember(teamId);
+        allow create, update: if isTeamOwner(teamId) &&
+          request.resource.data.keys().hasOnly(['pendingColumnId', 'progressColumnId', 'reviewColumnId', 'createThumbnailTask']) &&
+          request.resource.data.createThumbnailTask is bool &&
+          request.resource.data.pendingColumnId is string &&
+          request.resource.data.progressColumnId is string &&
+          request.resource.data.reviewColumnId is string;
+      }
+
       match /taskStatuses/{columnId} {
         allow read: if isTeamMember(teamId);
         allow write: if isMemberRole(teamId);

@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
-import { DateInput } from '@/components/ui/DateInput';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { Icon } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
@@ -255,19 +254,26 @@ function VideoRequestForm({
           hint="サムネ用スレッドへ投稿します"
           required
         />
-        <DateInput label="編集開始日" value={startAt} onChange={setStartAt} />
+        <Input
+          type="date"
+          label="編集開始日"
+          value={startAt}
+          onChange={(event) => setStartAt(event.target.value)}
+        />
         <div className="grid gap-3 md:grid-cols-2">
-          <DateInput
+          <Input
+            type="date"
             label="初稿納期"
             value={firstDraftDueAt}
-            onChange={setFirstDraftDueAt}
+            onChange={(event) => setFirstDraftDueAt(event.target.value)}
             error={draftError}
           />
-          <DateInput
+          <Input
+            type="date"
             label="完パケ納期"
             error={finalError}
             value={finalPackageDueAt}
-            onChange={setFinalPackageDueAt}
+            onChange={(event) => setFinalPackageDueAt(event.target.value)}
             hint="サムネイル納期にも使います"
           />
         </div>

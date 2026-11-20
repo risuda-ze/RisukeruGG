@@ -6,6 +6,7 @@
 
 ## 対象範囲
 
+- [動画依頼](../video-request/README.md)の専用ワーカーによるスレッド作成・納品ボタンの受付（[運用手順](../../../workers/video-requests/README.md)）
 - Discord 連携設定画面（`/integrations/discord`）
 - チームごとの Discord 通知設定（`teams/{teamId}/discord/config`）
 - スケジュール通知の Discord 配送（Bot API / Webhook フォールバック）

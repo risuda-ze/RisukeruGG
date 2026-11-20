@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Card } from '@/components/ui/Card';
+import { VideoRequestSettings } from '@/components/team/VideoRequestSettings';
 import { TopBar } from '@/components/layout/TopBar';
 import { Icon } from '@/components/ui/Icon';
 
@@ -195,6 +196,8 @@ function KanbanStatusSettings() {
           「完了」とみなす列をひとつ選択してください。ダッシュボードの達成率計算に使用されます。
         </p>
       </div>
+
+      {isOperator && <VideoRequestSettings key={teamId} teamId={teamId} columns={columns} />}
 
       {/* ステータス一覧 */}
       <Card noPadding>

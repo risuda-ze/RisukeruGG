@@ -25,7 +25,7 @@ export interface VideoRequest {
   id: string;
   teamId: string;
   title: string;
-  /** RisukeruGG上で選択した担当メンバー。Discord IDの手入力を不要にするために保持する。 */
+  /** 旧形式の依頼で指定されたチームメンバー。 */
   editorMemberIds: string[];
   editorDiscordIds: string[];
   videoType: 'long' | 'short';
@@ -54,6 +54,6 @@ export interface VideoRequest {
 export const VIDEO_REQUEST_STATUS_LABELS: Record<VideoRequestStatus, string> = {
   pending_discord: 'Discord作成待ち',
   in_progress: '作業中',
-  review_requested: '見てくれぃ',
+  review_requested: '確認待ち',
   completed: '完了',
 };
