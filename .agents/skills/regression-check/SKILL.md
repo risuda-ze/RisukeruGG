@@ -1,6 +1,6 @@
 ---
 name: regression-check
-description: 実装後の回帰確認（pnpm verify、UI 変更時は E2E smoke）を実行し、結果を固定フォーマットで報告するときに使う。報告フォーマットは reference/report-format.md にある。
+description: 実装後の回帰確認（pnpm verify、UI 変更時は E2E smoke）を実行し、結果を固定フォーマットで報告する
 ---
 
 # regression-check

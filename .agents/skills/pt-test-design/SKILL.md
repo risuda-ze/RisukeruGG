@@ -1,6 +1,6 @@
 ---
 name: pt-test-design
-description: PT（単体テスト）工程のテスト技法（同値分割・境界値・デシジョンテーブル・状態遷移・エラー推測）で受入条件からテストケースを導出し、レビュー結果を固定フォーマットで報告するときに使う。技法は reference/techniques.md、報告形式は reference/review-report.md にある。
+description: PT（単体テスト）工程のテスト技法（同値分割・境界値・デシジョンテーブル・状態遷移・エラー推測）で受入条件からテストケースを導出し、レビュー結果を固定フォーマットで報告する
 ---
 
 # pt-test-design

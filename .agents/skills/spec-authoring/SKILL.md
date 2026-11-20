@@ -1,6 +1,6 @@
 ---
 name: spec-authoring
-description: 変更仕様の草案を書くときに使う。書式は reference/spec-template.md、方針が複数ありうるときの案の分け方は reference/patterns.md にある。
+description: 変更仕様の草案を書く
 ---
 
 # spec-authoring

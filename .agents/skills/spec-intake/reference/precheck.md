@@ -1,7 +1,5 @@
 # 着手前チェック
 
-git 運用ルールは AGENTS.md「Gitブランチ運用」が正本。ここではその状態確認だけを行う。
-
 1. 現在ブランチが `feature/*` であり、`develop` から切られていることを確認する
    ```bash
    git branch --show-current && git log --oneline origin/develop..HEAD
