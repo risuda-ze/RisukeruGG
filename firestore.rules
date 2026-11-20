@@ -194,6 +194,25 @@ service cloud.firestore {
         allow write: if isTeamOwner(teamId);
       }
 
+      // 対応不可時間（1 人・1 ヶ月 = 1 ドキュメント、ID は {userId}_{yyyy-mm}）。
+      // 閲覧は rom を含む全メンバー、書き込みはロールを問わず本人の分だけ（UN-010〜UN-013）。
+      // days / notes の中身はルールで走査できないため、クライアントの Zod で検証する。
+      // 削除は Admin SDK のみ（月次削除・退出時の削除）。
+      match /unavailability/{docId} {
+        allow read: if isTeamMember(teamId);
+        allow create, update: if isTeamMember(teamId) &&
+                                 request.resource.data.keys().hasOnly(['userId', 'month', 'days', 'notes', 'updatedAt']) &&
+                                 request.resource.data.userId == request.auth.uid &&
+                                 request.resource.data.month is string &&
+                                 request.resource.data.month.matches('^[0-9]{4}-(0[1-9]|1[0-2])$') &&
+                                 docId == request.auth.uid + '_' + request.resource.data.month &&
+                                 (!('days' in request.resource.data) || request.resource.data.days is map) &&
+                                 (!('notes' in request.resource.data) ||
+                                  (request.resource.data.notes is list && request.resource.data.notes.size() <= 200)) &&
+                                 request.resource.data.updatedAt == request.time;
+        allow delete: if false;
+      }
+
       // ── タスク管理 v2（1枚紙） ─────────────────────────────
       // 進め方（工程の型）。閲覧は全メンバー、編集は operator / member
       match /playbooks/{playbookId} {

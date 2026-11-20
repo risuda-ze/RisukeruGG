@@ -71,7 +71,7 @@ Issue #210 の本文に無い、または曖昧だった点を設計時に次の
 | 弾 | PR | 内容 | 依存 | 状態 |
 | --- | --- | --- | --- | --- |
 | 0 | 設計書 | 本書、正本カテゴリ `unavailability/`、共通用語、親仕様のカテゴリ一覧 | なし | 本 PR |
-| 1 | A | 型・Zod・Firestore ルール・インデックス・純関数・月次削除 Functions・退出時の掃除・ユニットテスト | #178 | 未着手 |
+| 1 | A | 型・Zod・Firestore ルール・インデックス・純関数・月次削除 Functions・退出時の掃除・ユニットテスト | #178 | 実装済み（`feature/unavailability-foundation`） |
 | 1 | B | 一覧 + メンバー詳細の閲覧（仮想スクロール、最終更新、メンバー複数選択）+ ナビ項目 + E2E ①② | A | 未着手 |
 | 1 | C | 入力（ドラッグ塗り）+ メモ + E2E ③④ | B | 未着手 |
 | 2 | D | 展開 → プレビュー → 和集合の共通経路 + CSV + 定期入力 | C | 未着手 |
@@ -85,10 +85,10 @@ Issue #210 の本文に無い、または曖昧だった点を設計時に次の
 
 - 型 `UnavailabilityMonth` / `UnavailabilityNote`（`src/types/unavailability.ts`）と Zod スキーマ（`src/lib/validations/unavailability.ts`）
 - 純関数（`src/lib/unavailability/`）: 時間範囲 ⇄ 日マスク、日またぎ・月またぎの分割、OR 追記、ビット数、時間帯マスクとの AND、保存範囲（前月 1 日〜翌月末日）の判定
-- リポジトリ（`src/lib/repositories/unavailability.ts`）: 月の購読、日単位の更新、メモの追加・更新・削除
+- リポジトリ（`src/lib/repositories/unavailability.ts`）: 月の購読と、1 ヶ月分の保存（変更した日とメモをまとめて 1 回で書く）
 - `firestore.rules` に `teams/{teamId}/unavailability/{docId}` のブロックを追加、`firestore.indexes.json` に `month` のコレクショングループ用 `fieldOverrides` を追加
-- Functions: 月次削除（`onSchedule`、`0 0 1 * *`、`Asia/Tokyo`、`asia-northeast1`）。`leaveTeam` / `removeTeamMember` / `deleteAccount` に対象ユーザーのドキュメント削除を追加
-- ユニットテスト: 純関数（境界: 0 時・24 時・日またぎ・月またぎ・範囲外）、Zod、ルール
+- Functions: 月次削除（`onSchedule`、`0 0 1 * *`、`Asia/Tokyo`、`asia-northeast1`）。`leaveTeam` / `leaveSpecificTeam` / `removeTeamMember` / `deleteAccount` に対象ユーザーのドキュメント削除を追加
+- ユニットテスト: 純関数（境界: 0 時・24 時・日またぎ・月またぎ・範囲外）、Zod。ルールは Emulator で `scripts/check-unavailability-rules.mjs` を実行して確認する
 - 正本の同期: team/flows（退出・Kick）、user/flows（アカウント削除）、plan/requirements（PL-002 に「対応不可時間の入力は無制限」を追記）
 
 ### PR B: 閲覧
@@ -135,7 +135,7 @@ Emulator のシードに対応不可データを追加して行う。
 | --- | --- |
 | 既存データ | 変更なし（新コレクションの追加のみ。移行なし） |
 | 既存画面 | サイドバーと「その他」ドロワーに 1 項目追加。スケジュール画面は変更なし |
-| Functions | スケジュール関数 1 つ追加。`leaveTeam` / `removeTeamMember` / `deleteAccount` に削除処理を追加 |
+| Functions | スケジュール関数 1 つ追加。`leaveTeam` / `leaveSpecificTeam` / `removeTeamMember` / `deleteAccount` に削除処理を追加 |
 | ルール・インデックス | `unavailability` のブロックと `fieldOverrides` を追加 |
 | プラン・課金 | 影響なし |
 

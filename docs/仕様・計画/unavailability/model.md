@@ -18,7 +18,7 @@ Firestore コレクション配置: `teams/{teamId}/unavailability/{userId}_{yyy
 | `notes`     | UnavailabilityNote[]           | その月のメモ。最大 200 件 |
 | `updatedAt` | timestamp                      | 対応不可またはメモを最後に保存した日時（サーバー時刻）。一覧の「最終更新」に使う |
 
-ドキュメントが無いことは「その月は未入力」を表す。
+ドキュメントが無いことは「その月は未入力」を表す。`days` / `notes` は、一度も保存していない側のフィールドを持たないことがあり、空として扱う。
 
 ### 日マスク
 
@@ -54,7 +54,7 @@ Firestore コレクション配置: `teams/{teamId}/unavailability/{userId}_{yyy
 | 操作 | 条件 |
 | ---- | ---- |
 | read | 同一チームのメンバー（`rom` を含む） |
-| create / update | 同一チームのメンバー（ロール不問）かつ β ゲート通過。書き込み後の `userId` が本人の UID、`docId` が `{本人の UID}_{month}`、`month` が `yyyy-mm` 形式、フィールドが `userId` / `month` / `days` / `notes` / `updatedAt` のみ、`notes` が 200 件以下、`updatedAt` がリクエスト時刻 |
+| create / update | 同一チームのメンバー（ロール不問）かつ β ゲート通過。書き込み後の `userId` が本人の UID、`docId` が `{本人の UID}_{month}`、`month` が `yyyy-mm` 形式、フィールドが `userId` / `month` / `days` / `notes` / `updatedAt` のみ、`days` が map、`notes` が 200 件以下の配列、`updatedAt` がリクエスト時刻 |
 | delete | 不可（削除は Admin SDK のみ） |
 
 ルールは map・配列の中身を走査できないため、次はルールでは検証しない。
