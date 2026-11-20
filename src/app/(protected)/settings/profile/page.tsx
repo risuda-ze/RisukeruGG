@@ -497,7 +497,16 @@ export default function ProfileSettingsPage() {
                     </div>
                     <div className="flex justify-between items-center py-3">
                       <span className="text-text-muted">バージョン</span>
-                      <span className="text-text">v{packageJson.version}</span>
+                      {/* クリックでリリースノート（公開ページ）を別タブで開く */}
+                      <Link
+                        href="/release-notes"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-text hover:text-brand-2 transition-colors"
+                      >
+                        v{packageJson.version}
+                        <Icon name="open_in_new" size={20} className="text-text-muted" />
+                      </Link>
                     </div>
                   </div>
                 </div>

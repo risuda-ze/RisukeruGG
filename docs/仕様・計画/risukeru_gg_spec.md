@@ -62,12 +62,12 @@
 | `user`         | 認証・アカウント管理 | Google OAuth2 認証、初回ログイン時のアカウント初期化、セッション維持、アカウント削除後のゴースト保持を扱う | [README](./user/README.md) / [requirements](./user/requirements.md) / [model](./user/model.md) / [flows](./user/flows.md) |
 | `plan`         | プラン管理           | LIGHT / PARTY プラン、月次利用上限、アップグレード導線、プラン判定ルールを扱う                             | [README](./plan/README.md) / [requirements](./plan/requirements.md) / [model](./plan/model.md)                            |
 | `team`         | チーム管理           | チーム作成、所属、ロール、チームコード、アクティブチーム切り替えを扱う                                     | [README](./team/README.md) / [requirements](./team/requirements.md) / [model](./team/model.md)                            |
-| `schedule`     | スケジュール管理     | スケジュール CRUD、カレンダー表示、Google カレンダー同期、カレンダー UI 改善を扱う                         | [README](./schedule/README.md) / [requirements](./schedule/requirements.md) / [model](./schedule/model.md)                |
+| `schedule`     | スケジュール管理     | スケジュール CRUD、カレンダー表示、Google カレンダー書き出し、カレンダー UI 改善を扱う                     | [README](./schedule/README.md) / [requirements](./schedule/requirements.md) / [model](./schedule/model.md)                |
 | `task`         | 制作タスク管理       | カンバン、タスク詳細、担当者、カテゴリ、列設定、タスク進捗管理を扱う                                       | [README](./task/README.md) / [requirements](./task/requirements.md) / [model](./task/model.md)                            |
 | `collab`       | コラボ日程調整       | コラボセッション、公開回答フォーム、再調整、複製、関連 UI を扱う                                           | [README](./collab/README.md) / [requirements](./collab/requirements.md) / [model](./collab/model.md)                      |
 | `notification` | 通知                 | 通知カテゴリ、既読管理、プッシュ通知、通知設定、遷移ルールを扱う                                           | [README](./notification/README.md) / [requirements](./notification/requirements.md) / [model](./notification/model.md)    |
 | `ui`           | UI・ナビゲーション   | サイドバー、TopBar、通知導線、共通ナビゲーション状態を扱う                                                 | [README](./ui/README.md) / [requirements](./ui/requirements.md) / [model](./ui/model.md)                                  |
-| `platform`     | PWA・オフライン      | PWA インストール、Service Worker、オフライン閲覧、接続断時の扱いを扱う                                     | [README](./platform/README.md) / [requirements](./platform/requirements.md) / [model](./platform/model.md)                |
+| `platform`     | PWA・オフライン      | PWA インストール、Service Worker、オフライン閲覧、接続断時の扱い、バージョン表示・リリースノートを扱う                                     | [README](./platform/README.md) / [requirements](./platform/requirements.md) / [model](./platform/model.md)                |
 | `integration`  | 外部サービス連携     | Discord 連携（通知配送、Bot 招待、`/risukerugg` AI ボット）を扱う                                          | [README](./integration/README.md) / [requirements](./integration/requirements.md) / [model](./integration/model.md)       |
 | `ai`           | AIチャット           | `/chat` の AI アシスタント、提案生成、スケジュール・タスク・コラボ登録連携を扱う                           | [README](./ai/README.md) / [requirements](./ai/requirements.md) / [model](./ai/model.md)                                  |
 | `production`   | タスク管理 v2（1枚紙） | ブリーフ（動画1本）、工程、進め方、締切逆算、差分、操作層を扱う。既存カンバン（task）と並行提供 | [README](./production/README.md) / [requirements](./production/requirements.md) / [model](./production/model.md) / [flows](./production/flows.md) |
@@ -92,7 +92,7 @@
 #### schedule
 
 - 配信予定や作業予定の時間管理責務を持つ
-- カレンダー描画、説明表現、同期、モーダル UI を含む体験の中心機能になる
+- カレンダー描画、説明表現、Google カレンダー書き出し、モーダル UI を含む体験の中心機能になる
 
 #### task
 
