@@ -21,7 +21,8 @@ const TEST_USER = {
 };
 
 async function switchToTeam(page: Page, targetTeamName: string, expectedTeamCode: string) {
-  await page.getByRole('tab', { name: 'チーム', exact: true }).click();
+  // チーム切替時にページが再読み込みされても、コードを表示するタブを維持する。
+  await page.goto('/team?tab=team');
   const info = page.getByRole('main').locator('dl');
   await expect(info).toBeVisible();
   if (!(await info.getByText(expectedTeamCode, { exact: true }).isVisible())) {
