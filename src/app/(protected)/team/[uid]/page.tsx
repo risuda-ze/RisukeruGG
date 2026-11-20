@@ -19,7 +19,7 @@ import { selectAssignedSteps } from '@/lib/briefs/assignedSteps';
 import { MEMBER_DUTY_LABELS } from '@/types/entities';
 
 /**
- * メンバー詳細（TE-015〜TE-017）。担当分野・ひとこと・担当中の工程を表示する。
+ * メンバー・スタッフの詳細（TE-017）。担当分野・ひとこと・担当中の工程を表示する。
  * 対応不可時間の画面と同じく、カードを使わず全幅のセクションを罫線で区切る。
  */
 export default function MemberDetailPage() {
@@ -44,16 +44,16 @@ export default function MemberDetailPage() {
   const back = (
     <Link href="/team" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
       <Icon name="arrow_back" size={14} />
-      メンバー一覧
+      メンバー・スタッフ一覧
     </Link>
   );
 
   if (!member) {
     return (
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar title="メンバー詳細">{back}</TopBar>
+        <TopBar title="メンバー・スタッフの詳細">{back}</TopBar>
         <p className="px-4 py-10 text-center text-sm text-text-2 md:px-7">
-          メンバーが見つかりません
+          メンバー・スタッフが見つかりません
         </p>
       </div>
     );
@@ -64,7 +64,7 @@ export default function MemberDetailPage() {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <TopBar title="メンバー詳細">{back}</TopBar>
+      <TopBar title="メンバー・スタッフの詳細">{back}</TopBar>
       <div className="flex-1 overflow-y-auto">
         {/* 見出し: アバター・名前・ロール */}
         <section className="flex items-center gap-4 border-b border-border bg-surface px-4 py-5 md:px-7">

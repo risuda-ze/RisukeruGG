@@ -1,6 +1,6 @@
 'use client';
 
-/** メンバーの担当分野・ひとことを編集するダイアログ（TE-014）。本人またはオペレーターが使う */
+/** 所属者の担当分野・ひとことを編集するダイアログ（TE-014）。本人またはメンバー（operator）が使う */
 
 import { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';

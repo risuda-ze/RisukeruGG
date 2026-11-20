@@ -36,7 +36,7 @@ type DialogState =
 
 type Tab = 'members' | 'team';
 
-/** メンバー一覧の列。広い幅では表の列、狭い幅では 1 列の縦積み */
+/** 所属者（メンバー・スタッフ）一覧の列。広い幅では表の列、狭い幅では 1 列の縦積み */
 const MEMBER_GRID =
   'px-4 md:px-7 @4xl:grid-cols-[minmax(13rem,1.4fr)_11rem_minmax(12rem,1.4fr)_minmax(14rem,1.2fr)_7rem] @4xl:items-center @4xl:gap-x-6';
 
@@ -76,7 +76,8 @@ function TeamPageInner() {
   const initialTab: Tab = useSearchParams().get('tab') === 'team' ? 'team' : 'members';
   const [tab, setTab] = useState<Tab>(initialTab);
   const [query, setQuery] = useState('');
-  const [dutyFilter, setDutyFilter] = useState<MemberDuty | null>(null);
+  // 担当分野は複数選択。選んだもののいずれかを持つ人に絞る（TE-016）
+  const [dutyFilter, setDutyFilter] = useState<ReadonlySet<MemberDuty>>(new Set());
   const currentUser = useAuthStore((s) => s.currentUser);
   const currentTeam = useAuthStore((s) => s.currentTeam);
   const members = useAuthStore((s) => s.members);
@@ -102,7 +103,7 @@ function TeamPageInner() {
   const q = query.trim().toLowerCase();
   const filteredMembers = members.filter(
     (m) =>
-      (!dutyFilter || m.duties.includes(dutyFilter)) &&
+      (dutyFilter.size === 0 || m.duties.some((d) => dutyFilter.has(d))) &&
       (!q ||
         m.displayName.toLowerCase().includes(q) ||
         (m.discordUsername ?? '').toLowerCase().includes(q))
@@ -253,13 +254,13 @@ function TeamPageInner() {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <TopBar title="チームメンバー" subtitle={`${members.length}名`} />
+      <TopBar title="メンバー・スタッフ" subtitle={`${members.length}名`} />
 
       {/* タブ。対応不可時間と同じく、カードを使わず全幅の帯で区切る */}
       <div role="tablist" className="flex shrink-0 gap-1 border-b border-border px-4 md:px-7">
         {(
           [
-            ['members', 'メンバー'],
+            ['members', 'メンバー・スタッフ'],
             ['team', 'チーム'],
           ] as const
         ).map(([key, label]) => (
@@ -296,7 +297,7 @@ function TeamPageInner() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="名前・Discord 名で絞り込み"
-                aria-label="メンバーを絞り込み"
+                aria-label="メンバー・スタッフを絞り込み"
                 className="pl-9"
               />
             </div>
@@ -309,10 +310,14 @@ function TeamPageInner() {
                 <button
                   key={d}
                   type="button"
-                  aria-pressed={dutyFilter === d}
-                  onClick={() => setDutyFilter(dutyFilter === d ? null : d)}
+                  aria-pressed={dutyFilter.has(d)}
+                  onClick={() => {
+                    const next = new Set(dutyFilter);
+                    if (!next.delete(d)) next.add(d);
+                    setDutyFilter(next);
+                  }}
                   className={cn(
-                    badgeVariants({ variant: dutyFilter === d ? 'primary' : 'neutral' }),
+                    badgeVariants({ variant: dutyFilter.has(d) ? 'primary' : 'neutral' }),
                     'shrink-0 cursor-pointer'
                   )}
                 >
@@ -323,13 +328,13 @@ function TeamPageInner() {
           </div>
 
           {/*
-            メンバー一覧（DESIGN.md Table / List）。行は交互に canvas / surface、hover で surface-2。
+            所属者の一覧（DESIGN.md Table / List）。行は交互に canvas / surface、hover で surface-2。
             幅に余裕があるときは列をそろえた表、狭いときは項目名つきの縦積みにする（コンテナ幅で切り替え）
           */}
           <div className="@container flex-1 overflow-y-auto">
             {filteredMembers.length === 0 ? (
               <p className="px-4 py-10 text-center text-sm text-text-2 md:px-7">
-                条件に合うメンバーはいません
+                条件に合うメンバー・スタッフはいません
               </p>
             ) : (
               <>
@@ -340,7 +345,7 @@ function TeamPageInner() {
                     'hidden border-b border-border bg-surface-2 py-2.5 @4xl:grid'
                   )}
                 >
-                  {['メンバー', 'ロール', '担当分野', 'Discord', '操作'].map((label) => (
+                  {['名前', 'ロール', '担当分野', 'Discord', '操作'].map((label) => (
                     <span key={label} className="eyebrow text-text-2">
                       {label}
                     </span>
@@ -359,7 +364,7 @@ function TeamPageInner() {
                           'relative grid gap-y-3 py-5 transition-colors duration-(--duration-instant) odd:bg-canvas even:bg-surface hover:bg-surface-2 @4xl:py-4'
                         )}
                       >
-                        {/* メンバー。行全体を詳細へのリンクにする（操作は z-10 で上に出す） */}
+                        {/* 名前。行全体を詳細へのリンクにする（操作は z-10 で上に出す） */}
                         <div className="flex min-w-0 items-center gap-3">
                           <Avatar initials={member.displayName} src={member.avatarUrl} size="lg" />
                           <div className="min-w-0">
@@ -408,7 +413,7 @@ function TeamPageInner() {
                           )}
                         </MemberField>
 
-                        {/* Discord ユーザー名（TE-012）。本人とオペレーターが編集できる */}
+                        {/* Discord ユーザー名（TE-012）。本人とメンバー（operator）が編集できる */}
                         <MemberField label="Discord">
                           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
                             <span
@@ -515,7 +520,7 @@ function TeamPageInner() {
             </Button>
           </section>
 
-          {/* チームを解散する（オペレーターのみ） */}
+          {/* チームを解散する（メンバー＝operator のみ） */}
           {isOperator && (
             <section className="px-4 py-6 md:px-7">
               <h2 className={cn(fieldLabelClass, 'mb-1 text-danger')}>危険ゾーン</h2>
