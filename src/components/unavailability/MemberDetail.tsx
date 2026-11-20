@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
@@ -70,6 +70,8 @@ const AXIS_W = { pc: 228, mobile: 176 };
 const LANE_W = { pc: 220, mobile: 200 };
 /** ドラッグ中、スクロール領域の上下端からこの距離に入ったら自動でスクロールする */
 const EDGE_SCROLL_ZONE = 28;
+/** 保存の書き込みがこの時間（ミリ秒）で完了しなければ、通信の案内を出して閉じられるようにする */
+const SAVE_STALL_MS = 10_000;
 
 /** 表示範囲の先頭からの時間数 → その 1 時間が対応不可か。範囲外は false */
 function isUnavailableAt(dates: string[], days: DayMasks, hourIndex: number): boolean {
@@ -129,6 +131,10 @@ export function MemberDetail({
     null
   );
   const [saving, setSaving] = useState(false);
+  /** 保存を始めてから SAVE_STALL_MS たっても書き込みが完了していない（通信が切れている等） */
+  const [stalled, setStalled] = useState(false);
+  /** 詳細を閉じた後に保存の結果が出たとき、画面に無い内容を「残っている」と案内しないために使う */
+  const closed = useRef(false);
   /** 開いているメモのフォーム。key が null なら追加 */
   const [noteForm, setNoteForm] = useState<{ key: string | null; initial: NoteFields } | null>(
     null
@@ -184,13 +190,28 @@ export function MemberDetail({
   const allNotes = useMemo(() => draftedNotes(data, draft), [data, draft]);
   const dirty = editable && isDirty(data, draft);
 
-  // 未保存のままリロード・タブを閉じようとしたら、ブラウザの確認を出す
+  // 未保存のまま、または保存の書き込みが完了する前にリロード・タブを閉じようとしたら、ブラウザの確認を出す。
+  // 書き込みの送信待ちの間は、購読データに自分の変更が先に反映されて dirty が false になるため、saving も見る
   useEffect(() => {
-    if (!dirty) return;
+    if (!dirty && !saving) return;
     const warn = (event: BeforeUnloadEvent) => event.preventDefault();
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
-  }, [dirty]);
+  }, [dirty, saving]);
+
+  // 書き込みが完了しないまま時間がたったら、案内を出して閉じられるようにする
+  useEffect(() => {
+    if (!saving) return;
+    const timer = window.setTimeout(() => setStalled(true), SAVE_STALL_MS);
+    return () => window.clearTimeout(timer);
+  }, [saving]);
+
+  useEffect(
+    () => () => {
+      closed.current = true;
+    },
+    []
+  );
 
   const notes = useMemo(() => {
     const byNote = new Map(allNotes.map((drafted) => [drafted.note, drafted]));
@@ -327,8 +348,11 @@ export function MemberDetail({
     // 書けた月の変更だけ取り除く。失敗した月の変更は画面に残す
     setDraft((prev) => dropSavedMonths(prev, submitted, savedMonths));
     setSaving(false);
+    setStalled(false);
     if (savedMonths.size === saves.length) {
       toast.success('対応不可時間を保存しました');
+    } else if (closed.current) {
+      toast.error('対応不可時間の保存に失敗しました。もう一度入力してください。');
     } else {
       toast.error('保存に失敗しました。入力した内容は残っています。もう一度お試しください。');
     }
@@ -345,10 +369,11 @@ export function MemberDetail({
     setBulkOpen(true);
   };
 
-  /** 未保存の変更があれば、黙って破棄せず確認する */
+  /** 未保存の変更や、完了していない保存があれば、黙って閉じずに確認する */
   const requestClose = () => {
-    if (saving) return;
-    if (dirty) setConfirmingClose(true);
+    // 保存の結果がすぐ出る間は閉じさせない（失敗したときに未保存の内容を残すため）
+    if (saving && !stalled) return;
+    if (saving || dirty) setConfirmingClose(true);
     else onClose();
   };
 
@@ -381,8 +406,9 @@ export function MemberDetail({
         <button
           type="button"
           onClick={requestClose}
-          // 保存の結果が出るまでは閉じさせない（失敗したときに未保存の内容を残すため）
-          disabled={saving}
+          // 保存の結果が出るまでは閉じさせない（失敗したときに未保存の内容を残すため）。
+          // 書き込みが完了しないまま時間がたったら、確認のうえで閉じられるようにする
+          disabled={saving && !stalled}
           aria-label="閉じる"
           className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-sm text-text-2 transition-colors duration-(--duration-fast) hover:bg-surface-2 hover:text-text disabled:pointer-events-none disabled:opacity-40"
         >
@@ -625,10 +651,16 @@ export function MemberDetail({
           <Button variant="ghost" onClick={openBulk} disabled={saving} className="mr-auto px-4">
             CSV・定期入力
           </Button>
-          {dirty && (
-            <span data-testid="un-unsaved" className="text-caption text-warning">
-              未保存の変更があります
+          {stalled ? (
+            <span data-testid="un-save-stalled" role="status" className="text-caption text-warning">
+              保存が終わっていません。通信を確認してください
             </span>
+          ) : (
+            (dirty || saving) && (
+              <span data-testid="un-unsaved" className="text-caption text-warning">
+                未保存の変更があります
+              </span>
+            )
           )}
           <Button onClick={save} disabled={!dirty} loading={saving}>
             保存
@@ -668,7 +700,7 @@ export function MemberDetail({
       <Modal
         open={confirmingClose}
         onClose={() => setConfirmingClose(false)}
-        title="保存していない変更があります"
+        title={saving ? '保存が終わっていません' : '保存していない変更があります'}
         size="sm"
         footer={
           <>
@@ -676,12 +708,14 @@ export function MemberDetail({
               編集に戻る
             </Button>
             <Button variant="danger" onClick={onClose}>
-              破棄して閉じる
+              {saving ? '閉じる' : '破棄して閉じる'}
             </Button>
           </>
         }
       >
-        閉じると、入力した対応不可とメモの変更は保存されずに破棄されます。
+        {saving
+          ? '通信が戻る前にこのページを閉じたり再読み込みしたりすると、変更は保存されません。このページを開いたままにしておけば、通信が戻ったときに保存されます。'
+          : '閉じると、入力した対応不可とメモの変更は保存されずに破棄されます。'}
       </Modal>
     </DialogShell>
   );

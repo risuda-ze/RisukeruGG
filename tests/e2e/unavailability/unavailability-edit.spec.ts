@@ -187,6 +187,8 @@ test('⑤ 定期入力をプレビューして保存すると、一覧に反映�
   await bulk.getByRole('button', { name: `${weekday}曜日` }).click();
   await bulk.locator('[data-slot="dropdown-trigger"]').nth(1).click();
   await page.getByRole('option', { name: '12:00' }).click();
+  // 選択肢が閉じ切る前に隣の Dropdown を開くと、選択肢が見えないことがある（#241）。閉じるのを待つ
+  await expect(page.getByRole('listbox')).toHaveCount(0);
   await bulk.locator('[data-slot="dropdown-trigger"]').nth(0).click();
   await page.getByRole('option', { name: '10:00' }).click();
   await page.getByRole('button', { name: 'プレビュー' }).click();
@@ -220,4 +222,48 @@ test('⑤ 定期入力をプレビューして保存すると、一覧に反映�
   await expect(hourRow(page, date, 10).getByTestId('un-block')).toHaveCount(0);
   await detail.getByRole('button', { name: '閉じる' }).click();
   await expect(myCell(page, date)).toHaveText('');
+});
+
+test('書き込みが完了しない間は案内を出し、確認のうえで閉じられる（UN-071, UN-074）', async ({
+  page,
+  context,
+}) => {
+  await openAs(page, 'kenta@example.com');
+  const date = day(4);
+  await myCell(page, date).click();
+
+  const detail = page.getByTestId('un-detail');
+  const save = detail.getByRole('button', { name: '保存', exact: true });
+  const close = detail.getByRole('button', { name: '閉じる' });
+  await expect(hourRow(page, date, 2)).toBeVisible();
+  await dragHours(page, date, 2, 2);
+
+  // 通信を切って保存する。送信待ちの間も未保存の表示は残り、すぐには閉じられない
+  await context.setOffline(true);
+  await save.click();
+  await expect(detail.getByTestId('un-unsaved')).toBeVisible();
+  await expect(close).toBeDisabled();
+
+  // 一定時間たつと通信の案内に変わり、閉じる操作で確認が出る
+  await expect(detail.getByTestId('un-save-stalled')).toBeVisible({ timeout: 20000 });
+  await close.click();
+  await expect(page.getByRole('heading', { name: '保存が終わっていません' })).toBeVisible();
+  await page.getByRole('button', { name: '編集に戻る' }).click();
+  await expect(detail).toBeVisible();
+
+  // 通信が戻ると保存が完了し、案内が消える
+  await context.setOffline(false);
+  await expect(page.getByText('対応不可時間を保存しました')).toBeVisible({ timeout: 60000 });
+  await expect(detail.getByTestId('un-save-stalled')).toHaveCount(0);
+  await expect(detail.getByTestId('un-unsaved')).toHaveCount(0);
+  await expect(hourRow(page, date, 2).getByTestId('un-block')).toHaveAttribute(
+    'data-kind',
+    'saved'
+  );
+
+  // 消して保存し、シードの状態に戻す
+  await dragHours(page, date, 2, 2);
+  await save.click();
+  await expect(hourRow(page, date, 2)).toHaveAttribute('data-unavailable', 'false');
+  await expect(detail.getByTestId('un-unsaved')).toHaveCount(0);
 });
