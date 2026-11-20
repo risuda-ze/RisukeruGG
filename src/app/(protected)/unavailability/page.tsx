@@ -9,7 +9,10 @@ export default function UnavailabilityPage() {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <TopBar title="対応不可時間" subtitle="メンバーが対応できない日・時間帯を確認できます" />
+      <TopBar
+        title="対応不可時間"
+        subtitle="メンバー・スタッフが対応できない日・時間帯を確認できます"
+      />
       {/* チームを切り替えたら購読と表示状態を作り直す */}
       {currentTeamId && <UnavailabilityBoard key={currentTeamId} teamId={currentTeamId} />}
     </div>

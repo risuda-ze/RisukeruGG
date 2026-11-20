@@ -4,7 +4,7 @@
 
 対応不可は「1 人・1 ヶ月」を 1 ドキュメントにまとめて持つ。1 日は 24 ビットの整数 1 つで表し、追記・人数集計・時間帯フィルタをビット演算で済ませる。
 
-メンバーの所属とロールは team、アカウントの状態は user を参照する。
+所属者の所属とロールは team、アカウントの状態は user を参照する。
 
 ## UnavailabilityMonth
 
@@ -53,8 +53,8 @@ Firestore コレクション配置: `teams/{teamId}/unavailability/{userId}_{yyy
 
 | 操作 | 条件 |
 | ---- | ---- |
-| read | 同一チームのメンバー（`rom` を含む） |
-| create / update | 同一チームのメンバー（ロール不問）かつ β ゲート通過。書き込み後の `userId` が本人の UID、`docId` が `{本人の UID}_{month}`、`month` が `yyyy-mm` 形式、フィールドが `userId` / `month` / `days` / `notes` / `updatedAt` のみ、`days` が map、`notes` が 200 件以下の配列、`updatedAt` がリクエスト時刻 |
+| read | 同一チームの所属者（`rom` を含む） |
+| create / update | 同一チームの所属者（ロール不問）かつ β ゲート通過。書き込み後の `userId` が本人の UID、`docId` が `{本人の UID}_{month}`、`month` が `yyyy-mm` 形式、フィールドが `userId` / `month` / `days` / `notes` / `updatedAt` のみ、`days` が map、`notes` が 200 件以下の配列、`updatedAt` がリクエスト時刻 |
 | delete | 不可（削除は Admin SDK のみ） |
 
 ルールは map・配列の中身を走査できないため、次はルールでは検証しない。
@@ -68,7 +68,7 @@ Firestore コレクション配置: `teams/{teamId}/unavailability/{userId}_{yyy
 ## 読み取り
 
 - 一覧・詳細とも `teams/{teamId}/unavailability` を `month` の等価条件で購読する（1 クエリでチーム全員の 1 ヶ月分）。当月を先に購読し、前月・翌月はスクロールが端に近づいたときに購読を足す
-- 一覧の「最終更新」は、そのメンバーの読み込み済み月ドキュメントの `updatedAt` のうち最新のもの。読み込み済みの月にドキュメントが 1 つも無ければ「未入力」
+- 一覧の「最終更新」は、その所属者の読み込み済み月ドキュメントの `updatedAt` のうち最新のもの。読み込み済みの月にドキュメントが 1 つも無ければ「未入力」
 
 ## インデックス
 

@@ -72,7 +72,7 @@
 | `integration`  | 外部サービス連携     | Discord 連携（通知配送、Bot 招待、`/risukerugg` AI ボット）を扱う                                          | [README](./integration/README.md) / [requirements](./integration/requirements.md) / [model](./integration/model.md)       |
 | `ai`           | AIチャット           | `/chat` の AI アシスタント、提案生成、スケジュール・タスク・コラボ登録連携を扱う                           | [README](./ai/README.md) / [requirements](./ai/requirements.md) / [model](./ai/model.md)                                  |
 | `production`   | タスク管理 v2（1枚紙） | ブリーフ（動画1本）、工程、進め方、締切逆算、差分、操作層を扱う。既存カンバン（task）と並行提供 | [README](./production/README.md) / [requirements](./production/requirements.md) / [model](./production/model.md) / [flows](./production/flows.md) |
-| `unavailability` | 対応不可時間 | メンバーが申告する対応不可の時間帯とメモ、全メンバーの一覧、メンバー詳細、CSV・定期入力を扱う | [README](./unavailability/README.md) / [requirements](./unavailability/requirements.md) / [model](./unavailability/model.md) / [flows](./unavailability/flows.md) |
+| `unavailability` | 対応不可時間 | 所属者が申告する対応不可の時間帯とメモ、全所属者の一覧、所属者詳細、CSV・定期入力を扱う | [README](./unavailability/README.md) / [requirements](./unavailability/requirements.md) / [model](./unavailability/model.md) / [flows](./unavailability/flows.md) |
 
 ### カテゴリ別の役割
 
@@ -138,7 +138,7 @@
 
 #### unavailability
 
-- メンバーごとの対応不可時間を本人の申告で持ち、チーム全員に一覧で見せる責務を持つ
+- 所属者ごとの対応不可時間を本人の申告で持ち、チーム全員に一覧で見せる責務を持つ
 - チーム予定（schedule）とは独立し、集まれる日を探すための材料を提供する
 
 ---
