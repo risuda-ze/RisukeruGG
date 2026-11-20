@@ -130,6 +130,14 @@ export default function MemberDetailPage() {
               </dd>
             </div>
           </dl>
+          {/* 対応不可時間は埋め込まず、画面へのリンクだけを置く（TE-017-5） */}
+          <Link
+            href="/unavailability"
+            className={`${buttonVariants({ variant: 'ghost', size: 'sm' })} mt-5`}
+          >
+            <Icon name="person_off" size={14} />
+            対応不可時間を見る
+          </Link>
         </section>
 
         {/* 担当中の工程。行は交互背景のリスト（DESIGN.md Table / List） */}
