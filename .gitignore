@@ -68,3 +68,5 @@ screenshots/
 
 # ログインファイル（必要に応じてコミットする）
 *.log
+# エージェントのレビュー素材（publish-report.mjs で review-reports ブランチへ）
+review-artifacts/

@@ -13,6 +13,8 @@
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
+    "check:static": "pnpm lint && pnpm typecheck && pnpm functions:build",
+    "verify": "pnpm check:static && pnpm test",
     "tokens": "node scripts/generate-design-tokens.mjs",
     "tokens:check": "node scripts/generate-design-tokens.mjs --check",
     "test": "vitest run",
