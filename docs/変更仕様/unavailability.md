@@ -66,12 +66,12 @@ Issue #210 の本文に無い、または曖昧だった点を設計時に次の
 
 ## PR 分割と状態
 
-すべて `develop` 起点の `feature/` ブランチで作り、`develop` へ段階的にマージする。
+設計書と同じ PR（ブランチ `feature/unavailability-docs`）に、A〜E を順に載せる。A〜E は PR ではなく、同じ PR の中の作業単位を指す。
 
 | 弾 | PR | 内容 | 依存 | 状態 |
 | --- | --- | --- | --- | --- |
 | 0 | 設計書 | 本書、正本カテゴリ `unavailability/`、共通用語、親仕様のカテゴリ一覧 | なし | 本 PR |
-| 1 | A | 型・Zod・Firestore ルール・インデックス・純関数・月次削除 Functions・退出時の掃除・ユニットテスト | #178 | 実装済み（`feature/unavailability-foundation`） |
+| 1 | A | 型・Zod・Firestore ルール・インデックス・純関数・月次削除 Functions・退出時の掃除・ユニットテスト | #178 | 実装済み |
 | 1 | B | 一覧 + メンバー詳細の閲覧（仮想スクロール、最終更新、メンバー複数選択）+ ナビ項目 + E2E ①② | A | 未着手 |
 | 1 | C | 入力（ドラッグ塗り）+ メモ + E2E ③④ | B | 未着手 |
 | 2 | D | 展開 → プレビュー → 和集合の共通経路 + CSV + 定期入力 | C | 未着手 |
@@ -126,7 +126,7 @@ Emulator のシードに対応不可データを追加して行う。
 
 ## 本番反映時の注意
 
-- PR A のマージ後、`firebase deploy --only firestore`（rules + indexes）と Functions の再デプロイが必要。ルールが未デプロイだと画面は全メンバーが permission-denied になる
+- 本 PR のマージ後、`firebase deploy --only firestore`（rules + indexes）と Functions の再デプロイが必要。ルールが未デプロイだと画面は全メンバーが permission-denied になる
 - 月次削除はコレクショングループのインデックスが無いと失敗する。初回実行（翌月 1 日）までにインデックスが有効になっていることを確認する
 
 ## 影響範囲まとめ
