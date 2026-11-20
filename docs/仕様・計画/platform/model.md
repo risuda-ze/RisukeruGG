@@ -6,13 +6,13 @@
 
 ## ReleaseNote（未実装）
 
-リリースノート 1 件。GitHub Releases の公開済み Release 1 件から作る表示用のデータで、アプリ側には保存しない（Firestore にも持たない）。
+リリースノート 1 件。`src/lib/releaseNotes.ts` に `RELEASE_NOTES: ReleaseNote[]` として新しい順に持つ。Firestore には保存しない。
 
-| フィールド    | 型     | 意味 |
-| ------------- | ------ | ---- |
-| `version`     | string | バージョン番号（例: `0.2.0`）。Release のタグ `v{version}` から先頭の `v` を除いたもの。見出しとアンカー `#v{version}` に使う |
-| `publishedAt` | string | Release の公開日時（ISO 8601）。JST の日付にして公開日として表示し、並び順（新しい順）にも使う |
-| `body`        | string | Release の本文（Markdown）。そのリリースの更新内容として描画する |
+| フィールド | 型     | 意味 |
+| ---------- | ------ | ---- |
+| `version`  | string | バージョン番号（例: `0.2.0`）。見出しとアンカー `#v{version}` に使う。先頭の 1 件は `package.json` の `version` と一致する |
+| `date`     | string | 公開日（JST、`YYYY-MM-DD`）。そのまま表示する |
+| `body`     | string | そのリリースの更新内容（Markdown）。GitHub Releases の下書きから移した本文で、ページに描画する |
 
 ## 今後詳細化する項目
 
