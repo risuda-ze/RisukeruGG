@@ -47,7 +47,7 @@ Team は共同作業単位を表す。TeamMember はユーザーとチームの�
 
 ### Security Rules（TE-014-3）
 
-`teams/{teamId}/members/{uid}` の読み取り（同一チームの全ロール）と更新権限（本人またはオペレーター、`plan` は変更不可）は変更しない。create / update に次の検証を追加する。
+クライアントは更新の許可リスト（下記「業務ルール」）で `duties` / `note` を書ける。更新時に次の値を検証する。
 
 - `duties` がある場合: list で、要素は候補のコード値のみ（`hasOnly`）、件数は 6 以下
 - `note` がある場合: null、または 100 字以下の string
@@ -82,6 +82,7 @@ teamCodes/{teamCode}              ← チームコード → teamId の逆引き
 
 - チームには少なくとも 1 人のオペレーターが必要（複数も可）
 - `operatorUids` は `TeamMember.role === 'operator'` を持つメンバーの UID リストと同期する（非正規化）
+- `TeamMember` の作成・削除と `role` / `plan` の変更は Callable Function（Admin SDK）だけが行う。クライアントが直接更新できるのは `displayName` / `avatarUrl` / `discordUsername` / `discordUserId` / `duties` / `note` のみで、対象は本人のドキュメント（オペレーターは全メンバー）。Security Rules の許可リストで強制する（`scripts/check-member-rules.mjs` で検証）
 - メンバーが 1 人（自分のみ）のチームをソロチームと呼ぶ
 - ソロチームのオペレーターが退出した場合、チームドキュメントとチームコードドキュメントは自動削除される
 - `removeTeamMember` で削除後にメンバー数が 0 になった場合も同様に自動削除される（防御的処理）
