@@ -4,7 +4,7 @@
 
 現時点では PWA・オフラインカテゴリに専用の永続モデルは明示していない。
 
-## ReleaseNote（未実装）
+## ReleaseNote
 
 リリースノート 1 件。`src/lib/releaseNotes.ts` に `RELEASE_NOTES: ReleaseNote[]` として新しい順に持つ。Firestore には保存しない。
 
