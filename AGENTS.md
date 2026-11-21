@@ -92,8 +92,9 @@ node scripts/agent/file-issue.mjs    # 範囲外の課題・共通指摘の起�
 - 日時は JST 基準（NFR-010）、演算は date-fns
 - テスト: ユニットは `tests/unit/<機能>/<対象>.test.ts(x)`（Firebase 依存は `tests/unit/setup.ts` の方式でモック）、UI 変更は `tests/e2e/` の smoke で通る spec
 
-## 出力
+## PR規約
 
 - レビュー結果は `node scripts/agent/post-review.mjs`
 - 最終レポートは `node scripts/agent/publish-report.mjs` で PR コメントとして投稿する
 - スクリーンショットなどレポート素材は `review-artifacts/pr-<番号>/`（git 管理外）に置く
+- 関連するチケットをDevelopmentに入れること

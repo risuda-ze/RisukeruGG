@@ -2,6 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomBytes } from 'crypto';
 import { db, getAuthContext, requireAuth, getUserDoc } from '../lib/validateAuth';
+import { deleteUserUnavailability } from '../unavailability/cleanup';
 
 export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: CallableRequest) => {
   const uid = requireAuth(request);
@@ -47,7 +48,7 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
     }
   }
 
-  return await db.runTransaction(async (tx) => {
+  const result = await db.runTransaction(async (tx) => {
     const now = FieldValue.serverTimestamp();
 
     tx.delete(db.doc(`teams/${teamId}/members/${uid}`));
@@ -93,4 +94,7 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
 
     return { success: true, newSoloTeamId: soloTeamId };
   });
+
+  await deleteUserUnavailability(teamId, uid);
+  return result;
 });

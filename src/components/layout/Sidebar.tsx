@@ -33,6 +33,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: '/chat',         label: 'AIに相談',  icon: 'auto_awesome' },
       { href: '/schedule',     label: 'スケジュール', icon: 'calendar_month' },
+      { href: '/unavailability', label: '対応不可時間', icon: 'person_off' },
       { href: '/tasks',        label: 'タスク管理', icon: 'list_bullet' },
       { href: '/briefs',       label: 'タスク管理 v2', icon: 'event_available', badge: 'β' },
       { href: '/collabs',      label: 'コラボ調整', icon: 'handshake' },

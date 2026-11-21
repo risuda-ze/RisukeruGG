@@ -2,6 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { db, requireAuth, getUserDoc } from '../lib/validateAuth';
+import { deleteUserUnavailability } from '../unavailability/cleanup';
 
 interface DeleteAccountData {
   operatorAssignments?: { teamId: string; newOperatorId: string }[];
@@ -157,6 +158,8 @@ export const deleteAccount = onCall(
         deletedAt: FieldValue.serverTimestamp(),
       });
     });
+
+    await Promise.all(teamDataList.map((t) => deleteUserUnavailability(t.teamId, uid)));
 
     await getAuth().deleteUser(uid);
     return { success: true };
