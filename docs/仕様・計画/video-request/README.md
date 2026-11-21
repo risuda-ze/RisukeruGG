@@ -11,5 +11,5 @@
 ## 他カテゴリとの境界
 
 - [タスク管理](../task/README.md)が列の作成・改名・完了列の指定を扱う。動画依頼はチームが割り当てた列IDを使い、納品した制作物のタスクを移動する。
-- [外部サービス連携](../integration/README.md)がDiscord共通の連携を扱う。動画依頼の投稿先・納品ボタンの運用は[専用ワーカーの手順](../../../workers/video-requests/README.md)を参照する。
+- [外部サービス連携](../integration/README.md)がDiscord共通の連携を扱う。動画依頼の投稿先・納品ボタンの運用は[Discord連携の設定と移行](flows.md#discord連携の設定と移行)を参照する。
 - [制作ブリーフ](../production/README.md)は制作工程と予定の管理を扱う。外部編集者への依頼・納品確認はこのカテゴリで扱う。

@@ -3,7 +3,7 @@ export type VideoRequestStatus =
   | 'in_progress'
   | 'review_requested'
   | 'completed';
-export type DiscordRequestStatus = 'pending' | 'queued' | 'creating' | 'created' | 'failed';
+export type DiscordRequestStatus = 'pending' | 'bot_queued' | 'queued' | 'creating' | 'created' | 'failed';
 
 export interface VideoRequestDiscord {
   status: DiscordRequestStatus;

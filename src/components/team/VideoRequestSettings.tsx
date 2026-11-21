@@ -5,6 +5,8 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
 import type { TaskStatus } from '@/types/entities';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
 import { Card } from '@/components/ui/Card';
 
 const labels = {
@@ -19,6 +21,13 @@ const defaults = {
   progressColumnId: '',
   reviewColumnId: '',
   createThumbnailTask: false,
+  routing: {
+    editorChannelId: '',
+    thumbnailChannelId: '',
+    thumbnailLongIds: [] as string[],
+    thumbnailShortIds: [] as string[],
+    editorChannels: {} as Record<string, string>,
+  },
 };
 
 export function VideoRequestSettings({
@@ -29,6 +38,9 @@ export function VideoRequestSettings({
   columns: TaskStatus[];
 }) {
   const [settings, setSettings] = useState(defaults);
+  const [longIds, setLongIds] = useState('');
+  const [shortIds, setShortIds] = useState('');
+  const [overrides, setOverrides] = useState('');
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -38,7 +50,16 @@ export function VideoRequestSettings({
     getDoc(doc(db, 'teams', teamId, 'settings', 'videoRequests'))
       .then((snapshot) => {
         if (active) {
-          setSettings({ ...defaults, ...snapshot.data() });
+          const data = snapshot.data();
+          const stored = { ...defaults, ...data, routing: { ...defaults.routing, ...data?.routing } };
+          setSettings(stored);
+          setLongIds(stored.routing.thumbnailLongIds.join(', '));
+          setShortIds(stored.routing.thumbnailShortIds.join(', '));
+          setOverrides(
+            Object.entries(stored.routing.editorChannels)
+              .map(([user, channel]) => user + '=' + channel)
+              .join('\n')
+          );
           setReady(true);
         }
       })
@@ -54,7 +75,39 @@ export function VideoRequestSettings({
     event.preventDefault();
     setSaving(true);
     try {
-      await setDoc(doc(db, 'teams', teamId, 'settings', 'videoRequests'), settings);
+      const splitIds = (value: string) => [...new Set(value.split(/[\s,、]+/).filter(Boolean))];
+      const routing = {
+        ...settings.routing,
+        editorChannelId: settings.routing.editorChannelId.trim(),
+        thumbnailChannelId: settings.routing.thumbnailChannelId.trim(),
+        thumbnailLongIds: splitIds(longIds),
+        thumbnailShortIds: splitIds(shortIds),
+        editorChannels: {} as Record<string, string>,
+      };
+      const ids = [
+        routing.editorChannelId,
+        ...routing.thumbnailLongIds,
+        ...routing.thumbnailShortIds,
+      ];
+      if (settings.createThumbnailTask || routing.thumbnailChannelId)
+        ids.push(routing.thumbnailChannelId);
+      for (const line of overrides
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)) {
+        const pair = line.split('=').map((value) => value.trim());
+        if (pair.length !== 2) {
+          setMessage('担当者別の送信先は「ユーザーID=チャンネルID」で入力してください');
+          return;
+        }
+        ids.push(...pair);
+        routing.editorChannels[pair[0]] = pair[1];
+      }
+      if (ids.some((id) => !/^\d{17,20}$/.test(id))) {
+        setMessage('DiscordのIDは17〜20桁の半角数字で入力してください');
+        return;
+      }
+      await setDoc(doc(db, 'teams', teamId, 'settings', 'videoRequests'), { ...settings, routing });
       setMessage('保存しました。次の動画依頼から適用されます。');
     } catch {
       setMessage('設定を保存できませんでした');
@@ -105,6 +158,50 @@ export function VideoRequestSettings({
           />{' '}
           サムネ制作も依頼する
         </label>
+        <Input
+          label="動画編集の送信先チャンネルID"
+          required
+          value={settings.routing.editorChannelId}
+          onChange={(e) =>
+            setSettings({
+              ...settings,
+              routing: { ...settings.routing, editorChannelId: e.target.value },
+            })
+          }
+        />
+        <Textarea
+          label="担当者別の送信先（任意）"
+          value={overrides}
+          onChange={(e) => setOverrides(e.target.value)}
+          placeholder="1行につき、ユーザーID=チャンネルID"
+        />
+        {settings.createThumbnailTask && (
+          <>
+            <Input
+              label="サムネ制作の送信先チャンネルID"
+              required
+              value={settings.routing.thumbnailChannelId}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  routing: { ...settings.routing, thumbnailChannelId: e.target.value },
+                })
+              }
+            />
+            <Input
+              label="横動画のサムネ担当者ID"
+              value={longIds}
+              hint="複数人はカンマ区切り"
+              onChange={(e) => setLongIds(e.target.value)}
+            />
+            <Input
+              label="ショートのサムネ担当者ID"
+              value={shortIds}
+              hint="複数人はカンマ区切り"
+              onChange={(e) => setShortIds(e.target.value)}
+            />
+          </>
+        )}
         <Button type="submit" disabled={!ready || !valid || saving}>
           動画依頼の設定を保存
         </Button>

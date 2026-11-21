@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { onCall, type CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db, getAuthContext, requireOperator, requireOwnerOrEditor } from '../lib/validateAuth';
@@ -159,6 +160,19 @@ async function getEditorsInTransaction(
   return [...new Set(cachedDiscordIds)];
 }
 
+const discordId = z.string().regex(/^\d{17,20}$/);
+const routeSettings = z.object({
+  editorChannelId: discordId,
+  thumbnailChannelId: z.union([discordId, z.literal('')]).default(''),
+  thumbnailLongIds: z.array(discordId).default([]),
+  thumbnailShortIds: z.array(discordId).default([]),
+  editorChannels: z.record(discordId, discordId).default({}),
+});
+
+function eventStatus(request: FirebaseFirestore.DocumentData) {
+  return request.discordTransport === 'integrated' ? 'bot_queued' : 'queued';
+}
+
 export const createVideoRequest = onCall(
   { region: REGION },
   async (request: CallableRequest<CreateVideoRequestData>) => {
@@ -174,6 +188,18 @@ export const createVideoRequest = onCall(
       const config = (await tx.get(db.doc(`teams/${input.teamId}/settings/videoRequests`))).data();
       if (!config)
         throw new HttpsError('failed-precondition', 'カテゴリ設定で動画依頼の列を指定してください');
+      const binding = await tx.get(db.doc(`teams/${input.teamId}/discord/config`));
+      const routing = routeSettings.safeParse(config.routing);
+      if (
+        !binding.get('guildId') ||
+        !routing.success ||
+        (config.createThumbnailTask && !routing.data.thumbnailChannelId)
+      ) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Discordサーバーを連携し、カテゴリ設定で動画依頼の送信先を保存してください'
+        );
+      }
       const mapping = videoRequestColumns(config);
       if (!mapping)
         throw new HttpsError('failed-precondition', '動画依頼の3つの列を設定してください');
@@ -213,6 +239,8 @@ export const createVideoRequest = onCall(
           updatedAt: now,
         });
       tx.set(videoRequestRef, {
+        discordTransport: 'integrated',
+        discordRouting: { ...routing.data, guildId: binding.get('guildId') },
         thumbnailTaskId: config.createThumbnailTask ? thumbnailTask.id : null,
         thumbnailStatus: config.createThumbnailTask ? 'pending_discord' : null,
         teamId: input.teamId,
@@ -235,8 +263,7 @@ export const createVideoRequest = onCall(
         taskColumnId: pendingColumnId,
         reviewTaskColumnId: reviewColumnId,
         discord: {
-          // queued は重複作成対策済みの新Bot専用。旧Botの pending 監視から分離する。
-          status: 'queued',
+          status: 'bot_queued',
           editorThreadIds: [],
           editorThreadUrls: [],
           thumbnailThreadId: null,
@@ -272,6 +299,11 @@ export const updateVideoRequest = onCall(
         : await getEditorsInTransaction(tx, input.teamId, editorMemberIds);
       const currentData = current.data()!;
       const discord = currentData.discord as { status?: string } | undefined;
+      if (currentData.discordTransport === 'integrated' && discord?.status === 'creating')
+        throw new HttpsError(
+          'failed-precondition',
+          'Discord送信中です。送信完了後に編集してください'
+        );
       const next = {
         title: input.title.trim(),
         editorMemberIds,
@@ -338,14 +370,13 @@ export const updateVideoRequest = onCall(
       if (discord?.status === 'created' && changes.length > 0) {
         tx.set(requestRef.collection('discordEvents').doc(), {
           type: 'request_updated',
-          // 旧Botの pending 監視とは分離し、差分通知対応Botだけが処理する。
-          status: 'queued',
+          status: eventStatus(currentData),
           changes,
           createdBy: ctx.uid,
           createdAt: now,
           updatedAt: now,
         });
-      } else if (discord?.status === 'failed') {
+      } else if (discord?.status === 'failed' && currentData.discordTransport !== 'integrated') {
         tx.update(requestRef, {
           'discord.status': 'pending',
           'discord.error': null,
@@ -398,7 +429,7 @@ export const reviewThumbnail = onCall(
       tx.set(ref.collection('discordEvents').doc(), {
         type: action === 'approve' ? 'thumbnail_approved' : 'thumbnail_revision',
         message: message ?? '',
-        status: 'queued',
+        status: eventStatus(data),
         createdBy: request.auth!.uid,
         createdAt: now,
         updatedAt: now,
@@ -422,6 +453,9 @@ export const requestVideoRevision = onCall(
     const event = ref.collection('discordEvents').doc();
     const now = FieldValue.serverTimestamp();
     await db.runTransaction(async (tx) => {
+      const latest = (await tx.get(ref)).data();
+      if (latest?.discordTransport === 'integrated' && latest.discord?.status !== 'created')
+        throw new HttpsError('failed-precondition', 'Discord送信完了後に操作してください');
       tx.update(ref, { status: 'in_progress', updatedAt: now });
       const taskId = snap.data()!.taskId as string | undefined;
       if (taskId && progressColumnId) {
@@ -433,7 +467,7 @@ export const requestVideoRevision = onCall(
       tx.set(event, {
         type: 'revision_requested',
         message: message.trim(),
-        status: 'queued',
+        status: eventStatus(snap.data()!),
         createdBy: ctx.uid,
         createdAt: now,
         updatedAt: now,
@@ -458,6 +492,9 @@ export const approveVideoRequest = onCall(
     const event = ref.collection('discordEvents').doc();
     const now = FieldValue.serverTimestamp();
     await db.runTransaction(async (tx) => {
+      const latest = (await tx.get(ref)).data();
+      if (latest?.discordTransport === 'integrated' && latest.discord?.status !== 'created')
+        throw new HttpsError('failed-precondition', 'Discord送信完了後に操作してください');
       tx.update(ref, { status: 'completed', updatedAt: now });
       if (taskId) {
         tx.update(db.doc(`teams/${teamId}/tasks/${taskId}`), {
@@ -467,7 +504,7 @@ export const approveVideoRequest = onCall(
       }
       tx.set(event, {
         type: 'approved',
-        status: 'queued',
+        status: eventStatus(snap.data()!),
         createdBy: ctx.uid,
         createdAt: now,
         updatedAt: now,

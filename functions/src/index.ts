@@ -57,3 +57,5 @@ export * from './beta/requestBetaAccess';
 export * from './stripe/createCheckoutSession';
 export * from './stripe/createPortalSession';
 export * from './stripe/stripeWebhook';
+
+export * from './videoRequests/integratedDiscord';

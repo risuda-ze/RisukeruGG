@@ -10,4 +10,6 @@
 
 動画の状態は `status`、サムネの状態は `thumbnailStatus`。各々が `pending_discord → in_progress → review_requested → completed` と遷移し、修正は制作中に戻す。サムネがない依頼ではサムネ状態は空。動画は異なる納品URLを蓄積し、サムネは最新の納品投稿を参照する。
 
-スレッド作成の状態は `discord.status`（queued / creating / created / failed）、追加通知は queued / sending / sent / failed。通知結果と制作物の承認結果を独立して保存する。旧データに制作中列IDがない場合はチーム設定を参照する。
+スレッド作成の状態は `discord.status`（bot_queued / creating / created / failed）、追加通知は bot_queued / sending / sent / failed。通知結果と制作物の承認結果を独立して保存する。旧データに制作中列IDがない場合はチーム設定を参照する。
+
+新規依頼は `discordTransport=integrated`。チーム設定の `routing` には編集の既定チャンネル、担当者別の送信先、サムネチャンネル、形式別のサムネ担当IDを保存する。依頼作成時に送信先と連携サーバーを `discordRouting` に記録する。旧ワーカーは従来の `queued` だけを処理する。

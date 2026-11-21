@@ -506,7 +506,7 @@ export async function handleRisukeruVideoRequestInteraction(interaction, db, con
     const deliveryCount = [...new Set([...(data.deliveryUrls || []), url])].length;
     const message =
       deliveryCount === 1
-        ? '初稿が納品完了丸！ありがとうございます！\n確認されるまでお待ちください。'
+        ? '初稿の納品完了丸！ありがとうございます！\n確認しますのでお待ちください！'
         : '修正ファイルの納品ありがとうございます！\nさっそく確認します！';
     await interaction.reply({
       content: `${message}\n\n納品ファイル：${url}${note ? `\n共有事項：${note}` : ''}`,
