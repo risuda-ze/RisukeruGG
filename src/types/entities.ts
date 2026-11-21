@@ -40,7 +40,12 @@ export interface User {
   googleCalendarExports?: Record<string, GoogleCalendarExport>;
   deleted?: boolean;
   deletedAt?: Date | null;
+  /** テーマの選択（UI-036）。未設定なら端末の選択を使う */
+  theme?: ThemePreference;
 }
+
+/** テーマの選択。`system` は OS の prefers-color-scheme に追従する */
+export type ThemePreference = 'dark' | 'light' | 'system';
 
 /** チームごとの Google カレンダー書き出し状態 */
 export interface GoogleCalendarExport {

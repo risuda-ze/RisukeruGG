@@ -22,7 +22,7 @@
 2. システムが `/dashboard` へ遷移する
 3. ダッシュボードを現在のアクティブ項目として表示する
 
-## テーマ切り替えフロー（未実装・Issue #215）
+## テーマ切り替えフロー
 
 1. ページの初回描画前に、localStorage の `risukeru-theme` を読み、`<html data-theme>` を付ける。値が無ければ `dark`、`system` なら `prefers-color-scheme` から決める
 2. ログイン中は `users/{uid}` の購読で `theme` を受け取る。値があり、端末の選択と違う場合は端末の選択をその値に合わせる。未設定なら何もしない

@@ -11,7 +11,8 @@ import { auth } from '@/lib/firebase/client';
 import { subscribeTeam, subscribeMembers } from '@/lib/repositories/teams';
 import { parseGoogleCalendarExports } from '@/lib/repositories/googleCalendarExports';
 import { useGoogleCalendarExportStore } from '@/stores/googleCalendarExport';
-import type { GoogleCalendarExport, Team, TeamMember } from '@/types/entities';
+import { parseThemePreference } from '@/lib/utils/theme';
+import type { GoogleCalendarExport, Team, TeamMember, ThemePreference } from '@/types/entities';
 
 interface AuthState {
   currentUser: FirebaseUser | null;
@@ -24,6 +25,8 @@ interface AuthState {
   idToken: string | null;
   /** Google カレンダー書き出しの状態。キーは teamId */
   googleCalendarExports: Record<string, GoogleCalendarExport>;
+  /** users/{uid}.theme。未設定・不正値は null（UI-037） */
+  theme: ThemePreference | null;
 
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -42,6 +45,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   loading: true,
   idToken: null,
   googleCalendarExports: {},
+  theme: null,
 
   signIn: async () => {
     const provider = new GoogleAuthProvider();
@@ -50,7 +54,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signOut: async () => {
     await firebaseSignOut(auth);
-    set({ currentUser: null, currentTeamId: null, teamIds: [], currentTeam: null, members: [], idToken: null, googleCalendarExports: {} });
+    set({ currentUser: null, currentTeamId: null, teamIds: [], currentTeam: null, members: [], idToken: null, googleCalendarExports: {}, theme: null });
   },
 
   _setUser: (user) => set({ currentUser: user }),
@@ -98,6 +102,7 @@ export function initAuthListener() {
           currentTeamId: newTeamId,
           teamIds: newTeamIds,
           googleCalendarExports: parseGoogleCalendarExports(data.googleCalendarExports),
+          theme: parseThemePreference(data.theme),
         });
 
         if (newTeamId !== prev) {
@@ -133,6 +138,7 @@ export function initAuthListener() {
         currentTeam: null,
         members: [],
         googleCalendarExports: {},
+        theme: null,
         loading: false,
       });
     }

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useSidebarStore } from '@/stores/sidebar';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { TeamSwitcher } from '@/components/layout/TeamSwitcher';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { badgeVariants } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils/cn';
 
@@ -260,6 +261,11 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* ── テーマ切り替え ──────────────────────────────── */}
+      <div className="px-2 py-2" style={{ borderTop: '1px solid var(--border)' }}>
+        <ThemeToggle collapsed={collapsed} />
+      </div>
 
       {/* ── チームスイッチャー ──────────────────────────── */}
       <div className="px-2 py-2" style={{ borderTop: '1px solid var(--border)' }}>

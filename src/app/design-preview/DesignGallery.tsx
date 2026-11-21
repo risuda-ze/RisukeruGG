@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
+import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
@@ -48,17 +49,14 @@ function Swatch({ name }: { name: string }) {
 }
 
 export function DesignGallery() {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const { resolvedTheme, setTheme } = useTheme();
+  // サーバーでは選択がわからないため、マウント後にだけ選択中を示す
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
+  const theme = mounted ? resolvedTheme : undefined;
   const [modal, setModal] = useState<null | 'confirm' | 'danger'>(null);
   const [category, setCategory] = useState<string | null>(null);
   const [hint, setHint] = useState(true);
   const [allDay, setAllDay] = useState(true);
-
-  function switchTheme(next: 'dark' | 'light') {
-    setTheme(next);
-    // テーマ切り替え UI（#215）ができるまでの確認用。このページを離れるとリロードで既定（dark）に戻る
-    document.documentElement.dataset.theme = next;
-  }
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-12 px-4 py-10 md:px-8">
@@ -69,10 +67,10 @@ export function DesignGallery() {
           <p className="mt-2 text-sm text-text-2">正本: docs/DESIGN.md。開発時のみ表示されるページです。</p>
         </div>
         <div className="flex gap-2" role="group" aria-label="テーマ">
-          <Button size="sm" variant={theme === 'dark' ? 'primary' : 'ghost'} onClick={() => switchTheme('dark')}>
+          <Button size="sm" variant={theme === 'dark' ? 'primary' : 'ghost'} onClick={() => setTheme('dark')}>
             ダーク
           </Button>
-          <Button size="sm" variant={theme === 'light' ? 'primary' : 'ghost'} onClick={() => switchTheme('light')}>
+          <Button size="sm" variant={theme === 'light' ? 'primary' : 'ghost'} onClick={() => setTheme('light')}>
             ライト
           </Button>
         </div>
