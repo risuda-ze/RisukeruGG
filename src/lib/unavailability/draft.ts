@@ -88,10 +88,15 @@ export function paintHours(
   return changed;
 }
 
-/** 保存済みと同じになった変更（塗ってから消した等）を取り除く */
+/**
+ * 保存済みと同じになった変更（塗ってから消した等）を取り除く。
+ * 保存の書き込み中は、送信した変更（`submitted`）が購読データに先に反映されて「保存済みと同じ」に見える。
+ * 書き込みが失敗したときに残せるよう、送信したままの変更は取り除かない。
+ */
 export function pruneDraft(
   saved: Saved | undefined,
-  draft: UnavailabilityDraft
+  draft: UnavailabilityDraft,
+  submitted: UnavailabilityDraft | null = null
 ): UnavailabilityDraft {
   const base = saved ?? NOTHING_SAVED;
   const savedNotes = new Map(base.notes.map((note) => [noteKey(note), note]));
@@ -99,10 +104,13 @@ export function pruneDraft(
     a.date === b.date && a.start === b.start && a.end === b.end && a.text === b.text;
   return {
     days: Object.fromEntries(
-      Object.entries(draft.days).filter(([date, mask]) => mask !== (base.days[date] ?? 0))
+      Object.entries(draft.days).filter(
+        ([date, mask]) => submitted?.days[date] === mask || mask !== (base.days[date] ?? 0)
+      )
     ),
     notes: Object.fromEntries(
       Object.entries(draft.notes).filter(([key, note]) => {
+        if (submitted && key in submitted.notes && submitted.notes[key] === note) return true;
         const original = savedNotes.get(key);
         // 保存済みに無いメモの削除、保存済みと同じ内容への編集は変更なし
         return original ? !(note && same(note, original)) : note !== null;

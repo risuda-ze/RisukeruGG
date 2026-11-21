@@ -73,6 +73,18 @@ const EDGE_SCROLL_ZONE = 28;
 /** 保存の書き込みがこの時間（ミリ秒）で完了しなければ、通信の案内を出して閉じられるようにする */
 const SAVE_STALL_MS = 10_000;
 
+/** 完了していない保存の書き込みの数。詳細を閉じた後も数え続ける */
+let pendingWrites = 0;
+const warnBeforeUnload = (event: BeforeUnloadEvent) => event.preventDefault();
+
+/** 書き込みが完了するまで、リロード・タブを閉じる操作にブラウザの離脱確認を出す（UN-074） */
+function guardUntilSettled<T>(write: Promise<T>): Promise<T> {
+  if (pendingWrites++ === 0) window.addEventListener('beforeunload', warnBeforeUnload);
+  return write.finally(() => {
+    if (--pendingWrites === 0) window.removeEventListener('beforeunload', warnBeforeUnload);
+  });
+}
+
 /** 表示範囲の先頭からの時間数 → その 1 時間が対応不可か。範囲外は false */
 function isUnavailableAt(dates: string[], days: DayMasks, hourIndex: number): boolean {
   const date = dates[Math.floor(hourIndex / 24)];
@@ -130,7 +142,9 @@ export function MemberDetail({
   const [drag, setDrag] = useState<{ anchor: number; current: number; paint: boolean } | null>(
     null
   );
-  const [saving, setSaving] = useState(false);
+  /** 保存の書き込み中に、送信した変更を持つ。null なら保存中ではない */
+  const [submitted, setSubmitted] = useState<UnavailabilityDraft | null>(null);
+  const saving = submitted !== null;
   /** 保存を始めてから SAVE_STALL_MS たっても書き込みが完了していない（通信が切れている等） */
   const [stalled, setStalled] = useState(false);
   /** 詳細を閉じた後に保存の結果が出たとき、画面に無い内容を「残っている」と案内しないために使う */
@@ -190,14 +204,13 @@ export function MemberDetail({
   const allNotes = useMemo(() => draftedNotes(data, draft), [data, draft]);
   const dirty = editable && isDirty(data, draft);
 
-  // 未保存のまま、または保存の書き込みが完了する前にリロード・タブを閉じようとしたら、ブラウザの確認を出す。
-  // 書き込みの送信待ちの間は、購読データに自分の変更が先に反映されて dirty が false になるため、saving も見る
+  // 未保存のままリロード・タブを閉じようとしたら、ブラウザの確認を出す。
+  // 保存の書き込みが完了していない間の確認は、詳細を閉じた後も要るので guardUntilSettled が出す
   useEffect(() => {
-    if (!dirty && !saving) return;
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
-    window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [dirty, saving]);
+    if (!dirty) return;
+    window.addEventListener('beforeunload', warnBeforeUnload);
+    return () => window.removeEventListener('beforeunload', warnBeforeUnload);
+  }, [dirty]);
 
   // 書き込みが完了しないまま時間がたったら、案内を出して閉じられるようにする
   useEffect(() => {
@@ -206,12 +219,13 @@ export function MemberDetail({
     return () => window.clearTimeout(timer);
   }, [saving]);
 
-  useEffect(
-    () => () => {
+  // 開発時の StrictMode は effect を 1 度やり直すので、開いている間は必ず false に戻す
+  useEffect(() => {
+    closed.current = false;
+    return () => {
       closed.current = true;
-    },
-    []
-  );
+    };
+  }, []);
 
   const notes = useMemo(() => {
     const byNote = new Map(allNotes.map((drafted) => [drafted.note, drafted]));
@@ -261,7 +275,7 @@ export function MemberDetail({
    * 残しておくと、あとで保存済みの内容が変わったとき（CSV・定期入力など）に「変更」として効いてしまう
    */
   const updateDraft = (change: (prev: UnavailabilityDraft) => UnavailabilityDraft) =>
-    setDraft((prev) => pruneDraft(data, change(prev)));
+    setDraft((prev) => pruneDraft(data, change(prev), submitted));
 
   // ── 塗り・消し（UN-070）
   const canPaint = editable && !saving;
@@ -334,21 +348,25 @@ export function MemberDetail({
   // ── 保存（UN-071）。月ドキュメントごとに 1 回書く。読み取りはしない
   const save = async () => {
     // 保存中に足された変更を消さないよう、保存を始めた時点の変更を控えておく
-    const submitted = draft;
-    const saves = buildSaves(data, submitted);
-    setSaving(true);
-    const results = await Promise.allSettled(
-      saves.map(({ month, changes }) =>
-        saveUnavailabilityMonth(teamId, member.userId, month, changes)
+    const sending = draft;
+    const saves = buildSaves(data, sending);
+    setSubmitted(sending);
+    const results = await guardUntilSettled(
+      Promise.allSettled(
+        saves.map(({ month, changes }) =>
+          saveUnavailabilityMonth(teamId, member.userId, month, changes)
+        )
       )
     );
     const savedMonths = new Set(
       saves.filter((_, i) => results[i].status === 'fulfilled').map(({ month }) => month)
     );
     // 書けた月の変更だけ取り除く。失敗した月の変更は画面に残す
-    setDraft((prev) => dropSavedMonths(prev, submitted, savedMonths));
-    setSaving(false);
+    setDraft((prev) => dropSavedMonths(prev, sending, savedMonths));
+    setSubmitted(null);
     setStalled(false);
+    // 開いたままの確認は「保存が終わっていません」の内容なので、結果が出たら閉じる
+    setConfirmingClose(false);
     if (savedMonths.size === saves.length) {
       toast.success('対応不可時間を保存しました');
     } else if (closed.current) {
@@ -651,16 +669,15 @@ export function MemberDetail({
           <Button variant="ghost" onClick={openBulk} disabled={saving} className="mr-auto px-4">
             CSV・定期入力
           </Button>
-          {stalled ? (
+          {stalled && (
             <span data-testid="un-save-stalled" role="status" className="text-caption text-warning">
               保存が終わっていません。通信を確認してください
             </span>
-          ) : (
-            (dirty || saving) && (
-              <span data-testid="un-unsaved" className="text-caption text-warning">
-                未保存の変更があります
-              </span>
-            )
+          )}
+          {(dirty || saving) && (
+            <span data-testid="un-unsaved" className="text-caption text-warning">
+              未保存の変更があります
+            </span>
           )}
           <Button onClick={save} disabled={!dirty} loading={saving}>
             保存
@@ -708,14 +725,24 @@ export function MemberDetail({
               編集に戻る
             </Button>
             <Button variant="danger" onClick={onClose}>
-              {saving ? '閉じる' : '破棄して閉じる'}
+              {saving && !dirty ? '閉じる' : '破棄して閉じる'}
             </Button>
           </>
         }
       >
-        {saving
-          ? '通信が戻る前にこのページを閉じたり再読み込みしたりすると、変更は保存されません。このページを開いたままにしておけば、通信が戻ったときに保存されます。'
-          : '閉じると、入力した対応不可とメモの変更は保存されずに破棄されます。'}
+        {saving ? (
+          <>
+            通信が戻る前にこのページを閉じたり再読み込みしたりすると、変更は保存されません。このページを開いたままにしておけば、通信が戻ったときに保存されます。
+            {/* 送信中の変更は購読データに先に反映されるので、ここでの dirty は「保存」を押した後の変更を指す */}
+            {dirty && (
+              <span data-testid="un-confirm-discard" className="mt-2 block">
+                「保存」を押したあとに加えた変更は、閉じると破棄されます。
+              </span>
+            )}
+          </>
+        ) : (
+          '閉じると、入力した対応不可とメモの変更は保存されずに破棄されます。'
+        )}
       </Modal>
     </DialogShell>
   );

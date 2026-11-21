@@ -228,6 +228,8 @@ test('書き込みが完了しない間は案内を出し、確認のうえで�
   page,
   context,
 }) => {
+  // 通信の案内が出るまでの 10 秒と、通信が戻ってからの再接続を待つので、既定の 30 秒では足りない
+  test.setTimeout(120_000);
   await openAs(page, 'kenta@example.com');
   const date = day(4);
   await myCell(page, date).click();
@@ -244,17 +246,41 @@ test('書き込みが完了しない間は案内を出し、確認のうえで�
   await expect(detail.getByTestId('un-unsaved')).toBeVisible();
   await expect(close).toBeDisabled();
 
-  // 一定時間たつと通信の案内に変わり、閉じる操作で確認が出る
+  // 一定時間たつと通信の案内が加わり（未保存の表示は残る）、閉じる操作で確認が出る
   await expect(detail.getByTestId('un-save-stalled')).toBeVisible({ timeout: 20000 });
+  await expect(detail.getByTestId('un-unsaved')).toBeVisible();
   await close.click();
-  await expect(page.getByRole('heading', { name: '保存が終わっていません' })).toBeVisible();
-  await page.getByRole('button', { name: '編集に戻る' }).click();
+  const confirm = page.getByRole('dialog', { name: '保存が終わっていません' });
+  await expect(confirm.getByTestId('un-confirm-discard')).toHaveCount(0);
+  await expect(confirm.getByRole('button', { name: '閉じる', exact: true })).toBeVisible();
+  await confirm.getByRole('button', { name: '編集に戻る' }).click();
+
+  // 止まっている間に足したメモは、閉じると破棄されることを確認に示す
+  const text = `E2E 送信待ち ${Date.now()}`;
+  const note = detail.getByTestId('un-note').filter({ hasText: text });
+  await hourRow(page, date, 5).getByTestId('un-note-slot').click();
+  const form = page.getByRole('dialog', { name: 'メモを追加', exact: true });
+  await form.getByLabel('メモ').fill(text);
+  await form.getByRole('button', { name: '追加' }).click();
+  await expect(note).toHaveAttribute('data-unsaved', 'true');
+  await close.click();
+  await expect(confirm.getByTestId('un-confirm-discard')).toBeVisible();
+  await expect(confirm.getByRole('button', { name: '破棄して閉じる' })).toBeVisible();
+  await confirm.getByRole('button', { name: '編集に戻る' }).click();
   await expect(detail).toBeVisible();
 
-  // 通信が戻ると保存が完了し、案内が消える
+  // 通信が戻ると保存が完了し、案内が消える。送信待ちの間に足したメモは未保存のまま残る
   await context.setOffline(false);
   await expect(page.getByText('対応不可時間を保存しました')).toBeVisible({ timeout: 60000 });
   await expect(detail.getByTestId('un-save-stalled')).toHaveCount(0);
+  await expect(note).toHaveAttribute('data-unsaved', 'true');
+  await expect(detail.getByTestId('un-unsaved')).toBeVisible();
+  await note.click();
+  await page
+    .getByRole('dialog', { name: 'メモを編集' })
+    .getByRole('button', { name: '削除' })
+    .click();
+  await expect(note).toHaveCount(0);
   await expect(detail.getByTestId('un-unsaved')).toHaveCount(0);
   await expect(hourRow(page, date, 2).getByTestId('un-block')).toHaveAttribute(
     'data-kind',
@@ -265,5 +291,59 @@ test('書き込みが完了しない間は案内を出し、確認のうえで�
   await dragHours(page, date, 2, 2);
   await save.click();
   await expect(hourRow(page, date, 2)).toHaveAttribute('data-unavailable', 'false');
+  await expect(detail.getByTestId('un-unsaved')).toHaveCount(0);
+});
+
+test('保存に失敗したら知らせて、入力した内容を未保存のまま残す（UN-071）', async ({
+  page,
+  request,
+}) => {
+  // ROM美香: 他のテストが使わない。シードでは入力済みで対応不可なし
+  await openAs(page, 'mika@example.com');
+  const date = day(6);
+
+  // ルールに拒否させるため、月ドキュメントに定義外のフィールドを置く（Emulator は Bearer owner でルールを迂回できる）
+  const firestore = 'http://localhost:8080/v1/projects/demo-risukeru/databases/(default)/documents';
+  const headers = { Authorization: 'Bearer owner' };
+  const members: {
+    documents: { name: string; fields: { displayName: { stringValue: string } } }[];
+  } = await (await request.get(`${firestore}/teams/teamAlpha/members`, { headers })).json();
+  const uid = members.documents
+    .find((doc) => doc.fields.displayName.stringValue === 'ROM美香')
+    ?.name.split('/')
+    .pop();
+  expect(uid).toBeTruthy();
+  const brokenField = `${firestore}/teams/teamAlpha/unavailability/${uid}_${date.slice(0, 7)}?updateMask.fieldPaths=broken`;
+  const setBroken = async (fields: Record<string, unknown>) =>
+    expect((await request.patch(brokenField, { headers, data: { fields } })).ok()).toBe(true);
+
+  await myCell(page, date).click();
+  const detail = page.getByTestId('un-detail');
+  const save = detail.getByRole('button', { name: '保存', exact: true });
+  const block = hourRow(page, date, 3).getByTestId('un-block');
+  await expect(hourRow(page, date, 3)).toBeVisible();
+  await dragHours(page, date, 3, 3);
+
+  await setBroken({ broken: { stringValue: 'x' } });
+  try {
+    await save.click();
+    await expect(
+      page.getByText('保存に失敗しました。入力した内容は残っています。もう一度お試しください。')
+    ).toBeVisible();
+    await expect(block).toHaveAttribute('data-kind', 'added');
+    await expect(detail.getByTestId('un-unsaved')).toBeVisible();
+  } finally {
+    await setBroken({});
+  }
+
+  // 原因を取り除けば、残っていた内容をそのまま保存できる
+  await save.click();
+  await expect(page.getByText('対応不可時間を保存しました')).toBeVisible();
+  await expect(block).toHaveAttribute('data-kind', 'saved');
+
+  // 消して保存し、シードの状態に戻す
+  await dragHours(page, date, 3, 3);
+  await save.click();
+  await expect(hourRow(page, date, 3)).toHaveAttribute('data-unavailable', 'false');
   await expect(detail.getByTestId('un-unsaved')).toHaveCount(0);
 });

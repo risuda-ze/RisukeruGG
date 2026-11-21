@@ -9,6 +9,7 @@ import {
   isDirty,
   noteKey,
   paintHours,
+  pruneDraft,
 } from '@/lib/unavailability/draft';
 import { hoursToMask } from '@/lib/unavailability/mask';
 import { datesBetween } from '@/lib/unavailability/view';
@@ -189,6 +190,27 @@ describe('buildSaves（UN-071）', () => {
 
   it('変更が無ければ何も書かない', () => {
     expect(buildSaves(saved, EMPTY_DRAFT)).toEqual([]);
+  });
+});
+
+describe('pruneDraft（保存の書き込み中）', () => {
+  it('送信した変更が購読データに先に反映されていても取り除かず、保存が失敗したら残せる（UN-071）', () => {
+    const added = note('new', '2026-11-25');
+    const submitted = { days: { '2026-11-21': 3 }, notes: { '2026-11-25:new': added } };
+    // 送信中は、購読データに自分の書き込みが先に入る
+    const optimistic = { days: { ...saved.days, '2026-11-21': 3 }, notes: [...saved.notes, added] };
+    // その間にメモを 1 件足す
+    const during = note('later', '2026-11-26');
+    const draft = {
+      days: submitted.days,
+      notes: { ...submitted.notes, '2026-11-26:later': during },
+    };
+    expect(pruneDraft(optimistic, draft, submitted)).toEqual(draft);
+    // 送信中でなければ、保存済みと同じ変更は取り除く
+    expect(pruneDraft(optimistic, draft)).toEqual({
+      days: {},
+      notes: { '2026-11-26:later': during },
+    });
   });
 });
 
