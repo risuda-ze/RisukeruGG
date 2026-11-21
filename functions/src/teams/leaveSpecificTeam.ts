@@ -2,6 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomBytes } from 'crypto';
 import { db, requireAuth, getUserDoc } from '../lib/validateAuth';
+import { deleteUserUnavailability } from '../unavailability/cleanup';
 
 interface LeaveSpecificTeamData {
   teamId: string;
@@ -57,7 +58,7 @@ export const leaveSpecificTeam = onCall(
         const remainingTeamIds = currentTeamIds.filter((id) => id !== teamId);
         const newOperatorUids = currentOperatorUids.filter((id) => id !== uid);
 
-        return await db.runTransaction(async (tx) => {
+        const result = await db.runTransaction(async (tx) => {
           tx.delete(db.doc(`teams/${teamId}/members/${uid}`));
           tx.update(db.doc(`teams/${teamId}`), { operatorUids: newOperatorUids });
 
@@ -79,6 +80,9 @@ export const leaveSpecificTeam = onCall(
 
           return { success: true, newActiveTeamId };
         });
+
+        await deleteUserUnavailability(teamId, uid);
+        return result;
       }
 
       /* ソロチーム: チームを削除して脱退 */
@@ -86,7 +90,7 @@ export const leaveSpecificTeam = onCall(
       const teamCode = teamDocSnap.data()?.teamCode as string | undefined;
       const remainingTeamIds = currentTeamIds.filter((id) => id !== teamId);
 
-      return await db.runTransaction(async (tx) => {
+      const result = await db.runTransaction(async (tx) => {
         const now = FieldValue.serverTimestamp();
 
         tx.delete(db.doc(`teams/${teamId}/members/${uid}`));
@@ -135,10 +139,13 @@ export const leaveSpecificTeam = onCall(
 
         return { success: true, newActiveTeamId };
       });
+
+      await deleteUserUnavailability(teamId, uid);
+      return result;
     }
 
     /* 非オペレーターの通常脱退フロー */
-    return await db.runTransaction(async (tx) => {
+    const result = await db.runTransaction(async (tx) => {
       const now = FieldValue.serverTimestamp();
       const remainingTeamIds = currentTeamIds.filter((id) => id !== teamId);
 
@@ -191,5 +198,8 @@ export const leaveSpecificTeam = onCall(
 
       return { success: true, newActiveTeamId };
     });
+
+    await deleteUserUnavailability(teamId, uid);
+    return result;
   }
 );

@@ -51,26 +51,28 @@
   - `integration`: `IN`
   - `ai`: `AI`
   - `production`: `PD`
+  - `unavailability`: `UN`
 - 番号は 3 桁ゼロ埋めを基本とし、各機能カテゴリごとに必ず `001` から開始する（例: `TE-001`）
 - 同一機能内で要件を細分化する場合は枝番を付与する（例: `TE-010-1`, `SC-008-2`）
 - 新規要件追加時は同一カテゴリ内で末尾に連番を採番し、他カテゴリの番号は参照しない。既存IDの再利用はしない
 
 ### カテゴリ一覧
 
-| 機能ID         | カテゴリ               | 大まかな記述内容                                                                                           | 参照先                                                                                                                                            |
-| -------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `user`         | 認証・アカウント管理   | Google OAuth2 認証、初回ログイン時のアカウント初期化、セッション維持、アカウント削除後のゴースト保持を扱う | [README](./user/README.md) / [requirements](./user/requirements.md) / [model](./user/model.md) / [flows](./user/flows.md)                         |
-| `plan`         | プラン管理             | LIGHT / PARTY プラン、月次利用上限、アップグレード導線、プラン判定ルールを扱う                             | [README](./plan/README.md) / [requirements](./plan/requirements.md) / [model](./plan/model.md)                                                    |
-| `team`         | チーム管理             | チーム作成、所属、ロール、チームコード、アクティブチーム切り替えを扱う                                     | [README](./team/README.md) / [requirements](./team/requirements.md) / [model](./team/model.md)                                                    |
-| `schedule`     | スケジュール管理       | スケジュール CRUD、カレンダー表示、Google カレンダー書き出し、カレンダー UI 改善を扱う                     | [README](./schedule/README.md) / [requirements](./schedule/requirements.md) / [model](./schedule/model.md)                                        |
-| `task`         | 制作タスク管理         | カンバン、タスク詳細、担当者、カテゴリ、列設定、タスク進捗管理を扱う                                       | [README](./task/README.md) / [requirements](./task/requirements.md) / [model](./task/model.md)                                                    |
-| `collab`       | コラボ日程調整         | コラボセッション、公開回答フォーム、再調整、複製、関連 UI を扱う                                           | [README](./collab/README.md) / [requirements](./collab/requirements.md) / [model](./collab/model.md)                                              |
-| `notification` | 通知                   | 通知カテゴリ、既読管理、プッシュ通知、通知設定、遷移ルールを扱う                                           | [README](./notification/README.md) / [requirements](./notification/requirements.md) / [model](./notification/model.md)                            |
-| `ui`           | UI・ナビゲーション     | サイドバー、TopBar、通知導線、共通ナビゲーション状態を扱う                                                 | [README](./ui/README.md) / [requirements](./ui/requirements.md) / [model](./ui/model.md)                                                          |
-| `platform`     | PWA・オフライン        | PWA インストール、Service Worker、オフライン閲覧、接続断時の扱い、バージョン表示・リリースノートを扱う     | [README](./platform/README.md) / [requirements](./platform/requirements.md) / [model](./platform/model.md)                                        |
-| `integration`  | 外部サービス連携       | Discord 連携（通知配送、Bot 招待、`/risukerugg` AI ボット）を扱う                                          | [README](./integration/README.md) / [requirements](./integration/requirements.md) / [model](./integration/model.md)                               |
-| `ai`           | AIチャット             | `/chat` の AI アシスタント、提案生成、スケジュール・タスク・コラボ登録連携を扱う                           | [README](./ai/README.md) / [requirements](./ai/requirements.md) / [model](./ai/model.md)                                                          |
-| `production`   | タスク管理 v2（1枚紙） | ブリーフ（動画1本）、工程、進め方、締切逆算、差分、操作層を扱う。既存カンバン（task）と並行提供            | [README](./production/README.md) / [requirements](./production/requirements.md) / [model](./production/model.md) / [flows](./production/flows.md) |
+| 機能ID           | カテゴリ               | 大まかな記述内容                                                                                           | 参照先                                                                                                                                                            |
+| ---------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user`           | 認証・アカウント管理   | Google OAuth2 認証、初回ログイン時のアカウント初期化、セッション維持、アカウント削除後のゴースト保持を扱う | [README](./user/README.md) / [requirements](./user/requirements.md) / [model](./user/model.md) / [flows](./user/flows.md)                                         |
+| `plan`           | プラン管理             | LIGHT / PARTY プラン、月次利用上限、アップグレード導線、プラン判定ルールを扱う                             | [README](./plan/README.md) / [requirements](./plan/requirements.md) / [model](./plan/model.md)                                                                    |
+| `team`           | チーム管理             | チーム作成、所属、ロール、チームコード、アクティブチーム切り替えを扱う                                     | [README](./team/README.md) / [requirements](./team/requirements.md) / [model](./team/model.md)                                                                    |
+| `schedule`       | スケジュール管理       | スケジュール CRUD、カレンダー表示、Google カレンダー書き出し、カレンダー UI 改善を扱う                     | [README](./schedule/README.md) / [requirements](./schedule/requirements.md) / [model](./schedule/model.md)                                                        |
+| `task`           | 制作タスク管理         | カンバン、タスク詳細、担当者、カテゴリ、列設定、タスク進捗管理を扱う                                       | [README](./task/README.md) / [requirements](./task/requirements.md) / [model](./task/model.md)                                                                    |
+| `collab`         | コラボ日程調整         | コラボセッション、公開回答フォーム、再調整、複製、関連 UI を扱う                                           | [README](./collab/README.md) / [requirements](./collab/requirements.md) / [model](./collab/model.md)                                                              |
+| `notification`   | 通知                   | 通知カテゴリ、既読管理、プッシュ通知、通知設定、遷移ルールを扱う                                           | [README](./notification/README.md) / [requirements](./notification/requirements.md) / [model](./notification/model.md)                                            |
+| `ui`             | UI・ナビゲーション     | サイドバー、TopBar、通知導線、共通ナビゲーション状態を扱う                                                 | [README](./ui/README.md) / [requirements](./ui/requirements.md) / [model](./ui/model.md)                                                                          |
+| `platform`       | PWA・オフライン        | PWA インストール、Service Worker、オフライン閲覧、接続断時の扱い、バージョン表示・リリースノートを扱う     | [README](./platform/README.md) / [requirements](./platform/requirements.md) / [model](./platform/model.md)                                                        |
+| `integration`    | 外部サービス連携       | Discord 連携（通知配送、Bot 招待、`/risukerugg` AI ボット）を扱う                                          | [README](./integration/README.md) / [requirements](./integration/requirements.md) / [model](./integration/model.md)                                               |
+| `ai`             | AIチャット             | `/chat` の AI アシスタント、提案生成、スケジュール・タスク・コラボ登録連携を扱う                           | [README](./ai/README.md) / [requirements](./ai/requirements.md) / [model](./ai/model.md)                                                                          |
+| `production`     | タスク管理 v2（1枚紙） | ブリーフ（動画1本）、工程、進め方、締切逆算、差分、操作層を扱う。既存カンバン（task）と並行提供            | [README](./production/README.md) / [requirements](./production/requirements.md) / [model](./production/model.md) / [flows](./production/flows.md)                 |
+| `unavailability` | 対応不可時間           | 所属者が申告する対応不可の時間帯とメモ、全所属者の一覧、所属者詳細、CSV・定期入力を扱う                    | [README](./unavailability/README.md) / [requirements](./unavailability/requirements.md) / [model](./unavailability/model.md) / [flows](./unavailability/flows.md) |
 
 ### カテゴリ別の役割
 
@@ -134,6 +136,11 @@
 - 動画1本を親にした制作進行（ブリーフ・工程・進め方）の責務を持つ
 - 締切逆算・状態遷移・差分記録を操作層に集約し、Web・Discord・AI・公開 API が同じ操作を呼ぶ基盤になる
 
+#### unavailability
+
+- 所属者ごとの対応不可時間を本人の申告で持ち、チーム全員に一覧で見せる責務を持つ
+- チーム予定（schedule）とは独立し、集まれる日を探すための材料を提供する
+
 ---
 
 ## 非機能要件（spec 001）
@@ -174,6 +181,7 @@
 | **DiscordSession**                       | 詳細は [integration/model.md](./integration/model.md) を参照。`/risukerugg` AI ボットのサーバー単位会話セッションを管理                        |
 | **ChatMessage / Proposal**               | 詳細は [ai/model.md](./ai/model.md) を参照。AIチャットの会話履歴と登録提案（セッションメモリのみ・Firestore 永続化なし）                       |
 | **Playbook / Brief / Step / BriefEvent** | 詳細は [production/model.md](./production/model.md) を参照。進め方（工程の型）、ブリーフ（動画1本）、工程、差分                                |
+| **UnavailabilityMonth**                  | 詳細は [unavailability/model.md](./unavailability/model.md) を参照。1 人 1 ヶ月の対応不可（日ごとの 24 ビットマスク）とメモ                    |
 
 ---
 
