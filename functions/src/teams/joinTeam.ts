@@ -47,7 +47,7 @@ export const joinTeam = onCall(
       const now = FieldValue.serverTimestamp();
 
       tx.set(db.doc(`teams/${teamId}/members/${uid}`), {
-        role: 'member',
+        role: 'staff',
         displayName: userData.displayName,
         avatarUrl: userData.avatarUrl ?? null,
         plan: userData.plan,

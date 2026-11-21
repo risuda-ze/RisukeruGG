@@ -1,7 +1,7 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { db, getAuthContext, requireOperator } from '../lib/validateAuth';
 
-type UserRole = 'operator' | 'member' | 'rom';
+type UserRole = 'operator' | 'member' | 'staff' | 'rom';
 
 interface UpdateMemberRoleData {
   teamId: string;
@@ -22,7 +22,7 @@ export const updateMemberRole = onCall(
       throw new HttpsError('invalid-argument', 'teamId・targetUserId・role が必要です');
     }
 
-    if (!['operator', 'member', 'rom'].includes(role)) {
+    if (!['operator', 'member', 'staff', 'rom'].includes(role)) {
       throw new HttpsError('invalid-argument', '無効なロールです');
     }
 

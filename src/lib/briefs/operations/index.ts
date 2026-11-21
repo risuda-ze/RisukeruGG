@@ -1,4 +1,5 @@
 import { startOfDay } from 'date-fns';
+import { canEditRole } from '@/lib/utils/teamRoles';
 import type { Playbook, Step, StepStatus } from '@/types/briefs';
 import type { AddStepInput, CreateBriefInput, UpdateBriefHeaderInput } from '@/lib/validations/briefs';
 import { computeDueDate, isSameDate, planDueDateRecalc } from '../deadlines';
@@ -26,7 +27,7 @@ import {
 /** ブリーフ・工程を編集できるロールか。Discord 由来（role null）はサーバーを信頼境界として許可する */
 export function assertCanEdit(ctx: OperationContext): void {
   if (ctx.source === 'discord' || ctx.source === 'system') return;
-  if (ctx.role === 'operator' || ctx.role === 'member') return;
+  if (canEditRole(ctx.role)) return;
   throw new OperationError('permission-denied', 'この操作にはメンバー以上の権限が必要です');
 }
 

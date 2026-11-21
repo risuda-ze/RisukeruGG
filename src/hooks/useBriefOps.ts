@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { canEditRole } from '@/lib/utils/teamRoles';
 import { useAuthStore } from '@/stores/auth';
 import { firestoreBriefsPort } from '@/lib/repositories/briefs';
 import * as ops from '@/lib/briefs/operations';
@@ -20,7 +21,7 @@ export function useBriefOps() {
   const teamId = currentTeam?.id ?? null;
   const uid = currentUser?.uid ?? null;
   const role = members.find((m) => m.userId === uid)?.role ?? null;
-  const canEdit = role === 'operator' || role === 'member';
+  const canEdit = canEditRole(role);
 
   return useMemo(() => {
     const ctx = (): OperationContext => {
