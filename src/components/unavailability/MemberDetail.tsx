@@ -75,13 +75,15 @@ const SAVE_STALL_MS = 10_000;
 
 /** 完了していない保存の書き込みの数。詳細を閉じた後も数え続ける */
 let pendingWrites = 0;
-const warnBeforeUnload = (event: BeforeUnloadEvent) => event.preventDefault();
+// 同じ関数を addEventListener に 2 回渡しても登録は 1 つにまとまる。未保存用の確認（コンポーネント側）とは
+// 別々に登録・解除できるよう、書き込み用の関数はここだけで使う
+const warnPendingWrite = (event: BeforeUnloadEvent) => event.preventDefault();
 
 /** 書き込みが完了するまで、リロード・タブを閉じる操作にブラウザの離脱確認を出す（UN-074） */
 function guardUntilSettled<T>(write: Promise<T>): Promise<T> {
-  if (pendingWrites++ === 0) window.addEventListener('beforeunload', warnBeforeUnload);
+  if (pendingWrites++ === 0) window.addEventListener('beforeunload', warnPendingWrite);
   return write.finally(() => {
-    if (--pendingWrites === 0) window.removeEventListener('beforeunload', warnBeforeUnload);
+    if (--pendingWrites === 0) window.removeEventListener('beforeunload', warnPendingWrite);
   });
 }
 
@@ -208,8 +210,9 @@ export function MemberDetail({
   // 保存の書き込みが完了していない間の確認は、詳細を閉じた後も要るので guardUntilSettled が出す
   useEffect(() => {
     if (!dirty) return;
-    window.addEventListener('beforeunload', warnBeforeUnload);
-    return () => window.removeEventListener('beforeunload', warnBeforeUnload);
+    const warnUnsaved = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener('beforeunload', warnUnsaved);
+    return () => window.removeEventListener('beforeunload', warnUnsaved);
   }, [dirty]);
 
   // 書き込みが完了しないまま時間がたったら、案内を出して閉じられるようにする

@@ -51,6 +51,17 @@ const hourRow = (page: Page, date: string, h: number) =>
     .getByTestId('un-detail')
     .locator(`[data-testid="un-hour"][data-date="${date}"][data-hour="${h}"]`);
 
+/** リロードしようとして、ブラウザの離脱確認が出ることを確かめる。確認は取り消してページに残る */
+async function expectLeaveConfirm(page: Page) {
+  const dialog = page.waitForEvent('dialog');
+  // 確認が出ている間はスクリプトが止まるので、確認を取り消してから完了を待つ
+  const reload = page.evaluate(() => window.location.reload());
+  const shown = await dialog;
+  expect(shown.type()).toBe('beforeunload');
+  await shown.dismiss();
+  await reload;
+}
+
 /** 対応不可の列を、from 時から to 時までドラッグする */
 async function dragHours(page: Page, date: string, from: number, to: number) {
   const start = await hourRow(page, date, from).getByTestId('un-paint').boundingBox();
@@ -245,6 +256,9 @@ test('書き込みが完了しない間は案内を出し、確認のうえで�
   await save.click();
   await expect(detail.getByTestId('un-unsaved')).toBeVisible();
   await expect(close).toBeDisabled();
+  // 書き込みが完了していない間のリロードには、離脱確認が出る
+  await expectLeaveConfirm(page);
+  await expect(detail).toBeVisible();
 
   // 一定時間たつと通信の案内が加わり（未保存の表示は残る）、閉じる操作で確認が出る
   await expect(detail.getByTestId('un-save-stalled')).toBeVisible({ timeout: 20000 });
@@ -269,23 +283,29 @@ test('書き込みが完了しない間は案内を出し、確認のうえで�
   await confirm.getByRole('button', { name: '編集に戻る' }).click();
   await expect(detail).toBeVisible();
 
-  // 通信が戻ると保存が完了し、案内が消える。送信待ちの間に足したメモは未保存のまま残る
-  await context.setOffline(false);
-  await expect(page.getByText('対応不可時間を保存しました')).toBeVisible({ timeout: 60000 });
-  await expect(detail.getByTestId('un-save-stalled')).toHaveCount(0);
-  await expect(note).toHaveAttribute('data-unsaved', 'true');
-  await expect(detail.getByTestId('un-unsaved')).toBeVisible();
+  // 足したメモを消してから、確認を通して詳細を閉じる。閉じた後も、書き込みが完了するまで離脱確認が出る
   await note.click();
   await page
     .getByRole('dialog', { name: 'メモを編集' })
     .getByRole('button', { name: '削除' })
     .click();
   await expect(note).toHaveCount(0);
-  await expect(detail.getByTestId('un-unsaved')).toHaveCount(0);
+  await close.click();
+  await confirm.getByRole('button', { name: '閉じる', exact: true }).click();
+  await expect(detail).toHaveCount(0);
+  await expectLeaveConfirm(page);
+
+  // 通信が戻ると保存が完了し、一覧に反映される
+  await context.setOffline(false);
+  await expect(page.getByText('対応不可時間を保存しました')).toBeVisible({ timeout: 60000 });
+  await expect(myCell(page, date)).toHaveText('×');
+  await myCell(page, date).click();
   await expect(hourRow(page, date, 2).getByTestId('un-block')).toHaveAttribute(
     'data-kind',
     'saved'
   );
+  await expect(detail.getByTestId('un-save-stalled')).toHaveCount(0);
+  await expect(detail.getByTestId('un-unsaved')).toHaveCount(0);
 
   // 消して保存し、シードの状態に戻す
   await dragHours(page, date, 2, 2);
