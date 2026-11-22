@@ -14,6 +14,7 @@
 | `migrate-category-schema.mjs` | taskCategories / scheduleCategories → categories 統合移行 | 適用済み |
 | `migrate-discord-schema.mjs` | Discord セッション guildId 移行 / config 既定値正規化 | 適用済み |
 | `migrate-allday-schedule-encoding.mjs` | 終日予定の endAt 排他的境界への移行 | 適用済み |
+| `delete-member-calendars.mjs` | メンバー予定ミラーの廃止に伴う既存データ（`teams/{teamId}/memberCalendars/**`・`users/{uid}.googleCalendar`）の削除 | 適用済み（2026-11-22） |
 
 ---
 
@@ -25,9 +26,7 @@
 
 ### 適用待ちの一回性スクリプト
 
-| コマンド | スクリプト | 目的 |
-| --- | --- | --- |
-| `node scripts/delete-member-calendars.mjs` | `delete-member-calendars.mjs` | メンバー予定ミラーの廃止に伴う既存データ（`teams/{teamId}/memberCalendars/**`・`users/{uid}.googleCalendar`）の削除。本番適用後にスクリプトとこの表の行を削除する |
+現在は無し。追加するときは、コマンド・スクリプト・目的・実行タイミングをここに表で載せる。
 
 共通仕様:
 
@@ -64,23 +63,3 @@ pnpm cleanup:discord-invite-temp -- --apply
 ```
 
 実行タイミング: 必要時のみ（Bot 招待フローの失敗が続いた後など）。定期実行は不要。
-
----
-
-## delete-member-calendars — メンバー予定ミラーの既存データ削除（一回性）
-
-実行タイミング: Google カレンダー書き出し（`docs/変更仕様/google-calendar-export.md`）を本番へデプロイした後に 1 回。デプロイ前に実行すると、旧バージョンのアプリがログイン時にデータを書き戻す。
-
-### dry-run
-
-```powershell
-node scripts/delete-member-calendars.mjs
-```
-
-### 本適用
-
-```powershell
-node scripts/delete-member-calendars.mjs --apply
-```
-
-適用後にもう一度 dry-run を実行し、対象が 0 件になったことを確認する。確認できたらスクリプトを削除する。
