@@ -2,6 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomBytes } from 'crypto';
 import { db, requireAuth, getUserDoc } from '../lib/validateAuth';
+import { toTeamRole } from '../lib/role';
 import { deleteUserUnavailability } from '../unavailability/cleanup';
 
 interface LeaveSpecificTeamData {
@@ -33,34 +34,27 @@ export const leaveSpecificTeam = onCall(
       throw new HttpsError('not-found', 'このチームに所属していません');
     }
 
-    const isOperator = memberDoc.data()!.role === 'operator';
-    if (isOperator) {
+    const isMember = toTeamRole(memberDoc.data()!.role) === 'member';
+    if (isMember) {
       const membersSnap = await db.collection(`teams/${teamId}/members`).get();
       const isSolo = membersSnap.size <= 1;
 
       if (!isSolo) {
-        /* 複数メンバーチーム: 自分以外にオペレーターがいるか確認 */
-        const otherOperatorCount = membersSnap.docs.filter(
-          (d) => d.id !== uid && (d.data().role === 'operator' || d.data().role === 'owner')
+        /* 複数所属者のチーム: 自分以外にメンバー（全権限のロール）がいるか確認 */
+        const otherMemberCount = membersSnap.docs.filter(
+          (d) => d.id !== uid && toTeamRole(d.data().role) === 'member'
         ).length;
-        if (otherOperatorCount === 0) {
+        if (otherMemberCount === 0) {
           throw new HttpsError(
             'failed-precondition',
-            '先に別のメンバーをオペレーターに指名してください'
+            '先に別の所属者をメンバーに変更してください'
           );
         }
 
-        /* 他にオペレーターが存在: operatorUids から自分を除いて脱退 */
-        const teamDocSnap = await db.doc(`teams/${teamId}`).get();
-        const currentOperatorUids = Array.isArray(teamDocSnap.data()?.operatorUids)
-          ? (teamDocSnap.data()!.operatorUids as string[])
-          : [teamDocSnap.data()?.ownerId as string];
         const remainingTeamIds = currentTeamIds.filter((id) => id !== teamId);
-        const newOperatorUids = currentOperatorUids.filter((id) => id !== uid);
 
         const result = await db.runTransaction(async (tx) => {
           tx.delete(db.doc(`teams/${teamId}/members/${uid}`));
-          tx.update(db.doc(`teams/${teamId}`), { operatorUids: newOperatorUids });
 
           const tasksSnap = await tx.get(
             db.collection(`teams/${teamId}/tasks`).where('assigneeId', '==', uid)
@@ -111,13 +105,12 @@ export const leaveSpecificTeam = onCall(
 
           tx.set(soloTeamRef, {
             name: `${userData.displayName}のチーム`,
-            operatorUids: [uid],
             teamCode: soloTeamCode,
             createdAt: now,
           });
           tx.set(db.doc(`teamCodes/${soloTeamCode}`), { teamId: newActiveTeamId, createdAt: now });
           tx.set(db.doc(`teams/${newActiveTeamId}/members/${uid}`), {
-            role: 'operator',
+            role: 'member',
             displayName: userData.displayName,
             avatarUrl: userData.avatarUrl ?? null,
             plan: userData.plan,
@@ -144,7 +137,7 @@ export const leaveSpecificTeam = onCall(
       return result;
     }
 
-    /* 非オペレーターの通常脱退フロー */
+    /* スタッフの通常脱退フロー */
     const result = await db.runTransaction(async (tx) => {
       const now = FieldValue.serverTimestamp();
       const remainingTeamIds = currentTeamIds.filter((id) => id !== teamId);
@@ -171,13 +164,12 @@ export const leaveSpecificTeam = onCall(
 
         tx.set(soloTeamRef, {
           name: `${userData.displayName}のチーム`,
-          operatorUids: [uid],
           teamCode: soloTeamCode,
           createdAt: now,
         });
         tx.set(db.doc(`teamCodes/${soloTeamCode}`), { teamId: newActiveTeamId, createdAt: now });
         tx.set(db.doc(`teams/${newActiveTeamId}/members/${uid}`), {
-          role: 'operator',
+          role: 'member',
           displayName: userData.displayName,
           avatarUrl: userData.avatarUrl ?? null,
           plan: userData.plan,

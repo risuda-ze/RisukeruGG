@@ -2,7 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomUUID } from 'crypto';
 import { logger } from 'firebase-functions/v2';
-import { db, getAuthContext, requireOwnerOrEditor, getUserDoc } from '../lib/validateAuth';
+import { db, getAuthContext, requireMemberRole, getUserDoc } from '../lib/validateAuth';
 import { withErrorBoundary } from '../lib/withErrorBoundary';
 import { notifyDiscord } from '../discord/notifyDiscord';
 import { discordBotToken } from '../discord/botToken';
@@ -78,7 +78,7 @@ export const createCollabSessionDraft = onCall(
 
         // --- 認証・権限 ---
         const ctx = await getAuthContext(request, teamId);
-        requireOwnerOrEditor(ctx);
+        requireMemberRole(ctx);
 
         const userData = await getUserDoc(ctx.uid);
 

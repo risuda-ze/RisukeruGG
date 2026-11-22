@@ -42,10 +42,10 @@ export const createTeam = onCall(
       const teamId = teamRef.id;
       const now = FieldValue.serverTimestamp();
 
-      tx.set(teamRef, { name: name.trim(), operatorUids: [uid], teamCode, createdAt: now });
+      tx.set(teamRef, { name: name.trim(), teamCode, createdAt: now });
       tx.set(db.doc(`teamCodes/${teamCode}`), { teamId, createdAt: now });
       tx.set(db.doc(`teams/${teamId}/members/${uid}`), {
-        role: 'operator',
+        role: 'member',
         displayName: userData.displayName,
         avatarUrl: userData.avatarUrl ?? null,
         plan: userData.plan,

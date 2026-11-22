@@ -1,5 +1,5 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
-import { db, getAuthContext, requireOperator } from '../lib/validateAuth';
+import { db, getAuthContext, requireMemberRole } from '../lib/validateAuth';
 
 interface UpdateDiscordSettingsData {
   teamId: string;
@@ -15,7 +15,7 @@ interface UpdateDiscordSettingsData {
 /**
  * チームの Discord 通知設定を更新する Callable Function。
  * データは teams/{teamId}/discord/config サブコレクションに保存する。
- * operator のみ実行可能（Firestore ルールでも制限済み）。
+ * メンバーのみ実行可能（Firestore ルールでも制限済み）。
  */
 export const updateDiscordSettings = onCall(
   { region: 'asia-northeast1' },
@@ -36,7 +36,7 @@ export const updateDiscordSettings = onCall(
     }
 
     const ctx = await getAuthContext(request, teamId);
-    requireOperator(ctx);
+    requireMemberRole(ctx);
 
     // Webhook URL のバリデーション（空文字は許可 — 設定解除のユースケース）
     if (webhookUrl && !webhookUrl.startsWith('https://discord.com/api/webhooks/')) {

@@ -1,5 +1,6 @@
 import { HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { db } from './admin';
+import { toTeamRole, type TeamRole } from './role';
 
 export { db };
 export { HttpsError };
@@ -7,7 +8,7 @@ export { HttpsError };
 export interface AuthContext {
   uid: string;
   teamId: string;
-  role: 'operator' | 'member' | 'staff' | 'rom';
+  role: TeamRole;
 }
 
 /** 認証済みユーザーのチームメンバー情報を取得する */
@@ -29,24 +30,15 @@ export async function getAuthContext(
   return {
     uid,
     teamId,
-    role: memberSnap.data()!.role as AuthContext['role'],
+    role: toTeamRole(memberSnap.data()!.role),
   };
 }
 
-export function requireOperator(ctx: AuthContext): void {
-  if (ctx.role !== 'operator') {
-    throw new HttpsError('permission-denied', 'オペレーター権限が必要です');
+export function requireMemberRole(ctx: AuthContext): void {
+  if (ctx.role !== 'member') {
+    throw new HttpsError('permission-denied', 'メンバー権限が必要です');
   }
 }
-
-export function requireOperatorOrMember(ctx: AuthContext): void {
-  if (ctx.role !== 'operator' && ctx.role !== 'member' && ctx.role !== 'staff') {
-    throw new HttpsError('permission-denied', 'オペレーターまたはメンバー権限が必要です');
-  }
-}
-
-/** @deprecated requireOperatorOrMember の旧エイリアス */
-export const requireOwnerOrEditor = requireOperatorOrMember;
 
 export function requireAuth(callableRequest: CallableRequest): string {
   if (!callableRequest.auth) {

@@ -38,7 +38,6 @@ export const onUserCreate = v1.auth.user().onCreate(async (user) => {
 
   batch.set(soloTeamRef, {
     name: `${displayName}のチーム`,
-    operatorUids: [uid],
     teamCode,
     createdAt: now,
   });
@@ -49,7 +48,7 @@ export const onUserCreate = v1.auth.user().onCreate(async (user) => {
   });
 
   batch.set(db.doc(`teams/${soloTeamId}/members/${uid}`), {
-    role: 'operator',
+    role: 'member',
     displayName,
     avatarUrl,
     plan: 'light',

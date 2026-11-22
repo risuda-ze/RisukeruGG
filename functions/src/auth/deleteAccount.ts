@@ -2,24 +2,25 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { db, requireAuth, getUserDoc } from '../lib/validateAuth';
+import { toTeamRole } from '../lib/role';
 import { deleteUserUnavailability } from '../unavailability/cleanup';
 
 interface DeleteAccountData {
-  operatorAssignments?: { teamId: string; newOperatorId: string }[];
+  memberAssignments?: { teamId: string; newMemberId: string }[];
 }
 
 /**
  * アカウントと関連データを削除する。
- * - 自分が唯一のオペレーターで他メンバーがいるチームがある場合、operatorAssignments で新オペレーターの指定が必要
- * - ソロチームのオペレーター: チームごと削除
- * - 複数オペレーターの1人: operatorUids から自分を除去して脱退
- * - member/rom: チームから脱退してアカウント削除
+ * - 自分が唯一のメンバー（全権限のロール）で他の所属者がいるチームがある場合、memberAssignments で新しいメンバーの指定が必要
+ * - ソロチームのメンバー: チームごと削除
+ * - 複数メンバーの1人: チームから脱退
+ * - スタッフ: チームから脱退してアカウント削除
  */
 export const deleteAccount = onCall(
   { region: 'asia-northeast1' },
   async (request: CallableRequest<DeleteAccountData>) => {
     const uid = requireAuth(request);
-    const assignments = request.data?.operatorAssignments ?? [];
+    const assignments = request.data?.memberAssignments ?? [];
     const userData = await getUserDoc(uid);
 
     const rawTeamIds = (userData.teamIds as string[] | undefined) ?? [];
@@ -32,8 +33,7 @@ export const deleteAccount = onCall(
       memberCount: number;
       teamCode?: string;
       isSolo: boolean;
-      isLastOperator: boolean;
-      operatorUids: string[];
+      isLastMember: boolean;
     };
 
     // 各チームの状態を取得
@@ -49,16 +49,12 @@ export const deleteAccount = onCall(
       const role = memberSnap.data()!.role as string;
       const memberCount = membersSnap.size;
       const teamCode = teamSnap.data()?.teamCode as string | undefined;
-      const operatorUids = Array.isArray(teamSnap.data()?.operatorUids)
-        ? (teamSnap.data()!.operatorUids as string[])
-        : teamSnap.data()?.ownerId
-          ? [teamSnap.data()!.ownerId as string]
-          : [];
-      const isSolo = role === 'operator' && memberCount <= 1;
-      const isLastOperator =
-        (role === 'operator' || role === 'owner') &&
-        operatorUids.length === 1 &&
-        operatorUids[0] === uid;
+      const isMember = toTeamRole(role) === 'member';
+      const isSolo = isMember && memberCount <= 1;
+      // 自分以外にメンバーがいなければ最後のメンバー
+      const isLastMember =
+        isMember &&
+        !membersSnap.docs.some((d) => d.id !== uid && toTeamRole(d.data().role) === 'member');
 
       teamDataList.push({
         teamId,
@@ -66,31 +62,30 @@ export const deleteAccount = onCall(
         memberCount,
         teamCode,
         isSolo,
-        isLastOperator,
-        operatorUids,
+        isLastMember,
       });
     }
 
-    // 最後のオペレーターかつ他メンバーがいるチームは新オペレーター指名が必要
-    const teamsNeedingOperator = teamDataList.filter(
-      (t) => t.isLastOperator && !t.isSolo && !assignments.some((a) => a.teamId === t.teamId)
+    // 最後のメンバーかつ他の所属者がいるチームは新しいメンバーの指名が必要
+    const teamsNeedingMember = teamDataList.filter(
+      (t) => t.isLastMember && !t.isSolo && !assignments.some((a) => a.teamId === t.teamId)
     );
-    if (teamsNeedingOperator.length > 0) {
+    if (teamsNeedingMember.length > 0) {
       throw new HttpsError(
         'failed-precondition',
-        `次のチームで新しいオペレーターを指名してください: ${teamsNeedingOperator.map((t) => t.teamId).join(', ')}`
+        `次のチームで新しいメンバーを指名してください: ${teamsNeedingMember.map((t) => t.teamId).join(', ')}`
       );
     }
 
-    // 指定されたオペレーター候補のバリデーション
+    // 指定された新メンバー候補のバリデーション
     for (const assignment of assignments) {
-      const newOpSnap = await db
-        .doc(`teams/${assignment.teamId}/members/${assignment.newOperatorId}`)
+      const newMemberSnap = await db
+        .doc(`teams/${assignment.teamId}/members/${assignment.newMemberId}`)
         .get();
-      if (!newOpSnap.exists) {
+      if (!newMemberSnap.exists) {
         throw new HttpsError(
           'invalid-argument',
-          '指定されたオペレーターがチームメンバーではありません'
+          '指定された所属者がチームに所属していません'
         );
       }
     }
@@ -108,7 +103,7 @@ export const deleteAccount = onCall(
 
       // 書き込みフェーズ
       for (const teamData of teamDataList) {
-        const { teamId, isSolo, teamCode, isLastOperator, operatorUids } = teamData;
+        const { teamId, isSolo, teamCode, isLastMember } = teamData;
 
         if (isSolo) {
           // ソロチーム: チームごと削除
@@ -118,23 +113,11 @@ export const deleteAccount = onCall(
         } else {
           const assignment = assignments.find((a) => a.teamId === teamId);
 
-          if (isLastOperator && assignment) {
-            // 最後のオペレーター: 新オペレーターを昇格し operatorUids を更新
-            tx.update(db.doc(`teams/${teamId}/members/${assignment.newOperatorId}`), {
-              role: 'operator',
+          if (isLastMember && assignment) {
+            // 最後のメンバー: 指名された所属者をメンバーに昇格
+            tx.update(db.doc(`teams/${teamId}/members/${assignment.newMemberId}`), {
+              role: 'member',
               updatedAt: FieldValue.serverTimestamp(),
-            });
-            const newOperatorUids = [
-              ...operatorUids.filter((id) => id !== uid),
-              ...(operatorUids.includes(assignment.newOperatorId)
-                ? []
-                : [assignment.newOperatorId]),
-            ];
-            tx.update(db.doc(`teams/${teamId}`), { operatorUids: newOperatorUids });
-          } else if (teamData.role === 'operator' || teamData.role === 'owner') {
-            // 複数オペレーターの1人: operatorUids から自分を除去するだけ
-            tx.update(db.doc(`teams/${teamId}`), {
-              operatorUids: operatorUids.filter((id) => id !== uid),
             });
           }
 

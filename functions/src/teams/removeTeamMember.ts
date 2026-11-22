@@ -1,7 +1,7 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomBytes } from 'crypto';
-import { db, getAuthContext, requireOperator, getUserDoc } from '../lib/validateAuth';
+import { db, getAuthContext, requireMemberRole, getUserDoc } from '../lib/validateAuth';
 import { deleteUserUnavailability } from '../unavailability/cleanup';
 
 interface RemoveTeamMemberData {
@@ -19,7 +19,7 @@ export const removeTeamMember = onCall(
     }
 
     const ctx = await getAuthContext(request, teamId);
-    requireOperator(ctx);
+    requireMemberRole(ctx);
 
     if (ctx.uid === targetUserId) {
       throw new HttpsError('invalid-argument', '自分自身は削除できません');
@@ -51,7 +51,7 @@ export const removeTeamMember = onCall(
 
       tx.delete(db.doc(`teams/${teamId}/members/${targetUserId}`));
 
-      // 通常 requireOperator(ctx) によりオペレーター（ctx.uid）が常にメンバーとして存在し、
+      // 通常 requireMemberRole(ctx) によりメンバー（ctx.uid）が常にメンバーとして存在し、
       // かつ ctx.uid !== targetUserId が保証されるため membersSnap.size >= 2 が維持される。
       // ただしデータ破損等の異常状態で targetUserId のみが存在していた場合の防御として実施。
       if (membersSnap.size <= 1) {
@@ -66,13 +66,12 @@ export const removeTeamMember = onCall(
 
       tx.set(soloTeamRef, {
         name: `${targetUserData.displayName}のチーム`,
-        operatorUids: [targetUserId],
         teamCode: soloTeamCode,
         createdAt: now,
       });
       tx.set(db.doc(`teamCodes/${soloTeamCode}`), { teamId: soloTeamId, createdAt: now });
       tx.set(db.doc(`teams/${soloTeamId}/members/${targetUserId}`), {
-        role: 'operator',
+        role: 'member',
         displayName: targetUserData.displayName,
         avatarUrl: targetUserData.avatarUrl ?? null,
         plan: targetUserData.plan,
