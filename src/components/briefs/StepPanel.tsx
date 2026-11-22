@@ -15,10 +15,11 @@ import { formatDateTime, fromDateInputValue, toDateInputValue } from '@/lib/brie
 import { stepCommentInputSchema } from '@/lib/validations/briefs';
 import { useAuthStore } from '@/stores/auth';
 import { briefsLoadErrorMessage } from '@/stores/briefs';
-import type { Step, StepComment, StepStatus } from '@/types/briefs';
+import type { Brief, Step, StepComment, StepStatus } from '@/types/briefs';
 import type { TeamMember } from '@/types/entities';
 
 interface StepPanelProps {
+  brief: Brief;
   step: Step;
   members: TeamMember[];
   onClose: () => void;
@@ -28,11 +29,14 @@ interface StepPanelProps {
  * 工程パネル（右ドロワー / モバイルは全画面）。
  * 状態の操作、担当・締切、工程固有の項目、コメントをここで扱う。
  */
-export function StepPanel({ step, members, onClose }: StepPanelProps) {
+export function StepPanel({ brief, step, members, onClose }: StepPanelProps) {
   const briefOps = useBriefOps();
   const currentUser = useAuthStore((s) => s.currentUser);
   const teamId = briefOps.teamId;
-  const canEdit = briefOps.canEdit;
+  /** 工程の構成（名前・担当・締切・入力項目・削除）を編集できるか */
+  const canEdit = briefOps.canEditBrief(brief);
+  /** 状態の操作（着手・完了など）。担当者本人も可 */
+  const canChange = briefOps.canChangeStep(brief, step);
 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -138,7 +142,7 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
         {error && <p className="text-[12px] text-live">{error}</p>}
 
         {/* 状態の操作 */}
-        {canEdit && (
+        {canChange && (
           <div className="flex flex-wrap gap-2">
             {actions
               .filter((a) => canTransition(step, a.to).ok)
@@ -238,8 +242,8 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
               ))}
             </ul>
           )}
-          {canEdit && (
-            <form onSubmit={submitComment} className="space-y-2">
+          {/* コメントは所属者全員が書ける */}
+          <form onSubmit={submitComment} className="space-y-2">
               <Textarea
                 value={commentBody}
                 onChange={(e) => setCommentBody(e.target.value)}
@@ -251,7 +255,6 @@ export function StepPanel({ step, members, onClose }: StepPanelProps) {
                 コメントする
               </Button>
             </form>
-          )}
         </section>
 
         {/* 削除 */}

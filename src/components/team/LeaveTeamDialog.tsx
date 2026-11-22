@@ -9,8 +9,8 @@ interface LeaveTeamDialogProps {
   open: boolean;
   onClose: () => void;
   teamId: string;
-  isSoloOperator: boolean;   /* ソロチームのオペレーター: 退出ボタンを表示 */
-  isMultiOperator: boolean;  /* 複数メンバーのオペレーター: 移譲メッセージのみ */
+  isSoloMember: boolean;   /* ソロチームのメンバー: 退出ボタンを表示 */
+  isMultiMember: boolean;  /* 複数の所属者がいるチームのメンバー: 移譲メッセージのみ */
   onSuccess?: () => void;
 }
 
@@ -18,15 +18,15 @@ export function LeaveTeamDialog({
   open,
   onClose,
   teamId,
-  isSoloOperator,
-  isMultiOperator,
+  isSoloMember,
+  isMultiMember,
   onSuccess,
 }: LeaveTeamDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleLeave = async () => {
-    if (isMultiOperator) return;
+    if (isMultiMember) return;
     setLoading(true);
     setError(null);
     try {
@@ -46,7 +46,7 @@ export function LeaveTeamDialog({
       onClose={onClose}
       title="現在のチームから退出する"
       footer={
-        isMultiOperator ? (
+        isMultiMember ? (
           <Button onClick={onClose}>閉じる</Button>
         ) : (
           <>
@@ -60,9 +60,9 @@ export function LeaveTeamDialog({
         )
       }
     >
-      {isMultiOperator ? (
-        <p className="text-sm text-live">先に所有権を移譲してください</p>
-      ) : isSoloOperator ? (
+      {isMultiMember ? (
+        <p className="text-sm text-live">先に別の所属者をメンバーに変更してください</p>
+      ) : isSoloMember ? (
         <>
           <p className="text-sm text-text">ソロチームを退出します。自動的に新しいソロチームが作成されます。</p>
           {error && <p className="mt-2 text-sm text-live">{error}</p>}

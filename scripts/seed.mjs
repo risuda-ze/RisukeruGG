@@ -12,7 +12,7 @@
  *   - Functions http://localhost:5001
  *
  * 投入データ概要:
- *   - テストユーザー: 6人（operator×2・member×2・rom×2）
+ *   - テストユーザー: 6人（member×2・staff×4）
  *   - 複数チーム所属: 2チーム（teamAlpha / teamBeta）
  *   - スケジュール: 先月・当月・来月（週1回配信＋毎週土曜動画）
  *   - タスク: ステータス・担当・期限・連携有無の組み合わせを網羅
@@ -258,13 +258,11 @@ async function main() {
   // ── チーム ────────────────────────────────────────────────
   await setDoc(`teams/${TEAM_ID}`, {
     name: '配信チームα',
-    operatorUids: [UID1, UID2],
     teamCode: TEAM_CODE,
     createdAt: d(2026, 4, 1),
   });
   await setDoc(`teams/${TEAM_BETA_ID}`, {
     name: '編集チームβ',
-    operatorUids: [UID2, UID5],
     teamCode: TEAM_BETA_CODE,
     createdAt: d(2026, 4, 20),
   });
@@ -277,7 +275,7 @@ async function main() {
 
   // ── チームメンバー (teamAlpha: 6人 / teamBeta: 3人) ─────
   await setDoc(`teams/${TEAM_ID}/members/${UID1}`, {
-    role: 'operator',
+    role: 'member',
     displayName: '配信太郎',
     avatarUrl: null,
     plan: 'party',
@@ -286,7 +284,7 @@ async function main() {
     note: '土日は配信しています',
   });
   await setDoc(`teams/${TEAM_ID}/members/${UID2}`, {
-    role: 'operator',
+    role: 'member',
     displayName: '運営花子',
     avatarUrl: null,
     plan: 'party',
@@ -295,28 +293,28 @@ async function main() {
     note: '平日夜は編集できます',
   });
   await setDoc(`teams/${TEAM_ID}/members/${UID3}`, {
-    role: 'member',
+    role: 'staff',
     displayName: 'マネージャー健太',
     avatarUrl: null,
     plan: 'party',
     joinedAt: d(2026, 4, 5),
   });
   await setDoc(`teams/${TEAM_ID}/members/${UID4}`, {
-    role: 'rom',
+    role: 'staff',
     displayName: 'ROM三郎',
     avatarUrl: null,
     plan: 'light',
     joinedAt: d(2026, 4, 10),
   });
   await setDoc(`teams/${TEAM_ID}/members/${UID5}`, {
-    role: 'member',
+    role: 'staff',
     displayName: 'サポート里奈',
     avatarUrl: null,
     plan: 'party',
     joinedAt: d(2026, 4, 12),
   });
   await setDoc(`teams/${TEAM_ID}/members/${UID6}`, {
-    role: 'rom',
+    role: 'staff',
     displayName: 'ROM美香',
     avatarUrl: null,
     plan: 'light',
@@ -324,21 +322,21 @@ async function main() {
   });
 
   await setDoc(`teams/${TEAM_BETA_ID}/members/${UID2}`, {
-    role: 'operator',
+    role: 'member',
     displayName: '運営花子',
     avatarUrl: null,
     plan: 'party',
     joinedAt: d(2026, 4, 20),
   });
   await setDoc(`teams/${TEAM_BETA_ID}/members/${UID5}`, {
-    role: 'operator',
+    role: 'member',
     displayName: 'サポート里奈',
     avatarUrl: null,
     plan: 'party',
     joinedAt: d(2026, 4, 20),
   });
   await setDoc(`teams/${TEAM_BETA_ID}/members/${UID1}`, {
-    role: 'member',
+    role: 'staff',
     displayName: '配信太郎',
     avatarUrl: null,
     plan: 'party',
@@ -1149,16 +1147,16 @@ async function main() {
   // ── 完了サマリー ─────────────────────────────────────────
   console.log('\n=== シード完了 ===\n');
   console.log('テストアカウント (パスワード共通: password123):');
-  console.log(`  配信太郎          (operator): taro@example.com    uid=${UID1}`);
-  console.log(`  運営花子          (operator): hanako@example.com  uid=${UID2}`);
-  console.log(`  マネージャー健太  (member)  : kenta@example.com   uid=${UID3}`);
-  console.log(`  ROM三郎           (rom)     : saburo@example.com  uid=${UID4}`);
-  console.log(`  サポート里奈      (member)  : rina@example.com    uid=${UID5}`);
-  console.log(`  ROM美香           (rom)     : mika@example.com    uid=${UID6}`);
+  console.log(`  配信太郎          (member) : taro@example.com    uid=${UID1}`);
+  console.log(`  運営花子          (member) : hanako@example.com  uid=${UID2}`);
+  console.log(`  マネージャー健太  (staff)  : kenta@example.com   uid=${UID3}`);
+  console.log(`  ROM三郎           (staff)   : saburo@example.com  uid=${UID4}`);
+  console.log(`  サポート里奈      (staff)   : rina@example.com    uid=${UID5}`);
+  console.log(`  ROM美香           (staff)   : mika@example.com    uid=${UID6}`);
   console.log('');
   console.log('チーム構成:');
-  console.log(`  teamAlpha (${TEAM_CODE}) operator=2, member=2, rom=2`);
-  console.log(`  teamBeta  (${TEAM_BETA_CODE}) operator=2, member=1`);
+  console.log(`  teamAlpha (${TEAM_CODE}) member=2, staff=4`);
+  console.log(`  teamBeta  (${TEAM_BETA_CODE}) member=2, staff=1`);
   console.log('\n投入データ件数:');
   console.log(`  スケジュール : ${schedules.length}件`);
   console.log('    先月(4月): 8件');

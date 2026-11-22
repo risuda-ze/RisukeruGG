@@ -33,8 +33,8 @@ const fixedContext: AiChatContext = {
   ],
   collabs: [{ title: 'コラボ配信', partnerName: 'たなか', status: 'open' }],
   members: [
-    { displayName: 'りす', role: 'operator' },
-    { displayName: 'さとう', role: 'member' },
+    { displayName: 'りす', role: 'member' },
+    { displayName: 'さとう', role: 'staff' },
   ],
   columns: [{ name: 'TODO' }, { name: '進行中' }, { name: '完了' }],
   categories: [{ name: 'サムネ' }, { name: '編集' }],

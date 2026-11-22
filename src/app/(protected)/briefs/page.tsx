@@ -83,7 +83,7 @@ export default function BriefsPage() {
             <Icon name="settings" size={14} />
             進め方
           </Link>
-          {briefOps.canEdit && (
+          {briefOps.canCreate && (
             <Button size="sm" onClick={() => setShowNew(true)}>
               <Icon name="add" size={14} />
               新しいブリーフ
@@ -133,7 +133,7 @@ export default function BriefsPage() {
               動画1本ごとに1枚紙を作ると、工程・担当・締切が自動で埋まります。
               {playbooks.length === 0 && ' まず「進め方」を作っておくと、次からは公開日を入れるだけで済みます。'}
             </p>
-            {briefOps.canEdit && (
+            {briefOps.canCreate && (
               <div className="flex justify-center gap-2">
                 <Button size="sm" onClick={() => setShowNew(true)}>
                   新しいブリーフ

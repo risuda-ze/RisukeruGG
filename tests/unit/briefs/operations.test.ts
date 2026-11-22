@@ -73,10 +73,68 @@ describe('createBrief', () => {
     expect(loaded!.steps).toHaveLength(0);
   });
 
-  it('rom は作成できない', async () => {
+  it('スタッフも作成でき、作成者は本人になる', async () => {
+    const staff: OperationContext = { ...ctx, actorId: 'u_staff', role: 'staff' };
+    const { briefId } = await createBrief(
+      port,
+      staff,
+      { title: 'x', publishAt: null, playbookId: null, performerIds: [], linkedScheduleId: null },
+      null
+    );
+    expect((await port.loadBrief('t_1', briefId))!.brief.createdBy).toBe('u_staff');
+  });
+
+  it('ロールを持たない web 操作（所属者でない）は作成できない', async () => {
     await expect(
-      createBrief(port, { ...ctx, role: 'rom' }, { title: 'x', publishAt: null, playbookId: null, performerIds: [], linkedScheduleId: null }, null)
+      createBrief(port, { ...ctx, role: null }, { title: 'x', publishAt: null, playbookId: null, performerIds: [], linkedScheduleId: null }, null)
     ).rejects.toBeInstanceOf(OperationError);
+  });
+});
+
+describe('権限（作成者・担当者・メンバー）', () => {
+  let port: MemoryBriefsPort;
+  let briefId: string;
+  let ids: string[];
+  const creator: OperationContext = { ...ctx, actorId: 'u_creator', role: 'staff' };
+  const other: OperationContext = { ...ctx, actorId: 'u_other', role: 'staff' };
+  const assignee: OperationContext = { ...ctx, actorId: 'u_sato', role: 'staff' };
+
+  beforeEach(async () => {
+    port = new MemoryBriefsPort();
+    const r = await createBrief(
+      port,
+      creator,
+      { title: '第10回', publishAt: new Date('2026-09-20'), playbookId: 'pb_1', performerIds: [], linkedScheduleId: null },
+      samplePlaybook()
+    );
+    briefId = r.briefId;
+    ids = r.stepIds;
+  });
+
+  it('スタッフは他人のブリーフを編集できない', async () => {
+    await expect(updateBriefHeader(port, other, briefId, { title: 'y' })).rejects.toBeInstanceOf(OperationError);
+    await expect(assignStep(port, other, briefId, ids[0]!, 'u_other')).rejects.toBeInstanceOf(OperationError);
+    await expect(completeStep(port, other, briefId, ids[0]!)).rejects.toBeInstanceOf(OperationError);
+  });
+
+  it('ブリーフの作成者は、スタッフでも自分のブリーフを編集できる', async () => {
+    await updateBriefHeader(port, creator, briefId, { title: 'y' });
+    expect((await port.loadBrief('t_1', briefId))!.brief.title).toBe('y');
+  });
+
+  it('メンバーは他人のブリーフも編集できる', async () => {
+    await updateBriefHeader(port, ctx, briefId, { title: 'z' });
+    expect((await port.loadBrief('t_1', briefId))!.brief.title).toBe('z');
+  });
+
+  it('担当者本人は完了できるが、担当・締切・項目の変更はできない', async () => {
+    await completeStep(port, creator, briefId, ids[0]!);
+    // ids[1] の担当は u_sato（進め方から）
+    await completeStep(port, assignee, briefId, ids[1]!);
+    expect((await port.loadBrief('t_1', briefId))!.steps[1]!.status).toBe('done');
+    await expect(assignStep(port, assignee, briefId, ids[1]!, 'u_risu')).rejects.toBeInstanceOf(OperationError);
+    await expect(setStepDueDate(port, assignee, briefId, ids[1]!, new Date('2026-09-10'))).rejects.toBeInstanceOf(OperationError);
+    await expect(setStepFields(port, assignee, briefId, ids[1]!, { material_url: 'x' })).rejects.toBeInstanceOf(OperationError);
   });
 });
 

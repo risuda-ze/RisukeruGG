@@ -3,16 +3,17 @@ import { getAdminFirestore } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { verifyBearerToken } from '@/lib/firebase/verifyBearerToken';
 import { getAppBaseUrl } from '@/lib/discord/appBaseUrl';
+import { toTeamRole } from '@/lib/utils/teamRoles';
 
 /**
  * Discord Bot 招待 OAuth2 開始エンドポイント。
- * operator が「Botをサーバーに追加」ボタンを押した際に呼び出す。
+ * メンバーが「Botをサーバーに追加」ボタンを押した際に呼び出す。
  *
  * CSRF 保護: nonce を discord_bot_invite_requests/{nonce} に保存し、
  * コールバック時に state パラメータと照合する。
  */
 export async function POST(req: NextRequest): Promise<Response> {
-  // Firebase ID トークンで operator 認証
+  // Firebase ID トークンで メンバー認証
   const authResult = await verifyBearerToken(req);
   if (authResult instanceof Response) return authResult;
   const { uid } = authResult;
@@ -29,11 +30,11 @@ export async function POST(req: NextRequest): Promise<Response> {
     return Response.json({ error: '無効なリクエストボディです' }, { status: 400 });
   }
 
-  // operator 権限の確認
+  // メンバー権限の確認
   const db = getAdminFirestore();
   const memberSnap = await db.doc(`teams/${teamId}/members/${uid}`).get();
-  if (!memberSnap.exists || memberSnap.data()?.role !== 'operator') {
-    return Response.json({ error: 'operator 権限が必要です' }, { status: 403 });
+  if (!memberSnap.exists || toTeamRole(memberSnap.data()?.role) !== 'member') {
+    return Response.json({ error: 'メンバー権限が必要です' }, { status: 403 });
   }
 
   const clientId = process.env.DISCORD_CLIENT_ID;

@@ -2,12 +2,13 @@ import { NextRequest } from 'next/server';
 import { getAdminFirestore } from '@/lib/firebase/admin';
 import { fetchGuildTextChannels } from '@/lib/discord/sendBotMessage';
 import { verifyBearerToken } from '@/lib/firebase/verifyBearerToken';
+import { toTeamRole } from '@/lib/utils/teamRoles';
 
 /**
  * 接続済みチームの Discord 通知チャンネルを変更する。
  * Bot 招待フローをやり直さずに、通知先チャンネルだけを更新できる。
  *
- * 認証: Firebase Bearer トークン必須。対象チームの operator のみ変更可能。
+ * 認証: Firebase Bearer トークン必須。対象チームのメンバーのみ変更可能。
  * channelId は Bot トークンで取得した実チャンネル一覧と照合して検証する（改ざん防止）。
  */
 export async function POST(req: NextRequest): Promise<Response> {
@@ -29,10 +30,10 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const db = getAdminFirestore();
 
-  // operator 権限の確認
+  // メンバー権限の確認
   const memberSnap = await db.doc(`teams/${teamId}/members/${uid}`).get();
-  if (!memberSnap.exists || memberSnap.data()?.role !== 'operator') {
-    return Response.json({ error: 'operator 権限が必要です' }, { status: 403 });
+  if (!memberSnap.exists || toTeamRole(memberSnap.data()?.role) !== 'member') {
+    return Response.json({ error: 'メンバー権限が必要です' }, { status: 403 });
   }
 
   // 接続済み（guildId 設定済み）であることを確認

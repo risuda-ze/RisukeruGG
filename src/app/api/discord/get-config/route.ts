@@ -2,11 +2,12 @@ import { NextRequest } from 'next/server';
 import { getAdminFirestore } from '@/lib/firebase/admin';
 import { verifyBearerToken } from '@/lib/firebase/verifyBearerToken';
 import type { DiscordTeamConfig } from '@/types/entities';
+import { toTeamRole } from '@/lib/utils/teamRoles';
 
 /**
  * Discord 連携設定を Admin SDK 経由で取得する。
  * クライアントSDK（Firestoreセキュリティルール）に依存せず確実に読み込む。
- * operator のみアクセス可能。
+ * メンバーのみアクセス可能。
  */
 export async function GET(req: NextRequest): Promise<Response> {
   const authResult = await verifyBearerToken(req);
@@ -20,9 +21,9 @@ export async function GET(req: NextRequest): Promise<Response> {
 
   const db = getAdminFirestore();
 
-  // operator 権限確認
+  // メンバー権限の確認
   const memberSnap = await db.doc(`teams/${teamId}/members/${uid}`).get();
-  if (!memberSnap.exists || memberSnap.data()?.role !== 'operator') {
+  if (!memberSnap.exists || toTeamRole(memberSnap.data()?.role) !== 'member') {
     return Response.json({ config: null });
   }
 

@@ -25,10 +25,10 @@ import { Icon } from '@/components/ui/Icon';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { ROLE_BADGE, ROLE_LABELS } from '@/lib/utils/teamRoles';
 import { MEMBER_DUTIES, MEMBER_DUTY_LABELS } from '@/types/entities';
-import type { MemberDuty, TeamMember } from '@/types/entities';
+import type { MemberDuty, TeamMember, TeamRole } from '@/types/entities';
 
 type DialogState =
-  | { type: 'roleChange'; member: TeamMember; newRole: 'member' | 'staff' | 'rom' | 'operator' }
+  | { type: 'roleChange'; member: TeamMember; newRole: TeamRole }
   | { type: 'remove'; member: TeamMember }
   | { type: 'leave' }
   | { type: 'discord'; member: TeamMember }
@@ -98,7 +98,7 @@ function TeamPageInner() {
 
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const isOperator = myMember?.role === 'operator';
+  const isMember = myMember?.role === 'member';
   const isSolo = members.length <= 1 && !teamId;
   const q = query.trim().toLowerCase();
   const filteredMembers = members.filter(
@@ -148,7 +148,7 @@ function TeamPageInner() {
   }
 
   function handleRoleChange(member: TeamMember, value: string) {
-    if (value === 'member' || value === 'staff' || value === 'rom' || value === 'operator') {
+    if (value === 'member' || value === 'staff') {
       setDialog({ type: 'roleChange', member, newRole: value });
     }
   }
@@ -354,8 +354,8 @@ function TeamPageInner() {
                 <ul>
                   {filteredMembers.map((member) => {
                     const isMe = member.userId === currentUser?.uid;
-                    const canEditDiscord = isOperator || isMe;
-                    const canManage = isOperator && !isMe;
+                    const canEditDiscord = isMember || isMe;
+                    const canManage = isMember && !isMe;
                     return (
                       <li
                         key={member.userId}
@@ -384,10 +384,8 @@ function TeamPageInner() {
                               <Dropdown
                                 value={member.role}
                                 options={[
-                                  { value: 'operator', label: 'オペレーター' },
                                   { value: 'member', label: 'メンバー' },
                                   { value: 'staff', label: 'スタッフ' },
-                                  { value: 'rom', label: 'ROM専' },
                                 ]}
                                 onChange={(v) => handleRoleChange(member, v)}
                                 size="sm"
@@ -471,7 +469,7 @@ function TeamPageInner() {
             <section className="border-b border-border px-4 py-6 md:px-7">
               <div className="mb-4 flex items-center justify-between gap-2">
                 <h2 className={fieldLabelClass}>チームの基本情報</h2>
-                {isOperator && (
+                {isMember && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -522,7 +520,7 @@ function TeamPageInner() {
           </section>
 
           {/* チームを解散する（メンバー＝operator のみ） */}
-          {isOperator && (
+          {isMember && (
             <section className="px-4 py-6 md:px-7">
               <h2 className={cn(fieldLabelClass, 'mb-1 text-danger')}>危険ゾーン</h2>
               <p className="mb-4 text-sm text-text-2">
@@ -648,8 +646,8 @@ function TeamPageInner() {
         open={dialog?.type === 'leave'}
         onClose={() => setDialog(null)}
         teamId={teamId ?? ''}
-        isSoloOperator={isOperator && members.length <= 1}
-        isMultiOperator={isOperator && members.length > 1}
+        isSoloMember={isMember && members.length <= 1}
+        isMultiMember={isMember && members.length > 1}
         onSuccess={() => setDialog(null)}
       />
     </div>

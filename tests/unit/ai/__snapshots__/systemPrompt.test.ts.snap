@@ -171,6 +171,6 @@ exports[`generateSystemPrompt（スナップショット） > 固定コンテキ
 - コラボ配信（相手: たなか、状態: open）
 
 【チームメンバー】
-- りす（operator）
-- さとう（member）"
+- りす（メンバー）
+- さとう（スタッフ）"
 `;

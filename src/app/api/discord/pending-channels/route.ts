@@ -1,12 +1,13 @@
 import { NextRequest } from 'next/server';
 import { getAdminFirestore } from '@/lib/firebase/admin';
 import { verifyBearerToken } from '@/lib/firebase/verifyBearerToken';
+import { toTeamRole } from '@/lib/utils/teamRoles';
 
 /**
  * Bot 招待フロー中のチャンネル選択画面でチャンネル一覧を取得する。
  * nonce をキーに Firestore の discord_bot_invite_pending から読み出す。
  *
- * 認証: Firebase Bearer トークンを必須とし、対象チームの operator のみ取得可能。
+ * 認証: Firebase Bearer トークンを必須とし、対象チームのメンバーのみ取得可能。
  * nonce は URL に露出するため、認証なしでは Discord サーバーのチャンネル情報が漏洩するリスクがある。
  */
 export async function GET(req: NextRequest): Promise<Response> {
@@ -29,9 +30,9 @@ export async function GET(req: NextRequest): Promise<Response> {
   const data = snap.data()!;
   const teamId = data.teamId as string;
 
-  // 対象チームの operator であることを確認
+  // 対象チームのメンバーであることを確認
   const memberSnap = await db.doc(`teams/${teamId}/members/${uid}`).get();
-  if (!memberSnap.exists || memberSnap.data()?.role !== 'operator') {
+  if (!memberSnap.exists || toTeamRole(memberSnap.data()?.role) !== 'member') {
     return Response.json({ error: 'アクセス権限がありません' }, { status: 403 });
   }
 

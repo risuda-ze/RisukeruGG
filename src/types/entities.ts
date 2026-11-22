@@ -1,4 +1,5 @@
-export type UserRole = 'operator' | 'member' | 'staff' | 'rom';
+/** チーム内ロール（保存値）。member = メンバー（全権限）、staff = スタッフ */
+export type TeamRole = 'member' | 'staff';
 export type PlanType = 'light' | 'party';
 /** @deprecated 新規コードでは Category インターフェースと categoryId を使用すること */
 export type TaskCategoryKey = 'shooting' | 'editing' | 'thumbnail' | 'announcement' | 'other';
@@ -72,13 +73,13 @@ export const MEMBER_NOTE_MAX = 100;
 
 export interface TeamMember {
   userId: string;
-  role: UserRole;
+  role: TeamRole;
   displayName: string;
   avatarUrl: string | null;
   plan: PlanType;
   joinedAt: Date;
   /**
-   * Discord のユーザー名（`@` の後ろの一意な名前）。メンション用に本人またはオペレーターが任意で登録する。
+   * Discord のユーザー名（`@` の後ろの一意な名前）。メンション用に本人またはメンバーが任意で登録する。
    * 未登録は null。ログイン連携ではなく、送信時に Bot がサーバー内検索で ID に解決する（TE-012）
    */
   discordUsername: string | null;
@@ -93,7 +94,6 @@ export interface TeamMember {
 export interface Team {
   id: string;
   name: string;
-  operatorUids: string[];
   teamCode: string;
   createdAt: Date;
 }
@@ -242,7 +242,7 @@ export interface AiPreset {
   body: string;
 }
 
-/** teams/{teamId}/ai/settings（AI-022 / AI-023）。閲覧はメンバー、編集はオペレーター */
+/** teams/{teamId}/ai/settings（AI-022 / AI-023）。閲覧は所属者、編集はメンバー */
 export interface TeamAiSettings {
   /** 全能力のプロンプトに共通で注入する追加指示（1,000 文字以内） */
   teamInstructions: string;

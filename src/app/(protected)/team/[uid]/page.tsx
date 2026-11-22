@@ -60,7 +60,7 @@ export default function MemberDetailPage() {
   }
 
   const isMe = member.userId === currentUser?.uid;
-  const isOperator = members.find((m) => m.userId === currentUser?.uid)?.role === 'operator';
+  const isMember = members.find((m) => m.userId === currentUser?.uid)?.role === 'member';
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
@@ -78,7 +78,7 @@ export default function MemberDetailPage() {
               <Badge variant={ROLE_BADGE[member.role]}>{ROLE_LABELS[member.role]}</Badge>
             </div>
           </div>
-          {(isMe || isOperator) && (
+          {(isMe || isMember) && (
             <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
               <Icon name="edit" size={14} />
               編集

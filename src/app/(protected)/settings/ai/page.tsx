@@ -27,7 +27,7 @@ export default function AiSettingsPage() {
   const currentTeam = useAuthStore((s) => s.currentTeam);
   const members = useAuthStore((s) => s.members);
   const teamId = currentTeam?.id;
-  const isOperator = members.find((m) => m.userId === currentUser?.uid)?.role === 'operator';
+  const isMember = members.find((m) => m.userId === currentUser?.uid)?.role === 'member';
 
   const [saved, setSaved] = useState<TeamAiSettings>(EMPTY_AI_SETTINGS);
   const [instructions, setInstructions] = useState('');
@@ -40,7 +40,7 @@ export default function AiSettingsPage() {
     if (!teamId) return;
     return subscribeTeamAiSettings(teamId, (s) => {
       setSaved(s);
-      // 編集中でなければ保存値に追従する（他のオペレーターの変更を反映）
+      // 編集中でなければ保存値に追従する（他のメンバーの変更を反映）
       setDirty((d) => {
         if (!d) {
           setInstructions(s.teamInstructions);
@@ -133,7 +133,7 @@ export default function AiSettingsPage() {
             rows={5}
             maxLength={TEAM_INSTRUCTIONS_MAX}
             placeholder="例: 「配信」は「枠」と呼ぶ。担当者の呼び方は「さん」付け。タスク名は動詞で終える。"
-            disabled={!isOperator}
+            disabled={!isMember}
           />
           <p className="text-[11px] text-text-muted text-right">
             {instructions.length} / {TEAM_INSTRUCTIONS_MAX}
@@ -145,7 +145,7 @@ export default function AiSettingsPage() {
           <CardHeader
             title="定型指示"
             action={
-              isOperator ? (
+              isMember ? (
                 <Button
                   size="sm"
                   variant="secondary"
@@ -177,10 +177,10 @@ export default function AiSettingsPage() {
                       onChange={(e) => updatePreset(i, { name: e.target.value })}
                       placeholder="例: 今週の締切"
                       maxLength={30}
-                      disabled={!isOperator}
+                      disabled={!isMember}
                     />
                   </div>
-                  {isOperator && (
+                  {isMember && (
                     <button
                       type="button"
                       onClick={() => {
@@ -201,7 +201,7 @@ export default function AiSettingsPage() {
                   rows={2}
                   maxLength={500}
                   placeholder="例: 今週締切のタスクを担当者ごとにまとめて"
-                  disabled={!isOperator}
+                  disabled={!isMember}
                 />
               </li>
             ))}
@@ -213,7 +213,7 @@ export default function AiSettingsPage() {
             {message.text}
           </p>
         )}
-        {isOperator ? (
+        {isMember ? (
           <div className="flex items-center gap-3">
             <Button onClick={handleSave} loading={saving} disabled={!dirty}>
               保存する
@@ -223,7 +223,7 @@ export default function AiSettingsPage() {
             )}
           </div>
         ) : (
-          <p className="text-[12px] text-text-muted">編集はオペレーターのみ行えます</p>
+          <p className="text-[12px] text-text-muted">編集はメンバーのみ行えます</p>
         )}
       </div>
     </div>

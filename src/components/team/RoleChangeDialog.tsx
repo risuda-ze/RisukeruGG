@@ -5,12 +5,12 @@ import { updateMemberRole } from '@/lib/repositories/teams';
 import { ROLE_LABELS } from '@/lib/utils/teamRoles';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import type { TeamMember } from '@/types/entities';
+import type { TeamMember, TeamRole } from '@/types/entities';
 
 interface RoleChangeDialogProps {
   teamId: string;
   member: TeamMember;
-  newRole: 'member' | 'staff' | 'rom' | 'operator';
+  newRole: TeamRole;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -59,11 +59,6 @@ export function RoleChangeDialog({
           <span className="font-medium">{member.displayName}</span> のロールを{' '}
           <span className="font-medium">{ROLE_LABELS[newRole]}</span> に変更しますか？
         </p>
-        {newRole === 'rom' && (
-          <p className="text-orange-text bg-warning/10 border border-warning/30 rounded-[8px] p-3">
-            ROM専になると、スケジュール・タスクの作成・編集ができなくなります。
-          </p>
-        )}
         {error && <p className="text-live">{error}</p>}
       </div>
     </Modal>
