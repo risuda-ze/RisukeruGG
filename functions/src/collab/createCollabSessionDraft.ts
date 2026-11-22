@@ -106,6 +106,7 @@ export const createCollabSessionDraft = onCall(
             participantResponses: {},
             comments: [],
             createdBy: ctx.uid,
+            updatedBy: ctx.uid,
             teamId,
             expiresAt,
             icon: icon ?? 'sports_esports',

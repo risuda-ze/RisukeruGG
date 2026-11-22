@@ -1,4 +1,5 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
+import { FieldValue } from 'firebase-admin/firestore';
 import { db, getAuthContext, requireMemberRole } from '../lib/validateAuth';
 
 interface CancelCollabSessionData {
@@ -28,7 +29,7 @@ export const cancelCollabSession = onCall(
     const session = sessionSnap.data()!;
 
     await db.runTransaction(async (tx) => {
-      tx.update(sessionRef, { status: 'cancelled' });
+      tx.update(sessionRef, { status: 'cancelled', updatedBy: ctx.uid, updatedAt: FieldValue.serverTimestamp() });
 
       // 確定済みの場合はリンク先スケジュールを削除
       if (session.status === 'confirmed' && session.linkedScheduleId) {

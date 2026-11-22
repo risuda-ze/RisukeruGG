@@ -9,7 +9,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db } from '@/lib/firebase/client';
+import { db, requireUid } from '@/lib/firebase/client';
 import type { Task } from '@/types/entities';
 
 const functions = getFunctions(undefined, 'asia-northeast1');
@@ -27,6 +27,7 @@ function toTask(id: string, data: Record<string, unknown>): Task {
     linkedScheduleId: (data.linkedScheduleId as string | null) ?? null,
     updatedAt: (data.updatedAt as Timestamp).toDate(),
     createdBy: data.createdBy as string,
+    updatedBy: (data.updatedBy as string | null | undefined) ?? null,
     createdAt: (data.createdAt as Timestamp).toDate(),
   };
 }
@@ -64,10 +65,10 @@ export async function updateTask(
       if (currentUpdatedAt.getTime() !== expectedUpdatedAt.getTime()) {
         throw new Error('CONFLICT');
       }
-      tx.update(ref, { ...data, updatedAt: serverTimestamp() });
+      tx.update(ref, { ...data, updatedBy: requireUid(), updatedAt: serverTimestamp() });
     });
   } else {
-    await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
+    await updateDoc(ref, { ...data, updatedBy: requireUid(), updatedAt: serverTimestamp() });
   }
 }
 

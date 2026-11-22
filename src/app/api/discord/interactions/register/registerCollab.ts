@@ -23,6 +23,7 @@ export async function registerCollab(
     title: proposal.title,
     partnerName: proposal.partnerName,
     createdBy: 'discord-bot',  // 個人ユーザーを追跡しないため固定値
+    updatedBy: 'discord-bot',
     teamId,
     // タイムゾーン無しの日時は JST として解釈する（UTC サーバーでのずれ防止）
     proposedDates: proposal.proposedDates.map((d) => parseProposalDateTime(d)),

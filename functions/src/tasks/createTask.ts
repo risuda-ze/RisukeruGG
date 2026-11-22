@@ -52,6 +52,7 @@ export const createTask = onCall(
         linkedScheduleId: linkedScheduleId ?? null,
         updatedAt: now,
         createdBy: ctx.uid,
+        updatedBy: ctx.uid,
         createdAt: now,
       });
 

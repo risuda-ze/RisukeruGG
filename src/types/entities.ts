@@ -108,6 +108,10 @@ export interface TaskStatus {
   /** Material Icons 名。未設定は null */
   icon: string | null;
   createdAt: Date;
+  /** 作成者・最終更新の記録。記録のない既存データは未設定 */
+  createdBy?: string | null;
+  updatedAt?: Date | null;
+  updatedBy?: string | null;
 }
 
 /**
@@ -122,6 +126,10 @@ export interface Category {
   /** Material Icons 名。任意（未設定は null） */
   icon: string | null;
   createdAt: Date;
+  /** 作成者・最終更新の記録。記録のない既存データは未設定 */
+  createdBy?: string | null;
+  updatedAt?: Date | null;
+  updatedBy?: string | null;
 }
 
 export interface ScheduleEntry {
@@ -135,6 +143,8 @@ export interface ScheduleEntry {
   collabPartnerName: string | null;
   linkedTaskIds: string[];
   updatedAt: Date;
+  /** 最終更新者の uid。Discord 経由は 'discord-bot'。記録のない既存データは未設定 */
+  updatedBy?: string | null;
   createdBy: string;
   createdAt: Date;
   /** 終日フラグ。後方互換のため optional（未設定は false 扱い） */
@@ -160,6 +170,8 @@ export interface Task {
   dueDateAllDay?: boolean;
   linkedScheduleId: string | null;
   updatedAt: Date;
+  /** 最終更新者の uid。記録のない既存データは未設定 */
+  updatedBy?: string | null;
   createdBy: string;
   createdAt: Date;
 }

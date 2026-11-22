@@ -26,6 +26,11 @@ export class AdminBriefsPort implements BriefsPort {
   }
 
   async commit(teamId: string, tx: BriefTransaction): Promise<void> {
+    if (tx.deleteBrief) {
+      // 配下（工程・工程コメント・差分）ごと削除する
+      await this.db.recursiveDelete(this.db.doc(`teams/${teamId}/briefs/${tx.briefId}`));
+      return;
+    }
     const batch = this.db.batch();
     const now = FieldValue.serverTimestamp();
     const briefRef = this.db.doc(`teams/${teamId}/briefs/${tx.briefId}`);
@@ -38,12 +43,13 @@ export class AdminBriefsPort implements BriefsPort {
         discord: null,
         createdAt: now,
         updatedAt: now,
+        updatedBy: tx.actor,
       });
     }
     if (tx.briefPatch && Object.keys(tx.briefPatch).length > 0) {
-      batch.update(briefRef, { ...stripUndefined(tx.briefPatch), updatedAt: now });
+      batch.update(briefRef, { ...stripUndefined(tx.briefPatch), updatedAt: now, updatedBy: tx.actor });
     } else if (tx.stepPatches.length > 0 || tx.stepCreates.length > 0 || tx.stepDeletes.length > 0) {
-      batch.update(briefRef, { updatedAt: now });
+      batch.update(briefRef, { updatedAt: now, updatedBy: tx.actor });
     }
     for (const c of tx.stepCreates) {
       const { id, ...rest } = c;
@@ -54,12 +60,18 @@ export class AdminBriefsPort implements BriefsPort {
         completedAt: null,
         completedBy: null,
         discordMessageId: null,
+        createdBy: tx.actor,
         createdAt: now,
         updatedAt: now,
+        updatedBy: tx.actor,
       });
     }
     for (const { stepId, patch } of tx.stepPatches) {
-      batch.update(briefRef.collection('steps').doc(stepId), { ...stripUndefined(patch), updatedAt: now });
+      batch.update(briefRef.collection('steps').doc(stepId), {
+        ...stripUndefined(patch),
+        updatedAt: now,
+        updatedBy: tx.actor,
+      });
     }
     for (const stepId of tx.stepDeletes) {
       batch.delete(briefRef.collection('steps').doc(stepId));

@@ -34,6 +34,7 @@ export async function registerSchedule(
     linkedTaskIds: [],
     allDay: proposal.allDay ?? false,
     createdBy: 'discord-bot',  // 個人ユーザーを追跡しないため固定値
+    updatedBy: 'discord-bot',
     updatedAt: now,
     createdAt: now,
   });

@@ -55,7 +55,7 @@ export async function registerTaskUpdate(
     throw new Error('更新できる変更内容がありません');
   }
 
-  await taskRef.update({ ...data, updatedAt: FieldValue.serverTimestamp() });
+  await taskRef.update({ ...data, updatedBy: 'discord-bot', updatedAt: FieldValue.serverTimestamp() });
 
   // 完了メッセージ用に更新後のタイトルを返す
   return (c.title ?? (snap.data()?.title as string | undefined)) ?? proposal.taskId;

@@ -45,6 +45,8 @@ export const reopenCollabSession = onCall(
       /* セッションを open 状態に戻す */
       tx.update(sessionRef, {
         status: 'open',
+        updatedBy: ctx.uid,
+        updatedAt: FieldValue.serverTimestamp(),
         confirmedDate: FieldValue.delete(),
         linkedScheduleId: FieldValue.delete(),
       });

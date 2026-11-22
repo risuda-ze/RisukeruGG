@@ -38,6 +38,7 @@ export async function registerTask(
     dueDate: proposal.dueDate ? new Date(proposal.dueDate) : null,
     linkedScheduleId: null,
     createdBy: 'discord-bot',  // 個人ユーザーを追跡しないため固定値
+    updatedBy: 'discord-bot',
     updatedAt: now,
     createdAt: now,
   });

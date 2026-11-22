@@ -69,6 +69,7 @@ export function toBrief(teamId: string, id: string, data: Record<string, unknown
     createdBy: data.createdBy as string,
     createdAt: toDateOrNull(data.createdAt) ?? new Date(0),
     updatedAt: toDateOrNull(data.updatedAt) ?? new Date(0),
+    updatedBy: (data.updatedBy as string | null | undefined) ?? null,
   };
 }
 
@@ -93,8 +94,10 @@ export function toStep(id: string, data: Record<string, unknown>): Step {
     completedAt: toDateOrNull(data.completedAt),
     completedBy: (data.completedBy as string | null | undefined) ?? null,
     discordMessageId: (data.discordMessageId as string | null | undefined) ?? null,
+    createdBy: (data.createdBy as string | null | undefined) ?? null,
     createdAt: toDateOrNull(data.createdAt) ?? new Date(0),
     updatedAt: toDateOrNull(data.updatedAt) ?? new Date(0),
+    updatedBy: (data.updatedBy as string | null | undefined) ?? null,
   };
 }
 

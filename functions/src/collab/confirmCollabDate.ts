@@ -53,12 +53,15 @@ export const confirmCollabDate = onCall(
         collabPartnerName: session.partnerName,
         linkedTaskIds: [],
         updatedAt: now,
+        updatedBy: ctx.uid,
         createdBy: ctx.uid,
         createdAt: now,
       });
 
       tx.update(sessionRef, {
         status: 'confirmed',
+        updatedBy: ctx.uid,
+        updatedAt: now,
         confirmedDate: confirmedDateObj,
         linkedScheduleId: scheduleRef.id,
       });

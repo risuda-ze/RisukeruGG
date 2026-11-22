@@ -46,6 +46,7 @@ export const createCollabSession = onCall(
         title,
         partnerName,
         createdBy: ctx.uid,
+        updatedBy: ctx.uid,
         teamId,
         proposedDates: proposedDates.map((d) => new Date(d)),
         responses: null,

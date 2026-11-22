@@ -12,7 +12,7 @@ import {
   Timestamp,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
+import { db, requireUid } from '@/lib/firebase/client';
 import type { Category } from '@/types/entities';
 
 function toCategory(id: string, data: Record<string, unknown>): Category {
@@ -23,17 +23,26 @@ function toCategory(id: string, data: Record<string, unknown>): Category {
     order: (data.order as number) ?? 0,
     icon: (data.icon as string | null) ?? null,
     createdAt: (data.createdAt as Timestamp).toDate(),
+    createdBy: (data.createdBy as string | null | undefined) ?? null,
+    updatedAt: (data.updatedAt as Timestamp | null | undefined)?.toDate() ?? null,
+    updatedBy: (data.updatedBy as string | null | undefined) ?? null,
   };
 }
 
 export async function createCategory(
   teamId: string,
-  data: Omit<Category, 'id' | 'createdAt' | 'icon'> & { icon?: string | null }
+  data: Omit<Category, 'id' | 'createdAt' | 'icon' | 'createdBy' | 'updatedAt' | 'updatedBy'> & {
+    icon?: string | null;
+  }
 ): Promise<string> {
+  const uid = requireUid();
   const ref = await addDoc(collection(db, 'teams', teamId, 'categories'), {
     ...data,
     icon: data.icon ?? null,
+    createdBy: uid,
     createdAt: serverTimestamp(),
+    updatedBy: uid,
+    updatedAt: serverTimestamp(),
   });
   return ref.id;
 }
@@ -43,7 +52,11 @@ export async function updateCategory(
   categoryId: string,
   data: Partial<Pick<Category, 'name' | 'color' | 'order' | 'icon'>>
 ): Promise<void> {
-  await updateDoc(doc(db, 'teams', teamId, 'categories', categoryId), data);
+  await updateDoc(doc(db, 'teams', teamId, 'categories', categoryId), {
+    ...data,
+    updatedBy: requireUid(),
+    updatedAt: serverTimestamp(),
+  });
 }
 
 /**

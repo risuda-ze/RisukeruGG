@@ -29,6 +29,13 @@ export class MemoryBriefsPort implements BriefsPort {
 
   async commit(teamId: string, tx: BriefTransaction): Promise<void> {
     this.committed.push(tx);
+    if (tx.deleteBrief) {
+      // 配下（工程・差分）ごと削除する
+      this.briefs.delete(tx.briefId);
+      for (const [id, s] of this.steps) if (s.briefId === tx.briefId) this.steps.delete(id);
+      this.events = this.events.filter((e) => e.briefId !== tx.briefId);
+      return;
+    }
     if (tx.createBrief) {
       const d = tx.createBrief;
       this.briefs.set(d.id, {
@@ -37,11 +44,12 @@ export class MemoryBriefsPort implements BriefsPort {
         discord: null,
         createdAt: this.now,
         updatedAt: this.now,
+        updatedBy: tx.actor,
       });
     }
     if (tx.briefPatch) {
       const b = this.briefs.get(tx.briefId)!;
-      this.briefs.set(tx.briefId, { ...b, ...tx.briefPatch, updatedAt: this.now });
+      this.briefs.set(tx.briefId, { ...b, ...tx.briefPatch, updatedAt: this.now, updatedBy: tx.actor });
     }
     for (const c of tx.stepCreates) {
       this.steps.set(c.id, {
@@ -51,13 +59,15 @@ export class MemoryBriefsPort implements BriefsPort {
         completedAt: null,
         completedBy: null,
         discordMessageId: null,
+        createdBy: tx.actor,
         createdAt: this.now,
         updatedAt: this.now,
+        updatedBy: tx.actor,
       });
     }
     for (const { stepId, patch } of tx.stepPatches) {
       const s = this.steps.get(stepId);
-      if (s) this.steps.set(stepId, { ...s, ...patch, updatedAt: this.now });
+      if (s) this.steps.set(stepId, { ...s, ...patch, updatedAt: this.now, updatedBy: tx.actor });
     }
     for (const id of tx.stepDeletes) this.steps.delete(id);
     for (const e of tx.events) {

@@ -56,6 +56,9 @@ export interface Playbook {
   steps: StepDef[];
   createdAt: Date;
   updatedAt: Date;
+  /** 作成者・最終更新者の uid。記録のない既存データは null */
+  createdBy?: string | null;
+  updatedBy?: string | null;
 }
 
 export type BriefStatus = 'planning' | 'in_progress' | 'published' | 'archived';
@@ -86,6 +89,8 @@ export interface Brief {
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
+  /** 最終更新者の uid。Discord 経由は 'discord-bot'、システムは 'system'。記録のない既存データは null */
+  updatedBy: string | null;
 }
 
 export type StepStatus = 'waiting' | 'ready' | 'in_progress' | 'done' | 'skipped';
@@ -114,8 +119,12 @@ export interface Step {
   completedBy: string | null;
   /** 着手可能通知メッセージの ID（B-2） */
   discordMessageId: string | null;
+  /** 作成者の uid。Discord 経由は 'discord-bot'、システムは 'system'。記録のない既存データは null */
+  createdBy: string | null;
   createdAt: Date;
   updatedAt: Date;
+  /** 最終更新者の uid。記録のない既存データは null */
+  updatedBy: string | null;
 }
 
 export type CommentSource = 'web' | 'discord';
