@@ -19,6 +19,7 @@ import { Icon } from '@/components/ui/Icon';
 import type { ScheduleEntry } from '@/types/entities';
 import { buttonVariants } from '@/components/ui/Button';
 import { cn } from '@/lib/utils/cn';
+import { canEditRole } from '@/lib/utils/teamRoles';
 
 type CalendarView = 'month' | 'week';
 
@@ -89,7 +90,7 @@ export default function SchedulePage() {
 
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
+  const canEdit = canEditRole(myMember?.role);
 
   /* マウント時に一度だけ、スマホなら初期ビューを週表示に切り替える。
      ビュー選択（週/月）はこの画面の React state のみで管理しており、

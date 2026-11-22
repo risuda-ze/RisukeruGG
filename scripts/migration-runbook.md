@@ -14,6 +14,7 @@
 | `migrate-category-schema.mjs` | taskCategories / scheduleCategories → categories 統合移行 | 適用済み |
 | `migrate-discord-schema.mjs` | Discord セッション guildId 移行 / config 既定値正規化 | 適用済み |
 | `migrate-allday-schedule-encoding.mjs` | 終日予定の endAt 排他的境界への移行 | 適用済み |
+| `delete-member-calendars.mjs` | メンバー予定ミラーの廃止に伴う既存データ（`teams/{teamId}/memberCalendars/**`・`users/{uid}.googleCalendar`）の削除 | 適用済み（2026-11-22） |
 
 ---
 
@@ -25,9 +26,9 @@
 
 ### 適用待ちの一回性スクリプト
 
-| コマンド | スクリプト | 目的 |
+| コマンド | スクリプト | 目的・実行タイミング |
 | --- | --- | --- |
-| `node scripts/delete-member-calendars.mjs` | `delete-member-calendars.mjs` | メンバー予定ミラーの廃止に伴う既存データ（`teams/{teamId}/memberCalendars/**`・`users/{uid}.googleCalendar`）の削除。本番適用後にスクリプトとこの表の行を削除する |
+| `node scripts/migrate-roles-to-staff.mjs` | `migrate-roles-to-staff.mjs` | ロール移行の本番作業①（`docs/変更仕様/two-roles.md`）。`teams/*/members/*` の旧 `member` / `rom` / `editor` / `viewer` を `staff` へ書き換える。**PR A の本番反映後、PR B のデプロイ前**に実行する。PR B のデプロイ後は実行しない（新 `member`＝管理者を `staff` に落とす）。適用後にスクリプトとこの表の行を削除する |
 
 共通仕様:
 
@@ -67,20 +68,19 @@ pnpm cleanup:discord-invite-temp -- --apply
 
 ---
 
-## delete-member-calendars — メンバー予定ミラーの既存データ削除（一回性）
+## migrate-roles-to-staff — ロールを staff へ寄せる（本番作業①）
 
-実行タイミング: Google カレンダー書き出し（`docs/変更仕様/google-calendar-export.md`）を本番へデプロイした後に 1 回。デプロイ前に実行すると、旧バージョンのアプリがログイン時にデータを書き戻す。
-
-### dry-run
+1. dry-run で role ごとの件数と、書き換え対象・未知の値を確認する
 
 ```powershell
-node scripts/delete-member-calendars.mjs
+node scripts/migrate-roles-to-staff.mjs
 ```
 
-### 本適用
+2. 本適用
 
 ```powershell
-node scripts/delete-member-calendars.mjs --apply
+node scripts/migrate-roles-to-staff.mjs --apply
 ```
 
-適用後にもう一度 dry-run を実行し、対象が 0 件になったことを確認する。確認できたらスクリプトを削除する。
+3. dry-run を再実行し、「旧 member / rom / editor / viewer は 0 件です」と出ることを確認する。**0 件を確認するまで PR B をデプロイしない**
+4. 未知の role が表示された場合は終了コード 2 になり、「0 件です」の行は出ない。書き換えは行わないので、内容を確認して扱いを決める。旧 member が 0 件かどうかは、role ごとの件数に `member` / `rom` / `editor` / `viewer` の行が無いことで確認する

@@ -10,7 +10,7 @@ import type { TeamMember } from '@/types/entities';
 interface RoleChangeDialogProps {
   teamId: string;
   member: TeamMember;
-  newRole: 'member' | 'rom' | 'operator';
+  newRole: 'member' | 'staff' | 'rom' | 'operator';
   onClose: () => void;
   onSuccess: () => void;
 }

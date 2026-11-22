@@ -14,6 +14,7 @@ import { TopBar } from '@/components/layout/TopBar';
 import type { Task } from '@/types/entities';
 import { LIGHT_PLAN_LIMITS } from '@/types/entities';
 import { isPartyPlan } from '@/lib/plan';
+import { canEditRole } from '@/lib/utils/teamRoles';
 
 const KanbanBoard = dynamic(() => import('@/components/kanban/KanbanBoard'), {
   loading: () => <div className="flex justify-center py-16"><Spinner size="lg" /></div>,
@@ -62,7 +63,7 @@ export default function TasksPage() {
 
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
+  const canEdit = canEditRole(myMember?.role);
 
   const myTaskCount = tasks.filter((t) => t.createdBy === currentUser?.uid).length;
   const isLightPlanFull =
