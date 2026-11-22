@@ -1,4 +1,4 @@
-export type UserRole = 'operator' | 'member' | 'rom';
+export type UserRole = 'operator' | 'member' | 'staff' | 'rom';
 export type PlanType = 'light' | 'party';
 /** @deprecated 新規コードでは Category インターフェースと categoryId を使用すること */
 export type TaskCategoryKey = 'shooting' | 'editing' | 'thumbnail' | 'announcement' | 'other';

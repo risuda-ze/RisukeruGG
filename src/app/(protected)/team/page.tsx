@@ -28,7 +28,7 @@ import { MEMBER_DUTIES, MEMBER_DUTY_LABELS } from '@/types/entities';
 import type { MemberDuty, TeamMember } from '@/types/entities';
 
 type DialogState =
-  | { type: 'roleChange'; member: TeamMember; newRole: 'member' | 'rom' | 'operator' }
+  | { type: 'roleChange'; member: TeamMember; newRole: 'member' | 'staff' | 'rom' | 'operator' }
   | { type: 'remove'; member: TeamMember }
   | { type: 'leave' }
   | { type: 'discord'; member: TeamMember }
@@ -148,7 +148,7 @@ function TeamPageInner() {
   }
 
   function handleRoleChange(member: TeamMember, value: string) {
-    if (value === 'member' || value === 'rom' || value === 'operator') {
+    if (value === 'member' || value === 'staff' || value === 'rom' || value === 'operator') {
       setDialog({ type: 'roleChange', member, newRole: value });
     }
   }
@@ -386,6 +386,7 @@ function TeamPageInner() {
                                 options={[
                                   { value: 'operator', label: 'オペレーター' },
                                   { value: 'member', label: 'メンバー' },
+                                  { value: 'staff', label: 'スタッフ' },
                                   { value: 'rom', label: 'ROM専' },
                                 ]}
                                 onChange={(v) => handleRoleChange(member, v)}

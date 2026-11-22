@@ -17,6 +17,7 @@ import { Card, CardHeader } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { COLLAB_STATUS_LABELS } from '@/types/entities';
 import type { CollabSession } from '@/types/entities';
+import { canEditRole } from '@/lib/utils/teamRoles';
 
 type BadgeVariant = 'purple' | 'amber' | 'live' | 'green' | 'muted' | 'default';
 const STATUS_BADGE: Record<string, BadgeVariant> = {
@@ -42,7 +43,7 @@ export default function CollabDetailPage() {
 
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const canEdit = myMember?.role === 'operator' || myMember?.role === 'member';
+  const canEdit = canEditRole(myMember?.role);
 
   useEffect(() => {
     if (!teamId) return;
