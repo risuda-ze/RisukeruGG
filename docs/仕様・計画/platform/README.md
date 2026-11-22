@@ -14,6 +14,7 @@ PWA・オフラインカテゴリの詳細仕様です。
 - バージョン表示とリリースノート（公開ページ `/release-notes`、コード内に持つ原稿、GitHub Releases に置く下書き、バージョンの上げ方）
 - リリース時の Firebase へのデプロイとデータ移行（手順は [flows.md](./flows.md)、スクリプトの実行手順は `scripts/migration-runbook.md`）
 - リリース時のキーの入れ替え（対象の一覧は [requirements.md](./requirements.md)、手順は [flows.md](./flows.md)）
+- リリース時の開発環境の片付け（対象の一覧は [requirements.md](./requirements.md)）
 
 ## 対象外
 

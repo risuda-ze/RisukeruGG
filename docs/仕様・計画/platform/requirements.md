@@ -54,3 +54,22 @@ Stripe の 2 つは、正式な値を設定して課金を開始した後のリ�
 - Discord の `DISCORD_APPLICATION_ID` / `DISCORD_CLIENT_ID` / `DISCORD_PUBLIC_KEY`
 - Stripe の `STRIPE_PRICE_ID`
 - `GMAIL_USER`、`SENTRY_ORG`、`SENTRY_PROJECT`
+
+## リリース時の開発環境の片付け
+
+- **PF-020**: リリースのたびに、役目を終えたブランチ・ワークツリー・作業用ファイルを下表のとおり片付ける。片付けはリリースの公開まで終えた後に行う
+- **PF-021**: `main`・`develop`・`review-reports` と、オープン中の PR があるブランチは削除しない
+- **PF-022**: `develop` へ未マージのコミットを持つブランチ、未コミットの変更があるワークツリーは、一覧を見て不要と判断したものだけを削除する。機械的には削除しない
+
+### 片付ける対象
+
+| 対象 | 削除するもの | 確認方法 |
+| --- | --- | --- |
+| リモートのブランチ | `develop` へマージ済みのブランチ（`feature/`・`dependabot/`・`copilot/` など） | `git branch -r --merged origin/develop` |
+| ワークツリー | 作業が済んだもの（エージェントやセッションが作ったものを含む）。削除後に `git worktree prune` を実行する | `git worktree list` |
+| ローカルのブランチ | `develop` へマージ済みのもの、追跡先のリモートブランチが消えたもの、作業が済んだ `claude/`・`worktree-agent-` のもの。ワークツリーを先に削除する | `git branch -vv`（追跡先が消えたものは `gone` と表示される） |
+| リモート追跡の参照 | リモートで削除済みのブランチの参照 | `git fetch --prune` |
+| レビュー素材 | マージ済み PR の `review-artifacts/pr-<番号>/` | — |
+| 鍵ファイル | 運用スクリプトの実行のために端末へ置いたサービスアカウントの鍵ファイルのうち、入れ替え前の古いもの | — |
+
+片付けの後、ローカルの `main` と `develop` を最新にする。
