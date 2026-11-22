@@ -35,3 +35,17 @@
 6. 開発者が下書き Release をタグ `v{version}`、Target `main` で公開する
 
 リリースノートに載せる変更が無いリリースでは 2〜4 と 6 を行わない。公開済みの原稿は、誤記の訂正を除いて書き換えない。
+
+## リリースフロー（`develop` → `main`）
+
+1. 開発者が、前回のリリース以降に `develop` へ入った変更から次の 2 つを洗い出す
+   - Firebase へのデプロイが要る変更（`firestore.rules`・`firestore.indexes.json`・`functions/`）
+   - `scripts/migration-runbook.md` の「適用待ちの一回性スクリプト」
+2. リリースノートに載せる変更があれば、「リリースノートの原稿更新フロー」の 2〜4 を行う
+3. `develop` → `main` のリリース PR を merge commit でマージする。Vercel が本番へデプロイする
+4. 1 で洗い出した Firebase へのデプロイを行う（`firebase deploy --only firestore` / `firebase deploy --only functions`）
+5. 適用待ちの移行スクリプトを runbook の手順で実行する（dry-run → `--apply` → もう一度 dry-run で対象 0 件を確認）。実行タイミングの指定が runbook にあればそれに従う
+6. 適用したスクリプトと runbook の該当行を削除する PR を `develop` へ出す
+7. 「リリースノートの原稿更新フロー」の 6 を行う
+
+1 で該当が無ければ 4〜6 を行わない。
