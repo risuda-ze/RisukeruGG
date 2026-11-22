@@ -8,7 +8,7 @@ import type { FieldDef, Step, StepStatus } from '@/types/briefs';
  *   ready → in_progress     着手（任意）
  *   ready | in_progress → done
  *   ready | in_progress → skipped   optional の工程のみ
- *   done | skipped → ready  差し戻し（operator / member）
+ *   done | skipped → ready  差し戻し（メンバー、ブリーフの作成者、工程の担当者）
  */
 
 /** 先行工程がすべて完了（done | skipped）しているか */

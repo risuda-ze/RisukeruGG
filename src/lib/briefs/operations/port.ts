@@ -1,4 +1,4 @@
-import type { UserRole } from '@/types/entities';
+import type { TeamRole } from '@/types/entities';
 import type {
   Brief,
   BriefEventType,
@@ -85,7 +85,7 @@ export interface OperationContext {
   teamId: string;
   /** 操作者 UID。Discord・システム由来は null */
   actorId: string | null;
-  role: UserRole | null;
+  role: TeamRole | null;
   source: EventSource;
   now: Date;
 }

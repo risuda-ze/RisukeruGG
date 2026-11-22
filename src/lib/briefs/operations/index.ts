@@ -1,6 +1,6 @@
 import { startOfDay } from 'date-fns';
-import { canEditRole } from '@/lib/utils/teamRoles';
-import type { Playbook, Step, StepStatus } from '@/types/briefs';
+import { canManageCreated } from '@/lib/utils/teamRoles';
+import type { Brief, Playbook, Step, StepStatus } from '@/types/briefs';
 import type { AddStepInput, CreateBriefInput, UpdateBriefHeaderInput } from '@/lib/validations/briefs';
 import { computeDueDate, isSameDate, planDueDateRecalc } from '../deadlines';
 import { buildStepsFromPlaybook, nextCustomStepKey } from '../generate';
@@ -24,11 +24,37 @@ import {
 
 /* ── 権限 ─────────────────────────────────────────────── */
 
-/** ブリーフ・工程を編集できるロールか。Discord 由来（role null）はサーバーを信頼境界として許可する */
-export function assertCanEdit(ctx: OperationContext): void {
-  if (ctx.source === 'discord' || ctx.source === 'system') return;
-  if (canEditRole(ctx.role)) return;
-  throw new OperationError('permission-denied', 'この操作にはメンバー以上の権限が必要です');
+/** Discord・システム由来はロールを見ない。サーバーを信頼境界として許可する */
+function isTrustedSource(ctx: OperationContext): boolean {
+  return ctx.source === 'discord' || ctx.source === 'system';
+}
+
+/** ブリーフを作れるか。所属者（ロールを持つ）なら誰でも作れる */
+export function assertCanCreateBrief(ctx: OperationContext): void {
+  if (isTrustedSource(ctx) || ctx.role !== null) return;
+  throw new OperationError('permission-denied', 'チームの所属者のみブリーフを作成できます');
+}
+
+/** ブリーフと工程の構成を編集できるか。メンバーか、そのブリーフの作成者 */
+export function assertCanEditBrief(ctx: OperationContext, brief: Pick<Brief, 'createdBy'>): void {
+  if (isTrustedSource(ctx)) return;
+  if (canManageCreated(ctx.role, brief.createdBy, ctx.actorId)) return;
+  throw new OperationError('permission-denied', 'この操作にはメンバーか、ブリーフの作成者の権限が必要です');
+}
+
+/** 工程の状態を変えられるか。ブリーフの編集権限に加え、その工程の担当者本人も可 */
+export function assertCanChangeStep(
+  ctx: OperationContext,
+  brief: Pick<Brief, 'createdBy'>,
+  step: Pick<Step, 'assigneeId'>
+): void {
+  if (isTrustedSource(ctx)) return;
+  if (canManageCreated(ctx.role, brief.createdBy, ctx.actorId)) return;
+  if (ctx.actorId && step.assigneeId === ctx.actorId) return;
+  throw new OperationError(
+    'permission-denied',
+    'この操作にはメンバー、ブリーフの作成者、または工程の担当者の権限が必要です'
+  );
 }
 
 /* ── 内部ヘルパー ─────────────────────────────────────── */
@@ -102,7 +128,7 @@ export async function createBrief(
   input: CreateBriefInput,
   playbook: Playbook | null
 ): Promise<CreateBriefResult> {
-  assertCanEdit(ctx);
+  assertCanCreateBrief(ctx);
   if (input.playbookId && !playbook) {
     throw new OperationError('invalid-argument', '指定された進め方が見つかりません');
   }
@@ -146,8 +172,8 @@ export async function updateBriefHeader(
   briefId: string,
   input: UpdateBriefHeaderInput
 ): Promise<void> {
-  assertCanEdit(ctx);
   const { brief, steps } = await loadOrThrow(port, ctx, briefId);
+  assertCanEditBrief(ctx, brief);
   const tx = emptyTransaction(briefId);
   tx.briefPatch = {};
 
@@ -201,9 +227,9 @@ export async function changeStepStatus(
   stepId: string,
   to: StepStatus
 ): Promise<void> {
-  assertCanEdit(ctx);
-  const { steps } = await loadOrThrow(port, ctx, briefId);
+  const { brief, steps } = await loadOrThrow(port, ctx, briefId);
   const step = findStep(steps, stepId);
+  assertCanChangeStep(ctx, brief, step);
   const check = canTransition(step, to);
   if (!check.ok) throw new OperationError('invalid-transition', check.reason ?? '遷移できません');
   const tx = emptyTransaction(briefId);
@@ -228,8 +254,8 @@ export async function assignStep(
   stepId: string,
   assigneeId: string | null
 ): Promise<void> {
-  assertCanEdit(ctx);
-  const { steps } = await loadOrThrow(port, ctx, briefId);
+  const { brief, steps } = await loadOrThrow(port, ctx, briefId);
+  assertCanEditBrief(ctx, brief);
   const step = findStep(steps, stepId);
   if (step.assigneeId === assigneeId) return;
   const tx = emptyTransaction(briefId);
@@ -249,8 +275,8 @@ export async function setStepDueDate(
   stepId: string,
   dueDate: Date | null
 ): Promise<void> {
-  assertCanEdit(ctx);
   const { brief, steps } = await loadOrThrow(port, ctx, briefId);
+  assertCanEditBrief(ctx, brief);
   const step = findStep(steps, stepId);
   // 締切は日付単位で扱うため、手入力も 0 時に正規化する
   const next = dueDate ? startOfDay(dueDate) : computeDueDate(brief.publishAt, step.leadDays);
@@ -270,8 +296,8 @@ export async function setStepFields(
   stepId: string,
   fields: Record<string, unknown>
 ): Promise<void> {
-  assertCanEdit(ctx);
-  const { steps } = await loadOrThrow(port, ctx, briefId);
+  const { brief, steps } = await loadOrThrow(port, ctx, briefId);
+  assertCanEditBrief(ctx, brief);
   const step = findStep(steps, stepId);
   const merged = { ...step.fields, ...fields };
   const tx = emptyTransaction(briefId);
@@ -293,8 +319,8 @@ export async function renameStep(
   stepId: string,
   title: string
 ): Promise<void> {
-  assertCanEdit(ctx);
-  const { steps } = await loadOrThrow(port, ctx, briefId);
+  const { brief, steps } = await loadOrThrow(port, ctx, briefId);
+  assertCanEditBrief(ctx, brief);
   const step = findStep(steps, stepId);
   const trimmed = title.trim();
   if (!trimmed || trimmed === step.title) return;
@@ -310,8 +336,8 @@ export async function addStep(
   briefId: string,
   input: AddStepInput
 ): Promise<string> {
-  assertCanEdit(ctx);
   const { brief, steps } = await loadOrThrow(port, ctx, briefId);
+  assertCanEditBrief(ctx, brief);
   const key = nextCustomStepKey(steps.map((s) => s.key));
   const keys = new Set(steps.map((s) => s.key));
   const dependsOn = input.dependsOn.filter((k) => keys.has(k));
@@ -367,8 +393,8 @@ export async function removeStep(
   briefId: string,
   stepId: string
 ): Promise<void> {
-  assertCanEdit(ctx);
-  const { steps } = await loadOrThrow(port, ctx, briefId);
+  const { brief, steps } = await loadOrThrow(port, ctx, briefId);
+  assertCanEditBrief(ctx, brief);
   const step = findStep(steps, stepId);
   const tx = emptyTransaction(briefId);
   tx.stepDeletes.push(stepId);

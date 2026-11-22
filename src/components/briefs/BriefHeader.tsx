@@ -29,7 +29,7 @@ interface BriefHeaderProps {
  */
 export function BriefHeader({ brief, steps, members }: BriefHeaderProps) {
   const briefOps = useBriefOps();
-  const canEdit = briefOps.canEdit;
+  const canEdit = briefOps.canEditBrief(brief);
   const [title, setTitle] = useState(brief.title);
   const [pendingPublishAt, setPendingPublishAt] = useState<string | null>(null);
   const [fields, setFields] = useState(brief.fields);

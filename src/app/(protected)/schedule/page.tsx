@@ -19,7 +19,7 @@ import { Icon } from '@/components/ui/Icon';
 import type { ScheduleEntry } from '@/types/entities';
 import { buttonVariants } from '@/components/ui/Button';
 import { cn } from '@/lib/utils/cn';
-import { canEditRole } from '@/lib/utils/teamRoles';
+import { canManageCreated } from '@/lib/utils/teamRoles';
 
 type CalendarView = 'month' | 'week';
 
@@ -90,7 +90,8 @@ export default function SchedulePage() {
 
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const canEdit = canEditRole(myMember?.role);
+  /* スケジュールの作成は所属者全員。編集・削除はメンバーか作成者（スケジュールごとに判定） */
+  const canCreate = !!myMember;
 
   /* マウント時に一度だけ、スマホなら初期ビューを週表示に切り替える。
      ビュー選択（週/月）はこの画面の React state のみで管理しており、
@@ -171,7 +172,7 @@ export default function SchedulePage() {
           {/* 右グループ */}
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2.5">
             {/* 予定追加 */}
-            {canEdit && (
+            {canCreate && (
               <button
                 onClick={() => { setClickedDate(null); setShowCreate(true); }}
                 className={buttonVariants({ variant: 'primary', size: 'sm' })}
@@ -348,7 +349,7 @@ export default function SchedulePage() {
             schedules={schedules}
             categories={categories}
             onEventClick={setSelectedSchedule}
-            onDateClick={canEdit ? (d) => { setClickedDate(d ?? null); setShowCreate(true); } : undefined}
+            onDateClick={canCreate ? (d) => { setClickedDate(d ?? null); setShowCreate(true); } : undefined}
             onDateLabelClick={(date) => {
               setCurrentDate(date);
               setView('week');
@@ -360,7 +361,7 @@ export default function SchedulePage() {
             schedules={schedules}
             categories={categories}
             onEventClick={setSelectedSchedule}
-            onDateClick={canEdit ? (d) => { setClickedDate(d ?? null); setShowCreate(true); } : undefined}
+            onDateClick={canCreate ? (d) => { setClickedDate(d ?? null); setShowCreate(true); } : undefined}
           />
         )}
       </div>
@@ -370,7 +371,7 @@ export default function SchedulePage() {
         <ScheduleModal
           schedule={selectedSchedule}
           teamId={currentTeamId}
-          canEdit={canEdit}
+          canEdit={canManageCreated(myMember?.role, selectedSchedule.createdBy, currentUser?.uid)}
           categories={categories}
           onClose={() => setSelectedSchedule(null)}
           onDeleted={() => setSelectedSchedule(null)}
@@ -383,7 +384,7 @@ export default function SchedulePage() {
           schedule={null}
           initialDate={clickedDate ?? undefined}
           teamId={currentTeamId}
-          canEdit={canEdit}
+          canEdit
           categories={categories}
           onClose={() => { setShowCreate(false); setClickedDate(null); }}
           onDeleted={() => {}}

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getAdminFirestore } from '@/lib/firebase/admin';
 import { fetchGuildTextChannels } from '@/lib/discord/sendBotMessage';
 import { verifyBearerToken } from '@/lib/firebase/verifyBearerToken';
+import { toTeamRole } from '@/lib/utils/teamRoles';
 
 /** 'HH:00' 形式のみ（毎時起動のダイジェストに合わせる） */
 const BodySchema = z.object({
@@ -16,7 +17,7 @@ const BodySchema = z.object({
 
 /**
  * タスク管理 v2（ブリーフ）の Discord 連携設定を更新する（IN-023 / IN-027）。
- * operator のみ。チャンネル ID は Bot トークンで取得した実チャンネル一覧と照合する。
+ * メンバーのみ。チャンネル ID は Bot トークンで取得した実チャンネル一覧と照合する。
  * null のチャンネルは「通知チャンネルと同じ」を意味し、フィールドを削除する。
  */
 export async function POST(req: NextRequest): Promise<Response> {
@@ -32,8 +33,8 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const db = getAdminFirestore();
   const memberSnap = await db.doc(`teams/${teamId}/members/${uid}`).get();
-  if (!memberSnap.exists || memberSnap.data()?.role !== 'operator') {
-    return Response.json({ error: 'operator 権限が必要です' }, { status: 403 });
+  if (!memberSnap.exists || toTeamRole(memberSnap.data()?.role) !== 'member') {
+    return Response.json({ error: 'メンバー権限が必要です' }, { status: 403 });
   }
 
   const configRef = db.doc(`teams/${teamId}/discord/config`);

@@ -1,12 +1,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import { canEditRole } from '@/lib/utils/teamRoles';
+import { canManageCreated, isMemberRole } from '@/lib/utils/teamRoles';
 import { useAuthStore } from '@/stores/auth';
 import { firestoreBriefsPort } from '@/lib/repositories/briefs';
 import * as ops from '@/lib/briefs/operations';
 import type { OperationContext } from '@/lib/briefs/operations';
-import type { Playbook, StepStatus } from '@/types/briefs';
+import type { Brief, Playbook, Step, StepStatus } from '@/types/briefs';
 import type { AddStepInput, CreateBriefInput, UpdateBriefHeaderInput } from '@/lib/validations/briefs';
 
 /**
@@ -21,7 +21,9 @@ export function useBriefOps() {
   const teamId = currentTeam?.id ?? null;
   const uid = currentUser?.uid ?? null;
   const role = members.find((m) => m.userId === uid)?.role ?? null;
-  const canEdit = canEditRole(role);
+  const isMember = isMemberRole(role);
+  /** ブリーフは所属者なら誰でも作れる */
+  const canCreate = role !== null;
 
   return useMemo(() => {
     const ctx = (): OperationContext => {
@@ -31,7 +33,13 @@ export function useBriefOps() {
     const port = firestoreBriefsPort;
     return {
       teamId,
-      canEdit,
+      isMember,
+      canCreate,
+      /** ブリーフと工程の構成を編集できるか（メンバーか、そのブリーフの作成者） */
+      canEditBrief: (brief: Pick<Brief, 'createdBy'>) => canManageCreated(role, brief.createdBy, uid),
+      /** 工程の状態を変えられるか（ブリーフの編集権限、または工程の担当者本人） */
+      canChangeStep: (brief: Pick<Brief, 'createdBy'>, step: Pick<Step, 'assigneeId'>) =>
+        canManageCreated(role, brief.createdBy, uid) || (!!uid && step.assigneeId === uid),
       createBrief: (input: CreateBriefInput, playbook: Playbook | null) =>
         ops.createBrief(port, ctx(), input, playbook),
       updateBriefHeader: (briefId: string, input: UpdateBriefHeaderInput) =>
@@ -49,5 +57,5 @@ export function useBriefOps() {
       addStep: (briefId: string, input: AddStepInput) => ops.addStep(port, ctx(), briefId, input),
       removeStep: (briefId: string, stepId: string) => ops.removeStep(port, ctx(), briefId, stepId),
     };
-  }, [teamId, uid, role, canEdit]);
+  }, [teamId, uid, role, isMember, canCreate]);
 }
