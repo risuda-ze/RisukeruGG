@@ -1,7 +1,7 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomUUID } from 'crypto';
-import { db, getAuthContext, requireOwnerOrEditor, getUserDoc } from '../lib/validateAuth';
+import { db, getAuthContext, requireMemberRole, getUserDoc } from '../lib/validateAuth';
 import { assertActiveCollabLimit, assertCollabQuota, incrementCollabCount } from './lib';
 
 interface CreateCollabSessionData {
@@ -28,7 +28,7 @@ export const createCollabSession = onCall(
     }
 
     const ctx = await getAuthContext(request, teamId);
-    requireOwnerOrEditor(ctx);
+    requireMemberRole(ctx);
 
     const userData = await getUserDoc(ctx.uid);
     await assertActiveCollabLimit(teamId, userData);

@@ -1,6 +1,6 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
-import { db, getAuthContext, requireOwnerOrEditor, getUserDoc } from '../lib/validateAuth';
+import { db, getAuthContext, requireMemberRole, getUserDoc } from '../lib/validateAuth';
 import { LIGHT_PLAN_LIMITS } from '../lib/constants';
 import { isPartyPlan } from '../lib/plan';
 
@@ -26,7 +26,7 @@ export const createTask = onCall(
     }
 
     const ctx = await getAuthContext(request, teamId);
-    requireOwnerOrEditor(ctx);
+    requireMemberRole(ctx);
 
     const userData = await getUserDoc(ctx.uid);
 

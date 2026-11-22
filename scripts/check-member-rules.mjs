@@ -35,19 +35,19 @@ const del = async (path, auth) =>
   (await fetch(`${BASE}/${path}`, { method: 'DELETE', headers: { Authorization: `Bearer ${auth}` } })).status;
 
 // 'owner' は rules を迂回する（seed と同じ）
-assert.equal(await patch('teams/t1/members/op', { role: 'operator', displayName: 'op' }, 'owner'), 200);
-assert.equal(await patch('teams/t1/members/mem', { role: 'member', displayName: 'mem' }, 'owner'), 200);
+assert.equal(await patch('teams/t1/members/op', { role: 'member', displayName: 'op' }, 'owner'), 200);
+assert.equal(await patch('teams/t1/members/mem', { role: 'staff', displayName: 'mem' }, 'owner'), 200);
 
 const mem = token('mem');
 const op = token('op');
 const outsider = token('outsider');
 
 // 拒否されるべき操作
-assert.equal(await patch('teams/t1/members/mem', { role: 'operator' }, mem, ['role']), 403, '本人の role 書き換え');
+assert.equal(await patch('teams/t1/members/mem', { role: 'member' }, mem, ['role']), 403, '本人の role 書き換え');
 assert.equal(await patch('teams/t1/members/mem', { plan: 'pro' }, mem, ['plan']), 403, '本人の plan 書き換え');
-assert.equal(await patch('teams/t1/members/outsider', { role: 'operator' }, outsider), 403, '部外者の自己追加');
+assert.equal(await patch('teams/t1/members/outsider', { role: 'member' }, outsider), 403, '部外者の自己追加');
 assert.equal(await patch('teams/t1/members/op', { displayName: 'x' }, mem, ['displayName']), 403, '他人の更新');
-assert.equal(await patch('teams/t1/members/mem', { role: 'operator' }, op, ['role']), 403, 'operator でも role は Functions 経由');
+assert.equal(await patch('teams/t1/members/mem', { role: 'member' }, op, ['role']), 403, 'メンバーでも role は Functions 経由');
 assert.equal(await del('teams/t1/members/mem', mem), 403, '本人の直接削除');
 assert.equal(await patchRaw('teams/t1/members/mem', { duties: arr('dancer') }, mem), 403, '候補外の担当分野');
 assert.equal(await patchRaw('teams/t1/members/mem', { note: str('あ'.repeat(101)) }, mem), 403, '101 字のひとこと');
@@ -55,9 +55,9 @@ assert.equal(await patchRaw('teams/t1/members/op', { note: str('x') }, mem), 403
 
 // 許可されるべき操作
 assert.equal(await patch('teams/t1/members/mem', { displayName: 'new' }, mem, ['displayName']), 200, '本人の表示名');
-assert.equal(await patch('teams/t1/members/mem', { discordUsername: 'd' }, op, ['discordUsername']), 200, 'operator の Discord 名');
+assert.equal(await patch('teams/t1/members/mem', { discordUsername: 'd' }, op, ['discordUsername']), 200, 'メンバーの Discord 名');
 
 assert.equal(await patchRaw('teams/t1/members/mem', { duties: arr('cast', 'edit'), note: str('よろしく') }, mem), 200, '本人の担当分野・ひとこと');
-assert.equal(await patchRaw('teams/t1/members/mem', { note: { nullValue: null } }, op), 200, 'operator がひとことを消す');
+assert.equal(await patchRaw('teams/t1/members/mem', { note: { nullValue: null } }, op), 200, 'メンバーがひとことを消す');
 
 console.log('members rules: OK');

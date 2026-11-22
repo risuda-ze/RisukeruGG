@@ -2,6 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomBytes } from 'crypto';
 import { db, requireAuth, getUserDoc } from '../lib/validateAuth';
+import { toTeamRole } from '../lib/role';
 
 /**
  * チームを解散する（オーナー専用）。
@@ -19,8 +20,8 @@ export const dissolveTeam = onCall(
     }
 
     const memberSnap = await db.doc(`teams/${teamId}/members/${uid}`).get();
-    if (!memberSnap.exists || memberSnap.data()!.role !== 'operator') {
-      throw new HttpsError('permission-denied', 'オペレーターのみチームを解散できます');
+    if (!memberSnap.exists || toTeamRole(memberSnap.data()!.role) !== 'member') {
+      throw new HttpsError('permission-denied', 'メンバーのみチームを解散できます');
     }
 
     const teamSnap = await db.doc(`teams/${teamId}`).get();
@@ -53,13 +54,12 @@ export const dissolveTeam = onCall(
       const soloRef = db.collection('teams').doc();
       batch.set(soloRef, {
         name: `${memberData.displayName}のチーム`,
-        operatorUids: [memberId],
         teamCode: soloCode,
         createdAt: now,
       });
       batch.set(db.doc(`teamCodes/${soloCode}`), { teamId: soloRef.id, createdAt: now });
       batch.set(db.doc(`teams/${soloRef.id}/members/${memberId}`), {
-        role: 'operator',
+        role: 'member',
         displayName: memberData.displayName,
         avatarUrl: memberData.avatarUrl ?? null,
         plan: memberData.plan,
@@ -79,13 +79,12 @@ export const dissolveTeam = onCall(
     const ownerSoloRef = db.collection('teams').doc();
     batch.set(ownerSoloRef, {
       name: `${userData.displayName}のチーム`,
-      operatorUids: [uid],
       teamCode: ownerSoloCode,
       createdAt: now,
     });
     batch.set(db.doc(`teamCodes/${ownerSoloCode}`), { teamId: ownerSoloRef.id, createdAt: now });
     batch.set(db.doc(`teams/${ownerSoloRef.id}/members/${uid}`), {
-      role: 'operator',
+      role: 'member',
       displayName: userData.displayName,
       avatarUrl: userData.avatarUrl ?? null,
       plan: userData.plan,

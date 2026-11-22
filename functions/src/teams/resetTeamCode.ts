@@ -1,7 +1,7 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomBytes } from 'crypto';
-import { db, getAuthContext, requireOperator } from '../lib/validateAuth';
+import { db, getAuthContext, requireMemberRole } from '../lib/validateAuth';
 
 interface ResetTeamCodeData {
   teamId: string;
@@ -17,7 +17,7 @@ export const resetTeamCode = onCall(
     }
 
     const ctx = await getAuthContext(request, teamId);
-    requireOperator(ctx);
+    requireMemberRole(ctx);
 
     return await db.runTransaction(async (tx) => {
       const teamSnap = await tx.get(db.doc(`teams/${teamId}`));

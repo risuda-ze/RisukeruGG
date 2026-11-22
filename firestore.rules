@@ -10,7 +10,7 @@
 //   - /discord_sessions/{guildId}            — Admin SDK のみ（クライアント不可）
 //   - /discord_bot_invite_requests/{nonce}   — Admin SDK のみ（Bot 招待 CSRF 保護用）
 //   - /discord_bot_invite_pending/{nonce}    — Admin SDK のみ（チャンネル一覧一時保存用）
-//   - /teams/{teamId}/discord/{doc}          — operator のみ読み書き可
+//   - /teams/{teamId}/discord/{doc}          — メンバーのみ読み書き可
 
 rules_version = '2';
 service cloud.firestore {
@@ -87,14 +87,30 @@ service cloud.firestore {
              passesBetaGate();
     }
 
-    function isTeamOwner(teamId) {
+    // メンバー（全権限のロール）。
+    // ponytail: 移行中の互換。旧 operator / owner も管理者として扱う（変更仕様 two-roles の PR C で member へ書き換えた後に外す）。
+    // 旧 rom / editor / viewer や未知の値は staff 扱いで、ここには含めない。
+    function isMemberRole(teamId) {
       return isTeamMember(teamId) &&
-             get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role == 'operator';
+             get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role in ['member', 'operator', 'owner'];
     }
 
-    function isOwnerOrEditor(teamId) {
-      return isTeamMember(teamId) &&
-             get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role in ['operator', 'member', 'staff'];
+    // ドキュメントの作成者が自分か。createdBy が無い・Discord 経由・退会済みは誰にも一致しない
+    function isCreator(data) {
+      return request.auth != null && data.get('createdBy', null) == request.auth.uid;
+    }
+
+    // 作成時は createdBy を自分の uid に固定し、更新では変更させない
+    function createdByIsMe() {
+      return request.resource.data.get('createdBy', null) == request.auth.uid;
+    }
+    function createdByUnchanged() {
+      return request.resource.data.get('createdBy', null) == resource.data.get('createdBy', null);
+    }
+
+    // 更新後のブリーフの作成者が自分か（同じバッチでブリーフと工程を作る場合に備え getAfter を使う）
+    function isBriefCreator(teamId, briefId) {
+      return getAfter(/databases/$(database)/documents/teams/$(teamId)/briefs/$(briefId)).data.get('createdBy', null) == request.auth.uid;
     }
 
     // ユーザードキュメント（自分のみ読み書き）
@@ -144,7 +160,7 @@ service cloud.firestore {
     match /teams/{teamId} {
       allow read: if isTeamMember(teamId);
       allow create: if request.auth != null && passesBetaGate();
-      allow update, delete: if isTeamOwner(teamId);
+      allow update, delete: if isMemberRole(teamId);
 
       match /members/{memberId} {
         allow read: if isTeamMember(teamId);
@@ -153,8 +169,8 @@ service cloud.firestore {
         allow create, delete: if false;
         // クライアントが書けるのは表示用プロフィール、Discord 名（TE-012）、担当分野・ひとこと（TE-014）だけ。
         // role（ロール変更は updateMemberRole）と plan（T4 / PL-009）はサーバーのみが書く。
-        // 許可リスト方式にして、本人が自分の role を operator に書き換える昇格を防ぐ。
-        allow update: if (isTeamOwner(teamId) ||
+        // 許可リスト方式にして、本人が自分の role を member に書き換える昇格を防ぐ。
+        allow update: if (isMemberRole(teamId) ||
                         (isTeamMember(teamId) && request.auth.uid == memberId)) &&
                         request.resource.data.diff(resource.data)
                            .affectedKeys()
@@ -165,48 +181,54 @@ service cloud.firestore {
 
       match /taskStatuses/{columnId} {
         allow read: if isTeamMember(teamId);
-        allow write: if isTeamOwner(teamId);
+        allow write: if isMemberRole(teamId);
       }
 
-      // タスク・スケジュール共通の統合カテゴリ。編集は operator のみ。
+      // タスク・スケジュール共通の統合カテゴリ。編集はメンバーのみ。
       match /categories/{categoryId} {
         allow read: if isTeamMember(teamId);
-        allow write: if isTeamOwner(teamId);
+        allow write: if isMemberRole(teamId);
       }
 
+      // スケジュール: 作成は所属者全員、編集・削除はメンバーか作成者
       match /schedules/{scheduleId} {
         allow read: if isTeamMember(teamId);
-        allow write: if isOwnerOrEditor(teamId);
+        allow create: if isTeamMember(teamId) && createdByIsMe();
+        allow update: if (isMemberRole(teamId) || (isTeamMember(teamId) && isCreator(resource.data))) &&
+                         createdByUnchanged();
+        allow delete: if isMemberRole(teamId) || (isTeamMember(teamId) && isCreator(resource.data));
       }
 
       match /tasks/{taskId} {
         allow read: if isTeamMember(teamId);
-        allow update, delete: if isOwnerOrEditor(teamId);
+        allow update: if isMemberRole(teamId) && createdByUnchanged();
+        allow delete: if isMemberRole(teamId);
         allow create: if false;
       }
 
       match /collabSessions/{sessionId} {
         // URLトークン（UUID v4）が事実上の認証となるため公開読み取りOK
         allow read: if true;
-        allow update, delete: if isOwnerOrEditor(teamId);
+        allow update: if isMemberRole(teamId) && createdByUnchanged();
+        allow delete: if isMemberRole(teamId);
         // 新規作成は Cloud Function (Admin SDK) 経由のみ。クライアント直接作成は不可。
         allow create: if false;
       }
 
-      // Discord 通知設定 — operator のみ読み書き可
+      // Discord 通知設定 — メンバーのみ読み書き可
       // Webhook URL をチームメンバーから隠すためサブコレクション方式を採用
       match /discord/{doc} {
-        allow read, write: if isTeamOwner(teamId);
+        allow read, write: if isMemberRole(teamId);
       }
 
-      // AI 設定（追加指示・定型指示）— 閲覧はメンバー、編集は operator（AI-022 / AI-023）
+      // AI 設定（追加指示・定型指示）— 閲覧は所属者、編集はメンバー（AI-022 / AI-023）
       match /ai/{doc} {
         allow read: if isTeamMember(teamId);
-        allow write: if isTeamOwner(teamId);
+        allow write: if isMemberRole(teamId);
       }
 
       // 対応不可時間（1 人・1 ヶ月 = 1 ドキュメント、ID は {userId}_{yyyy-mm}）。
-      // 閲覧は rom を含む全メンバー、書き込みはロールを問わず本人の分だけ（UN-010〜UN-013）。
+      // 閲覧は全所属者、書き込みはロールを問わず本人の分だけ（UN-010〜UN-013）。
       // days / notes の中身はルールで走査できないため、クライアントの Zod で検証する。
       // 削除は Admin SDK のみ（月次削除・退出時の削除）。
       match /unavailability/{docId} {
@@ -225,35 +247,56 @@ service cloud.firestore {
       }
 
       // ── タスク管理 v2（1枚紙） ─────────────────────────────
-      // 進め方（工程の型）。閲覧は全メンバー、編集は operator / member
+      // 進め方（工程の型）。閲覧は所属者全員、編集はメンバー
       match /playbooks/{playbookId} {
         allow read: if isTeamMember(teamId);
-        allow write: if isOwnerOrEditor(teamId);
+        allow write: if isMemberRole(teamId);
       }
 
       // ブリーフ（動画1本）。書き込みは操作層（writeBatch）経由
+      // 作成は所属者全員、編集はメンバーか作成者、削除はメンバーのみ。
+      // 工程の変更でブリーフの updatedAt だけを進める操作（担当者の完了など）は所属者全員に許す。
       match /briefs/{briefId} {
         allow read: if isTeamMember(teamId);
-        allow write: if isOwnerOrEditor(teamId);
+        allow create: if isTeamMember(teamId) && createdByIsMe();
+        allow update: if (isMemberRole(teamId) || (isTeamMember(teamId) && isCreator(resource.data)) ||
+                          (isTeamMember(teamId) &&
+                           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt']))) &&
+                         createdByUnchanged();
+        allow delete: if isMemberRole(teamId);
 
         // 工程。コレクショングループ読み取りは下の /{path=**}/steps ルールが担う
+        // 作成・削除はブリーフの作成者かメンバー。更新は作成者・メンバーに加え、
+        //  - 担当者本人による完了・状態変更（status / completedAt / completedBy）
+        //  - 依存関係の再評価による waiting と ready の自動遷移（status のみ）
+        // を所属者に許す。
         match /steps/{stepId} {
           allow read: if isTeamMember(teamId);
-          allow write: if isOwnerOrEditor(teamId);
+          allow create, delete: if isMemberRole(teamId) || (isTeamMember(teamId) && isBriefCreator(teamId, briefId));
+          allow update: if isMemberRole(teamId) ||
+                           (isTeamMember(teamId) && isBriefCreator(teamId, briefId)) ||
+                           (isTeamMember(teamId) &&
+                            resource.data.assigneeId == request.auth.uid &&
+                            request.resource.data.diff(resource.data).affectedKeys()
+                              .hasOnly(['status', 'completedAt', 'completedBy', 'updatedAt'])) ||
+                           (isTeamMember(teamId) &&
+                            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']) &&
+                            resource.data.status in ['waiting', 'ready'] &&
+                            request.resource.data.status in ['waiting', 'ready']);
 
-          // 工程のやり取り
+          // 工程のやり取り: 作成は所属者全員、編集・削除は本人かメンバー
           match /comments/{commentId} {
             allow read: if isTeamMember(teamId);
-            allow create: if isOwnerOrEditor(teamId);
-            allow update, delete: if isTeamOwner(teamId) ||
-                                    (isOwnerOrEditor(teamId) && resource.data.authorId == request.auth.uid);
+            allow create: if isTeamMember(teamId);
+            allow update, delete: if isMemberRole(teamId) ||
+                                    (isTeamMember(teamId) && resource.data.authorId == request.auth.uid);
           }
         }
 
         // 差分（追記のみ。改変・削除は不可）
         match /briefEvents/{eventId} {
           allow read: if isTeamMember(teamId);
-          allow create: if isOwnerOrEditor(teamId);
+          allow create: if isTeamMember(teamId);
           allow update, delete: if false;
         }
       }

@@ -1,6 +1,6 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
-import { db, getAuthContext, requireOwnerOrEditor } from '../lib/validateAuth';
+import { db, getAuthContext, requireMemberRole } from '../lib/validateAuth';
 
 interface ConfirmCollabDateData {
   teamId: string;
@@ -18,7 +18,7 @@ export const confirmCollabDate = onCall(
     }
 
     const ctx = await getAuthContext(request, teamId);
-    requireOwnerOrEditor(ctx);
+    requireMemberRole(ctx);
 
     const sessionRef = db.doc(`teams/${teamId}/collabSessions/${sessionId}`);
     const sessionSnap = await sessionRef.get();

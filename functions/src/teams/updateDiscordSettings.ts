@@ -1,5 +1,5 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
-import { db, getAuthContext, requireOperator } from '../lib/validateAuth';
+import { db, getAuthContext, requireMemberRole } from '../lib/validateAuth';
 
 interface UpdateDiscordSettingsData {
   teamId: string;
@@ -36,7 +36,7 @@ export const updateDiscordSettings = onCall(
     }
 
     const ctx = await getAuthContext(request, teamId);
-    requireOperator(ctx);
+    requireMemberRole(ctx);
 
     // Webhook URL のバリデーション（空文字は許可 — 設定解除のユースケース）
     if (webhookUrl && !webhookUrl.startsWith('https://discord.com/api/webhooks/')) {

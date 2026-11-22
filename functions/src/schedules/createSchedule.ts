@@ -1,6 +1,6 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
-import { db, getAuthContext, requireOperatorOrMember } from '../lib/validateAuth';
+import { db, getAuthContext } from '../lib/validateAuth';
 
 interface CreateScheduleData {
   teamId: string;
@@ -43,7 +43,6 @@ export const createSchedule = onCall(
     }
 
     const ctx = await getAuthContext(request, teamId);
-    requireOperatorOrMember(ctx);
 
     const scheduleRef = db.collection(`teams/${teamId}/schedules`).doc();
     const now = FieldValue.serverTimestamp();
