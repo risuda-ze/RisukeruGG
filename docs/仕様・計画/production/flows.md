@@ -2,7 +2,7 @@
 
 ## ブリーフ作成フロー
 
-1. `operator` または `member` が `/briefs` の「新しいブリーフ」からタイトル・公開予定日・進め方・出演者を入力する
+1. 所属者が `/briefs` の「新しいブリーフ」からタイトル・公開予定日・進め方・出演者を入力する
 2. 操作層 `createBrief` が進め方の `steps` から工程を生成する。先行工程のない工程は `ready`、それ以外は `waiting`。締切は `publishAt − leadDays`、担当は `defaultAssigneeId`
 3. ブリーフ・工程・`brief.created` の差分を 1 つの writeBatch で書き込む
 4. 作成後は 1枚紙（`/briefs/{briefId}`）へ遷移する
