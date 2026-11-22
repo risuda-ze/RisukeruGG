@@ -15,7 +15,7 @@ interface UpdateDiscordSettingsData {
 /**
  * チームの Discord 通知設定を更新する Callable Function。
  * データは teams/{teamId}/discord/config サブコレクションに保存する。
- * operator のみ実行可能（Firestore ルールでも制限済み）。
+ * メンバーのみ実行可能（Firestore ルールでも制限済み）。
  */
 export const updateDiscordSettings = onCall(
   { region: 'asia-northeast1' },

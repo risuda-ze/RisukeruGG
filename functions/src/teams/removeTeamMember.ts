@@ -51,7 +51,7 @@ export const removeTeamMember = onCall(
 
       tx.delete(db.doc(`teams/${teamId}/members/${targetUserId}`));
 
-      // 通常 requireMemberRole(ctx) によりオペレーター（ctx.uid）が常にメンバーとして存在し、
+      // 通常 requireMemberRole(ctx) によりメンバー（ctx.uid）が常にメンバーとして存在し、
       // かつ ctx.uid !== targetUserId が保証されるため membersSnap.size >= 2 が維持される。
       // ただしデータ破損等の異常状態で targetUserId のみが存在していた場合の防御として実施。
       if (membersSnap.size <= 1) {
