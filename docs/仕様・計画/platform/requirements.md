@@ -38,6 +38,7 @@
 | Anthropic | `ANTHROPIC_API_KEY` | Vercel の環境変数 | Anthropic Console の API キー | 確認後に削除 |
 | Discord | `DISCORD_BOT_TOKEN` | Vercel の環境変数と Cloud Functions の Secret（同じ値を両方に設定する） | Discord Developer Portal の Bot「Reset Token」 | 発行時に失効 |
 | Firebase（Google Cloud） | `FIREBASE_SERVICE_ACCOUNT_KEY` | Vercel の環境変数。運用スクリプトを実行する端末に置いた鍵ファイルも差し替える | Google Cloud のサービスアカウントの鍵 | 確認後に削除 |
+| Google ログイン | OAuth クライアントシークレット（環境変数ではない） | Firebase コンソールの Authentication の Google プロバイダ（ウェブ SDK 構成のウェブ クライアント シークレット） | Google Cloud の認証情報にある OAuth 2.0 クライアント ID（シークレットを追加する） | 確認後に削除 |
 | Gmail | `GMAIL_APP_PASSWORD` | Cloud Functions の Secret | Google アカウントのアプリパスワード | 確認後に削除 |
 | Stripe | `STRIPE_SECRET_KEY` | Cloud Functions の Secret | Stripe ダッシュボードの API キー（ロール） | ロール時に指定した期限で失効 |
 | Stripe | `STRIPE_WEBHOOK_SECRET` | Cloud Functions の Secret | Stripe ダッシュボードの Webhook エンドポイント（署名シークレットのロール） | ロール時に指定した期限で失効 |
@@ -45,6 +46,8 @@
 | アプリ内部 | `INTERNAL_API_SECRET` | Vercel の環境変数 | 32 バイト以上の乱数を生成する | 上書きで失効 |
 
 Stripe の 2 つは、正式な値を設定して課金を開始した後のリリースから対象とする。
+
+Google ログインの OAuth クライアントシークレットは、Firebase コンソールで保存した時点で本番に反映される（デプロイは要らない）。誤った値を保存すると全員がログインできなくなるため、保存の直後に Google ログインができることを確認する。
 
 ### 入れ替えない値
 
