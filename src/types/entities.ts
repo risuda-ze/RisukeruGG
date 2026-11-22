@@ -213,7 +213,7 @@ export interface CollabSession {
 }
 
 // teams/{teamId}/discord/config サブコレクションの型
-// Team インターフェースには追加しない（サブコレクション方式で operator のみアクセス制限するため）
+// Team インターフェースには追加しない（サブコレクション方式でメンバーのみアクセス制限するため）
 export interface DiscordTeamConfig {
   webhookUrl: string;             // Sprint 1 のみ使用。guildId 設定後は Bot 通知が優先される
   guildId?: string;               // DiscordサーバーID（Bot 招待完了後に書き込む）

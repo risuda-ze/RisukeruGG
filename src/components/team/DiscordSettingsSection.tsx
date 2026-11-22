@@ -18,7 +18,7 @@ interface DiscordSettingsSectionProps {
 
 /**
  * チーム設定画面の Discord 連携セクション。
- * operator のみ設定変更可（member/rom には非表示）。
+ * メンバーのみ設定変更可（スタッフには非表示）。
  *
  * 3つの状態を管理する:
  * - 未招待: 「Botをサーバーに追加」ボタンを表示
@@ -371,7 +371,7 @@ export function DiscordSettingsSection({ teamId, isMember }: DiscordSettingsSect
     }).catch(() => {});
   }
 
-  // operator 以外には表示しない
+  // メンバー以外には表示しない
   if (!isMember) return null;
 
   if (loading) {

@@ -412,7 +412,7 @@ function TeamPageInner() {
                           )}
                         </MemberField>
 
-                        {/* Discord ユーザー名（TE-012）。本人とメンバー（operator）が編集できる */}
+                        {/* Discord ユーザー名（TE-012）。本人とメンバーが編集できる */}
                         <MemberField label="Discord">
                           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
                             <span
@@ -519,7 +519,7 @@ function TeamPageInner() {
             </Button>
           </section>
 
-          {/* チームを解散する（メンバー＝operator のみ） */}
+          {/* チームを解散する（メンバーのみ） */}
           {isMember && (
             <section className="px-4 py-6 md:px-7">
               <h2 className={cn(fieldLabelClass, 'mb-1 text-danger')}>危険ゾーン</h2>

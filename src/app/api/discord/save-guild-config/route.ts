@@ -11,7 +11,7 @@ import { toTeamRole } from '@/lib/utils/teamRoles';
  * メンバーが通知チャンネルを選択して「保存する」を押した際に呼び出す。
  */
 export async function POST(req: NextRequest): Promise<Response> {
-  // Firebase ID トークンで メンバー認証
+  // Firebase ID トークンでメンバー認証
   const authResult = await verifyBearerToken(req);
   if (authResult instanceof Response) return authResult;
   const { uid } = authResult;
