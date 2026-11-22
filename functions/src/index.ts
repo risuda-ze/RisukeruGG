@@ -45,7 +45,6 @@ export * from './notifications/taskDiscordNotifications';
 export * from './briefs/discordTriggers';
 export * from './briefs/briefDigest';
 export * from './videoRequests/videoRequests';
-export * from './videoRequests/taskDeletionTrigger';
 
 // お問い合わせフォーム
 export * from './contact/sendContactEmail';

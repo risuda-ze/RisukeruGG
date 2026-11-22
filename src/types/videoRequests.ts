@@ -3,14 +3,18 @@ export type VideoRequestStatus =
   | 'in_progress'
   | 'review_requested'
   | 'completed';
-export type DiscordRequestStatus = 'pending' | 'bot_queued' | 'queued' | 'creating' | 'created' | 'failed';
+export type DiscordRequestStatus = 'pending' | 'bot_queued' | 'creating' | 'created' | 'failed';
 
 export interface VideoRequestDiscord {
   status: DiscordRequestStatus;
   editorThreadIds: string[];
   editorThreadUrls: string[];
+  editorThreadChannels: string[];
+  editorThreadPostedChannels: string[];
   thumbnailThreadId: string | null;
   thumbnailThreadUrl: string | null;
+  thumbnailThreadPosted: boolean;
+  expectedThreadCount: number | null;
   error: string | null;
 }
 

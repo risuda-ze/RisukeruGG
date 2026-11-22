@@ -169,10 +169,6 @@ const routeSettings = z.object({
   editorChannels: z.record(discordId, discordId).default({}),
 });
 
-function eventStatus(request: FirebaseFirestore.DocumentData) {
-  return request.discordTransport === 'integrated' ? 'bot_queued' : 'queued';
-}
-
 export const createVideoRequest = onCall(
   { region: REGION },
   async (request: CallableRequest<CreateVideoRequestData>) => {
@@ -266,8 +262,12 @@ export const createVideoRequest = onCall(
           status: 'bot_queued',
           editorThreadIds: [],
           editorThreadUrls: [],
+          editorThreadChannels: [],
+          editorThreadPostedChannels: [],
           thumbnailThreadId: null,
           thumbnailThreadUrl: null,
+          thumbnailThreadPosted: false,
+          expectedThreadCount: null,
           error: null,
         },
         createdBy: ctx.uid,
@@ -370,19 +370,45 @@ export const updateVideoRequest = onCall(
       if (discord?.status === 'created' && changes.length > 0) {
         tx.set(requestRef.collection('discordEvents').doc(), {
           type: 'request_updated',
-          status: eventStatus(currentData),
+          status: 'bot_queued',
           changes,
           createdBy: ctx.uid,
           createdAt: now,
           updatedAt: now,
         });
-      } else if (discord?.status === 'failed' && currentData.discordTransport !== 'integrated') {
-        tx.update(requestRef, {
-          'discord.status': 'pending',
-          'discord.error': null,
-          updatedAt: now,
-        });
       }
+    });
+  }
+);
+
+export const retryVideoRequestDiscord = onCall(
+  { region: REGION },
+  async (request: CallableRequest<{ teamId: string; videoRequestId: string }>) => {
+    const { teamId, videoRequestId } = request.data;
+    if (!teamId || !videoRequestId)
+      throw new HttpsError('invalid-argument', '動画依頼が指定されていません');
+    const ctx = await getAuthContext(request, teamId);
+    requireOperator(ctx);
+    const ref = db.doc(`teams/${teamId}/videoRequests/${videoRequestId}`);
+    const now = FieldValue.serverTimestamp();
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const data = snap.data();
+      if (!snap.exists || !data) throw new HttpsError('not-found', '動画依頼が見つかりません');
+      if (data.discordTransport !== 'integrated' || data.discord?.status !== 'failed')
+        throw new HttpsError('failed-precondition', 'Discord再送信の対象ではありません');
+      tx.update(ref, {
+        'discord.status': 'bot_queued',
+        'discord.error': null,
+        updatedAt: now,
+      });
+      tx.set(ref.collection('discordEvents').doc(), {
+        type: 'request_retry',
+        status: 'bot_queued',
+        createdBy: ctx.uid,
+        createdAt: now,
+        updatedAt: now,
+      });
     });
   }
 );
@@ -429,7 +455,7 @@ export const reviewThumbnail = onCall(
       tx.set(ref.collection('discordEvents').doc(), {
         type: action === 'approve' ? 'thumbnail_approved' : 'thumbnail_revision',
         message: message ?? '',
-        status: eventStatus(data),
+        status: 'bot_queued',
         createdBy: request.auth!.uid,
         createdAt: now,
         updatedAt: now,
@@ -454,10 +480,10 @@ export const requestVideoRevision = onCall(
     const now = FieldValue.serverTimestamp();
     await db.runTransaction(async (tx) => {
       const latest = (await tx.get(ref)).data();
-      if (latest?.discordTransport === 'integrated' && latest.discord?.status !== 'created')
-        throw new HttpsError('failed-precondition', 'Discord送信完了後に操作してください');
+      if (latest?.status !== 'review_requested' || latest.discord?.status !== 'created')
+        throw new HttpsError('failed-precondition', '納品確認待ちの依頼だけ修正できます');
       tx.update(ref, { status: 'in_progress', updatedAt: now });
-      const taskId = snap.data()!.taskId as string | undefined;
+      const taskId = latest.taskId as string | undefined;
       if (taskId && progressColumnId) {
         tx.update(db.doc(`teams/${teamId}/tasks/${taskId}`), {
           columnId: progressColumnId,
@@ -467,7 +493,7 @@ export const requestVideoRevision = onCall(
       tx.set(event, {
         type: 'revision_requested',
         message: message.trim(),
-        status: eventStatus(snap.data()!),
+        status: 'bot_queued',
         createdBy: ctx.uid,
         createdAt: now,
         updatedAt: now,
@@ -485,7 +511,6 @@ export const approveVideoRequest = onCall(
     const ref = db.doc(`teams/${teamId}/videoRequests/${videoRequestId}`);
     const snap = await ref.get();
     if (!snap.exists) throw new HttpsError('not-found', '動画依頼が見つかりません');
-    const taskId = snap.data()!.taskId as string;
     const doneColumnId = await findDoneTaskStatusId(teamId);
     if (!doneColumnId)
       throw new HttpsError('failed-precondition', '完了のタスク状態が見つかりません');
@@ -493,18 +518,19 @@ export const approveVideoRequest = onCall(
     const now = FieldValue.serverTimestamp();
     await db.runTransaction(async (tx) => {
       const latest = (await tx.get(ref)).data();
-      if (latest?.discordTransport === 'integrated' && latest.discord?.status !== 'created')
-        throw new HttpsError('failed-precondition', 'Discord送信完了後に操作してください');
+      if (latest?.status !== 'review_requested' || latest.discord?.status !== 'created')
+        throw new HttpsError('failed-precondition', '納品確認待ちの依頼だけ承認できます');
       tx.update(ref, { status: 'completed', updatedAt: now });
-      if (taskId) {
-        tx.update(db.doc(`teams/${teamId}/tasks/${taskId}`), {
+      const latestTaskId = latest.taskId as string | undefined;
+      if (latestTaskId) {
+        tx.update(db.doc(`teams/${teamId}/tasks/${latestTaskId}`), {
           columnId: doneColumnId,
           updatedAt: now,
         });
       }
       tx.set(event, {
         type: 'approved',
-        status: eventStatus(snap.data()!),
+        status: 'bot_queued',
         createdBy: ctx.uid,
         createdAt: now,
         updatedAt: now,

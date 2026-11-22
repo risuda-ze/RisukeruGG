@@ -210,8 +210,9 @@ service cloud.firestore {
 
       match /tasks/{taskId} {
         allow read: if isTeamMember(teamId);
-        allow update: if isMemberRole(teamId) && createdByUnchanged();
-        allow delete: if isMemberRole(teamId);
+          allow update: if isMemberRole(teamId) && createdByUnchanged();
+          // 関連する動画依頼も整合させるため、削除は deleteTask 経由に限定する。
+          allow delete: if false;
         allow create: if false;
       }
 

@@ -61,8 +61,14 @@ function toVideoRequest(id: string, data: Record<string, unknown>): VideoRequest
       status: (discord.status as VideoRequest['discord']['status']) ?? 'pending',
       editorThreadIds: (discord.editorThreadIds as string[] | undefined) ?? [],
       editorThreadUrls: (discord.editorThreadUrls as string[] | undefined) ?? [],
+      editorThreadChannels: (discord.editorThreadChannels as string[] | undefined) ?? [],
+      editorThreadPostedChannels:
+        (discord.editorThreadPostedChannels as string[] | undefined) ?? [],
       thumbnailThreadId: (discord.thumbnailThreadId as string | null | undefined) ?? null,
       thumbnailThreadUrl: (discord.thumbnailThreadUrl as string | null | undefined) ?? null,
+      thumbnailThreadPosted: Boolean(discord.thumbnailThreadPosted),
+      expectedThreadCount:
+        typeof discord.expectedThreadCount === 'number' ? discord.expectedThreadCount : null,
       error: (discord.error as string | null | undefined) ?? null,
     },
     createdBy: String(data.createdBy),
@@ -73,12 +79,17 @@ function toVideoRequest(id: string, data: Record<string, unknown>): VideoRequest
 
 export function subscribeVideoRequests(
   teamId: string,
-  callback: (requests: VideoRequest[]) => void
+  callback: (requests: VideoRequest[]) => void,
+  onError?: (error: Error) => void
 ): Unsubscribe {
   const ref = collection(db, 'teams', teamId, 'videoRequests');
-  return onSnapshot(query(ref, orderBy('createdAt', 'desc')), (snap) => {
-    callback(snap.docs.map((d) => toVideoRequest(d.id, d.data() as Record<string, unknown>)));
-  });
+  return onSnapshot(
+    query(ref, orderBy('createdAt', 'desc')),
+    (snap) => {
+      callback(snap.docs.map((d) => toVideoRequest(d.id, d.data() as Record<string, unknown>)));
+    },
+    onError
+  );
 }
 
 export const createVideoRequest = httpsCallable<
@@ -142,3 +153,8 @@ export const addVideoOwnerResourceUrl = httpsCallable<
   { teamId: string; videoRequestId: string; url: string },
   void
 >(functions, 'addVideoOwnerResourceUrl');
+
+export const retryVideoRequestDiscord = httpsCallable<
+  { teamId: string; videoRequestId: string },
+  void
+>(functions, 'retryVideoRequestDiscord');

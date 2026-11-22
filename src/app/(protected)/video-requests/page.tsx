@@ -15,6 +15,7 @@ import {
   addVideoOwnerResourceUrl,
   createVideoRequest,
   requestVideoRevision,
+  retryVideoRequestDiscord,
   reviewThumbnail,
   subscribeVideoRequests,
   updateVideoRequest,
@@ -31,16 +32,25 @@ export default function VideoRequestsPage() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const [requests, setRequests] = useState<VideoRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingRequest, setEditingRequest] = useState<VideoRequest | null>(null);
 
   useEffect(() => {
     if (!currentTeam) return;
     const unsubs = [
-      subscribeVideoRequests(currentTeam.id, (items) => {
-        setRequests(items);
-        setLoading(false);
-      }),
+      subscribeVideoRequests(
+        currentTeam.id,
+        (items) => {
+          setRequests(items);
+          setLoadError(null);
+          setLoading(false);
+        },
+        (error) => {
+          setLoadError(error.message || '動画依頼の読み込みに失敗しました');
+          setLoading(false);
+        }
+      ),
     ];
     return () => unsubs.forEach((unsub) => unsub());
   }, [currentTeam]);
@@ -55,7 +65,13 @@ export default function VideoRequestsPage() {
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <TopBar title="動画依頼" subtitle="依頼・納品・修正依頼をDiscordと同期します">
-        <Button size="sm" onClick={() => setShowForm((open) => !open)}>
+        <Button
+          size="sm"
+          onClick={() => {
+            setEditingRequest(null);
+            setShowForm((open) => !open);
+          }}
+        >
           {showForm ? '閉じる' : '動画を依頼する'}
         </Button>
       </TopBar>
@@ -75,6 +91,14 @@ export default function VideoRequestsPage() {
           <div className="flex justify-center py-16">
             <Spinner size="lg" />
           </div>
+        ) : loadError ? (
+          <Card className="space-y-3 py-10 text-center text-sm text-muted">
+            <p>動画依頼の読み込みに失敗しました。</p>
+            <p className="text-xs">{loadError}</p>
+            <Button size="sm" variant="secondary" onClick={() => window.location.reload()}>
+              再読み込み
+            </Button>
+          </Card>
         ) : requests.length === 0 ? (
           <Card className="text-center py-10 text-sm text-muted">まだ動画依頼はありません。</Card>
         ) : (
@@ -361,6 +385,19 @@ function VideoRequestCard({
       setBusy(false);
     }
   }
+  async function retryDiscord() {
+    setBusy(true);
+    setError(null);
+    try {
+      await retryVideoRequestDiscord({ teamId, videoRequestId: request.id });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Discordへの再送信に失敗しました');
+    } finally {
+      setBusy(false);
+    }
+  }
+  const createdThreadCount =
+    request.discord.editorThreadUrls.length + (request.discord.thumbnailThreadUrl ? 1 : 0);
   return (
     <Card className="space-y-3">
       <div className="flex justify-between gap-3">
@@ -435,9 +472,24 @@ function VideoRequestCard({
           {request.discord.status === 'created'
             ? 'スレッド作成済み'
             : request.discord.status === 'failed'
-              ? '作成失敗'
+              ? '送信失敗'
               : 'Bot処理待ち'}
         </p>
+        {request.discord.status === 'failed' && (
+          <>
+            <p>理由：{request.discord.error ?? '不明'}</p>
+            {request.discord.expectedThreadCount !== null && (
+              <p>
+                作成済みスレッド：{createdThreadCount}/{request.discord.expectedThreadCount}
+              </p>
+            )}
+            {canManageResources && (
+              <Button size="sm" variant="secondary" disabled={busy} onClick={retryDiscord}>
+                Discordへ再送信
+              </Button>
+            )}
+          </>
+        )}
       </div>
       {request.deliveryUrls.length > 0 && (
         <div className="rounded-md border border-success/40 bg-success-tint p-3">

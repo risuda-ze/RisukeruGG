@@ -3,7 +3,14 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { z } from 'zod';
 import { db } from '../lib/admin';
 import { discordBotToken } from '../discord/botToken';
-import { createPublicThread, sendMessage, type DiscordActionRow } from '../discord/rest';
+import {
+  createPublicThread,
+  editChannelName,
+  listGuildChannels,
+  sendMessage,
+  type DiscordActionRow,
+} from '../discord/rest';
+import { searchGuildMemberId } from '../discord/resolveMention';
 
 const options = { region: 'asia-northeast1', secrets: [discordBotToken] };
 const path = 'teams/{teamId}/videoRequests/{requestId}';
@@ -16,6 +23,15 @@ const changeSchema = z.object({
 });
 type Ref = FirebaseFirestore.DocumentReference;
 type Row = FirebaseFirestore.DocumentData;
+type DiscordThreadState = {
+  editorThreadIds: string[];
+  editorThreadUrls: string[];
+  editorThreadChannels: string[];
+  editorThreadPostedChannels: string[];
+  thumbnailThreadId: string | null;
+  thumbnailThreadUrl: string | null;
+  thumbnailThreadPosted: boolean;
+};
 
 function mentions(ids: string[]) {
   return ids.map((id) => `<@${id}>`).join(' ');
@@ -37,19 +53,6 @@ function button(kind: 'video' | 'thumb', ref: Ref): DiscordActionRow[] {
       ],
     },
   ];
-}
-
-async function api(resource: string, method = 'GET', body?: object) {
-  const response = await fetch('https://discord.com/api/v10' + resource, {
-    method,
-    headers: {
-      Authorization: 'Bot ' + discordBotToken.value(),
-      'Content-Type': 'application/json',
-    },
-    body: body && JSON.stringify(body),
-  });
-  if (!response.ok) throw Error(`Discord APIで失敗しました（${response.status}）`);
-  return response;
 }
 
 async function post(thread: string, ids: string[], body: string, components?: DiscordActionRow[]) {
@@ -91,83 +94,116 @@ async function resolveEditors(team: Ref, request: Row, guild: string) {
       continue;
     }
     if (!member.discordUsername) throw Error('担当者のDiscord情報が未設定です');
-    const response = await api(
-      '/guilds/' +
-        guild +
-        '/members/search?limit=10&query=' +
-        encodeURIComponent(member.discordUsername)
-    );
-    const matches = z
-      .array(z.object({ user: z.object({ id: snowflake, username: z.string() }) }))
-      .parse(await response.json());
-    const match = matches.find((m) => m.user.username === member.discordUsername);
-    if (!match) throw Error('Discordサーバー内に担当者が見つかりません');
-    await ref.update({ discordUserId: match.user.id });
-    ids.add(match.user.id);
+    const resolvedId = await searchGuildMemberId(guild, member.discordUsername);
+    if (!resolvedId) throw Error('Discordサーバー内に担当者が見つかりません');
+    const userId = snowflake.parse(resolvedId);
+    await ref.update({ discordUserId: userId });
+    ids.add(userId);
   }
   return [...ids];
 }
 
-export const sendIntegratedVideoRequest = onDocumentCreated(
-  { ...options, document: path },
-  async (event) => {
-    const ref = event.data?.ref;
-    if (!ref || !(await claim(ref, 'discord.status', 'creating'))) return;
-    try {
-      const team = db.doc('teams/' + event.params.teamId);
-      const r = (await ref.get()).data();
-      if (!r) return;
-      const guild = snowflake.parse(
-        (await team.collection('discord').doc('config').get()).get('guildId')
-      );
-      if (guild !== r.discordRouting.guildId)
-        throw Error('依頼作成後に連携サーバーが変更されました');
-      const available = channelsSchema.parse(
-        await (await api('/guilds/' + guild + '/channels')).json()
-      );
-      const routes = r.discordRouting;
-      const editors = await resolveEditors(team, r, guild);
-      const groups = new Map<string, string[]>();
-      for (const id of editors) {
-        const parent = routes.editorChannels?.[id] || routes.editorChannelId;
-        groups.set(parent, [...(groups.get(parent) ?? []), id]);
+function getThreadState(request: Row): DiscordThreadState {
+  const discord = request.discord ?? {};
+  return {
+    editorThreadIds: discord.editorThreadIds ?? [],
+    editorThreadUrls: discord.editorThreadUrls ?? [],
+    editorThreadChannels: discord.editorThreadChannels ?? [],
+    editorThreadPostedChannels: discord.editorThreadPostedChannels ?? [],
+    thumbnailThreadId: discord.thumbnailThreadId ?? null,
+    thumbnailThreadUrl: discord.thumbnailThreadUrl ?? null,
+    thumbnailThreadPosted: discord.thumbnailThreadPosted ?? false,
+  };
+}
+
+async function saveThreadState(ref: Ref, state: DiscordThreadState) {
+  await ref.update({
+    'discord.editorThreadIds': state.editorThreadIds,
+    'discord.editorThreadUrls': state.editorThreadUrls,
+    'discord.editorThreadChannels': state.editorThreadChannels,
+    'discord.editorThreadPostedChannels': state.editorThreadPostedChannels,
+    'discord.thumbnailThreadId': state.thumbnailThreadId,
+    'discord.thumbnailThreadUrl': state.thumbnailThreadUrl,
+    'discord.thumbnailThreadPosted': state.thumbnailThreadPosted,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+async function processIntegratedVideoRequest(ref: Ref, teamId: string) {
+  if (!(await claim(ref, 'discord.status', 'creating'))) return false;
+  try {
+    const team = db.doc('teams/' + teamId);
+    const r = (await ref.get()).data();
+    if (!r) return false;
+    const guild = snowflake.parse(
+      (await team.collection('discord').doc('config').get()).get('guildId')
+    );
+    if (guild !== r.discordRouting.guildId) throw Error('依頼作成後に連携サーバーが変更されました');
+    const channelData = await listGuildChannels(guild);
+    if (!channelData) throw Error('Discordのチャンネル一覧を取得できませんでした');
+    const available = channelsSchema.parse(channelData);
+    const routes = r.discordRouting;
+    const editors = await resolveEditors(team, r, guild);
+    const groups = new Map<string, string[]>();
+    for (const id of editors) {
+      const parent = routes.editorChannels?.[id] || routes.editorChannelId;
+      groups.set(parent, [...(groups.get(parent) ?? []), id]);
+    }
+    const parents = [...groups.keys(), ...(r.thumbnailTaskId ? [routes.thumbnailChannelId] : [])];
+    if (parents.some((id) => !available.some((c) => c.id === id && c.type === 0)))
+      throw Error('連携サーバー内のテキストチャンネルを指定してください');
+    const progress = await team.collection('taskStatuses').doc(r.progressTaskColumnId).get();
+    if (!progress.exists || progress.get('role') === 'done')
+      throw Error('制作中の列設定を確認してください');
+    const thread = async (parent: string) => {
+      const id = await createPublicThread(parent, r.title);
+      if (!id) throw Error('スレッドを作成できませんでした');
+      return id;
+    };
+    const url = (id: string) => `https://discord.com/channels/${guild}/${id}`;
+    const state = getThreadState(r);
+    const expectedThreadCount = groups.size + (r.thumbnailTaskId ? 1 : 0);
+    await ref.update({ 'discord.expectedThreadCount': expectedThreadCount });
+    for (const [parent, ids] of groups) {
+      let index = state.editorThreadChannels.indexOf(parent);
+      let id = index >= 0 ? state.editorThreadIds[index] : undefined;
+      if (!id) {
+        id = await thread(parent);
+        index = state.editorThreadIds.length;
+        state.editorThreadChannels[index] = parent;
+        state.editorThreadIds[index] = id;
+        state.editorThreadUrls[index] = url(id);
+        await saveThreadState(ref, state);
       }
-      const parents = [...groups.keys(), ...(r.thumbnailTaskId ? [routes.thumbnailChannelId] : [])];
-      if (parents.some((id) => !available.some((c) => c.id === id && c.type === 0)))
-        throw Error('連携サーバー内のテキストチャンネルを指定してください');
-      const progress = await team.collection('taskStatuses').doc(r.progressTaskColumnId).get();
-      if (!progress.exists || progress.get('role') === 'done')
-        throw Error('制作中の列設定を確認してください');
-      const thread = async (parent: string) => {
-        const id = await createPublicThread(parent, r.title);
-        if (!id) throw Error('スレッドを作成できませんでした');
-        return id;
-      };
-      const editorThreadIds: string[] = [];
-      const url = (id: string) => `https://discord.com/channels/${guild}/${id}`;
-      for (const [parent, ids] of groups) {
-        const id = await thread(parent);
-        editorThreadIds.push(id);
-        await post(
-          id,
-          ids,
-          [
-            r.videoType === 'short'
-              ? 'ショート動画の編集をお願いします。'
-              : '横動画の編集をお願いします。',
-            '**編集内容**',
-            r.summary,
-            '**プロマネ**',
-            r.projectManagementUrl,
-            '**共有事項**',
-            r.notes || '（なし）',
-          ].join('\n'),
-          button('video', ref)
-        );
-      }
-      let thumb: string | null = null;
-      if (r.thumbnailTaskId) {
+      if (state.editorThreadPostedChannels.includes(parent)) continue;
+      await post(
+        id,
+        ids,
+        [
+          r.videoType === 'short'
+            ? 'ショート動画の編集をお願いします。'
+            : '横動画の編集をお願いします。',
+          '**編集内容**',
+          r.summary,
+          '**プロマネ**',
+          r.projectManagementUrl,
+          '**共有事項**',
+          r.notes || '（なし）',
+        ].join('\n'),
+        button('video', ref)
+      );
+      state.editorThreadPostedChannels.push(parent);
+      await saveThreadState(ref, state);
+    }
+    if (r.thumbnailTaskId) {
+      let thumb = state.thumbnailThreadId;
+      if (!thumb) {
         thumb = await thread(routes.thumbnailChannelId);
+        state.thumbnailThreadId = thumb;
+        state.thumbnailThreadUrl = url(thumb);
+        await saveThreadState(ref, state);
+      }
+      if (!state.thumbnailThreadPosted) {
         const due = r.finalPackageDueAt
           .toDate()
           .toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
@@ -178,39 +214,54 @@ export const sendIntegratedVideoRequest = onDocumentCreated(
             'サムネイルの制作をお願いします。',
             'タイトル案（仮）：' + r.titleIdea,
             '納期：' + due,
-            ...editorThreadIds.map(url),
+            ...state.editorThreadUrls,
             '画像を投稿してから納品ボタンを押してください。',
           ].join('\n\n'),
           button('thumb', ref)
         );
+        state.thumbnailThreadPosted = true;
+        await saveThreadState(ref, state);
       }
-      const batch = db.batch();
-      for (const id of [r.taskId, r.thumbnailTaskId].filter(Boolean))
-        batch.update(team.collection('tasks').doc(id), {
-          columnId: progress.id,
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-      batch.update(ref, {
-        editorDiscordIds: editors,
-        status: 'in_progress',
-        ...(thumb ? { thumbnailStatus: 'in_progress' } : {}),
-        discord: {
-          status: 'created',
-          guildId: guild,
-          editorThreadIds,
-          editorThreadUrls: editorThreadIds.map(url),
-          thumbnailThreadId: thumb,
-          thumbnailThreadUrl: thumb ? url(thumb) : null,
-          error: null,
-        },
+    }
+    const batch = db.batch();
+    for (const id of [r.taskId, r.thumbnailTaskId].filter(Boolean))
+      batch.update(team.collection('tasks').doc(id), {
+        columnId: progress.id,
         updatedAt: FieldValue.serverTimestamp(),
       });
-      await batch.commit();
-    } catch (error) {
-      await ref.update({
-        'discord.status': 'failed',
-        'discord.error': error instanceof Error ? error.message : String(error),
-      });
+    batch.update(ref, {
+      editorDiscordIds: editors,
+      status: 'in_progress',
+      ...(state.thumbnailThreadId ? { thumbnailStatus: 'in_progress' } : {}),
+      discord: {
+        status: 'created',
+        guildId: guild,
+        ...state,
+        expectedThreadCount,
+        error: null,
+      },
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    await batch.commit();
+    return true;
+  } catch (error) {
+    await ref.update({
+      'discord.status': 'failed',
+      'discord.error': error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
+}
+
+export const sendIntegratedVideoRequest = onDocumentCreated(
+  { ...options, document: path },
+  async (event) => {
+    const ref = event.data?.ref;
+    if (!ref) return;
+    try {
+      await processIntegratedVideoRequest(ref, event.params.teamId);
+    } catch {
+      // 失敗理由は依頼カードへ保存済み。トリガーの再実行による重複送信を避ける。
     }
   }
 );
@@ -233,6 +284,21 @@ export const sendIntegratedVideoEvent = onDocumentCreated(
     if (!e || !ref || !(await claim(e.ref, 'status', 'sending'))) return;
     try {
       const r = (await ref.get()).data();
+      const { type, message, changes } = e.data();
+      if (type === 'request_retry') {
+        if (
+          !r ||
+          r.discordTransport !== 'integrated' ||
+          (await db.doc('teams/' + event.params.teamId + '/discord/config').get()).get(
+            'guildId'
+          ) !== r.discord.guildId
+        )
+          throw Error('依頼のDiscord連携を確認してください');
+        if (!(await processIntegratedVideoRequest(ref, event.params.teamId)))
+          throw Error('Discord再送信の対象ではありません');
+        await e.ref.update({ status: 'sent', sentAt: FieldValue.serverTimestamp() });
+        return;
+      }
       if (
         !r ||
         r.discord.status !== 'created' ||
@@ -240,7 +306,6 @@ export const sendIntegratedVideoEvent = onDocumentCreated(
           r.discord.guildId
       )
         throw Error('依頼のDiscord連携を確認してください');
-      const { type, message, changes } = e.data();
       const editorIds = z.array(snowflake).parse(r.editorDiscordIds);
       const targets: Array<{ id: string; thumb: boolean }> = [
         ...r.discord.editorThreadIds.map((id: string) => ({ id, thumb: false })),
@@ -254,8 +319,8 @@ export const sendIntegratedVideoEvent = onDocumentCreated(
             .parse(changes)
             .filter((c) => c.target === 'both' || c.target === (thumb ? 'thumbnail' : 'editor'));
           if (!items.length) continue;
-          if (items.some((c) => c.label === 'タイトル'))
-            await api('/channels/' + id, 'PATCH', { name: r.title.slice(0, 100) });
+          if (items.some((c) => c.label === 'タイトル') && !(await editChannelName(id, r.title)))
+            throw Error('Discordスレッド名の更新に失敗しました');
           await post(
             id,
             ids,

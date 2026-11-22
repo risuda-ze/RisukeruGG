@@ -41,6 +41,7 @@ export const deleteCompletedTasks = onSchedule(
 
       // 削除対象タスクの ref を収集
       const staleTaskRefs: FirebaseFirestore.DocumentReference[] = [];
+      const staleVideoRequestRefs = new Map<string, FirebaseFirestore.DocumentReference>();
 
       for (const columnId of doneColumnIds) {
         // 複合インデックスを避けるため columnId の等価条件のみで取得し、
@@ -63,6 +64,12 @@ export const deleteCompletedTasks = onSchedule(
                 (request.status !== 'completed' || request.thumbnailStatus !== 'completed')
               )
                 continue;
+              if (taskDoc.get('videoRequestId')) {
+                staleVideoRequestRefs.set(
+                  requestId,
+                  teamDoc.ref.collection('videoRequests').doc(requestId)
+                );
+              }
             }
             staleTaskRefs.push(taskDoc.ref);
           }
@@ -77,6 +84,12 @@ export const deleteCompletedTasks = onSchedule(
         for (const ref of staleTaskRefs.slice(i, i + BATCH_LIMIT)) {
           batch.delete(ref);
         }
+        await batch.commit();
+      }
+      const requestRefs = [...staleVideoRequestRefs.values()];
+      for (let i = 0; i < requestRefs.length; i += BATCH_LIMIT) {
+        const batch = db.batch();
+        for (const ref of requestRefs.slice(i, i + BATCH_LIMIT)) batch.delete(ref);
         await batch.commit();
       }
 
