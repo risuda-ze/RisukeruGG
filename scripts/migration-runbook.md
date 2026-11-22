@@ -83,4 +83,4 @@ node scripts/migrate-roles-to-staff.mjs --apply
 ```
 
 3. dry-run を再実行し、「旧 member / rom / editor / viewer は 0 件です」と出ることを確認する。**0 件を確認するまで PR B をデプロイしない**
-4. 未知の role が表示された場合は終了コード 2 になる。書き換えは行わないので、内容を確認して扱いを決める
+4. 未知の role が表示された場合は終了コード 2 になり、「0 件です」の行は出ない。書き換えは行わないので、内容を確認して扱いを決める。旧 member が 0 件かどうかは、role ごとの件数に `member` / `rom` / `editor` / `viewer` の行が無いことで確認する
