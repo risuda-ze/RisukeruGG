@@ -103,10 +103,10 @@ test.describe('SC-019: TaskDetailModal のステータス・カテゴリ表示',
     await page.goto('/tasks');
     expect(page.url()).not.toContain('/login');
 
-    await expect(page.locator('.tcard').first()).toBeVisible({ timeout: 15000 });
-    await page.locator('.tcard').first().click();
+    await expect(page.getByTestId('task-card').first()).toBeVisible({ timeout: 15000 });
+    await page.getByTestId('task-card').first().click();
 
-    const modal = page.locator('.task-modal');
+    const modal = page.getByRole('dialog');
     await expect(modal).toBeVisible();
     await expect(modal.getByText('ステータス')).toBeVisible();
     await expect(modal.getByText('カテゴリ')).toBeVisible();
@@ -125,7 +125,7 @@ test.describe('SC-021: v3 機能回帰なし', () => {
 
     await expect(page.getByRole('button', { name: 'すべて' })).toBeVisible({ timeout: 15000 });
     await expect(page.locator('select').filter({ hasText: 'すべて' })).toBeVisible();
-    await expect(page.locator('.tcard').first()).toBeVisible();
+    await expect(page.getByTestId('task-card').first()).toBeVisible();
   });
 
   test('CSV出力ボタンが存在しない（SC-013 回帰なし）', async ({ page }) => {
@@ -134,7 +134,7 @@ test.describe('SC-021: v3 機能回帰なし', () => {
 
     /* TaskControlBar の「すべて」バッジが出るまで待機してからカードを確認 */
     await expect(page.getByRole('button', { name: 'すべて' })).toBeVisible({ timeout: 15000 });
-    await expect(page.locator('.tcard').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('task-card').first()).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('button', { name: /CSV|エクスポート/ })).not.toBeVisible();
   });
 });

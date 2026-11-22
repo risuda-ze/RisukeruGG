@@ -18,6 +18,7 @@ User は、認証済み利用者のアカウント状態を表す。
 | `avatarUrl`     | string \| null     | アイコン画像 URL                  |
 | `deleted`       | false または未設定 | 有効なアカウントであることを示す  |
 | `deletedAt`     | null または未設定  | 削除前は値を持たない              |
+| `googleCalendarExports` | map / 未設定 | Google カレンダー書き出し（schedule の SC-008 系）が使う状態。キーは `teamId`、値は `{ calendarId: string, exportedAt: timestamp | null }`。`calendarId` は再書き出し時に同じ専用副カレンダーへ書き込むため、`exportedAt` は最終書き出し日時を画面に表示するために使う。書き込みは本人のみ。詳細は [schedule/model.md](../schedule/model.md) |
 
 ### user 配下に配置する通知サブリソース
 
@@ -53,7 +54,7 @@ User は、認証済み利用者のアカウント状態を表す。
 ゴースト化では、次のような個人情報・運用情報を保持しない。
 
 - `email`
-- `googleCalendar`
+- `googleCalendarExports`（Google 側の副カレンダー自体は削除しない）
 - `teamIds`
 - その他の個人情報
 
@@ -75,6 +76,10 @@ User は、認証済み利用者のアカウント状態を表す。
 - `notificationEndpoints`
 - `notificationSettings`
 - 通知配送チャネルごとの運用データ
+
+### ui 側で管理するもの
+
+- `theme`（テーマの選択。[ui/model.md](../ui/model.md) の `ThemePreference`）
 
 ## 状態遷移
 

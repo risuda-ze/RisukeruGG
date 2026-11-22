@@ -1,24 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { Zen_Kaku_Gothic_New, Space_Grotesk } from 'next/font/google';
 import { AuthProvider } from '@/components/AuthProvider';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import { AnalyticsListener } from '@/components/AnalyticsListener';
+import { Toaster } from '@/components/ui/Toaster';
 import './globals.css';
-
-/* 日本語本文・見出しフォント */
-const zenKaku = Zen_Kaku_Gothic_New({
-  weight: ['400', '500', '700'],
-  subsets: ['latin'],
-  variable: '--font-ja',
-  display: 'swap',
-});
-
-/* 数値・英字ラベルフォント */
-const spaceGrotesk = Space_Grotesk({
-  weight: ['400', '500', '600'],
-  subsets: ['latin'],
-  variable: '--font-num',
-  display: 'swap',
-});
 
 // 本番 URL（OGP の絶対 URL 生成に使用）。未設定環境でもビルドが壊れないようフォールバックする。
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://risukeru.gg';
@@ -72,7 +57,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#3fb6e0',
+  // DESIGN.md の canvas（dark）
+  themeColor: '#100c1c',
 };
 
 export default function RootLayout({
@@ -81,11 +67,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className={`h-full ${zenKaku.variable} ${spaceGrotesk.variable}`}>
+    // next-themes が描画前に data-theme を付けるため、属性の不一致警告を抑える
+    <html lang="ja" className="h-full" suppressHydrationWarning>
       <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" precedence="default" />
       <body className="min-h-full flex flex-col antialiased">
-        <AnalyticsListener />
-        <AuthProvider>{children}</AuthProvider>
+        <ThemeProvider>
+          <AnalyticsListener />
+          <AuthProvider>{children}</AuthProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -2,6 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomBytes } from 'crypto';
 import { db, getAuthContext, requireOperator, getUserDoc } from '../lib/validateAuth';
+import { deleteUserUnavailability } from '../unavailability/cleanup';
 
 interface RemoveTeamMemberData {
   teamId: string;
@@ -35,7 +36,7 @@ export const removeTeamMember = onCall(
     const soloTeamRef = db.collection('teams').doc();
     const soloTeamId = soloTeamRef.id;
 
-    return await db.runTransaction(async (tx) => {
+    const result = await db.runTransaction(async (tx) => {
       const now = FieldValue.serverTimestamp();
 
       // Firestoreトランザクションの制約: 読み取りは書き込みより前に実行する必要がある
@@ -84,5 +85,8 @@ export const removeTeamMember = onCall(
 
       return { success: true };
     });
+
+    await deleteUserUnavailability(teamId, targetUserId);
+    return result;
   }
 );

@@ -1,0 +1,12 @@
+{
+  "name": "risukeru",
+  "owner": {
+    "name": "RisukeruGG"
+  },
+  "plugins": [
+    {
+      "name": "risukeru-agents",
+      "source": "./"
+    }
+  ]
+}

@@ -6,7 +6,7 @@
  *   node scripts/seed.mjs
  *   または: scripts\seed.bat
  *
- * 前提: Docker コンテナ (emulator) が起動済みであること
+ * 前提: Firebase Emulator (pnpm emulators) が起動済みであること
  *   - Auth      http://localhost:9098
  *   - Firestore http://localhost:8080
  *   - Functions http://localhost:5001
@@ -18,6 +18,7 @@
  *   - タスク: ステータス・担当・期限・連携有無の組み合わせを網羅
  *   - 通知: 10件（すべて未読）
  *   - コラボセッション: 2件
+ *   - 対応不可時間: teamAlpha の 5 人ぶん（実行日基準。1 人は未入力）
  */
 
 const PROJECT_ID = 'demo-risukeru';
@@ -250,7 +251,6 @@ async function main() {
       monthlyCollabCount: user.monthlyCollabCount,
       countResetAt: d(2026, 5, 1),
       createdAt: user.createdAt,
-      googleCalendar: null,
     });
   }
   console.log(`  ✓ users (${users.length}件)`);
@@ -282,6 +282,8 @@ async function main() {
     avatarUrl: null,
     plan: 'party',
     joinedAt: d(2026, 4, 1),
+    duties: ['cast', 'planning'],
+    note: '土日は配信しています',
   });
   await setDoc(`teams/${TEAM_ID}/members/${UID2}`, {
     role: 'operator',
@@ -289,6 +291,8 @@ async function main() {
     avatarUrl: null,
     plan: 'party',
     joinedAt: d(2026, 4, 3),
+    duties: ['edit', 'thumbnail'],
+    note: '平日夜は編集できます',
   });
   await setDoc(`teams/${TEAM_ID}/members/${UID3}`, {
     role: 'member',
@@ -1090,28 +1094,57 @@ async function main() {
   });
   console.log('  ✓ collabSessions (5件)');
 
-  // ── memberCalendars (同期予定) ────────────────────────────
-  await setDoc(`teams/${TEAM_ID}/memberCalendars/${UID3}/events/gcal_evt_001`, {
-    title: 'マネージャー健太 の予定',
-    startAt: d(2026, 5, 21, 11, 0),
-    endAt: d(2026, 5, 21, 12, 0),
-    allDay: false,
-    sourceEventId: 'gcal_evt_001',
-    syncedAt: NOW,
-    userId: UID3,
-    teamId: TEAM_ID,
+  // ── 対応不可時間 ──────────────────────────────────────────
+  // 画面は実行時点の JST 当日を基準に前月〜翌月を表示するため、ここだけ固定の基準日ではなく実行日からの相対で作る
+  const jstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  /** JST の当日から offset 日後の `yyyy-mm-dd` */
+  const day = (offset) =>
+    new Date(Date.UTC(jstNow.getUTCFullYear(), jstNow.getUTCMonth(), jstNow.getUTCDate() + offset))
+      .toISOString()
+      .slice(0, 10);
+  /** start 時〜end 時（end は排他的）の日マスク */
+  const hours = (start, end) => (2 ** (end - start) - 1) * 2 ** start;
+  /** 月ドキュメントに分けて書く。days / notes が空でも当月のドキュメントは作る（入力済みで不可なし） */
+  async function seedUnavailability(uid, updatedDaysAgo, days, notes = []) {
+    const months = new Set([day(0), ...Object.keys(days), ...notes.map((n) => n.date)].map((v) => v.slice(0, 7)));
+    for (const month of months) {
+      await setDoc(`teams/${TEAM_ID}/unavailability/${uid}_${month}`, {
+        userId: uid,
+        month,
+        days: Object.fromEntries(Object.entries(days).filter(([date]) => date.startsWith(month))),
+        notes: notes.filter((n) => n.date.startsWith(month)),
+        updatedAt: new Date(Date.now() - updatedDaysAgo * 24 * 60 * 60 * 1000),
+      });
+    }
+    return months.size;
+  }
+  let unavailabilityDocs = 0;
+  // 配信太郎: 当日 9〜12 時・20 時〜翌 2 時（E2E が参照する）、メモは同一時間帯の横並びを含む
+  unavailabilityDocs += await seedUnavailability(
+    UID1,
+    0,
+    {
+      [day(0)]: hours(9, 12) | hours(20, 24),
+      [day(1)]: hours(0, 2), // 当日 20 時から日をまたいで続く
+      [day(2)]: hours(0, 24),
+      [day(-3)]: hours(13, 18),
+    },
+    [
+      { id: 'note1', date: day(0), start: 9, end: 12, text: '移動中のため返信は遅れます' },
+      { id: 'note2', date: day(0), start: 10, end: 11, text: '通話は不可' },
+      { id: 'note3', date: day(0), start: 20, end: 22, text: 'チャットなら返せます' },
+    ]
+  );
+  unavailabilityDocs += await seedUnavailability(UID2, 3, { [day(0)]: hours(18, 22), [day(1)]: hours(0, 24) });
+  unavailabilityDocs += await seedUnavailability(UID3, 10, {
+    [day(5)]: hours(10, 15),
+    [day(-25)]: hours(19, 23),
+    [day(25)]: hours(8, 12),
   });
-  await setDoc(`teams/${TEAM_ID}/memberCalendars/${UID4}/events/gcal_evt_002`, {
-    title: 'ROM三郎 の予定',
-    startAt: d(2026, 5, 22, 0, 0),
-    endAt: d(2026, 5, 23, 0, 0), // 排他的終了（5/22のみ表示）
-    allDay: true,
-    sourceEventId: 'gcal_evt_002',
-    syncedAt: NOW,
-    userId: UID4,
-    teamId: TEAM_ID,
-  });
-  console.log('  ✓ memberCalendars/events (2件)');
+  unavailabilityDocs += await seedUnavailability(UID5, 0, { [day(0)]: hours(0, 6) });
+  // ROM美香: 入力済みだが対応不可なし。ROM三郎（UID4）はドキュメントを作らない（未入力）
+  unavailabilityDocs += await seedUnavailability(UID6, 1, {});
+  console.log(`  ✓ unavailability (${unavailabilityDocs}件)`);
 
   // ── 完了サマリー ─────────────────────────────────────────
   console.log('\n=== シード完了 ===\n');
@@ -1140,7 +1173,6 @@ async function main() {
   console.log('    6/24 (水) — 複数日バー 3件（+1件 表示）');
   console.log('    6/25 (木) — 複数日バー 4件（+2件 表示）');
   console.log(`  タスク       : ${tasks.length}件 (未着手6・進行中4・完了4)`);
-  console.log('  memberCalendars/events: 2件');
   console.log('  コラボ       : 5件 (open/confirmed/expired/cancelled を含む)');
   console.log('\nFirebase Emulator UI: http://localhost:4000\n');
 }

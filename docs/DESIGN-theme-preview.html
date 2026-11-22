@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RisukeruGG テーマ比較</title>
+<style>
+[data-theme="light"] {
+  --canvas: #fcf9f5;
+  --surface: #f3ecf7;
+  --surface-2: #eadff8;
+  --card: #ffffff;
+  --border: #eadff8;
+  --border-strong: #4d3e78;
+  --brand: #4d3e78;
+  --brand-2: #6956a8;
+  --primary: #745fbb;
+  --primary-hover: #6956a8;
+  --primary-active: #4d3e78;
+  --text: #4d3e78;
+  --text-2: #6956a8;
+  --text-muted: #7f72ac;
+  --text-disabled: #b8afd4;
+  --text-on-primary: #ffffff;
+  --success: #1f7a57;
+  --success-tint: #e9f3e7;
+  --warning: #b74d1a;
+  --warning-tint: #feede0;
+  --danger: #a53c3a;
+  --danger-tint: #ffdce8;
+  --info: #3c699b;
+  --info-tint: #ccdcf8;
+  --live: #e14f4c;
+  --text-on-danger: #ffffff;
+  --pink-tint: #ffdce8; --pink-border: #a54b7a; --pink-text: #803218;
+  --orange-tint: #feede0; --orange-border: #b74d1a; --orange-text: #b74d1a;
+  --green-tint: #e9f3e7; --green-border: #1f7a57; --green-text: #1f7a57;
+  --blue-tint: #ccdcf8; --blue-border: #3c699b; --blue-text: #4d3e78;
+  --teal-tint: #f3ecf7; --teal-border: #058380; --teal-text: #4d3e78;
+}
+[data-theme="dark"] {
+  --canvas: #100c1c;
+  --surface: #191528;
+  --card: #211c33;
+  --surface-2: #2c273f;
+  --border: #36314c;
+  --border-strong: #b9b1d9;
+  --text: #e8e4fd;
+  --text-2: #b8afe5;
+  --text-muted: #8d86aa;
+  --text-disabled: #5c5868;
+  --brand: #e8e4fd;
+  --brand-2: #b8afe5;
+  --primary: #7d68c5;
+  --primary-hover: #8e7ad9;
+  --primary-active: #6c56b1;
+  --text-on-primary: #ffffff;
+  --success: #64b892;
+  --success-tint: #222d34;
+  --warning: #f18153;
+  --warning-tint: #3a242b;
+  --danger: #e65850;
+  --danger-tint: #2d1926;
+  --info: #79a8de;
+  --info-tint: #252941;
+  --live: #fb6762;
+  --text-on-danger: #100c1c;
+  --pink-tint: #372339; --pink-border: #e181b0; --pink-text: #feafd4;
+  --orange-tint: #3a242b; --orange-border: #f18153; --orange-text: #feb79b;
+  --green-tint: #222d34; --green-border: #64b892; --green-text: #8bdfb7;
+  --blue-tint: #252941; --blue-border: #79a8de; --blue-text: #a5cefe;
+  --teal-tint: #202c3a; --teal-border: #53b7b4; --teal-text: #7bdeda;
+}
+* { box-sizing: border-box; }
+html { font-size: 16px; }
+body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Hiragino Sans', 'Yu Gothic UI', 'Noto Sans JP', sans-serif; background: #0b0a10; color: #e8e4fd; }
+header { padding: 24px 24px 8px; max-width: 1400px; margin: 0 auto; }
+header h1 { font-weight: 300; letter-spacing: -0.02em; margin: 0 0 8px; }
+header p, header li { color: #b8afe5; font-size: 14px; line-height: 1.6; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px 24px 48px; max-width: 1400px; margin: 0 auto; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+.theme { background: var(--canvas); color: var(--text); padding: 24px; border-radius: 14px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 16px; }
+.theme h2 { font-weight: 300; letter-spacing: -0.02em; margin: 0; font-size: 24px; }
+.theme h3 { font-weight: 500; font-size: 16px; margin: 0 0 6px; letter-spacing: -0.01em; }
+.theme p { margin: 0; font-size: 14px; line-height: 1.5; }
+.muted { color: var(--text-muted); }
+.num { font-variant-numeric: tabular-nums; font-weight: 500; letter-spacing: -0.01em; }
+.card .num { font-size: 32px; font-weight: 300; line-height: 1; margin: 6px 0; }
+.card .num .muted { font-size: 14px; margin-left: 4px; }
+.ladder { display: flex; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); font-size: 12px; }
+.ladder div { flex: 1; padding: 14px 8px; text-align: center; color: var(--text-2); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn { height: 44px; padding: 0 24px; border-radius: 14px; font-weight: 600; font-size: 14px; border: 1.5px solid transparent; cursor: pointer; font-family: inherit; transition: background 80ms, transform 150ms; }
+.btn:active { transform: scale(0.97); }
+.btn.primary { background: var(--primary); color: var(--text-on-primary); }
+.btn.primary:hover { background: var(--primary-hover); }
+.btn.ghost { background: transparent; border-color: var(--border-strong); color: var(--text); }
+.btn.ghost:hover { background: var(--surface); }
+.btn.subtle { background: var(--surface); color: var(--text); }
+.btn.subtle:hover { background: var(--surface-2); }
+.btn.danger { background: var(--danger); color: var(--text-on-danger); }
+.link { color: var(--brand-2); font-size: 14px; font-weight: 500; }
+.badge { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid; }
+.badge.success { background: var(--success-tint); color: var(--success); border-color: var(--success); }
+.badge.warning { background: var(--warning-tint); color: var(--warning); border-color: var(--warning); }
+.badge.danger  { background: var(--danger-tint);  color: var(--danger);  border-color: var(--danger); }
+.badge.info    { background: var(--info-tint);    color: var(--info);    border-color: var(--info); }
+.badge.live    { background: var(--danger-tint);  color: var(--danger);  border-color: var(--danger); }
+.badge.live i  { width: 8px; height: 8px; border-radius: 50%; background: var(--live); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(.8); } }
+.tag { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 7px; font-size: 12px; font-weight: 500; border: 1px solid; }
+.tag.pink, .card.specimen.pink { background: var(--pink-tint); border-color: var(--pink-border); } .tag.pink, .card.specimen.pink h3, .card.specimen.pink .num { color: var(--pink-text); }
+.tag.orange, .card.specimen.orange { background: var(--orange-tint); border-color: var(--orange-border); } .tag.orange, .card.specimen.orange h3, .card.specimen.orange .num { color: var(--orange-text); }
+.tag.green, .card.specimen.green { background: var(--green-tint); border-color: var(--green-border); } .tag.green, .card.specimen.green h3, .card.specimen.green .num { color: var(--green-text); }
+.tag.blue, .card.specimen.blue { background: var(--blue-tint); border-color: var(--blue-border); } .tag.blue, .card.specimen.blue h3, .card.specimen.blue .num { color: var(--blue-text); }
+.tag.teal, .card.specimen.teal { background: var(--teal-tint); border-color: var(--teal-border); } .tag.teal, .card.specimen.teal h3, .card.specimen.teal .num { color: var(--teal-text); }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.card { border-radius: 14px; padding: 16px; border: 1px solid var(--border); background: var(--card); }
+.card.specimen { border-width: 2px; }
+.card.default:hover { border-color: var(--border-strong); }
+.form label { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 200px; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); }
+input { height: 44px; border-radius: 7px; border: 1px solid var(--border); background: var(--card); color: var(--text); padding: 0 12px; font: inherit; font-size: 14px; }
+input::placeholder { color: var(--text-muted); }
+input:focus { outline: 2px solid var(--brand); outline-offset: 2px; border-color: var(--brand); }
+.side { display: flex; gap: 4px; background: var(--surface); padding: 6px; border-radius: 14px; }
+.side a { flex: 1; text-align: center; padding: 10px 12px; border-radius: 7px; font-size: 14px; color: var(--text-2); }
+.side a:hover { background: var(--surface-2); }
+.side a.active { background: var(--card); color: var(--text); font-weight: 600; }
+.dialog { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+.dialog .foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.list { width: 100%; border-collapse: collapse; font-size: 14px; border-radius: 14px; overflow: hidden; }
+.list th { background: var(--surface-2); text-align: left; padding: 10px 12px; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); }
+.list td { padding: 10px 12px; }
+.list tbody tr:nth-child(even) { background: var(--surface); }
+.list tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--brand); }
+.tables { max-width: 1400px; margin: 0 auto; padding: 0 24px 64px; display: grid; gap: 24px; }
+.tables h2 { font-weight: 300; letter-spacing: -0.02em; font-size: 22px; margin: 0 0 8px; }
+table.tok { width: 100%; border-collapse: collapse; font-size: 13px; background: #15121f; border-radius: 14px; overflow: hidden; }
+table.tok th, table.tok td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #2a2540; }
+table.tok th { color: #b8afe5; font-weight: 600; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+td.tok { font-family: ui-monospace, Consolas, monospace; color: #e8e4fd; }
+code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: #b8afe5; }
+.sw { display: inline-block; width: 18px; height: 18px; border-radius: 4px; vertical-align: middle; margin-right: 6px; border: 1px solid #ffffff22; }
+td.ok { color: #8bdfb7; } td.warn { color: #feb79b; } td.ng { color: #ff8f8a; font-weight: 700; }
+</style>
+</head>
+<body>
+<header>
+  <h1>RisukeruGG テーマ比較 — Light（v3）と Dark（導出）</h1>
+  <p>ライトの各トークンから、色相を保ったまま OKLCH の明度を反転して導出した参考値。GitHub / Linear / Notion / Material のライト↔ダーク対応に倣った規則:</p>
+  <ul>
+    <li>面は「暗 → 明」で段を積む（canvas → surface → card → surface-2）。ライトの「白が最前面」をダークでは「最も明るい紫黒が最前面」に置き換える</li>
+    <li>枡線は面より明るくする（ライトは面より暗い）。影なしの方針はそのまま、段差と枡線で奥行きを出す</li>
+    <li>文字は Deep Iris / Amethyst の色相を保った明るいラベンダーに。コントラストは 4.5:1 以上を再計測</li>
+    <li>プライマリは 1 段明るく（白文字 4.5:1 を満たす上限 L=0.58）。danger は明るくすると白文字が足りないため、ダークでは文字を canvas 色にする</li>
+    <li>ファミリーの border は L 0.72 に揃えて 1 段明るく、tint は border を canvas に 22% 混ぜた低彩度面、text は L 0.84</li>
+  </ul>
+</header>
+<div class="grid">
+<section class="theme" data-theme="light">
+  <h2>Light（現行 v3）</h2>
+  <div class="ladder">
+    <div style="background:var(--canvas)">canvas</div>
+    <div style="background:var(--surface)">surface</div>
+    <div style="background:var(--card)">card</div>
+    <div style="background:var(--surface-2)">surface-2</div>
+    <div style="background:var(--border)">border</div>
+  </div>
+  <div class="row">
+    <button class="btn primary">予定を作成</button>
+    <button class="btn ghost">キャンセル</button>
+    <button class="btn subtle">フィルター</button>
+    <button class="btn danger">削除</button>
+    <a class="link" href="#">リンク</a>
+  </div>
+  <div class="row">
+    <span class="badge success">完了</span>
+    <span class="badge warning">期限間近</span>
+    <span class="badge danger">期限切れ</span>
+    <span class="badge info">予定</span>
+    <span class="badge live"><i></i>LIVE</span>
+    <span class="tag pink">配信</span><span class="tag orange">編集</span><span class="tag green">告知</span><span class="tag blue">コラボ</span><span class="tag teal">雑務</span>
+  </div>
+  <div class="cards">
+    <div class="card default"><h3>今日の予定</h3><p>21:00 雑談配信<br><span class="muted">カテゴリ: 配信</span></p></div>
+    <div class="card specimen pink"><h3>pink</h3><p class="num">12<span class="muted">件</span></p><p>標本カード。tint + 2px border + text。</p></div><div class="card specimen orange"><h3>orange</h3><p class="num">12<span class="muted">件</span></p><p>標本カード。tint + 2px border + text。</p></div><div class="card specimen green"><h3>green</h3><p class="num">12<span class="muted">件</span></p><p>標本カード。tint + 2px border + text。</p></div><div class="card specimen blue"><h3>blue</h3><p class="num">12<span class="muted">件</span></p><p>標本カード。tint + 2px border + text。</p></div><div class="card specimen teal"><h3>teal</h3><p class="num">12<span class="muted">件</span></p><p>標本カード。tint + 2px border + text。</p></div>
+  </div>
+  <div class="row form">
+    <label><span class="eyebrow">タイトル</span><input placeholder="配信タイトルを入力" value="雑談配信 #12"></label>
+    <label><span class="eyebrow">メモ</span><input placeholder="placeholder の見え方"></label>
+  </div>
+  <nav class="side">
+    <a class="active">ダッシュボード</a><a>タスク管理</a><a>スケジュール</a><a>チーム</a>
+  </nav>
+  <div class="dialog">
+    <h3>予定を削除しますか？</h3>
+    <p>この操作は取り消せません。<span class="muted">（text-muted）</span></p>
+    <div class="foot"><button class="btn ghost">キャンセル</button><button class="btn danger">削除</button></div>
+  </div>
+  <table class="list"><thead><tr><th>日時</th><th>タイトル</th><th>状態</th></tr></thead>
+  <tbody><tr><td class="num">11/15 21:00</td><td>雑談配信</td><td><span class="badge success">完了</span></td></tr>
+  <tr class="sel"><td class="num">11/16 20:00</td><td>コラボ打ち合わせ</td><td><span class="badge info">予定</span></td></tr>
+  <tr><td class="num">11/17 22:00</td><td>編集作業</td><td><span class="badge warning">期限間近</span></td></tr></tbody></table>
+</section>
+<section class="theme" data-theme="dark">
+  <h2>Dark（導出・参考値）</h2>
+  <div class="ladder">
+    <div style="background:var(--canvas)">canvas</div>
+    <div style="background:var(--surface)">surface</div>
+    <div style="background:var(--card)">card</div>
+    <div style="background:var(--surface-2)">surface-2</div>
+    <div style="background:var(--border)">border</div>
+  </div>
+  <div class="row">
+    <button class="btn primary">予定を作成</button>
+    <button class="btn ghost">キャンセル</button>
+    <button class="btn subtle">フィルター</button>
+    <button class="btn danger">削除</button>
+    <a class="link" href="#">リンク</a>
+  </div>
+  <div class="row">
+    <span class="badge success">完了</span>
+    <span class="badge warning">期限間近</span>
+    <span class="badge danger">期限切れ</span>
+    <span class="badge info">予定</span>
+    <span class="badge live"><i></i>LIVE</span>
+    <span class="tag pink">配信</span><span class="tag orange">編集</span><span class="tag green">告知</span><span class="tag blue">コラボ</span><span class="tag teal">雑務</span>
+  </div>
+  <div class="cards">
+    <div class="card default"><h3>今日の予定</h3><p>21:00 雑談配信<br><span class="muted">カテゴリ: 配信</span></p></div>
+    <div class="card specimen pink"><h3>pink</h3><p class="num">12<span class="muted">件</span></p><p>標本カード。tint + 2px border + text。</p></div><div class="card specimen orange"><h3>orange</h3><p class="num">12<span class="muted">件</span></p><p>標本カード。tint + 2px border + text。</p></div><div class="card specimen green"><h3>green</h3><p class="num">12<span class="muted">件</span></p><p>標本カード。tint + 2px border + text。</p></div><div class="card specimen blue"><h3>blue</h3><p class="num">12<span class="muted">件</span></p><p>標本カード。tint + 2px border + text。</p></div><div class="card specimen teal"><h3>teal</h3><p class="num">12<span class="muted">件</span></p><p>標本カード。tint + 2px border + text。</p></div>
+  </div>
+  <div class="row form">
+    <label><span class="eyebrow">タイトル</span><input placeholder="配信タイトルを入力" value="雑談配信 #12"></label>
+    <label><span class="eyebrow">メモ</span><input placeholder="placeholder の見え方"></label>
+  </div>
+  <nav class="side">
+    <a class="active">ダッシュボード</a><a>タスク管理</a><a>スケジュール</a><a>チーム</a>
+  </nav>
+  <div class="dialog">
+    <h3>予定を削除しますか？</h3>
+    <p>この操作は取り消せません。<span class="muted">（text-muted）</span></p>
+    <div class="foot"><button class="btn ghost">キャンセル</button><button class="btn danger">削除</button></div>
+  </div>
+  <table class="list"><thead><tr><th>日時</th><th>タイトル</th><th>状態</th></tr></thead>
+  <tbody><tr><td class="num">11/15 21:00</td><td>雑談配信</td><td><span class="badge success">完了</span></td></tr>
+  <tr class="sel"><td class="num">11/16 20:00</td><td>コラボ打ち合わせ</td><td><span class="badge info">予定</span></td></tr>
+  <tr><td class="num">11/17 22:00</td><td>編集作業</td><td><span class="badge warning">期限間近</span></td></tr></tbody></table>
+</section></div>
+<div class="tables">
+  <div><h2>トークン対応表</h2>
+  <table class="tok"><thead><tr><th>トークン</th><th>Light</th><th>Dark</th></tr></thead><tbody><tr><td class="tok">--canvas</td>
+      <td><span class="sw" style="background:#fcf9f5"></span><code>#fcf9f5</code></td>
+      <td><span class="sw" style="background:#100c1c"></span><code>#100c1c</code></td></tr><tr><td class="tok">--surface</td>
+      <td><span class="sw" style="background:#f3ecf7"></span><code>#f3ecf7</code></td>
+      <td><span class="sw" style="background:#191528"></span><code>#191528</code></td></tr><tr><td class="tok">--surface-2</td>
+      <td><span class="sw" style="background:#eadff8"></span><code>#eadff8</code></td>
+      <td><span class="sw" style="background:#2c273f"></span><code>#2c273f</code></td></tr><tr><td class="tok">--card</td>
+      <td><span class="sw" style="background:#ffffff"></span><code>#ffffff</code></td>
+      <td><span class="sw" style="background:#211c33"></span><code>#211c33</code></td></tr><tr><td class="tok">--border</td>
+      <td><span class="sw" style="background:#eadff8"></span><code>#eadff8</code></td>
+      <td><span class="sw" style="background:#36314c"></span><code>#36314c</code></td></tr><tr><td class="tok">--border-strong</td>
+      <td><span class="sw" style="background:#4d3e78"></span><code>#4d3e78</code></td>
+      <td><span class="sw" style="background:#b9b1d9"></span><code>#b9b1d9</code></td></tr><tr><td class="tok">--brand</td>
+      <td><span class="sw" style="background:#4d3e78"></span><code>#4d3e78</code></td>
+      <td><span class="sw" style="background:#e8e4fd"></span><code>#e8e4fd</code></td></tr><tr><td class="tok">--brand-2</td>
+      <td><span class="sw" style="background:#6956a8"></span><code>#6956a8</code></td>
+      <td><span class="sw" style="background:#b8afe5"></span><code>#b8afe5</code></td></tr><tr><td class="tok">--primary</td>
+      <td><span class="sw" style="background:#745fbb"></span><code>#745fbb</code></td>
+      <td><span class="sw" style="background:#7d68c5"></span><code>#7d68c5</code></td></tr><tr><td class="tok">--primary-hover</td>
+      <td><span class="sw" style="background:#6956a8"></span><code>#6956a8</code></td>
+      <td><span class="sw" style="background:#8e7ad9"></span><code>#8e7ad9</code></td></tr><tr><td class="tok">--primary-active</td>
+      <td><span class="sw" style="background:#4d3e78"></span><code>#4d3e78</code></td>
+      <td><span class="sw" style="background:#6c56b1"></span><code>#6c56b1</code></td></tr><tr><td class="tok">--text</td>
+      <td><span class="sw" style="background:#4d3e78"></span><code>#4d3e78</code></td>
+      <td><span class="sw" style="background:#e8e4fd"></span><code>#e8e4fd</code></td></tr><tr><td class="tok">--text-2</td>
+      <td><span class="sw" style="background:#6956a8"></span><code>#6956a8</code></td>
+      <td><span class="sw" style="background:#b8afe5"></span><code>#b8afe5</code></td></tr><tr><td class="tok">--text-muted</td>
+      <td><span class="sw" style="background:#7f72ac"></span><code>#7f72ac</code></td>
+      <td><span class="sw" style="background:#8d86aa"></span><code>#8d86aa</code></td></tr><tr><td class="tok">--text-disabled</td>
+      <td><span class="sw" style="background:#b8afd4"></span><code>#b8afd4</code></td>
+      <td><span class="sw" style="background:#5c5868"></span><code>#5c5868</code></td></tr><tr><td class="tok">--text-on-primary</td>
+      <td><span class="sw" style="background:#ffffff"></span><code>#ffffff</code></td>
+      <td><span class="sw" style="background:#ffffff"></span><code>#ffffff</code></td></tr><tr><td class="tok">--success</td>
+      <td><span class="sw" style="background:#1f7a57"></span><code>#1f7a57</code></td>
+      <td><span class="sw" style="background:#64b892"></span><code>#64b892</code></td></tr><tr><td class="tok">--success-tint</td>
+      <td><span class="sw" style="background:#e9f3e7"></span><code>#e9f3e7</code></td>
+      <td><span class="sw" style="background:#222d34"></span><code>#222d34</code></td></tr><tr><td class="tok">--warning</td>
+      <td><span class="sw" style="background:#b74d1a"></span><code>#b74d1a</code></td>
+      <td><span class="sw" style="background:#f18153"></span><code>#f18153</code></td></tr><tr><td class="tok">--warning-tint</td>
+      <td><span class="sw" style="background:#feede0"></span><code>#feede0</code></td>
+      <td><span class="sw" style="background:#3a242b"></span><code>#3a242b</code></td></tr><tr><td class="tok">--danger</td>
+      <td><span class="sw" style="background:#a53c3a"></span><code>#a53c3a</code></td>
+      <td><span class="sw" style="background:#e65850"></span><code>#e65850</code></td></tr><tr><td class="tok">--danger-tint</td>
+      <td><span class="sw" style="background:#ffdce8"></span><code>#ffdce8</code></td>
+      <td><span class="sw" style="background:#2d1926"></span><code>#2d1926</code></td></tr><tr><td class="tok">--info</td>
+      <td><span class="sw" style="background:#3c699b"></span><code>#3c699b</code></td>
+      <td><span class="sw" style="background:#79a8de"></span><code>#79a8de</code></td></tr><tr><td class="tok">--info-tint</td>
+      <td><span class="sw" style="background:#ccdcf8"></span><code>#ccdcf8</code></td>
+      <td><span class="sw" style="background:#252941"></span><code>#252941</code></td></tr><tr><td class="tok">--live</td>
+      <td><span class="sw" style="background:#e14f4c"></span><code>#e14f4c</code></td>
+      <td><span class="sw" style="background:#fb6762"></span><code>#fb6762</code></td></tr><tr><td class="tok">--text-on-danger</td>
+      <td><span class="sw" style="background:#ffffff"></span><code>#ffffff</code></td>
+      <td><span class="sw" style="background:#100c1c"></span><code>#100c1c</code></td></tr></tbody></table></div>
+  <div><h2>カラーファミリー（tint / border / text）</h2>
+  <table class="tok"><thead><tr><th>family</th><th>Light</th><th>Dark</th></tr></thead><tbody><tr><td class="tok">pink</td><td><span class="sw" style="background:#ffdce8"></span><span class="sw" style="background:#a54b7a"></span><span class="sw" style="background:#803218"></span><code>#ffdce8 / #a54b7a / #803218</code></td><td><span class="sw" style="background:#372339"></span><span class="sw" style="background:#e181b0"></span><span class="sw" style="background:#feafd4"></span><code>#372339 / #e181b0 / #feafd4</code></td></tr><tr><td class="tok">orange</td><td><span class="sw" style="background:#feede0"></span><span class="sw" style="background:#b74d1a"></span><span class="sw" style="background:#b74d1a"></span><code>#feede0 / #b74d1a / #b74d1a</code></td><td><span class="sw" style="background:#3a242b"></span><span class="sw" style="background:#f18153"></span><span class="sw" style="background:#feb79b"></span><code>#3a242b / #f18153 / #feb79b</code></td></tr><tr><td class="tok">green</td><td><span class="sw" style="background:#e9f3e7"></span><span class="sw" style="background:#1f7a57"></span><span class="sw" style="background:#1f7a57"></span><code>#e9f3e7 / #1f7a57 / #1f7a57</code></td><td><span class="sw" style="background:#222d34"></span><span class="sw" style="background:#64b892"></span><span class="sw" style="background:#8bdfb7"></span><code>#222d34 / #64b892 / #8bdfb7</code></td></tr><tr><td class="tok">blue</td><td><span class="sw" style="background:#ccdcf8"></span><span class="sw" style="background:#3c699b"></span><span class="sw" style="background:#4d3e78"></span><code>#ccdcf8 / #3c699b / #4d3e78</code></td><td><span class="sw" style="background:#252941"></span><span class="sw" style="background:#79a8de"></span><span class="sw" style="background:#a5cefe"></span><code>#252941 / #79a8de / #a5cefe</code></td></tr><tr><td class="tok">teal</td><td><span class="sw" style="background:#f3ecf7"></span><span class="sw" style="background:#058380"></span><span class="sw" style="background:#4d3e78"></span><code>#f3ecf7 / #058380 / #4d3e78</code></td><td><span class="sw" style="background:#202c3a"></span><span class="sw" style="background:#53b7b4"></span><span class="sw" style="background:#7bdeda"></span><code>#202c3a / #53b7b4 / #7bdeda</code></td></tr></tbody></table></div>
+  <div><h2>コントラスト比（WCAG）</h2>
+  <p style="color:#b8afe5;font-size:13px;margin:0 0 8px">文字の組み合わせは 4.5 以上が AA。「vs canvas」の行は面の段差の目安で、文字基準ではない。</p>
+  <table class="tok"><thead><tr><th>組み合わせ</th><th>Light</th><th>Dark</th></tr></thead><tbody><tr><td class="tok">text on canvas</td><td class="ok">8.79</td><td class="ok">15.53</td></tr><tr><td class="tok">text on card</td><td class="ok">9.23</td><td class="ok">13.25</td></tr><tr><td class="tok">text on surface</td><td class="ok">7.98</td><td class="ok">14.37</td></tr><tr><td class="tok">text-2 on canvas</td><td class="ok">5.72</td><td class="ok">9.44</td></tr><tr><td class="tok">text-2 on card</td><td class="ok">6</td><td class="ok">8.06</td></tr><tr><td class="tok">text-muted on canvas</td><td class="warn">4.08</td><td class="ok">5.61</td></tr><tr><td class="tok">text-on-primary on primary</td><td class="ok">5.13</td><td class="ok">4.51</td></tr><tr><td class="tok">text-on-danger on danger</td><td class="ok">6.35</td><td class="ok">5.38</td></tr><tr><td class="tok">success on tint</td><td class="ok">4.63</td><td class="ok">5.9</td></tr><tr><td class="tok">warning on tint</td><td class="ok">4.5</td><td class="ok">5.46</td></tr><tr><td class="tok">danger on tint</td><td class="ok">5.04</td><td class="ok">4.6</td></tr><tr><td class="tok">info on tint</td><td class="warn">4.11</td><td class="ok">5.75</td></tr><tr><td class="tok">live on canvas</td><td class="warn">3.69</td><td class="ok">6.61</td></tr><tr><td class="tok">fam pink text on tint</td><td class="ok">6.98</td><td class="ok">8.41</td></tr><tr><td class="tok">fam orange text on tint</td><td class="ok">4.5</td><td class="ok">8.49</td></tr><tr><td class="tok">fam green text on tint</td><td class="ok">4.63</td><td class="ok">8.93</td></tr><tr><td class="tok">fam blue text on tint</td><td class="ok">6.66</td><td class="ok">8.74</td></tr><tr><td class="tok">fam teal text on tint</td><td class="ok">7.98</td><td class="ok">8.97</td></tr><tr><td class="tok">border vs canvas</td><td class="">1.22</td><td class="">1.56</td></tr><tr><td class="tok">card vs canvas</td><td class="">1.05</td><td class="">1.17</td></tr></tbody></table></div>
+</div>
+</body>
+</html>

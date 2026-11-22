@@ -210,8 +210,8 @@ export default function ProfileSettingsPage() {
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 activeTab === tab
-                  ? 'border-purple text-purple-l'
-                  : 'border-transparent text-muted hover:text-text'
+                  ? 'border-primary text-brand-2'
+                  : 'border-transparent text-text-muted hover:text-text'
               }`}
               aria-current={activeTab === tab ? 'page' : undefined}
             >
@@ -229,7 +229,7 @@ export default function ProfileSettingsPage() {
               <div className="flex items-center gap-5">
                 <div
                   className="w-16 h-16 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
-                  style={{ background: 'var(--purple-d)' }}
+                  style={{ background: 'color-mix(in oklab, var(--primary) 35%, transparent)' }}
                 >
                   {avatarPreview ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
@@ -239,7 +239,7 @@ export default function ProfileSettingsPage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-[22px] font-bold" style={{ color: 'var(--purple-l)' }}>
+                    <span className="text-[22px] font-bold" style={{ color: 'var(--brand-2)' }}>
                       {initials}
                     </span>
                   )}
@@ -260,7 +260,7 @@ export default function ProfileSettingsPage() {
                   >
                     画像を選択
                   </Button>
-                  <p className="text-[11px] text-muted mt-1.5">PNG・JPEG・GIF・WebP（最大5MB）</p>
+                  <p className="text-[11px] text-text-muted mt-1.5">PNG・JPEG・GIF・WebP（最大5MB）</p>
                   {avatarError && <p className="text-[11px] text-live mt-1">{avatarError}</p>}
                 </div>
               </div>
@@ -293,7 +293,7 @@ export default function ProfileSettingsPage() {
                     保存する
                   </Button>
                   {nameSaved && (
-                    <span className="text-[12px] text-green flex items-center gap-1">
+                    <span className="text-[12px] text-success flex items-center gap-1">
                       <Icon name="check" size={14} />
                       保存しました
                     </span>
@@ -306,12 +306,12 @@ export default function ProfileSettingsPage() {
             {currentTeam && myMember && (
               <Card>
                 <h3 className="text-sm font-semibold text-text mb-1">Discord ユーザー名</h3>
-                <p className="text-[12px] text-muted mb-4 leading-relaxed">
+                <p className="text-[12px] text-text-muted mb-4 leading-relaxed">
                   登録すると、Discord 連携の通知であなた宛てにメンションされます。ログイン連携ではなく、ユーザー名だけを保持します。チームごとの設定です（現在: {currentTeam.name}）。
                 </p>
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-text flex items-center gap-1.5">
-                    <Icon name="discord" size={16} className="text-muted" />
+                    <Icon name="discord" size={16} className="text-text-muted" />
                     {myMember.discordUsername ? `@${myMember.discordUsername}` : '未設定'}
                   </span>
                   <Button size="sm" variant="secondary" onClick={() => setDiscordDialogOpen(true)}>
@@ -339,13 +339,13 @@ export default function ProfileSettingsPage() {
                 // 現在プランの表示は実効プラン（試用モード中は PARTY）に合わせる
                 const isCurrent = (isParty ? 'party' : 'light') === plan;
                 return (
-                  <Card key={plan} className={isCurrent ? 'border-purple/60' : ''}>
+                  <Card key={plan} className={isCurrent ? 'border-primary/60' : ''}>
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <p className="text-[15px] font-bold text-text">
                           {plan === 'light' ? 'LIGHT' : 'PARTY'}
                         </p>
-                        <p className="text-[11px] text-muted mt-0.5">
+                        <p className="text-[11px] text-text-muted mt-0.5">
                           {plan === 'light' ? '個人利用向け基本プラン' : 'チーム向けフルプラン'}
                         </p>
                       </div>
@@ -353,9 +353,9 @@ export default function ProfileSettingsPage() {
                         <span
                           className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                           style={{
-                            background: 'var(--purple-sm)',
-                            color: 'var(--purple-l)',
-                            border: '1px solid var(--purple)',
+                            background: 'color-mix(in oklab, var(--primary) 15%, transparent)',
+                            color: 'var(--brand-2)',
+                            border: '1px solid var(--primary)',
                           }}
                         >
                           現在のプラン
@@ -363,42 +363,42 @@ export default function ProfileSettingsPage() {
                       )}
                     </div>
 
-                    <ul className="space-y-1 text-[12px] text-muted mb-4">
+                    <ul className="space-y-1 text-[12px] text-text-muted mb-4">
                       {plan === 'light' ? (
                         <>
                           <li className="flex items-center gap-1.5">
-                            <Icon name="check" size={14} className="text-green" />
+                            <Icon name="check" size={14} className="text-success" />
                             スケジュール管理
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <Icon name="check" size={14} className="text-green" />
+                            <Icon name="check" size={14} className="text-success" />
                             タスク管理（基本）
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <Icon name="close" size={14} className="text-muted/40" />
+                            <Icon name="close" size={14} className="text-text-muted/40" />
                             コラボ調整
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <Icon name="close" size={14} className="text-muted/40" />
+                            <Icon name="close" size={14} className="text-text-muted/40" />
                             チーム機能
                           </li>
                         </>
                       ) : (
                         <>
                           <li className="flex items-center gap-1.5">
-                            <Icon name="check" size={14} className="text-green" />
+                            <Icon name="check" size={14} className="text-success" />
                             スケジュール管理
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <Icon name="check" size={14} className="text-green" />
+                            <Icon name="check" size={14} className="text-success" />
                             タスク管理（全機能）
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <Icon name="check" size={14} className="text-green" />
+                            <Icon name="check" size={14} className="text-success" />
                             コラボ調整
                           </li>
                           <li className="flex items-center gap-1.5">
-                            <Icon name="check" size={14} className="text-green" />
+                            <Icon name="check" size={14} className="text-success" />
                             チーム機能（複数メンバー）
                           </li>
                         </>
@@ -421,7 +421,7 @@ export default function ProfileSettingsPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-sm font-semibold text-text mb-0.5">支払い設定</p>
-                    <p className="text-[12px] text-muted">
+                    <p className="text-[12px] text-text-muted">
                       解約・支払い方法の変更・請求履歴の確認は Stripe の管理ページで行えます。
                     </p>
                   </div>
@@ -438,11 +438,11 @@ export default function ProfileSettingsPage() {
             )}
 
             {!showBilling && (
-              <Card className="border-amber/20">
-                <p className="text-sm font-medium text-amber-l mb-1">
+              <Card className="border-warning/20">
+                <p className="text-sm font-medium text-orange-text mb-1">
                   現在は公開試用期間につき全機能を無料でご利用いただけます
                 </p>
-                <p className="text-[12px] text-muted">
+                <p className="text-[12px] text-text-muted">
                   試用期間の終了後にPARTYプランの課金導線を有効化します。
                 </p>
               </Card>
@@ -457,14 +457,14 @@ export default function ProfileSettingsPage() {
           <div className="space-y-6">
             <div>
               <h3 className="text-sm font-semibold text-live mb-1">危険ゾーン</h3>
-              <p className="text-[12px] text-muted mb-4">
+              <p className="text-[12px] text-text-muted mb-4">
                 一度削除したアカウントは復元できません。
               </p>
               <Card className="border-live/20">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-sm font-semibold text-text mb-0.5">アカウントを削除する</p>
-                    <p className="text-[12px] text-muted">
+                    <p className="text-[12px] text-text-muted">
                       {isOperatorWithMembers
                         ? '削除前に新しいオペレーターを選択してください。'
                         : 'アカウント・チームデータ・スケジュールがすべて削除されます。'}
@@ -489,65 +489,74 @@ export default function ProfileSettingsPage() {
               <div className="space-y-6">
                 {/* アプリ基本情報 */}
                 <div>
-                  <h3 className="text-sm font-medium text-muted mb-3">アプリ情報</h3>
+                  <h3 className="text-sm font-medium text-text-muted mb-3">アプリ情報</h3>
                   <div className="space-y-0 text-sm">
                     <div className="flex justify-between items-center border-b border-border py-3">
-                      <span className="text-muted">アプリ名</span>
+                      <span className="text-text-muted">アプリ名</span>
                       <span className="text-text font-medium">リスケるGG</span>
                     </div>
                     <div className="flex justify-between items-center py-3">
-                      <span className="text-muted">バージョン</span>
-                      <span className="text-text">v{packageJson.version}</span>
+                      <span className="text-text-muted">バージョン</span>
+                      {/* クリックでリリースノート（公開ページ）を別タブで開く */}
+                      <Link
+                        href="/release-notes"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-text hover:text-brand-2 transition-colors"
+                      >
+                        v{packageJson.version}
+                        <Icon name="open_in_new" size={20} className="text-text-muted" />
+                      </Link>
                     </div>
                   </div>
                 </div>
 
                 {/* 法的情報 */}
                 <div>
-                  <h3 className="text-sm font-medium text-muted mb-3">法的情報</h3>
+                  <h3 className="text-sm font-medium text-text-muted mb-3">法的情報</h3>
                   <div className="space-y-0">
                     <Link
                       href="/terms"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3 border-b border-border"
+                      className="flex items-center justify-between text-sm text-text hover:text-brand-2 transition-colors py-3 border-b border-border"
                     >
                       <span>利用規約</span>
-                      <Icon name="open_in_new" size={20} className="text-muted" />
+                      <Icon name="open_in_new" size={20} className="text-text-muted" />
                     </Link>
                     <Link
                       href="/privacy-policy"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3 border-b border-border"
+                      className="flex items-center justify-between text-sm text-text hover:text-brand-2 transition-colors py-3 border-b border-border"
                     >
                       <span>プライバシーポリシー</span>
-                      <Icon name="open_in_new" size={20} className="text-muted" />
+                      <Icon name="open_in_new" size={20} className="text-text-muted" />
                     </Link>
                     <Link
                       href="/tokushoho"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3 border-b border-border"
+                      className="flex items-center justify-between text-sm text-text hover:text-brand-2 transition-colors py-3 border-b border-border"
                     >
                       <span>特定商取引法に基づく表記</span>
-                      <Icon name="open_in_new" size={20} className="text-muted" />
+                      <Icon name="open_in_new" size={20} className="text-text-muted" />
                     </Link>
                   </div>
                 </div>
 
                 {/* サポート */}
                 <div>
-                  <h3 className="text-sm font-medium text-muted mb-3">サポート</h3>
+                  <h3 className="text-sm font-medium text-text-muted mb-3">サポート</h3>
                   <Link
                     href="/settings/contact"
-                    className="flex items-center justify-between text-sm text-text hover:text-purple-l transition-colors py-3"
+                    className="flex items-center justify-between text-sm text-text hover:text-brand-2 transition-colors py-3"
                   >
                     <span className="flex items-center gap-2">
-                      <Icon name="mail_outline" size={16} className="text-muted" />
+                      <Icon name="mail_outline" size={16} className="text-text-muted" />
                       お問い合わせ
                     </span>
-                    <Icon name="chevron_right" size={16} className="text-muted" />
+                    <Icon name="chevron_right" size={16} className="text-text-muted" />
                   </Link>
                 </div>
               </div>
@@ -584,8 +593,8 @@ export default function ProfileSettingsPage() {
         <div className="space-y-3 text-sm">
           {/* オペレーターが複数メンバーチームを持つ場合は指名UIを表示 */}
           {isOperatorWithMembers && (
-            <div className="rounded-[10px] border border-amber/30 bg-amber/10 p-3 space-y-2">
-              <p className="text-[12px] font-semibold text-amber-l">
+            <div className="rounded-[10px] border border-warning/30 bg-warning/10 p-3 space-y-2">
+              <p className="text-[12px] font-semibold text-orange-text">
                 新しいオペレーターを選択してください
               </p>
               <Dropdown
@@ -599,7 +608,7 @@ export default function ProfileSettingsPage() {
             </div>
           )}
           <p className="text-text">以下のデータが完全に削除されます：</p>
-          <ul className="space-y-1 text-[13px] text-muted list-none">
+          <ul className="space-y-1 text-[13px] text-text-muted list-none">
             <li className="flex items-center gap-2">
               <Icon name="close" size={14} className="text-live" />
               アカウント情報（名前・メールアドレス）

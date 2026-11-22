@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.local.example
 
 # vercel
 .vercel
@@ -68,3 +69,5 @@ screenshots/
 
 # ログインファイル（必要に応じてコミットする）
 *.log
+# エージェントのレビュー素材（publish-report.mjs で review-reports ブランチへ）
+review-artifacts/

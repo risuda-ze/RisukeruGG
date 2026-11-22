@@ -11,7 +11,8 @@ import { BriefsLoadError } from '@/components/briefs/BriefsLoadError';
 import { Icon } from '@/components/ui/Icon';
 import { StepAlertBadges, StepStatusBadge } from '@/components/briefs/StepStatusBadge';
 import { formatShortDate } from '@/lib/briefs/format';
-import { isStepClosed } from '@/lib/briefs/transitions';
+import { selectAssignedSteps } from '@/lib/briefs/assignedSteps';
+import { buttonVariants } from '@/components/ui/Button';
 
 /**
  * 自分の工程（/briefs/mine）。全ブリーフの自分の担当工程を締切順に並べる。
@@ -32,29 +33,15 @@ export default function MyStepsPage() {
     return subscribe(teamId);
   }, [teamId, subscribe]);
 
-  const mine = useMemo(() => {
-    const uid = currentUser?.uid;
-    const briefById = new Map(briefs.map((b) => [b.id, b]));
-    return steps
-      .filter((s) => s.assigneeId === uid && !isStepClosed(s.status))
-      .filter((s) => {
-        const b = briefById.get(s.briefId);
-        return b && b.status !== 'archived';
-      })
-      .sort((a, b) => {
-        // 締切あり → 近い順、締切なしは末尾。同日なら着手可能を先に
-        const ad = a.dueDate?.getTime() ?? Number.POSITIVE_INFINITY;
-        const bd = b.dueDate?.getTime() ?? Number.POSITIVE_INFINITY;
-        if (ad !== bd) return ad - bd;
-        return (a.status === 'waiting' ? 1 : 0) - (b.status === 'waiting' ? 1 : 0);
-      })
-      .map((s) => ({ step: s, brief: briefById.get(s.briefId)! }));
-  }, [steps, briefs, currentUser?.uid]);
+  const mine = useMemo(
+    () => selectAssignedSteps(steps, briefs, currentUser?.uid),
+    [steps, briefs, currentUser?.uid]
+  );
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <TopBar title="自分の工程" subtitle="担当している工程を締切順に">
-        <Link href="/briefs" className="btn btn--secondary btn--sm">
+        <Link href="/briefs" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
           <Icon name="arrow_back" size={14} />
           ブリーフ一覧
         </Link>
@@ -77,7 +64,7 @@ export default function MyStepsPage() {
                 <Link href={`/briefs/${brief.id}?step=${step.id}`} className="block no-underline">
                   <Card interactive className="flex items-center gap-3">
                     <div className="min-w-0 flex-1">
-                      <div className="text-[11px] text-muted truncate">{brief.title}</div>
+                      <div className="text-[11px] text-text-muted truncate">{brief.title}</div>
                       <div className="text-sm font-medium text-text truncate">{step.title}</div>
                       <div className="flex flex-wrap items-center gap-1 mt-1">
                         <StepStatusBadge status={step.status} />
@@ -85,7 +72,7 @@ export default function MyStepsPage() {
                       </div>
                     </div>
                     <div className="text-[12px] text-text-2 shrink-0 flex items-center gap-1">
-                      <Icon name="event" size={13} className="text-muted" />
+                      <Icon name="event" size={13} className="text-text-muted" />
                       {formatShortDate(step.dueDate)}
                     </div>
                   </Card>

@@ -90,7 +90,7 @@ export function DateField({
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
+        <label className="text-[12px] font-semibold" style={{ color: 'var(--text-2)' }}>
           {label}
         </label>
       )}
@@ -101,18 +101,17 @@ export function DateField({
           style={{
             background: 'var(--surface)',
             borderColor: open ? 'var(--primary)' : 'var(--border)',
-            boxShadow: open ? 'var(--glow-primary)' : 'none',
           }}
           onClick={handleOpen}
         >
           <Icon
             name="calendar_month"
             size={16}
-            style={{ color: 'var(--text-accent)', flexShrink: 0 } as React.CSSProperties}
+            style={{ color: 'var(--brand-2)', flexShrink: 0 } as React.CSSProperties}
           />
           <span
             className="flex-1 text-[13px] font-semibold font-num truncate"
-            style={{ color: displayText ? 'var(--text-primary)' : 'var(--text-muted)' }}
+            style={{ color: displayText ? 'var(--text)' : 'var(--text-muted)' }}
           >
             {displayText || placeholder}
           </span>
@@ -120,7 +119,7 @@ export function DateField({
             name={open ? 'expand_less' : 'expand_more'}
             size={16}
             style={{
-              color: open ? 'var(--primary-300)' : 'var(--text-muted)',
+              color: open ? 'var(--brand-2)' : 'var(--text-muted)',
               flexShrink: 0,
             } as React.CSSProperties}
           />
@@ -139,10 +138,9 @@ export function DateField({
             transform: popupPos.openUpward ? 'translateY(-100%)' : undefined,
             width: popupWidth,
             zIndex: 9999,
-            background: 'var(--card-raised)',
-            border: '1px solid var(--border-light)',
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border)',
             borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-xl)',
             padding: '16px',
           }}
           onClick={(e) => e.stopPropagation()}

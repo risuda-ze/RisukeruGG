@@ -36,14 +36,39 @@ export interface User {
   monthlyCollabCount: number;
   countResetAt: Date;
   createdAt: Date;
-  googleCalendar: {
-    connected: boolean;
-    syncError: string | null;
-    lastSyncedAt: Date | null;
-  } | null;
+  /** Google カレンダー書き出しの状態。キーは teamId（SC-008 系） */
+  googleCalendarExports?: Record<string, GoogleCalendarExport>;
   deleted?: boolean;
   deletedAt?: Date | null;
+  /** テーマの選択（UI-036）。未設定なら端末の選択を使う */
+  theme?: ThemePreference;
 }
+
+/** テーマの選択。`system` は OS の prefers-color-scheme に追従する */
+export type ThemePreference = 'dark' | 'light' | 'system';
+
+/** チームごとの Google カレンダー書き出し状態 */
+export interface GoogleCalendarExport {
+  /** 書き出し先の専用副カレンダー ID。再書き出しで同じカレンダーへ書くために使う */
+  calendarId: string;
+  /** 最終書き出し日時。一度も完了していなければ null */
+  exportedAt: Date | null;
+}
+
+/** 担当分野の候補（固定。チームごとの追加・変更はできない） */
+export const MEMBER_DUTIES = ['cast', 'planning', 'edit', 'thumbnail', 'moderation', 'other'] as const;
+export type MemberDuty = (typeof MEMBER_DUTIES)[number];
+
+export const MEMBER_DUTY_LABELS: Record<MemberDuty, string> = {
+  cast: '出演',
+  planning: '企画',
+  edit: '編集',
+  thumbnail: 'サムネ',
+  moderation: '配信サポート',
+  other: 'その他',
+};
+
+export const MEMBER_NOTE_MAX = 100;
 
 export interface TeamMember {
   userId: string;
@@ -59,6 +84,10 @@ export interface TeamMember {
   discordUsername: string | null;
   /** `discordUsername` をサーバー内検索で解決した Discord ユーザー ID のキャッシュ。ユーザー名変更時は null に戻す */
   discordUserId: string | null;
+  /** 担当分野（TE-014）。候補は `MEMBER_DUTIES`。重複なし。未設定は [] */
+  duties: MemberDuty[];
+  /** ひとこと（TE-014）。100 字以内・改行なし。未設定は null */
+  note: string | null;
 }
 
 export interface Team {
@@ -108,23 +137,8 @@ export interface ScheduleEntry {
   updatedAt: Date;
   createdBy: string;
   createdAt: Date;
-  /** Googleカレンダーから取得した予定は 'google'、メンバーのFirestore同期予定は 'member'、チーム予定は undefined */
-  source?: 'google' | 'member';
   /** 終日フラグ。後方互換のため optional（未設定は false 扱い） */
   allDay?: boolean;
-}
-
-/** Googleカレンダーから同期してFirestoreに保存したメンバーの予定エントリ */
-export interface MemberCalendarEvent {
-  id: string;
-  title: string;
-  startAt: Date;
-  endAt: Date;
-  allDay: boolean;
-  sourceEventId: string;
-  syncedAt: Date;
-  userId: string;
-  teamId: string;
 }
 
 export interface Task {

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { format, addDays, startOfDay } from 'date-fns';
+import { format } from 'date-fns';
 import { getEventLastDay } from '@/lib/utils/eventDays';
 import { ja } from 'date-fns/locale';
 import { useAIChatStore } from '@/stores/aiChat';
@@ -12,12 +12,11 @@ import { useAuthStore } from '@/stores/auth';
 import { useTasksStore } from '@/stores/tasks';
 import { useCategoryStore } from '@/stores/categories';
 import { useScheduleStore } from '@/stores/schedule';
-import { subscribeMemberCalendarEvents } from '@/lib/repositories/memberCalendars';
 import { subscribeTeamAiSettings, EMPTY_AI_SETTINGS } from '@/lib/repositories/aiSettings';
 import { createSchedule } from '@/lib/repositories/schedules';
 import { createTask, updateTask } from '@/lib/repositories/tasks';
 import { createCollabSession } from '@/lib/repositories/collabs';
-import type { MemberCalendarEvent, Task, TeamAiSettings } from '@/types/entities';
+import type { Task, TeamAiSettings } from '@/types/entities';
 import { Icon } from '@/components/ui/Icon';
 
 // ── 定数 ───────────────────────────────────────────────────────
@@ -135,7 +134,7 @@ function TaskUpdateDiff({
           if (field === 'description' && newValue !== null) {
             return (
               <div key={field} className="flex flex-col gap-1">
-                <span className="text-[11px] font-semibold text-muted">
+                <span className="text-[11px] font-semibold text-text-muted">
                   {CHANGE_FIELD_LABELS[field]}（変更後）
                 </span>
                 <p className="text-[12px] text-text whitespace-pre-wrap bg-surface border border-border rounded-[10px] px-3 py-2 max-h-[160px] overflow-y-auto">
@@ -148,7 +147,7 @@ function TaskUpdateDiff({
           const oldDisplay =
             oldValue && oldValue.length > 60 ? `${oldValue.slice(0, 60)}…` : oldValue;
           return (
-            <p key={field} className="text-[12px] text-muted">
+            <p key={field} className="text-[12px] text-text-muted">
               {CHANGE_FIELD_LABELS[field] ?? field}:{' '}
               <span className="line-through opacity-60">{oldDisplay ?? 'なし'}</span>
               {' → '}
@@ -180,20 +179,20 @@ function ProposalItemDetail({
     <div className="flex flex-col gap-0.5">
       <p className="text-[14px] font-medium text-text">{proposal.title}</p>
       {proposal.type === 'schedule' && (
-        <p className="text-[12px] text-muted">
+        <p className="text-[12px] text-text-muted">
           {proposal.startAt ? formatDateTimeDisplay(proposal.startAt) : ''}
           {proposal.endAt ? ` 〜 ${format(new Date(proposal.endAt), 'HH:mm')}` : ''}
         </p>
       )}
       {proposal.type === 'task' && (
-        <p className="text-[12px] text-muted">
+        <p className="text-[12px] text-text-muted">
           {[proposal.columnName, proposal.assigneeName, proposal.dueDate]
             .filter(Boolean)
             .join(' · ')}
         </p>
       )}
       {proposal.type === 'collab' && proposal.partnerName && (
-        <p className="text-[12px] text-muted">相手: {proposal.partnerName}</p>
+        <p className="text-[12px] text-text-muted">相手: {proposal.partnerName}</p>
       )}
     </div>
   );
@@ -210,11 +209,11 @@ function ProposalCard({ proposals, status, onConfirm, onReject, resolveTask }: P
       : '登録する';
 
   return (
-    <div className="mt-3 rounded-[14px] border border-purple/20 bg-purple/5 p-4 flex flex-col gap-2.5">
+    <div className="mt-3 rounded-[14px] border border-primary/20 bg-primary/5 p-4 flex flex-col gap-2.5">
       {/* ヘッダー */}
       <div className="flex items-center gap-1.5">
-        <span className="material-icons text-[16px] text-purple">{TYPE_ICONS[first.type]}</span>
-        <span className="text-[12px] font-bold text-purple uppercase tracking-wide">
+        <span className="material-icons text-[16px] text-primary">{TYPE_ICONS[first.type]}</span>
+        <span className="text-[12px] font-bold text-primary uppercase tracking-wide">
           {TYPE_LABELS[first.type]}
           {isMultiple && <span className="ml-1 normal-case font-normal">× {proposals.length}件</span>}
         </span>
@@ -236,7 +235,7 @@ function ProposalCard({ proposals, status, onConfirm, onReject, resolveTask }: P
           </div>
           <Link
             href={TYPE_ROUTES[first.type]}
-            className="text-[13px] text-purple-l hover:underline"
+            className="text-[13px] text-brand-2 hover:underline"
           >
             確認する →
           </Link>
@@ -248,7 +247,7 @@ function ProposalCard({ proposals, status, onConfirm, onReject, resolveTask }: P
           <button
             onClick={onConfirm}
             disabled={status === 'loading'}
-            className="flex-1 h-9 rounded-full bg-purple text-white text-[13px] font-semibold transition-all hover:bg-purple-l disabled:opacity-60 flex items-center justify-center gap-1.5"
+            className="flex-1 h-9 rounded-full bg-primary text-white text-[13px] font-semibold transition-all hover:bg-brand-2 disabled:opacity-60 flex items-center justify-center gap-1.5"
           >
             {status === 'loading' ? (
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -262,7 +261,7 @@ function ProposalCard({ proposals, status, onConfirm, onReject, resolveTask }: P
           <button
             onClick={onReject}
             disabled={status === 'loading'}
-            className="px-4 h-9 rounded-full border border-border text-[13px] text-muted transition-all hover:border-purple-l hover:text-purple-l disabled:opacity-60"
+            className="px-4 h-9 rounded-full border border-border text-[13px] text-text-muted transition-all hover:border-brand-2 hover:text-brand-2 disabled:opacity-60"
           >
             修正する
           </button>
@@ -303,15 +302,9 @@ export function AIChatPage() {
   const columns = useTasksStore((s) => s.columns);
   const categories = useCategoryStore((s) => s.categories);
   const schedules = useScheduleStore((s) => s.schedules);
-  const [memberCalendarEvents, setMemberCalendarEvents] = useState<MemberCalendarEvent[]>([]);
   // チームの AI 設定（追加指示・定型指示。AI-022 / AI-023）
   const [aiSettings, setAiSettings] = useState<TeamAiSettings>(EMPTY_AI_SETTINGS);
 
-  // メンバーの予定をFirestoreから購読（AIコンテキスト用）
-  useEffect(() => {
-    if (!currentTeamId) return;
-    return subscribeMemberCalendarEvents(currentTeamId, setMemberCalendarEvents);
-  }, [currentTeamId]);
   useEffect(() => {
     if (!currentTeamId) return;
     return subscribeTeamAiSettings(currentTeamId, setAiSettings);
@@ -371,22 +364,6 @@ export function AIChatPage() {
     const now = new Date();
     // 7日前以降のスケジュールを日付昇順で最大60件渡す（来週・空き時間の確認に対応）
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const todayStart = startOfDay(now);
-    const twoWeeksLater = addDays(todayStart, 14);
-
-    // メンバーごとに最大20件、今日〜14日先、自分のイベントは除外
-    const memberCalendarsForAI = memberCalendarEvents
-      .filter(
-        (e) =>
-          e.userId !== currentUser?.uid &&
-          e.startAt >= todayStart &&
-          e.startAt <= twoWeeksLater
-      )
-      .reduce<Record<string, typeof memberCalendarEvents>>((acc, e) => {
-        acc[e.userId] = acc[e.userId] ?? [];
-        if (acc[e.userId].length < 20) acc[e.userId].push(e);
-        return acc;
-      }, {});
 
     return {
       tasks: tasks.map((t) => ({
@@ -418,15 +395,6 @@ export function AIChatPage() {
       categories: categories.map((c) => ({ name: c.name })),
       // チームからの追加指示（空なら渡さない）
       teamInstructions: aiSettings.teamInstructions || undefined,
-      memberCalendars: Object.values(memberCalendarsForAI)
-        .flat()
-        .map((e) => ({
-          userId: e.userId,
-          displayName: members.find((m) => m.userId === e.userId)?.displayName ?? e.userId,
-          startAt: format(e.startAt, 'yyyy/MM/dd HH:mm'),
-          endAt: format(e.endAt, 'HH:mm'),
-          allDay: e.allDay,
-        })),
       // ピン留めタスクは description を切り詰めず全文渡す
       pinnedTask: pinnedTask
         ? {
@@ -445,7 +413,7 @@ export function AIChatPage() {
           }
         : undefined,
     };
-  }, [tasks, columns, categories, schedules, members, memberCalendarEvents, currentUser?.uid, pinnedTask, aiSettings.teamInstructions]);
+  }, [tasks, columns, categories, schedules, members, pinnedTask, aiSettings.teamInstructions]);
 
   // ── ストリーミング完了後: アシスタントメッセージから提案を解析 ───────
   useEffect(() => {
@@ -692,14 +660,14 @@ export function AIChatPage() {
 
   // ピン留めタスクのチップ（入力欄の上に表示。✕ で解除）
   const pinnedChip = pinnedTask ? (
-    <div className="flex items-center gap-1.5 self-start bg-purple/5 border border-purple/20 rounded-full pl-3 pr-1.5 py-1">
-      <Icon name="push_pin" size={13} className="text-purple" />
-      <span className="text-[12px] text-purple font-medium max-w-[240px] truncate">
+    <div className="flex items-center gap-1.5 self-start bg-primary/5 border border-primary/20 rounded-full pl-3 pr-1.5 py-1">
+      <Icon name="push_pin" size={13} className="text-primary" />
+      <span className="text-[12px] text-primary font-medium max-w-[240px] truncate">
         {pinnedTask.title}
       </span>
       <button
         onClick={() => setPinnedTaskId(null)}
-        className="w-5 h-5 rounded-full flex items-center justify-center text-purple/60 hover:text-purple hover:bg-purple/10 transition-colors"
+        className="w-5 h-5 rounded-full flex items-center justify-center text-primary/60 hover:text-primary hover:bg-primary/10 transition-colors"
         aria-label="タスクのピン留めを解除"
       >
         <Icon name="close" size={13} />
@@ -709,13 +677,13 @@ export function AIChatPage() {
 
   // ── レンダリング ──────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full bg-bg">
+    <div className="flex flex-col h-full bg-canvas">
       {/* ── TopBar ──────────────────────────────────────────── */}
       <header className="h-14 shrink-0 bg-surface border-b border-border flex items-center px-4 gap-3">
         {/* 戻るボタン（モバイルのみ） */}
         <button
           onClick={() => router.back()}
-          className="md:hidden w-9 h-9 flex items-center justify-center rounded-full text-muted hover:text-text hover:bg-bg transition-colors"
+          className="md:hidden w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:text-text hover:bg-canvas transition-colors"
           aria-label="戻る"
         >
           <Icon name="chevron_right" size={22} className="rotate-180" />
@@ -723,8 +691,8 @@ export function AIChatPage() {
 
         {/* アイコン + タイトル */}
         <div className="flex items-center gap-2 flex-1">
-          <div className="w-7 h-7 rounded-full bg-purple/10 flex items-center justify-center shrink-0">
-            <Icon name="auto_awesome" size={16} className="text-purple" />
+          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <Icon name="auto_awesome" size={16} className="text-primary" />
           </div>
           <span className="text-[16px] font-bold text-text">AIに相談</span>
         </div>
@@ -734,7 +702,7 @@ export function AIChatPage() {
           <button
             onClick={clearMessages}
             aria-label="会話をリセット"
-            className="w-9 h-9 flex items-center justify-center rounded-full text-muted hover:text-text hover:bg-bg transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:text-text hover:bg-canvas transition-colors"
           >
             <Icon name="delete_outline" size={20} />
           </button>
@@ -753,15 +721,15 @@ export function AIChatPage() {
               >
                 {/* AIアバター（左側） */}
                 {m.role === 'assistant' && (
-                  <div className="w-7 h-7 rounded-full bg-purple/10 flex items-center justify-center shrink-0 mr-2 mt-1">
-                    <Icon name="auto_awesome" size={14} className="text-purple" />
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mr-2 mt-1">
+                    <Icon name="auto_awesome" size={14} className="text-primary" />
                   </div>
                 )}
 
                 <div
                   className={`max-w-[80%] px-4 py-3 rounded-[18px] text-[14px] leading-relaxed ${
                     m.role === 'user'
-                      ? 'bg-purple text-white rounded-br-[4px]'
+                      ? 'bg-primary text-white rounded-br-[4px]'
                       : 'bg-surface text-text rounded-bl-[4px] border border-border'
                   }`}
                 >
@@ -771,7 +739,7 @@ export function AIChatPage() {
                       {[0, 1, 2].map((i) => (
                         <div
                           key={i}
-                          className="w-2 h-2 bg-muted rounded-full animate-bounce"
+                          className="w-2 h-2 bg-text-muted rounded-full animate-bounce"
                           style={{ animationDelay: `${i * 0.15}s` }}
                         />
                       ))}
@@ -799,7 +767,7 @@ export function AIChatPage() {
                     type="button"
                     onClick={() => { setInput(p.body); textareaRef.current?.focus(); }}
                     disabled={isLoading}
-                    className="shrink-0 text-[11px] text-purple-l bg-purple/5 hover:bg-purple/10 px-2.5 py-1 rounded-full transition-colors border border-purple/10 disabled:opacity-50"
+                    className="shrink-0 text-[11px] text-brand-2 bg-primary/5 hover:bg-primary/10 px-2.5 py-1 rounded-full transition-colors border border-primary/10 disabled:opacity-50"
                   >
                     ★ {p.name}
                   </button>
@@ -819,17 +787,17 @@ export function AIChatPage() {
                     : 'メッセージを入力...'
                 }
                 disabled={isLoading || proposalStatus === 'loading'}
-                className="flex-1 bg-bg border border-border text-text text-[14px] px-4 py-2.5 rounded-[14px] outline-none transition-colors focus:border-purple placeholder:text-muted/50 disabled:opacity-50 resize-none overflow-y-auto max-h-[40vh]"
+                className="flex-1 bg-canvas border border-border text-text text-[14px] px-4 py-2.5 rounded-[14px] outline-none transition-colors focus:border-primary placeholder:text-text-muted/50 disabled:opacity-50 resize-none overflow-y-auto max-h-[40vh]"
               />
               <button
                 type="submit"
                 disabled={!input.trim() || isLoading || proposalStatus === 'loading'}
-                className="w-10 h-10 shrink-0 rounded-full bg-purple text-white flex items-center justify-center transition-all disabled:opacity-40 hover:bg-purple-l"
+                className="w-10 h-10 shrink-0 rounded-full bg-primary text-white flex items-center justify-center transition-all disabled:opacity-40 hover:bg-brand-2"
               >
                 <Icon name="send" size={20} />
               </button>
             </form>
-            <p className="text-[11px] text-muted/50 text-center mt-1.5">
+            <p className="text-[11px] text-text-muted/50 text-center mt-1.5">
               Enter で送信 · Shift+Enter で改行
             </p>
           </div>
@@ -839,11 +807,11 @@ export function AIChatPage() {
         <div className="flex-1 flex flex-col items-center justify-center px-4 gap-6">
           {/* ウェルカムメッセージ */}
           <div className="text-center">
-            <div className="w-14 h-14 rounded-full bg-purple/10 flex items-center justify-center mx-auto mb-3">
-              <Icon name="auto_awesome" size={28} className="text-purple" />
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+              <Icon name="auto_awesome" size={28} className="text-primary" />
             </div>
             <h2 className="text-[18px] font-bold text-text">AIアシスタント</h2>
-            <p className="text-[13px] text-muted mt-1">
+            <p className="text-[13px] text-text-muted mt-1">
               スケジュールやタスクの登録、チームデータへの質問ができます
             </p>
           </div>
@@ -860,12 +828,12 @@ export function AIChatPage() {
                 rows={1}
                 placeholder="メッセージを入力..."
                 disabled={isLoading}
-                className="flex-1 bg-surface border border-border text-text text-[14px] px-4 py-3 rounded-[14px] outline-none transition-colors focus:border-purple placeholder:text-muted/50 disabled:opacity-50 resize-none overflow-y-auto max-h-[40vh] shadow-sm"
+                className="flex-1 bg-surface border border-border text-text text-[14px] px-4 py-3 rounded-[14px] outline-none transition-colors focus:border-primary placeholder:text-text-muted/50 disabled:opacity-50 resize-none overflow-y-auto max-h-[40vh] shadow-sm"
               />
               <button
                 type="submit"
                 disabled={!input.trim() || isLoading}
-                className="w-11 h-11 shrink-0 rounded-full bg-purple text-white flex items-center justify-center transition-all disabled:opacity-40 hover:bg-purple-l shadow-sm"
+                className="w-11 h-11 shrink-0 rounded-full bg-primary text-white flex items-center justify-center transition-all disabled:opacity-40 hover:bg-brand-2 shadow-sm"
               >
                 <Icon name="send" size={20} />
               </button>
@@ -878,7 +846,7 @@ export function AIChatPage() {
                   key={chip.label}
                   onClick={() => { setInput(chip.text); textareaRef.current?.focus(); }}
                   disabled={isLoading}
-                  className="text-[12px] text-purple-l bg-purple/5 hover:bg-purple/10 px-3 py-1.5 rounded-full transition-colors border border-purple/10 disabled:opacity-50"
+                  className="text-[12px] text-brand-2 bg-primary/5 hover:bg-primary/10 px-3 py-1.5 rounded-full transition-colors border border-primary/10 disabled:opacity-50"
                 >
                   {chip.label}
                 </button>

@@ -10,7 +10,7 @@ import { TEAM_INSTRUCTIONS_MAX } from '@/lib/ai/systemPrompt';
 import { TopBar } from '@/components/layout/TopBar';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Icon } from '@/components/ui/Icon';
@@ -102,10 +102,10 @@ export default function AiSettingsPage() {
                       </Badge>
                     ))}
                   </div>
-                  <p className="text-[12px] text-muted leading-relaxed">{c.description}</p>
-                  {c.note && <p className="text-[11px] text-muted">{c.note}</p>}
+                  <p className="text-[12px] text-text-muted leading-relaxed">{c.description}</p>
+                  {c.note && <p className="text-[11px] text-text-muted">{c.note}</p>}
                   {prompt && (
-                    <p className="text-[11px] text-muted">
+                    <p className="text-[11px] text-text-muted">
                       プロンプト: {prompt.name} v{prompt.version}
                     </p>
                   )}
@@ -113,7 +113,7 @@ export default function AiSettingsPage() {
               );
             })}
           </ul>
-          <p className="px-4 py-3 text-[11px] text-muted border-t border-border">
+          <p className="px-4 py-3 text-[11px] text-text-muted border-t border-border">
             入力欄は 1 つで、どの能力を使うかは AI が判断します。提案はすべて確認してから登録されます。
           </p>
         </Card>
@@ -121,7 +121,7 @@ export default function AiSettingsPage() {
         {/* チームからの追加指示 */}
         <Card className="space-y-3">
           <CardHeader title="チームからの追加指示" />
-          <p className="text-[12px] text-muted">
+          <p className="text-[12px] text-text-muted">
             用語・呼び方・優先したい書き方など、このチームの AI に共通で伝えたいことを書きます（{TEAM_INSTRUCTIONS_MAX}文字以内）。対応範囲や提案の形式を変える指示は無視されます。
           </p>
           <Textarea
@@ -135,7 +135,7 @@ export default function AiSettingsPage() {
             placeholder="例: 「配信」は「枠」と呼ぶ。担当者の呼び方は「さん」付け。タスク名は動詞で終える。"
             disabled={!isOperator}
           />
-          <p className="text-[11px] text-muted text-right">
+          <p className="text-[11px] text-text-muted text-right">
             {instructions.length} / {TEAM_INSTRUCTIONS_MAX}
           </p>
         </Card>
@@ -161,14 +161,14 @@ export default function AiSettingsPage() {
               ) : undefined
             }
           />
-          <p className="text-[12px] text-muted">
+          <p className="text-[12px] text-text-muted">
             繰り返し使う決まり文句を登録します。Web の「AIに相談」ではチップとして、Discord では{' '}
             <code className="text-[11px]">/risukerugg</code> の「preset」候補として選べます（最大 {AI_PRESETS_MAX} 件）。
           </p>
-          {presets.length === 0 && <p className="text-[12px] text-muted">まだ登録されていません</p>}
+          {presets.length === 0 && <p className="text-[12px] text-text-muted">まだ登録されていません</p>}
           <ul className="space-y-3">
             {presets.map((p, i) => (
-              <li key={p.id} className="rounded-[12px] border border-border p-3 space-y-2" style={{ background: 'var(--bg)' }}>
+              <li key={p.id} className="rounded-[12px] border border-border p-3 space-y-2" style={{ background: 'var(--canvas)' }}>
                 <div className="flex items-end gap-2">
                   <div className="flex-1">
                     <Input
@@ -188,7 +188,7 @@ export default function AiSettingsPage() {
                         setDirty(true);
                       }}
                       aria-label="定型指示を削除"
-                      className="btn btn--ghost btn--icon btn--sm"
+                      className={buttonVariants({ variant: 'subtle', size: 'icon-sm' })}
                     >
                       <Icon name="delete_outline" size={16} />
                     </button>
@@ -209,7 +209,7 @@ export default function AiSettingsPage() {
         </Card>
 
         {message && (
-          <p className="text-[12px]" style={{ color: message.type === 'success' ? 'var(--green)' : 'var(--live)' }}>
+          <p className="text-[12px]" style={{ color: message.type === 'success' ? 'var(--success)' : 'var(--live)' }}>
             {message.text}
           </p>
         )}
@@ -219,11 +219,11 @@ export default function AiSettingsPage() {
               保存する
             </Button>
             {saved.updatedAt && (
-              <span className="text-[11px] text-muted">最終更新 {saved.updatedAt.toLocaleString('ja-JP')}</span>
+              <span className="text-[11px] text-text-muted">最終更新 {saved.updatedAt.toLocaleString('ja-JP')}</span>
             )}
           </div>
         ) : (
-          <p className="text-[12px] text-muted">編集はオペレーターのみ行えます</p>
+          <p className="text-[12px] text-text-muted">編集はオペレーターのみ行えます</p>
         )}
       </div>
     </div>

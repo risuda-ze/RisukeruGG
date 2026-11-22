@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MEMBER_DUTIES, MEMBER_NOTE_MAX } from '@/types/entities';
 
 export const joinTeamSchema = z.object({
   teamCode: z.string().min(1).max(20),
@@ -30,3 +31,17 @@ export const discordUsernameSchema = z
   .max(32, 'Discord ユーザー名は32文字以内で入力してください')
   .regex(/^[a-z0-9_.]+$/, '英小文字・数字・_・. のみ使用できます')
   .refine((v) => !v.includes('..'), '「.」を連続して使うことはできません');
+
+/** 担当分野・ひとこと（TE-014）。ひとこと空文字は null（未設定）に正規化する */
+export const memberProfileSchema = z.object({
+  duties: z
+    .array(z.enum(MEMBER_DUTIES))
+    .refine((v) => new Set(v).size === v.length, '担当分野が重複しています'),
+  note: z
+    .string()
+    .trim()
+    .max(MEMBER_NOTE_MAX, `ひとことは${MEMBER_NOTE_MAX}文字以内で入力してください`)
+    .refine((v) => !/[\r\n]/.test(v), 'ひとことに改行は使えません')
+    .transform((v) => (v === '' ? null : v))
+    .nullable(),
+});

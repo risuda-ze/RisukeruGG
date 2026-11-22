@@ -15,8 +15,10 @@ export * from './auth/onUserCreate';
 export * from './auth/deleteAccount';
 export * from './plan/resetMonthlyPlanCounts';
 
+// 対応不可時間: 前々月以前の月次削除
+export * from './unavailability/purgeOldUnavailability';
+
 // Phase 4: US2 — カレンダー同期
-export * from './calendar/syncGoogleCalendar';
 
 // Phase 5: US3 — タスク管理
 export * from './tasks/createTask';

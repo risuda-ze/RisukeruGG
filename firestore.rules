@@ -73,6 +73,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // メンバーの担当分野・ひとこと（TE-014）の値検証。未設定（キーなし）は許可
+    function validMemberProfile(d) {
+      return (!('duties' in d) || (d.duties is list && d.duties.size() <= 6 &&
+                d.duties.hasOnly(['cast', 'planning', 'edit', 'thumbnail', 'moderation', 'other']))) &&
+             (!('note' in d) || d.note == null || (d.note is string && d.note.size() <= 100));
+    }
+
     function isTeamMember(teamId) {
       return request.auth != null &&
              exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)) &&
@@ -127,14 +134,6 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // memberCalendars の events コレクショングループを横断読み取りするために必要
-    // （subscribeMemberCalendarEvents が collectionGroup('events') を使用するため）
-    // teamId フィールドで自分のチームに属するドキュメントのみ許可し、他チームへの漏洩を防ぐ
-    // write は既存のネストルール（/teams/{teamId}/memberCalendars/{userId}/events/{eventId}）が担保する
-    match /{path=**}/events/{eventId} {
-      allow read: if request.auth != null && isTeamMember(resource.data.teamId);
-    }
-
     // タスク管理 v2 の工程をチーム横断で読むために必要
     // （subscribeTeamSteps が collectionGroup('steps') を teamId で絞って使用する）
     // write は /teams/{teamId}/briefs/{briefId}/steps/{stepId} のネストルールが担保する
@@ -149,15 +148,19 @@ service cloud.firestore {
 
       match /members/{memberId} {
         allow read: if isTeamMember(teamId);
-        allow create, delete: if isTeamOwner(teamId) ||
-                        (request.auth != null && request.auth.uid == memberId && passesBetaGate());
-        // plan はサーバー（Stripe Webhook / Admin SDK）が伝播する参照用スナップショット。
-        // クライアントからの書き換えを禁止する（T4 / PL-009）。
+        // 参加・退出・Kick は Callable Function（Admin SDK）経由のみ。
+        // クライアントからの作成を許すと、teamId を知る第三者が任意の role で自分を追加できる。
+        allow create, delete: if false;
+        // クライアントが書けるのは表示用プロフィール、Discord 名（TE-012）、担当分野・ひとこと（TE-014）だけ。
+        // role（ロール変更は updateMemberRole）と plan（T4 / PL-009）はサーバーのみが書く。
+        // 許可リスト方式にして、本人が自分の role を operator に書き換える昇格を防ぐ。
         allow update: if (isTeamOwner(teamId) ||
-                        (request.auth != null && request.auth.uid == memberId && passesBetaGate())) &&
-                        !request.resource.data.diff(resource.data)
+                        (isTeamMember(teamId) && request.auth.uid == memberId)) &&
+                        request.resource.data.diff(resource.data)
                            .affectedKeys()
-                           .hasAny(['plan']);
+                           .hasOnly(['displayName', 'avatarUrl', 'discordUsername', 'discordUserId',
+                                     'duties', 'note']) &&
+                        validMemberProfile(request.resource.data);
       }
 
       match /taskStatuses/{columnId} {
@@ -190,15 +193,6 @@ service cloud.firestore {
         allow create: if false;
       }
 
-      match /memberCalendars/{userId} {
-        allow read: if isTeamMember(teamId);
-
-        match /events/{eventId} {
-          allow read: if isTeamMember(teamId);
-          allow write: if request.auth != null && request.auth.uid == userId && passesBetaGate();
-        }
-      }
-
       // Discord 通知設定 — operator のみ読み書き可
       // Webhook URL をチームメンバーから隠すためサブコレクション方式を採用
       match /discord/{doc} {
@@ -209,6 +203,25 @@ service cloud.firestore {
       match /ai/{doc} {
         allow read: if isTeamMember(teamId);
         allow write: if isTeamOwner(teamId);
+      }
+
+      // 対応不可時間（1 人・1 ヶ月 = 1 ドキュメント、ID は {userId}_{yyyy-mm}）。
+      // 閲覧は rom を含む全メンバー、書き込みはロールを問わず本人の分だけ（UN-010〜UN-013）。
+      // days / notes の中身はルールで走査できないため、クライアントの Zod で検証する。
+      // 削除は Admin SDK のみ（月次削除・退出時の削除）。
+      match /unavailability/{docId} {
+        allow read: if isTeamMember(teamId);
+        allow create, update: if isTeamMember(teamId) &&
+                                 request.resource.data.keys().hasOnly(['userId', 'month', 'days', 'notes', 'updatedAt']) &&
+                                 request.resource.data.userId == request.auth.uid &&
+                                 request.resource.data.month is string &&
+                                 request.resource.data.month.matches('^[0-9]{4}-(0[1-9]|1[0-2])$') &&
+                                 docId == request.auth.uid + '_' + request.resource.data.month &&
+                                 (!('days' in request.resource.data) || request.resource.data.days is map) &&
+                                 (!('notes' in request.resource.data) ||
+                                  (request.resource.data.notes is list && request.resource.data.notes.size() <= 200)) &&
+                                 request.resource.data.updatedAt == request.time;
+        allow delete: if false;
       }
 
       // ── タスク管理 v2（1枚紙） ─────────────────────────────

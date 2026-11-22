@@ -38,51 +38,30 @@
 
 ## デザインシステム
 
-ネオン・シアンを基調としたダークテーマのゲーミングUIデザイン。
-（トークンの正は `src/app/globals.css`。本表は主要トークンの抜粋）
+紫がかったキャンバスにラベンダーの文字と枡線が乗る「標本カード」のデザイン（v3）。既定はダークテーマ、ライトは `[data-theme="light"]` の代替テーマ。
 
-### カラーパレット
+- **正本**: [docs/DESIGN.md](docs/DESIGN.md)。色・タイポグラフィ・余白・角丸・モーションと部品の規約はここに書く
+- **トークン**: `docs/DESIGN.md` の frontmatter から `src/app/tokens.css` を生成する（`pnpm tokens`。同期チェックは `pnpm tokens:check`）。`tokens.css` は手で編集しない
+- **部品**: shadcn（Base UI 版）と Animate UI（Base UI 版）を `src/components/ui/*` にコピー所有。アニメーションは `motion`、トーストは `sonner`
+- **フォント**: システムフォントのみ（Web フォントは読み込まない）
+- **影・グロー**: 使わない。奥行きは面の段差と枡線で表す
+- **確認ページ**: `pnpm dev` 起動中に http://localhost:3000/design-preview で全部品と両テーマを確認できる（本番ビルドでは 404）
+- **見比べ用**: [docs/DESIGN-theme-preview.html](docs/DESIGN-theme-preview.html)（両テーマの配色とコントラスト）
 
-| トークン           | 値        | 用途                               |
-| ------------------ | --------- | ---------------------------------- |
-| `--bg`             | `#0a0a18` | ページ背景                         |
-| `--surface`        | `#11112a` | サイドバー・ヘッダー背景           |
-| `--card`           | `#16163a` | カード背景                         |
-| `--card-raised`    | `#1c1c42` | 浮き上がりカード背景               |
-| `--primary`        | `#3fb6e0` | プライマリアクション・ナビアクティブ |
-| `--primary-300`    | `#8fe0ff` | アクセントテキスト・アイコン       |
-| `--success`        | `#3dd68c` | 完了・成功状態                     |
-| `--warning`        | `#ef9f27` | 警告・保留状態                     |
-| `--danger`         | `#f0506e` | エラー・削除・LIVE状態             |
-| `--info`           | `#5bc8fa` | 情報・ホバーアクセント             |
-| `--pink`           | `#ec4f95` | ボタンホバーシフト色               |
-| `--text-primary`   | `#e4e4ee` | 見出し・重要テキスト（13.5:1 AAA） |
-| `--text-secondary` | `#a8a8c0` | 本文・説明文（6.2:1 AA）           |
-| `--text-muted`     | `#7070a0` | 補足・プレースホルダー             |
+### 主要トークン（抜粋）
 
-### タイポグラフィ
+| 役割 | トークン | Dark（既定） | Light |
+| --- | --- | --- | --- |
+| ページ背景 | `--canvas` | `#100c1c` | `#fcf9f5` |
+| 面 1 | `--surface` | `#191528` | `#f3ecf7` |
+| カード | `--card` | `#211c33` | `#ffffff` |
+| 枡線 | `--border` | `#36314c` | `#eadff8` |
+| プライマリ | `--primary` | `#7d68c5` | `#745fbb` |
+| 文字 | `--text` | `#e8e4fd` | `#4d3e78` |
+| 文字 2 | `--text-2` | `#b8afe5` | `#6956a8` |
+| 危険 | `--danger` | `#e65850` | `#a53c3a` |
 
-- **見出し**: Space Grotesk（英数字）
-- **本文**: Zen Kaku Gothic New（日本語）
-- **数値**: Space Grotesk（タブラー数字）
-
-### グロー効果
-
-- `--glow-primary`: パープルグロー（ボタンフォーカス・アクティブナビ）
-- `--glow-pink`: ピンクグロー（ボタンホバー）
-- `--glow-success/warning/danger`: セマンティックグロー
-
-### コンポーネントクラス（グローバルCSS）
-
-| クラス               | 説明                                      |
-| -------------------- | ----------------------------------------- |
-| `.btn`, `.btn--*`    | ボタン（primary/ghost/danger/success/subtle） |
-| `.ds-card`, `.ds-card--hover` | カード（ホバーリフト付き）       |
-| `.ds-badge`, `.ds-badge--*`   | バッジ（各セマンティックカラー） |
-| `.navlink`, `.navlink--active` | サイドバーナビリンク           |
-| `.bottom-nav-item`   | ボトムナビアイテム（ピルインジケーター）  |
-| `.ds-progress`       | プログレスバー（グロー付き）              |
-| `.skeleton`          | スケルトンローディング                    |
+全トークン・カラーファミリー・コントラスト表は `docs/DESIGN.md` を参照。
 
 ---
 
@@ -102,7 +81,7 @@
 | サーバーレス   | Firebase Cloud Functions                                |
 | ホスティング   | Vercel                                                  |
 | テスト         | Vitest（ユニット）/ Playwright（E2E）                   |
-| 開発環境       | Docker + Firebase Emulator Suite                        |
+| 開発環境       | Firebase Emulator Suite（ホストで起動）                 |
 
 ---
 
@@ -110,9 +89,11 @@
 
 ### 前提条件
 
-- [Node.js](https://nodejs.org/) 18以上
-- [pnpm](https://pnpm.io/) 9以上
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Node.js](https://nodejs.org/) 22以上
+- [pnpm](https://pnpm.io/) 11（`package.json` の `packageManager` に合わせる。`corepack enable` 推奨）
+- Java 21以上（Firestore Emulator が使用）
+
+Docker を使った開発環境はサポートしていません。Firebase CLI は devDependency の `firebase-tools`（バージョン固定）を使うため、グローバルインストールは不要です。
 
 ### 手順
 
@@ -126,19 +107,37 @@ pnpm install
 
 # 3. 環境変数ファイルの作成
 cp .env.local.example .env.local
-# .env.local を編集して Firebase の設定を入力
+# そのままの値で Firebase Emulator に接続して動きます（編集不要）
 
-# 4. Docker コンテナの起動（Firebase Emulator + Next.js）
-docker compose up -d
+# 4. ターミナル 1: Functions をビルドして Firebase Emulator を起動
+pnpm emulators
 
-# functions/package.json / pnpm-lock.yaml を更新した場合も、emulator 起動時に
-# Functions 依存関係が自動同期されます。
+# 5. ターミナル 2: Next.js 開発サーバー
+pnpm dev
 
-# 5. テストデータの投入（コンテナ起動後）
-scripts\seed.bat
+# 6. テストデータの投入（エミュレータ起動後）
+node scripts/seed.mjs
 ```
 
 アプリは http://localhost:3000、Firebase Emulator UI は http://localhost:4000 で確認できます。
+
+- **ポート**: 4000 / 5001 / 8080 / 9098 / 9199 を使います。別の worktree を含め、同じマシンで複数同時に起動しないでください（終了時の書き出しが先に起動していた側に対して行われます）。
+- **データ**: 終了時に `.emulator-data/` へ書き出し、次回起動時に読み込みます。`Ctrl+C` で終了してください。強制終了すると書き出されず、その回のデータは残りません。Windows では `Ctrl+C` の直後に「バッチ ジョブを終了しますか (Y/N)?」と出ますが、書き出しは裏で続いています。`Export complete` の表示を待ってから `Y` で閉じてください。
+- **worktree**: `.emulator-data/` と `.env.local` は作業ディレクトリごとなので、git worktree ごとに `.env.local` の作成とシードが必要です。
+- **ログイン**: 「Googleでサインイン」を押すとエミュレータのサインイン画面が開きます。`Add new account` を選び、Email にテストアカウント（[テストデータ投入](#テストデータ投入) 参照。例: `taro@example.com`）のメールアドレスを入れて `Sign in with Google.com` を押すと、そのユーザーとしてログインできます。2 回目以降は一覧から選べます。
+- **環境変数**: エミュレータへの接続設定（`NEXT_PUBLIC_USE_EMULATORS` / `FIREBASE_AUTH_EMULATOR_HOST` / `FIRESTORE_EMULATOR_HOST`）は `.env.local.example` に入っています。Discord 連携や AI 機能を試す場合だけ、該当のキーを `.env.local` に追記します。
+
+### Linux 環境での動作確認（任意）
+
+Vercel / CI（Linux）でだけ `pnpm install` やビルドが失敗する場合に、手元で再現するためのコマンドです。開発環境としての Docker はサポートしていませんが、Docker Desktop が入っていれば使い捨ての Linux + Node 22 環境に入れます。PowerShell でプロジェクトルートから実行してください。
+
+```powershell
+docker run --rm -it -v "${PWD}:/work" -v /work/node_modules -v /work/functions/node_modules -v /work/.pnpm-store -v /work/.next -w /work -e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 node:22-bookworm-slim bash -c "corepack enable && pnpm install --frozen-lockfile && bash"
+```
+
+- **メモリ**: Docker（WSL2）の割り当てが 1GB だと `pnpm install` が `ERR_PNPM_ENOMEM` で失敗し、Docker の VM ごと落ちます。`%USERPROFILE%\.wslconfig` の `memory` を増やしてから実行してください。5GB の割り当てでは install・型チェック・lint・テスト・ビルドまで通り、コンテナのメモリ使用量は最大で約 3.2GB でした。
+- 依存のインストールが通ればコンテナ内のシェルに入ります。続けて `pnpm build` や `pnpm test` を実行できます。`exit` で抜けるとコンテナは破棄されます。
+- `node_modules`・pnpm のストア（`.pnpm-store`）・ビルド出力（`.next`）はコンテナ専用の一時ボリュームに置くため、ホスト（Windows）側は書き換わりません。ホストに空の `.pnpm-store/` フォルダが残ることがありますが、削除して構いません。それ以外のファイルはホストと共有なので、コンテナ内で編集した内容はホストに残ります。
 
 ---
 
@@ -146,6 +145,7 @@ scripts\seed.bat
 
 ```bash
 pnpm dev            # 開発サーバー起動 (localhost:3000)
+pnpm emulators      # Functions をビルドして Firebase Emulator を起動
 pnpm build          # プロダクションビルド
 pnpm typecheck      # TypeScript 型チェック
 pnpm lint           # ESLint 実行
@@ -163,11 +163,13 @@ pnpm test:e2e:ui    # Playwright UI モード
 
 ## テストデータ投入
 
-Docker の Firebase Emulator が起動した状態で、以下のバッチファイルを実行してください。
+Firebase Emulator（`pnpm emulators`）が起動した状態で、以下を実行してください。
 
-```bat
-scripts\seed.bat
+```bash
+node scripts/seed.mjs
 ```
+
+Windows では `scripts\seed.bat` をダブルクリックしても同じです（エミュレータの起動確認つき）。
 
 投入されるテストデータ:
 
@@ -340,10 +342,11 @@ Webhook イベントとプラン遷移:
 src/
 ├── app/                  # Next.js App Router ページ
 │   ├── (protected)/      # 認証保護ルート
-│   └── globals.css       # デザイントークン + コンポーネントCSS
+│   ├── globals.css       # Tailwind の設定・役割トークンの登録・ベーススタイル
+│   └── tokens.css        # テーマ値（docs/DESIGN.md から自動生成）
 ├── components/
 │   ├── layout/           # AppShell, Sidebar, TopBar, BottomNav
-│   └── ui/               # Button, Card, Badge, Avatar, Input, ...
+│   └── ui/               # Button, Card, Badge, Dialog, Drawer, Modal, Dropdown, ...
 ├── lib/
 │   ├── firebase/         # Firebase 初期化・認証
 │   └── repositories/     # Firestore データアクセス層
@@ -359,8 +362,8 @@ tests/
 
 - Firestoreへのアクセスは `src/lib/repositories/` 経由に限定
 - コレクション構造は常に `teams/{teamId}/...` サブコレクション
-- デザインシステムは `globals.css` で CSS カスタムプロパティ + コンポーネントクラスとして管理
-- コンポーネントは `.btn`, `.ds-card`, `.ds-badge` 等のCSSクラスを優先使用
+- デザインシステムの正本は `docs/DESIGN.md`。色・角丸・時間はトークン経由で指定し、生の値を書かない
+- UI は `src/components/ui/*` の部品（`Button` / `Card` / `Badge` / `Modal` 等）を使い、独自のボタン・カード・モーダルを実装しない
 - レスポンシブ: `md` (768px) ブレークポイントでサイドバー/ボトムナビを切り替え
 
 ---

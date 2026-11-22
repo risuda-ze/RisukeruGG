@@ -1,0 +1,331 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Avatar } from '@/components/ui/Avatar';
+import { Badge, badgeVariants } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Dropdown } from '@/components/ui/Dropdown';
+import { Icon } from '@/components/ui/Icon';
+import { Input, fieldLabelClass } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
+import { Spinner } from '@/components/ui/Spinner';
+import { MemberDetail } from '@/components/unavailability/MemberDetail';
+import { END_OPTIONS, START_OPTIONS } from '@/components/unavailability/NoteForm';
+import { UnavailabilityGrid } from '@/components/unavailability/UnavailabilityGrid';
+import type { PeriodFocus } from '@/components/unavailability/UnavailabilityGrid';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { toJstDateString } from '@/lib/googleCalendar/export';
+import { cn } from '@/lib/utils/cn';
+import { subscribeUnavailabilityMonth } from '@/lib/repositories/unavailability';
+import { monthOf, storageWindow } from '@/lib/unavailability/range';
+import { datesBetween, groupByMember, orderMembers, slotMaskOf } from '@/lib/unavailability/view';
+import { useAuthStore } from '@/stores/auth';
+import type { UnavailabilityMonth } from '@/types/unavailability';
+
+/** 画面ヘルプに出す注意事項と入力方法（UN-043） */
+const HELP_ITEMS = [
+  '入力するのは「対応不可」の時間帯だけです。入力のない時間帯は対応可能とみなします。',
+  '「未入力」のメンバー・スタッフは、まだ一度も入力していません。いつでも空いているという意味ではありません。',
+  '表示・保存されるのは前月 1 日〜翌月末日です。それより前のものは毎月 1 日に削除されます。',
+  '入力できるのは翌月末日までです。',
+  '対応不可とメモを入力できるのは本人だけです。チームのメンバー・スタッフ全員が見られます。',
+  '予定の内容は入力しません。補足があるときはメモに書きます。',
+  '× はその日に 1 時間でも対応不可があることを表します。日付の下の人数は、表示中のメンバー・スタッフのうち対応不可がある人数です。',
+  'セルを押すと、そのメンバー・スタッフの詳細（時間帯とメモ）が開きます。',
+  '入力するときは、自分の行のセルを押して詳細を開きます。時刻の右の列をドラッグすると対応不可を塗れます。対応不可の上からドラッグを始めると消せます。日をまたいで続けて塗れます。',
+  'メモは、詳細の右の欄か「メモを追加」を押して追加します。自分のメモを押すと編集・削除できます。メモは 1 ヶ月に 200 件までです。',
+  '塗り・消しとメモの変更は、「保存」を押すまで確定しません。未保存の変更は破線で表示されます。',
+  '同じ曜日・同じ時間帯をまとめて入れるときは、自分の詳細の「CSV・定期入力」から定期入力を使います。期間・曜日・時間帯を指定し、内容を確認してから保存します。',
+  '集まれる日を探すときは、検索条件の「時間帯」で開始と終了を指定します。表示中のメンバー・スタッフ全員がその時間帯に対応できる日に「空き」が付きます。メンバー・スタッフを選んでいるときは、選んだメンバー・スタッフだけで判定します。',
+  'CSV（1 行目が date,start,end、文字コードは UTF-8）からも取り込めます。同じ画面から当月の CSV をダウンロードでき、書式の見本になります。CSV・定期入力は追記で、入力済みの対応不可は消えません。',
+];
+
+/** チーム全員の 1 ヶ月分の購読。月ごとに 1 つ置き、足した月だけ購読が増える（UN-090） */
+function MonthSubscription({
+  teamId,
+  month,
+  onData,
+  onError,
+}: {
+  teamId: string;
+  month: string;
+  onData: (month: string, docs: UnavailabilityMonth[]) => void;
+  onError: (error: Error) => void;
+}) {
+  useEffect(
+    () => subscribeUnavailabilityMonth(teamId, month, (docs) => onData(month, docs), onError),
+    [teamId, month, onData, onError]
+  );
+  return null;
+}
+
+/**
+ * 対応不可時間の画面本体。ヘッダー（検索条件）と一覧、メンバー詳細を持つ（UN-041）。
+ * チームを切り替えたときは、呼び出し側が key で作り直す。
+ */
+export function UnavailabilityBoard({ teamId }: { teamId: string }) {
+  const selfId = useAuthStore((s) => s.currentUser?.uid ?? null);
+  const members = useAuthStore((s) => s.members);
+  const isMobile = useMediaQuery(767);
+
+  const [today] = useState(() => toJstDateString(new Date()));
+  const dates = useMemo(() => {
+    const { from, to } = storageWindow(today);
+    return datesBetween(from, to);
+  }, [today]);
+
+  // 当月を先に購読し、前月・翌月は表示が近づいたときに足す
+  const [months, setMonths] = useState(() => [monthOf(today)]);
+  const [docsByMonth, setDocsByMonth] = useState<Record<string, UnavailabilityMonth[]>>({});
+  const [error, setError] = useState<Error | null>(null);
+
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const [focus, setFocus] = useState<PeriodFocus>({ from: '', to: '' });
+  /** 時間帯フィルタ。空文字は未指定 */
+  const [slot, setSlot] = useState({ start: '', end: '' });
+  const [detail, setDetail] = useState<{ userId: string; date: string } | null>(null);
+
+  const onData = useCallback(
+    (month: string, docs: UnavailabilityMonth[]) =>
+      setDocsByMonth((prev) => ({ ...prev, [month]: docs })),
+    []
+  );
+  const onNeedMonths = useCallback(
+    (needed: string[]) =>
+      setMonths((prev) =>
+        needed.every((m) => prev.includes(m)) ? prev : [...new Set([...prev, ...needed])]
+      ),
+    []
+  );
+  const onCellClick = useCallback(
+    (userId: string, date: string) => setDetail({ userId, date }),
+    []
+  );
+
+  const byMember = useMemo(() => groupByMember(Object.values(docsByMonth).flat()), [docsByMonth]);
+  const loadedMonths = useMemo(() => new Set(Object.keys(docsByMonth)), [docsByMonth]);
+  const shownMembers = useMemo(
+    () => orderMembers(members, selfId, selected),
+    [members, selfId, selected]
+  );
+  const detailMember = detail && members.find((m) => m.userId === detail.userId);
+
+  // 時間帯は、開始と終了の両方があり、開始が終了より前のときだけ効く
+  const slotStart = slot.start === '' ? null : Number(slot.start);
+  const slotEnd = slot.end === '' ? null : Number(slot.end);
+  const slotMask = slotMaskOf(slotStart, slotEnd);
+  const slotHint =
+    slotStart === null && slotEnd === null
+      ? null
+      : slotStart === null || slotEnd === null
+        ? '開始と終了の両方を指定すると、全員が対応できる日に「空き」が付きます。'
+        : slotMask === null
+          ? '終了は開始より後にしてください。'
+          : `表示中のメンバー・スタッフ全員が ${START_OPTIONS[slotStart].label}〜${END_OPTIONS[slotEnd - 1].label} に対応できる日に「空き」が付きます。`;
+
+  const filtering =
+    selected.size > 0 ||
+    focus.from !== '' ||
+    focus.to !== '' ||
+    slot.start !== '' ||
+    slot.end !== '';
+  const toggleMember = (userId: string) => {
+    const next = new Set(selected);
+    if (!next.delete(userId)) next.add(userId);
+    setSelected(next);
+  };
+  const clearFilter = () => {
+    setSelected(new Set());
+    setFocus({ from: '', to: '' });
+    setSlot({ start: '', end: '' });
+  };
+  const dateRange = { min: dates[0], max: dates[dates.length - 1] };
+
+  return (
+    <>
+      {months.map((month) => (
+        <MonthSubscription
+          key={month}
+          teamId={teamId}
+          month={month}
+          onData={onData}
+          onError={setError}
+        />
+      ))}
+
+      {/* ヘッダー（検索条件）。初期表示は折り畳む */}
+      <div className="shrink-0 border-b border-border bg-surface px-4 md:px-7">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-expanded={filterOpen}
+            aria-controls="un-filter"
+            onClick={() => setFilterOpen((open) => !open)}
+            className="flex min-h-11 flex-1 cursor-pointer items-center gap-2 text-left text-sm font-semibold text-text-2 transition-colors duration-(--duration-fast) hover:text-text"
+          >
+            {/* 開閉の矢印は左端に置く */}
+            <Icon name={filterOpen ? 'expand_less' : 'expand_more'} size={18} />
+            <span>検索条件</span>
+            {filtering && <Badge variant="info">指定中</Badge>}
+          </button>
+          <button
+            type="button"
+            onClick={() => setHelpOpen(true)}
+            aria-label="ヘルプを表示"
+            className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-md text-text-2 transition-colors duration-(--duration-fast) hover:bg-surface-2 hover:text-text"
+          >
+            <Icon name="help_outline" size={18} />
+          </button>
+        </div>
+        {filterOpen && (
+          <div id="un-filter" className="flex flex-col gap-4 pt-1 pb-4">
+            <fieldset>
+              <legend className={fieldLabelClass}>メンバー・スタッフ</legend>
+              {/* 他画面（ブリーフの出演者など）と同じ、押して選ぶボタン。アイコンと名前を並べる */}
+              <div className="mt-1 flex flex-wrap gap-2">
+                {orderMembers(members, selfId, new Set()).map((member) => {
+                  const on = selected.has(member.userId);
+                  return (
+                    <button
+                      key={member.userId}
+                      type="button"
+                      onClick={() => toggleMember(member.userId)}
+                      aria-pressed={on}
+                      className={cn(
+                        badgeVariants({ variant: on ? 'primary' : 'neutral' }),
+                        'min-h-11 cursor-pointer gap-2 py-1 pr-3 pl-1.5'
+                      )}
+                    >
+                      <Avatar initials={member.displayName} src={member.avatarUrl} size="sm" />
+                      {member.displayName}
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+            <div className="flex flex-wrap items-end gap-3">
+              <Input
+                id="un-filter-from"
+                type="date"
+                label="期間（開始日）"
+                value={focus.from}
+                onChange={(e) => setFocus({ ...focus, from: e.target.value })}
+                {...dateRange}
+              />
+              <Input
+                id="un-filter-to"
+                type="date"
+                label="期間（終了日）"
+                value={focus.to}
+                onChange={(e) => setFocus({ ...focus, to: e.target.value })}
+                {...dateRange}
+              />
+              {/* label で包み、ドロップダウンのボタンに名前を付ける */}
+              <label className="flex w-32 flex-col gap-1.5">
+                <span className={fieldLabelClass}>時間帯（開始）</span>
+                <Dropdown
+                  options={START_OPTIONS}
+                  value={slot.start === '' ? null : slot.start}
+                  placeholder="指定なし"
+                  onChange={(value) => setSlot({ ...slot, start: value })}
+                  scroll
+                />
+              </label>
+              <label className="flex w-32 flex-col gap-1.5">
+                <span className={fieldLabelClass}>時間帯（終了）</span>
+                <Dropdown
+                  options={END_OPTIONS}
+                  value={slot.end === '' ? null : slot.end}
+                  placeholder="指定なし"
+                  onChange={(value) => setSlot({ ...slot, end: value })}
+                  scroll
+                />
+              </label>
+              <Button variant="ghost" onClick={clearFilter}>
+                条件を解除
+              </Button>
+            </div>
+            {slotHint && (
+              <p
+                data-testid="un-slot-hint"
+                role="status"
+                className={`text-caption ${slotMask === null ? 'text-warning' : 'text-text-2'}`}
+              >
+                {slotHint}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {error ? (
+        // 読み込めなかったときは一覧を出さない（空白＝対応可能と読ませない）
+        <div
+          role="alert"
+          className="flex items-center gap-2 bg-danger-tint px-4 py-3 text-sm text-danger md:px-7"
+        >
+          <Icon name="warning" size={16} />
+          <span>
+            対応不可時間を読み込めませんでした。時間をおいてページを再読み込みしてください。
+          </span>
+        </div>
+      ) : !loadedMonths.has(monthOf(today)) ? (
+        <div className="flex flex-1 items-center justify-center">
+          <Spinner size="lg" />
+        </div>
+      ) : (
+        <UnavailabilityGrid
+          // 縦横を入れ替えるときはスクロール方向が変わるため作り直す
+          key={isMobile ? 'vertical' : 'horizontal'}
+          dates={dates}
+          today={today}
+          members={shownMembers}
+          selfId={selfId}
+          byMember={byMember}
+          loadedMonths={loadedMonths}
+          vertical={isMobile}
+          focus={focus}
+          slotMask={slotMask}
+          onNeedMonths={onNeedMonths}
+          onCellClick={onCellClick}
+        />
+      )}
+
+      <Modal
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        title="対応不可時間の使い方"
+        footer={
+          <Button variant="ghost" onClick={() => setHelpOpen(false)}>
+            閉じる
+          </Button>
+        }
+      >
+        <ul data-testid="un-help" className="flex list-disc flex-col gap-2 pl-5 leading-relaxed">
+          {HELP_ITEMS.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </Modal>
+
+      {detail && detailMember && !error && (
+        <MemberDetail
+          // 別のセルから開き直したときは、表示位置を作り直す
+          key={`${detail.userId}:${detail.date}`}
+          teamId={teamId}
+          member={detailMember}
+          editable={detail.userId === selfId}
+          data={byMember.get(detail.userId)}
+          dates={dates}
+          today={today}
+          initialDate={detail.date}
+          loadedMonths={loadedMonths}
+          onNeedMonths={onNeedMonths}
+          onClose={() => setDetail(null)}
+        />
+      )}
+    </>
+  );
+}

@@ -50,6 +50,23 @@ ui カテゴリでは、画面横断で共有するナビゲーション状態�
 - 判定対象は `pathname === href` または `pathname.startsWith(href + '/')` を満たす非 disabled 項目
 - 複数候補がある場合は `href` が最も長い項目を採用し、同時アクティブ表示を禁止する
 
+## ThemePreference
+
+ユーザーが選んだテーマ。型は `'dark' | 'light' | 'system'`。
+
+| 保存先 | キー / フィールド | 条件 |
+| ------ | ----------------- | ---- |
+| localStorage | `risukeru-theme` | 常に保存する（`next-themes` が管理） |
+| Firestore | `users/{uid}.theme` | ログイン中のみ。未設定可 |
+
+- 未設定は `dark` として扱う。3 値以外が入っていた場合も未設定として扱う
+- `users/{uid}.theme` の読み書きは本人のみ。Security Rules では値域を検証しない
+- `users/{uid}.theme` はゴースト化で残さない（user の US-009 の保持対象外）
+
+### resolvedTheme
+
+- `<html data-theme>` に付ける値（`dark` / `light`）。`ThemePreference` が `system` のときは `prefers-color-scheme` から導出する
+
 ## notification 側モデルとの境界
 
 - 通知データの正本は notification カテゴリが持つ
