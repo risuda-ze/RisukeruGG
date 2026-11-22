@@ -28,7 +28,7 @@ export function subscribeTeamAiSettings(teamId: string, callback: (settings: Tea
   });
 }
 
-/** オペレーターが保存する（Firestore ルールで強制） */
+/** メンバーが保存する（Firestore ルールで強制） */
 export async function saveTeamAiSettings(teamId: string, input: TeamAiSettingsInput): Promise<void> {
   await setDoc(
     settingsDoc(teamId),

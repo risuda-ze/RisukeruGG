@@ -2,11 +2,12 @@ import { NextRequest } from 'next/server';
 import { getAdminFirestore } from '@/lib/firebase/admin';
 import { verifyBearerToken } from '@/lib/firebase/verifyBearerToken';
 import { deleteGuildCommands, leaveGuild } from '@/lib/discord/guildTeardown';
+import { toTeamRole } from '@/lib/utils/teamRoles';
 
 /**
  * Discord Bot 登録解除エンドポイント。
  * Discord 側（スラッシュコマンド・Bot 参加・AI セッション）と Firestore 側
- * （連携情報・通知設定）を一括でクリーンアップする。operator のみ実行可能。
+ * （連携情報・通知設定）を一括でクリーンアップする。メンバーのみ実行可能。
  *
  * Discord API 呼び出しは best-effort。失敗しても Firestore の連携情報は必ず削除し、
  * アプリ上は「未連携」状態に戻す（Bot を手動で追い出した後の解除にも対応）。
@@ -29,10 +30,10 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const db = getAdminFirestore();
 
-  // operator 権限の確認
+  // メンバー権限の確認
   const memberSnap = await db.doc(`teams/${teamId}/members/${uid}`).get();
-  if (!memberSnap.exists || memberSnap.data()?.role !== 'operator') {
-    return Response.json({ error: 'operator 権限が必要です' }, { status: 403 });
+  if (!memberSnap.exists || toTeamRole(memberSnap.data()?.role) !== 'member') {
+    return Response.json({ error: 'メンバー権限が必要です' }, { status: 403 });
   }
 
   const configRef = db.doc(`teams/${teamId}/discord/config`);

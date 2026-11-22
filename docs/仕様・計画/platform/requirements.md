@@ -22,3 +22,57 @@
 - **PF-012**: データ構造を変える変更は、変更仕様に既存データの扱い（移行の要否）を書く。旧データをそのまま読めない変更（フィールドの改名・型や値の意味の変更）と、不要になったデータの削除には、移行スクリプトを `scripts/` に置き、`scripts/migration-runbook.md` の「適用待ちの一回性スクリプト」に実行タイミングとともに載せる
 - **PF-013**: 移行スクリプトは dry-run を既定とし、`--apply` を付けたときだけ書き込む。本番への適用後はリポジトリから削除する
 - **PF-014**: リリース時は、Firebase へのデプロイ（rules・indexes・Functions）と適用待ちの移行スクリプトの実行を、リリースフローの中で行う
+
+## リリース時のキーの入れ替え
+
+- **PF-015**: 漏洩したキーが使える期間を短くするため、リリースのたびに、下表「入れ替えるキー」のすべてを新しい値に入れ替える。新しい値は発行元で新規に発行し、過去に使った値を再利用しない
+- **PF-016**: 入れ替えたキーは、リリースのデプロイで本番に反映する。Vercel の環境変数は次のデプロイから、Cloud Functions の Secret は Functions の再デプロイから有効になるため、Functions に変更が無いリリースでも Functions を再デプロイする
+- **PF-017**: 旧キーは、新キーで動作を確認した後に発行元で無効化する。発行と同時に旧キーが無効になるキー（下表の「旧キー」が「発行時に失効」）は、失効から反映までの間その機能が止まるため、リリースのデプロイの直前に入れ替える
+- **PF-018**: キーの値は、リポジトリ・Issue・PR・リリースノート・チャットに書かない
+- **PF-019**: 秘密の値を持つキーを追加・廃止する変更は、同じ PR で下表を更新する
+
+### 入れ替えるキー
+
+| サービス | キー | 設定先 | 発行元 | 旧キー |
+| --- | --- | --- | --- | --- |
+| Anthropic | `ANTHROPIC_API_KEY` | Vercel の環境変数 | Anthropic Console の API キー | 確認後に削除 |
+| Discord | `DISCORD_BOT_TOKEN` | Vercel の環境変数と Cloud Functions の Secret（同じ値を両方に設定する） | Discord Developer Portal の Bot「Reset Token」 | 発行時に失効 |
+| Firebase（Google Cloud） | `FIREBASE_SERVICE_ACCOUNT_KEY` | Vercel の環境変数。運用スクリプトを実行する端末に置いた鍵ファイルも差し替える | Google Cloud のサービスアカウントの鍵 | 確認後に削除 |
+| Google ログイン | OAuth クライアントシークレット（環境変数ではない） | Firebase コンソールの Authentication の Google プロバイダ（ウェブ SDK 構成のウェブ クライアント シークレット） | Google Cloud の認証情報にある OAuth 2.0 クライアント ID（シークレットを追加する） | 確認後に削除 |
+| Gmail | `GMAIL_APP_PASSWORD` | Cloud Functions の Secret | Google アカウントのアプリパスワード | 確認後に削除 |
+| Stripe | `STRIPE_SECRET_KEY` | Cloud Functions の Secret | Stripe ダッシュボードの API キー（ロール） | ロール時に指定した期限で失効 |
+| Stripe | `STRIPE_WEBHOOK_SECRET` | Cloud Functions の Secret | Stripe ダッシュボードの Webhook エンドポイント（署名シークレットのロール） | ロール時に指定した期限で失効 |
+| Sentry | `SENTRY_AUTH_TOKEN` | Vercel の環境変数（ビルド時のみ使用） | Sentry の認証トークン | 確認後に削除 |
+| アプリ内部 | `INTERNAL_API_SECRET` | Vercel の環境変数 | 32 バイト以上の乱数を生成する | 上書きで失効 |
+
+Stripe の 2 つは、正式な値を設定して課金を開始した後のリリースから対象とする。
+
+Google ログインの OAuth クライアントシークレットは、Firebase コンソールで保存した時点で本番に反映される（デプロイは要らない）。誤った値を保存すると全員がログインできなくなるため、保存の直後に Google ログインができることを確認する。
+
+### 入れ替えない値
+
+次は秘密ではない識別子・公開値のため、入れ替えない。
+
+- `NEXT_PUBLIC_` で始まる値（Firebase の Web 設定、Sentry の DSN、計測 ID など。ブラウザへ配信される）
+- Discord の `DISCORD_APPLICATION_ID` / `DISCORD_CLIENT_ID` / `DISCORD_PUBLIC_KEY`
+- Stripe の `STRIPE_PRICE_ID`
+- `GMAIL_USER`、`SENTRY_ORG`、`SENTRY_PROJECT`
+
+## リリース時の開発環境の片付け
+
+- **PF-020**: リリースのたびに、役目を終えたブランチ・ワークツリー・作業用ファイルを下表のとおり片付ける。片付けはリリースの公開まで終えた後に行う
+- **PF-021**: `main`・`develop`・`review-reports` と、オープン中の PR があるブランチは削除しない
+- **PF-022**: `develop` へ未マージのコミットを持つブランチ、未コミットの変更があるワークツリーは、一覧を見て不要と判断したものだけを削除する。機械的には削除しない
+
+### 片付ける対象
+
+| 対象 | 削除するもの | 確認方法 |
+| --- | --- | --- |
+| リモートのブランチ | `develop` へマージ済みのブランチ（`feature/`・`dependabot/`・`copilot/` など） | `git branch -r --merged origin/develop` |
+| ワークツリー | 作業が済んだもの（エージェントやセッションが作ったものを含む）。削除後に `git worktree prune` を実行する | `git worktree list` |
+| ローカルのブランチ | `develop` へマージ済みのもの、追跡先のリモートブランチが消えたもの、作業が済んだ `claude/`・`worktree-agent-` のもの。ワークツリーを先に削除する | `git branch -vv`（追跡先が消えたものは `gone` と表示される） |
+| リモート追跡の参照 | リモートで削除済みのブランチの参照 | `git fetch --prune` |
+| レビュー素材 | マージ済み PR の `review-artifacts/pr-<番号>/` | — |
+| 鍵ファイル | 運用スクリプトの実行のために端末へ置いたサービスアカウントの鍵ファイルのうち、入れ替え前の古いもの | — |
+
+片付けの後、ローカルの `main` と `develop` を最新にする。

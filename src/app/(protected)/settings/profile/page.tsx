@@ -41,7 +41,7 @@ export default function ProfileSettingsPage() {
   const router = useRouter();
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const isOperatorWithMembers = myMember?.role === 'operator' && members.length > 1;
+  const isMemberWithOthers = myMember?.role === 'member' && members.length > 1;
   // 通知制限（PL-002）の判定。試用モード中は PARTY 相当として全通知カテゴリを解放する
   const isParty = isPartyPlan(myMember?.plan);
 
@@ -163,13 +163,13 @@ export default function ProfileSettingsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [newOperatorId, setNewOperatorId] = useState('');
+  const [newMemberId, setNewMemberId] = useState('');
 
   function openDeleteDialog() {
     setDeleteError(null);
-    // オペレーター指名が必要な場合は先頭候補を初期選択
+    // 新しいメンバーの指名が必要な場合は先頭候補を初期選択
     const candidates = members.filter((m) => m.userId !== currentUser?.uid);
-    setNewOperatorId(candidates[0]?.userId ?? '');
+    setNewMemberId(candidates[0]?.userId ?? '');
     setShowDeleteDialog(true);
   }
 
@@ -177,11 +177,11 @@ export default function ProfileSettingsPage() {
     setDeleting(true);
     setDeleteError(null);
     try {
-      const operatorAssignments =
-        isOperatorWithMembers && newOperatorId && currentTeam
-          ? [{ teamId: currentTeam.id, newOperatorId }]
+      const memberAssignments =
+        isMemberWithOthers && newMemberId && currentTeam
+          ? [{ teamId: currentTeam.id, newMemberId }]
           : [];
-      await deleteAccount({ operatorAssignments });
+      await deleteAccount({ memberAssignments });
       await signOut();
       router.replace('/login');
     } catch (err: unknown) {
@@ -465,8 +465,8 @@ export default function ProfileSettingsPage() {
                   <div>
                     <p className="text-sm font-semibold text-text mb-0.5">アカウントを削除する</p>
                     <p className="text-[12px] text-text-muted">
-                      {isOperatorWithMembers
-                        ? '削除前に新しいオペレーターを選択してください。'
+                      {isMemberWithOthers
+                        ? '削除前に新しいメンバーを選択してください。'
                         : 'アカウント・チームデータ・スケジュールがすべて削除されます。'}
                     </p>
                   </div>
@@ -582,7 +582,7 @@ export default function ProfileSettingsPage() {
             <Button
               variant="danger"
               loading={deleting}
-              disabled={isOperatorWithMembers && !newOperatorId}
+              disabled={isMemberWithOthers && !newMemberId}
               onClick={handleDeleteAccount}
             >
               削除する
@@ -591,18 +591,18 @@ export default function ProfileSettingsPage() {
         }
       >
         <div className="space-y-3 text-sm">
-          {/* オペレーターが複数メンバーチームを持つ場合は指名UIを表示 */}
-          {isOperatorWithMembers && (
+          {/* メンバーが複数の所属者がいるチームを持つ場合は指名UIを表示 */}
+          {isMemberWithOthers && (
             <div className="rounded-[10px] border border-warning/30 bg-warning/10 p-3 space-y-2">
               <p className="text-[12px] font-semibold text-orange-text">
-                新しいオペレーターを選択してください
+                新しいメンバーを選択してください
               </p>
               <Dropdown
-                value={newOperatorId}
+                value={newMemberId}
                 options={members
                   .filter((m) => m.userId !== currentUser?.uid)
                   .map((m) => ({ value: m.userId, label: m.displayName }))}
-                onChange={setNewOperatorId}
+                onChange={setNewMemberId}
                 scroll
               />
             </div>

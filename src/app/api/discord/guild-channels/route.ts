@@ -2,12 +2,13 @@ import { NextRequest } from 'next/server';
 import { getAdminFirestore } from '@/lib/firebase/admin';
 import { fetchGuildTextChannels } from '@/lib/discord/sendBotMessage';
 import { verifyBearerToken } from '@/lib/firebase/verifyBearerToken';
+import { toTeamRole } from '@/lib/utils/teamRoles';
 
 /**
  * 接続済みチームの Discord サーバーからテキストチャンネル一覧を取得する。
  * 連携後に通知チャンネルを変更する際の選択肢として使う。
  *
- * 認証: Firebase Bearer トークン必須。対象チームの operator のみ取得可能。
+ * 認証: Firebase Bearer トークン必須。対象チームのメンバーのみ取得可能。
  */
 export async function GET(req: NextRequest): Promise<Response> {
   const authResult = await verifyBearerToken(req);
@@ -21,10 +22,10 @@ export async function GET(req: NextRequest): Promise<Response> {
 
   const db = getAdminFirestore();
 
-  // operator 権限の確認
+  // メンバー権限の確認
   const memberSnap = await db.doc(`teams/${teamId}/members/${uid}`).get();
-  if (!memberSnap.exists || memberSnap.data()?.role !== 'operator') {
-    return Response.json({ error: 'operator 権限が必要です' }, { status: 403 });
+  if (!memberSnap.exists || toTeamRole(memberSnap.data()?.role) !== 'member') {
+    return Response.json({ error: 'メンバー権限が必要です' }, { status: 403 });
   }
 
   // 接続済み（guildId 設定済み）であることを確認

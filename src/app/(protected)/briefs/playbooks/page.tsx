@@ -61,7 +61,7 @@ export default function PlaybooksPage() {
             <Icon name="arrow_back" size={14} />
             ブリーフ一覧
           </Link>
-          {briefOps.canEdit && editor.mode === 'closed' && (
+          {briefOps.isMember && editor.mode === 'closed' && (
             <Button size="sm" onClick={() => setEditor({ mode: 'new' })}>
               <Icon name="add" size={14} />
               進め方を作る
@@ -103,7 +103,7 @@ export default function PlaybooksPage() {
             <p className="text-[12px] text-text-muted mb-4">
               動画1本の工程（構成確認 → 編集 → サムネ → 告知 など）と、担当・公開日からの日数・必要な情報を一度決めておくと、次からは公開日を入れるだけで1枚紙ができます。
             </p>
-            {briefOps.canEdit && (
+            {briefOps.isMember && (
               <Button size="sm" onClick={() => setEditor({ mode: 'new' })}>
                 進め方を作る
               </Button>
@@ -121,7 +121,7 @@ export default function PlaybooksPage() {
                         v{p.version} ・ {ORIGIN_LABELS[p.origin]} ・ {p.steps.length} 工程
                       </p>
                     </div>
-                    {briefOps.canEdit && (
+                    {briefOps.isMember && (
                       <div className="flex items-center gap-1 shrink-0">
                         <Button size="sm" variant="secondary" onClick={() => setEditor({ mode: 'edit', playbook: p })}>
                           編集

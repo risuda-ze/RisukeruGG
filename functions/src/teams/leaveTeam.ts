@@ -2,6 +2,7 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomBytes } from 'crypto';
 import { db, getAuthContext, requireAuth, getUserDoc } from '../lib/validateAuth';
+import { toTeamRole } from '../lib/role';
 import { deleteUserUnavailability } from '../unavailability/cleanup';
 
 export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: CallableRequest) => {
@@ -17,9 +18,8 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
 
   let isSoloTeam = false;
   let existingTeamCode: string | undefined;
-  let remainingOperatorUids: string[] = [];
 
-  if (ctx.role === 'operator') {
+  if (ctx.role === 'member') {
     const [membersSnap, teamDocSnap] = await Promise.all([
       db.collection(`teams/${teamId}/members`).get(),
       db.doc(`teams/${teamId}`).get(),
@@ -29,22 +29,16 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
     if (membersSnap.size <= 1) {
       isSoloTeam = true;
     } else {
-      /* 複数メンバー: 自分以外にオペレーターがいるか確認 */
-      const otherOperatorCount = membersSnap.docs.filter(
-        (d) => d.id !== uid && (d.data().role === 'operator' || d.data().role === 'owner')
+      /* 複数所属者: 自分以外にメンバー（全権限のロール）がいるか確認 */
+      const otherMemberCount = membersSnap.docs.filter(
+        (d) => d.id !== uid && toTeamRole(d.data().role) === 'member'
       ).length;
-      if (otherOperatorCount === 0) {
+      if (otherMemberCount === 0) {
         throw new HttpsError(
           'failed-precondition',
-          '先に別のメンバーをオペレーターに指名してください'
+          '先に別の所属者をメンバーに変更してください'
         );
       }
-      const currentOperatorUids = Array.isArray(teamDocSnap.data()?.operatorUids)
-        ? (teamDocSnap.data()!.operatorUids as string[])
-        : teamDocSnap.data()?.ownerId
-          ? [teamDocSnap.data()!.ownerId as string]
-          : [];
-      remainingOperatorUids = currentOperatorUids.filter((id) => id !== uid);
     }
   }
 
@@ -56,9 +50,6 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
     if (isSoloTeam) {
       tx.delete(db.doc(`teams/${teamId}`));
       if (existingTeamCode) tx.delete(db.doc(`teamCodes/${existingTeamCode}`));
-    } else if (ctx.role === 'operator') {
-      /* 他にオペレーターが存在: operatorUids から自分を除いて更新 */
-      tx.update(db.doc(`teams/${teamId}`), { operatorUids: remainingOperatorUids });
     }
 
     const tasksSnap = await tx.get(
@@ -78,13 +69,12 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
 
     tx.set(soloTeamRef, {
       name: `${userData.displayName}のチーム`,
-      operatorUids: [uid],
       teamCode: soloTeamCode,
       createdAt: now,
     });
     tx.set(db.doc(`teamCodes/${soloTeamCode}`), { teamId: soloTeamId, createdAt: now });
     tx.set(db.doc(`teams/${soloTeamId}/members/${uid}`), {
-      role: 'operator',
+      role: 'member',
       displayName: userData.displayName,
       avatarUrl: userData.avatarUrl ?? null,
       plan: userData.plan,

@@ -95,6 +95,8 @@ export default function BriefDetailPage() {
   }, [teamId, briefId, showEvents]);
 
   const brief = briefs.find((b) => b.id === briefId) ?? null;
+  /** ブリーフと工程の構成を編集できるか（メンバーか、このブリーフの作成者） */
+  const canEditBrief = brief ? briefOps.canEditBrief(brief) : false;
   const steps = useMemo(() => selectStepsOfBrief(allSteps, briefId), [allSteps, briefId]);
   const selectedStep = steps.find((s) => s.id === selectedStepId) ?? null;
   const stepTitle = (id: string | null) => steps.find((s) => s.id === id)?.title ?? '工程';
@@ -169,7 +171,7 @@ export default function BriefDetailPage() {
             <Icon name="arrow_back" size={14} />
             一覧
           </Link>
-          {briefOps.canEdit && (
+          {canEditBrief && (
             <Button size="sm" onClick={() => setShowAdd(true)}>
               <Icon name="add" size={14} />
               工程
@@ -191,7 +193,7 @@ export default function BriefDetailPage() {
                   title="工程"
                   action={
                     <div className="flex items-center gap-2">
-                      {briefOps.canEdit && steps.length > 0 && (
+                      {briefOps.isMember && steps.length > 0 && (
                         <Button size="sm" variant="subtle" onClick={saveAsPlaybook} loading={savingPlaybook}>
                           この流れを進め方にする
                         </Button>
@@ -204,7 +206,7 @@ export default function BriefDetailPage() {
                 {steps.length === 0 ? (
                   <p className="text-[12px] text-text-muted px-2 pb-3">
                     工程がありません。
-                    {briefOps.canEdit && '「工程」ボタンから追加するか、進め方を作って次のブリーフから自動生成できます。'}
+                    {canEditBrief && '「工程」ボタンから追加するか、進め方を作って次のブリーフから自動生成できます。'}
                   </p>
                 ) : (
                   steps.map((s) => (
@@ -215,7 +217,7 @@ export default function BriefDetailPage() {
                       selected={s.id === selectedStepId}
                       onSelect={(st) => setSelectedStepId(st.id)}
                       onComplete={completeFromRow}
-                      canEdit={briefOps.canEdit}
+                      canEdit={briefOps.canChangeStep(brief, s)}
                     />
                   ))
                 )}
@@ -251,7 +253,7 @@ export default function BriefDetailPage() {
         {/* 工程パネル */}
         {selectedStep && (
           <div className="w-full md:w-[380px] lg:w-[420px] shrink-0 overflow-hidden">
-            <StepPanel step={selectedStep} members={members} onClose={() => setSelectedStepId(null)} />
+            <StepPanel brief={brief} step={selectedStep} members={members} onClose={() => setSelectedStepId(null)} />
           </div>
         )}
       </div>

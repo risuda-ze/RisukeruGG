@@ -2,22 +2,16 @@ import { doc, getDoc, collection, onSnapshot, Unsubscribe } from 'firebase/fires
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '@/lib/firebase/client';
 import { MEMBER_DUTIES } from '@/types/entities';
-import type { Team, TeamMember, UserRole, DiscordTeamConfig, MemberDuty } from '@/types/entities';
+import { toTeamRole } from '@/lib/utils/teamRoles';
+import type { Team, TeamMember, TeamRole, DiscordTeamConfig, MemberDuty } from '@/types/entities';
 
 const functions = getFunctions(undefined, 'asia-northeast1');
 
 // Firestoreドキュメントを型付きエンティティに変換
 function toTeam(id: string, data: Record<string, unknown>): Team {
-  // operatorUids がない旧ドキュメントは ownerId から変換
-  const operatorUids = Array.isArray(data.operatorUids)
-    ? (data.operatorUids as string[])
-    : data.ownerId
-      ? [data.ownerId as string]
-      : [];
   return {
     id,
     name: data.name as string,
-    operatorUids,
     teamCode: data.teamCode as string,
     createdAt: (data.createdAt as { toDate: () => Date }).toDate(),
   };
@@ -26,7 +20,7 @@ function toTeam(id: string, data: Record<string, unknown>): Team {
 function toTeamMember(id: string, data: Record<string, unknown>): TeamMember {
   return {
     userId: id,
-    role: data.role as UserRole,
+    role: toTeamRole(data.role),
     displayName: data.displayName as string,
     avatarUrl: (data.avatarUrl as string | null) ?? null,
     plan: data.plan as 'light' | 'party',
@@ -44,7 +38,7 @@ function toTeamMember(id: string, data: Record<string, unknown>): TeamMember {
 
 /**
  * メンバーの Discord ユーザー名を更新する（TE-012）。
- * 本人またはオペレーターが呼ぶ（Firestore ルールで強制）。
+ * 本人またはメンバーが呼ぶ（Firestore ルールで強制）。
  * ユーザー名が変わると解決済み ID のキャッシュは無効になるため、常に `discordUserId` を null に戻す。
  */
 export async function updateMemberDiscordUsername(
@@ -59,7 +53,7 @@ export async function updateMemberDiscordUsername(
   });
 }
 
-/** メンバーの担当分野・ひとことを更新する（TE-014）。本人またはオペレーターが呼ぶ（Firestore ルールで強制） */
+/** メンバーの担当分野・ひとことを更新する（TE-014）。本人またはメンバーが呼ぶ（Firestore ルールで強制） */
 export async function updateMemberProfile(
   teamId: string,
   memberId: string,
@@ -98,16 +92,17 @@ export function subscribeMembers(
 
 // Admin SDK 経由で Security Rules をバイパスするため CF を使用する
 const _updateMemberRoleCF = httpsCallable<
-  { teamId: string; targetUserId: string; role: UserRole },
+  { teamId: string; targetUserId: string; role: TeamRole; schemaVersion: number },
   { success: boolean }
 >(functions, 'updateMemberRole');
 
 export async function updateMemberRole(
   teamId: string,
   memberId: string,
-  role: UserRole
+  role: TeamRole
 ): Promise<void> {
-  await _updateMemberRoleCF({ teamId, targetUserId: memberId, role });
+  // schemaVersion 2: 旧 member（編集者）と新 member（全権限）の取り違えを防ぐため、古いタブからの要求はサーバーが拒否する
+  await _updateMemberRoleCF({ teamId, targetUserId: memberId, role, schemaVersion: 2 });
 }
 
 // Cloud Functions 呼び出し
@@ -132,7 +127,7 @@ export const removeTeamMember = httpsCallable<
 >(functions, 'removeTeamMember');
 
 export const deleteAccount = httpsCallable<
-  { operatorAssignments?: { teamId: string; newOperatorId: string }[] },
+  { memberAssignments?: { teamId: string; newMemberId: string }[] },
   { success: boolean }
 >(functions, 'deleteAccount');
 

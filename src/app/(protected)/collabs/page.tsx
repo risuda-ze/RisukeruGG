@@ -16,7 +16,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { cn } from '@/lib/utils/cn';
 import { COLLAB_STATUS_LABELS } from '@/types/entities';
 import type { CollabSession, CollabStatus } from '@/types/entities';
-import { canEditRole } from '@/lib/utils/teamRoles';
+import { isMemberRole } from '@/lib/utils/teamRoles';
 
 // ステータス → Badge の variant
 const STATUS_BADGE: Record<CollabStatus, 'primary' | 'success' | 'neutral'> = {
@@ -480,7 +480,7 @@ export default function CollabsPage() {
 
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const canEdit = canEditRole(myMember?.role);
+  const canEdit = isMemberRole(myMember?.role);
 
   // 調整中ゾーン: open、予定確定ゾーン: confirmed
   const adjustSessions = sessions.filter((s) => s.status === 'open');

@@ -50,9 +50,9 @@ const del = async (path, auth) =>
 
 // 'owner' は rules を迂回する（seed と同じ）
 for (const [uid, role] of [
-  ['op', 'operator'],
-  ['mem', 'member'],
-  ['rom', 'rom'],
+  ['op', 'member'],
+  ['mem', 'staff'],
+  ['rom', 'staff'],
 ]) {
   assert.equal(
     await write(`teams/t1/members/${uid}`, { role }, 'owner', { serverTime: false }),
@@ -70,7 +70,7 @@ assert.equal(await write(`${dir}/mem_2026-11`, doc('mem'), mem), 200, '本人の
 assert.equal(
   await write(`${dir}/rom_2026-11`, doc('rom'), rom),
   200,
-  'rom も自分の分は書ける（UN-011）'
+  'スタッフも自分の分は書ける（UN-011）'
 );
 assert.equal(
   await write(`${dir}/mem_2026-11`, { userId: 'mem', month: '2026-11', notes: [note(1)] }, mem),
@@ -89,14 +89,14 @@ assert.equal(
 assert.equal(
   await read(`${dir}/mem_2026-11`, rom),
   200,
-  'rom を含む同一チームのメンバーは読める（UN-012）'
+  'スタッフを含む同一チームの所属者は読める（UN-012）'
 );
 
 // 拒否されるべき操作
 assert.equal(
   await write(`${dir}/mem_2026-11`, doc('mem'), op),
   403,
-  'operator でも他人の分は書けない（UN-010）'
+  'メンバーでも他人の分は書けない（UN-010）'
 );
 assert.equal(
   await write(`${dir}/mem_2026-10`, doc('op', '2026-10'), op),

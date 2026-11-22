@@ -42,10 +42,15 @@
    - Firebase へのデプロイが要る変更（`firestore.rules`・`firestore.indexes.json`・`functions/`）
    - `scripts/migration-runbook.md` の「適用待ちの一回性スクリプト」
 2. リリースノートに載せる変更があれば、「リリースノートの原稿更新フロー」の 2〜4 を行う
-3. `develop` → `main` のリリース PR を merge commit でマージする。Vercel が本番へデプロイする
-4. 1 で洗い出した Firebase へのデプロイを行う（`firebase deploy --only firestore` / `firebase deploy --only functions`）
-5. 適用待ちの移行スクリプトを runbook の手順で実行する（dry-run → `--apply` → もう一度 dry-run で対象 0 件を確認）。実行タイミングの指定が runbook にあればそれに従う
-6. 適用したスクリプトと runbook の該当行を削除する PR を `develop` へ出す
-7. 「リリースノートの原稿更新フロー」の 6 を行う
+3. [requirements.md](./requirements.md) の「入れ替えるキー」のうち、旧キーが発行時に失効しないものを発行元で新しく発行し、設定先（Vercel の環境変数・Cloud Functions の Secret）へ設定する。この時点では本番は旧キーで動いている（Google ログインの OAuth クライアントシークレットだけは保存した時点で反映されるため、保存の直後にログインを確認する）
+4. 旧キーが発行時に失効するキーを入れ替え、設定先へ設定する。ここから 6 の完了まで、そのキーを使う機能は止まる
+5. `develop` → `main` のリリース PR を merge commit でマージする。Vercel が新しい環境変数で本番へデプロイする
+6. Firebase へのデプロイを行う。Functions は変更の有無にかかわらず再デプロイし（`firebase deploy --only functions`）、1 で洗い出した rules・indexes があれば合わせてデプロイする（`firebase deploy --only firestore`）
+7. 入れ替えたキーを使う機能が本番で動くことを確認する（Google ログイン、AI 相談、Discord への通知、お問い合わせメールの送信、ログイン後のデータ取得）
+8. 旧キーを発行元で無効化する
+9. 適用待ちの移行スクリプトを runbook の手順で実行する（dry-run → `--apply` → もう一度 dry-run で対象 0 件を確認）。実行タイミングの指定が runbook にあればそれに従う。実行には 3 で発行した新しいサービスアカウントの鍵を使う
+10. 適用したスクリプトと runbook の該当行を削除する PR を `develop` へ出す
+11. 「リリースノートの原稿更新フロー」の 6 を行う
+12. [requirements.md](./requirements.md) の「片付ける対象」に従って、ブランチ・ワークツリー・作業用ファイルを片付ける
 
-1 で該当が無ければ 4〜6 を行わない。
+1 で移行スクリプトの該当が無ければ 9・10 を行わない。7 で動かない機能があれば、8 へ進まずに設定先の値を確認する。

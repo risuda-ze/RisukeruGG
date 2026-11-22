@@ -16,6 +16,7 @@ import { subscribeTeamAiSettings, EMPTY_AI_SETTINGS } from '@/lib/repositories/a
 import { createSchedule } from '@/lib/repositories/schedules';
 import { createTask, updateTask } from '@/lib/repositories/tasks';
 import { createCollabSession } from '@/lib/repositories/collabs';
+import { canRegisterProposals } from '@/lib/ai/proposalPermission';
 import type { Task, TeamAiSettings } from '@/types/entities';
 import { Icon } from '@/components/ui/Icon';
 
@@ -106,6 +107,8 @@ function formatDateTimeDisplay(iso: string): string {
 interface ProposalCardProps {
   proposals: Proposal[];
   status: ProposalStatus;
+  /** 登録・更新できるか。スタッフはタスク・コラボの提案を登録できない */
+  canRegister: boolean;
   onConfirm: () => void;
   onReject: () => void;
   /** task_update の差分表示用: taskId から現在値を引く（見つからなければ null） */
@@ -198,7 +201,7 @@ function ProposalItemDetail({
   );
 }
 
-function ProposalCard({ proposals, status, onConfirm, onReject, resolveTask }: ProposalCardProps) {
+function ProposalCard({ proposals, status, canRegister, onConfirm, onReject, resolveTask }: ProposalCardProps) {
   const first = proposals[0];
   if (!first) return null;
   const isMultiple = proposals.length > 1;
@@ -242,6 +245,10 @@ function ProposalCard({ proposals, status, onConfirm, onReject, resolveTask }: P
         </div>
       ) : status === 'error' ? (
         <p className="text-[13px] text-live pt-1">登録に失敗しました。もう一度お試しください。</p>
+      ) : !canRegister ? (
+        <p className="text-[13px] text-text-muted pt-1">
+          タスク・コラボの登録と更新はメンバーのみ行えます。メンバーに依頼してください。
+        </p>
       ) : (
         <div className="flex gap-2 pt-1">
           <button
@@ -297,6 +304,7 @@ export function AIChatPage() {
   // アプリデータ
   const members = useAuthStore((s) => s.members);
   const currentUser = useAuthStore((s) => s.currentUser);
+  const myRole = members.find((m) => m.userId === currentUser?.uid)?.role ?? null;
   const currentTeamId = useAuthStore((s) => s.currentTeamId);
   const tasks = useTasksStore((s) => s.tasks);
   const columns = useTasksStore((s) => s.columns);
@@ -475,6 +483,8 @@ export function AIChatPage() {
   // ── Firestore への登録実行 ────────────────────────────────────
   async function handleRegister() {
     if (pendingProposals.length === 0 || !currentTeamId || !currentUser) return;
+    // 権限のない提案は登録しない（カードに案内を出す）。確認の返信文からの登録も同じ判定を通す
+    if (!canRegisterProposals(myRole, pendingProposals)) return;
     setProposalStatus('loading');
 
     try {
@@ -647,6 +657,7 @@ export function AIChatPage() {
           <ProposalCard
             proposals={proposals}
             status={proposalStatus}
+            canRegister={canRegisterProposals(myRole, proposals)}
             onConfirm={handleRegister}
             onReject={handleReject}
             resolveTask={resolveTaskSummary}

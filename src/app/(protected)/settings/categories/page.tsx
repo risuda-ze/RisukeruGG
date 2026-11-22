@@ -80,7 +80,7 @@ function KanbanStatusSettings() {
   const teamId = currentTeam?.id;
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const isOperator = myMember?.role === 'operator';
+  const isMember = myMember?.role === 'member';
 
   useEffect(() => {
     if (!teamId) return;
@@ -226,7 +226,7 @@ function KanbanStatusSettings() {
               <span className="text-[11px] text-text-muted font-num shrink-0">
                 {tasks.filter((t) => t.columnId === col.id).length}件
               </span>
-              {isOperator && (
+              {isMember && (
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleMoveUp(index)}
@@ -273,7 +273,7 @@ function KanbanStatusSettings() {
       </Card>
 
       {/* ステータス追加 */}
-      {isOperator && (
+      {isMember && (
         <Card>
           <h4 className="text-sm font-medium text-text mb-3">ステータスを追加</h4>
           <form onSubmit={handleAddColumn} className="space-y-3">
@@ -508,7 +508,7 @@ function CategorySettings() {
   const teamId = currentTeam?.id;
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const isOperator = myMember?.role === 'operator';
+  const isMember = myMember?.role === 'member';
 
   useEffect(() => {
     if (!teamId) return;
@@ -615,7 +615,7 @@ function CategorySettings() {
                 )}
               </div>
               <span className="flex-1 text-sm text-text">{cat.name}</span>
-              {isOperator && (
+              {isMember && (
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => {
@@ -644,7 +644,7 @@ function CategorySettings() {
       </Card>
 
       {/* カテゴリ追加 */}
-      {isOperator && (
+      {isMember && (
         <Card>
           <h4 className="text-sm font-medium text-text mb-3">カテゴリを追加</h4>
           <form onSubmit={handleAdd} className="space-y-3">

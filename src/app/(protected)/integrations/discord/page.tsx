@@ -43,7 +43,7 @@ export default function DiscordIntegrationPage() {
   const members = useAuthStore((s) => s.members);
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const isOperator = myMember?.role === 'operator';
+  const isMember = myMember?.role === 'member';
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -122,13 +122,13 @@ export default function DiscordIntegrationPage() {
 
             {/* 右: 設定セクション */}
             <div className="space-y-5">
-              <DiscordSettingsSection teamId={teamId} isOperator={isOperator} />
-              {!isOperator && (
+              <DiscordSettingsSection teamId={teamId} isMember={isMember} />
+              {!isMember && (
                 <p
                   className="text-[12px] text-center pb-4"
                   style={{ color: 'var(--text-muted)' }}
                 >
-                  Discord連携の設定はチームの「オペレーター」のみが行えます。
+                  Discord連携の設定はチームの「メンバー」のみが行えます。
                 </p>
               )}
             </div>

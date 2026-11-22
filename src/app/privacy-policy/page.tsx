@@ -110,7 +110,7 @@ export default function PrivacyPolicyPage() {
               Discord ユーザー名およびユーザーID（Discord連携でメンションを受け取るために任意で登録するもの）
             </li>
             <li>
-              Discord サーバーID、チャンネルID、Webhook URL（チームの Discord 連携設定。オペレーターのみが登録・閲覧）
+              Discord サーバーID、チャンネルID、Webhook URL（チームの Discord 連携設定。メンバーのみが登録・閲覧）
             </li>
           </ul>
 
@@ -287,10 +287,10 @@ export default function PrivacyPolicyPage() {
             Discord連携を有効にしたチームでは、スケジュール、タスク、ブリーフの内容（タイトル、担当者名、締切、進捗等）が、チームが指定した Discord サーバーのチャンネルおよびスレッドへ送信されます。送信された情報は Discord Inc.（米国）が同社のプライバシーポリシーに基づき取り扱います。
           </p>
           <p className="text-sm text-text-muted leading-relaxed mb-3">
-            当方は、Discord 上での情報の閲覧、保存、拡散について管理を行わず、責任を負いません。Bot を導入する Discord サーバーの参加者、権限およびチャンネルの設定は、チームのオペレーターの責任で管理してください。
+            当方は、Discord 上での情報の閲覧、保存、拡散について管理を行わず、責任を負いません。Bot を導入する Discord サーバーの参加者、権限およびチャンネルの設定は、チームのメンバーの責任で管理してください。
           </p>
           <p className="text-sm text-text-muted leading-relaxed">
-            Discord連携の有効・無効および送信先の設定は、チームのオペレーターがいつでも変更できます。メンション用に登録した Discord ユーザー名・ユーザーIDは、利用者本人がいつでも削除でき、アカウント削除時にはメンバー情報とともに消去されます。当方は Discord のメッセージ本文やアカウントの認証情報を取得・保持しません。
+            Discord連携の有効・無効および送信先の設定は、チームのメンバーがいつでも変更できます。メンション用に登録した Discord ユーザー名・ユーザーIDは、利用者本人がいつでも削除でき、アカウント削除時にはメンバー情報とともに消去されます。当方は Discord のメッセージ本文やアカウントの認証情報を取得・保持しません。
           </p>
         </Section>
 

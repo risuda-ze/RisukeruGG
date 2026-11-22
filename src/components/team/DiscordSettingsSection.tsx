@@ -13,19 +13,19 @@ import type { DiscordTeamConfig } from '@/types/entities';
 
 interface DiscordSettingsSectionProps {
   teamId: string;
-  isOperator: boolean;
+  isMember: boolean;
 }
 
 /**
  * チーム設定画面の Discord 連携セクション。
- * operator のみ設定変更可（member/rom には非表示）。
+ * メンバーのみ設定変更可（スタッフには非表示）。
  *
  * 3つの状態を管理する:
  * - 未招待: 「Botをサーバーに追加」ボタンを表示
  * - channel-select: Bot招待完了後、通知チャンネルを選択
  * - 招待済み: 接続済み状態を表示（チャンネル名 + 解除ボタン）
  */
-export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSectionProps) {
+export function DiscordSettingsSection({ teamId, isMember }: DiscordSettingsSectionProps) {
   const idToken = useAuthStore((s) => s.idToken);
   const searchParams = useSearchParams();
   const discordParam = searchParams.get('discord');
@@ -62,7 +62,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
   const [notifyBefore15min, setNotifyBefore15min] = useState(true);
   const [savingWebhook, setSavingWebhook] = useState(false);
 
-  const loading = isOperator && loadedTeamId !== teamId;
+  const loading = isMember && loadedTeamId !== teamId;
   const pendingNonce =
     discordParam === 'channel-select' && nonce && nonce !== dismissedNonce ? nonce : null;
 
@@ -79,7 +79,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
 
   // 設定を読み込む
   useEffect(() => {
-    if (!isOperator || !idToken) return;
+    if (!isMember || !idToken) return;
     let cancelled = false;
 
     fetchConfig()
@@ -118,7 +118,7 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
     return () => {
       cancelled = true;
     };
-  }, [teamId, isOperator, idToken, fetchConfig]);
+  }, [teamId, isMember, idToken, fetchConfig]);
 
   // URL クエリパラメータから Bot 招待フローの状態を読み取る
   useEffect(() => {
@@ -371,8 +371,8 @@ export function DiscordSettingsSection({ teamId, isOperator }: DiscordSettingsSe
     }).catch(() => {});
   }
 
-  // operator 以外には表示しない
-  if (!isOperator) return null;
+  // メンバー以外には表示しない
+  if (!isMember) return null;
 
   if (loading) {
     return (

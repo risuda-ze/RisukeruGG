@@ -64,7 +64,7 @@ export const AI_CAPABILITIES: AiCapability[] = [
   {
     id: 'playbook_learning',
     name: '運用から進め方の修正を提案する',
-    description: '実際の順序・担当・日数・求められた情報・飛ばされた工程から、進め方の修正案を作る。検出は決定的に行い、AI は提案文の生成に使う。承認はオペレーター。',
+    description: '実際の順序・担当・日数・求められた情報・飛ばされた工程から、進め方の修正案を作る。検出は決定的に行い、AI は提案文の生成に使う。承認はメンバー。',
     surfaces: ['background'],
     stage: 'planned',
     promptId: null,
