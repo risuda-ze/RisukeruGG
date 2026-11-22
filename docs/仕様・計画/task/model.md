@@ -30,15 +30,15 @@ Firestore コレクション配置: `teams/{teamId}/tasks/{taskId}`
 
 Firestore コレクション配置: `teams/{teamId}/taskStatuses/{columnId}`
 
-| フィールド  | 型 / 例          | 意味                                   |
-| ----------- | ---------------- | -------------------------------------- |
-| `id`        | string           | Firestore ドキュメント ID              |
-| `name`      | string           | 列名                                   |
-| `order`     | number           | 左からの表示順                         |
-| `color`     | string           | 列色                                   |
-| `icon`      | string           | 表示用アイコン                         |
-| `role`      | `'done'` \| null | 完了列なら `'done'`、それ以外は `null` |
-| `createdAt` | timestamp        | 作成日時                               |
+| フィールド  | 型 / 例          | 意味                                        |
+| ----------- | ---------------- | ------------------------------------------- |
+| `id`        | string           | Firestore ドキュメント ID                   |
+| `name`      | string           | 列名                                        |
+| `order`     | number           | 左からの表示順                              |
+| `color`     | string           | 列色                                        |
+| `icon`      | string \| null   | 表示用アイコン。任意設定（未設定は `null`） |
+| `role`      | `'done'` \| null | 完了列なら `'done'`、それ以外は `null`      |
+| `createdAt` | timestamp        | 作成日時                                    |
 
 ## Category（タスク・スケジュール共通）
 
