@@ -26,7 +26,9 @@
 
 ### 適用待ちの一回性スクリプト
 
-現在は無し。追加するときは、コマンド・スクリプト・目的・実行タイミングをここに表で載せる。
+| コマンド | スクリプト | 目的・実行タイミング |
+| --- | --- | --- |
+| `node scripts/migrate-roles-to-staff.mjs` | `migrate-roles-to-staff.mjs` | ロール移行の本番作業①（`docs/変更仕様/two-roles.md`）。`teams/*/members/*` の旧 `member` / `rom` / `editor` / `viewer` を `staff` へ書き換える。**PR A の本番反映後、PR B のデプロイ前**に実行する。PR B のデプロイ後は実行しない（新 `member`＝管理者を `staff` に落とす）。適用後にスクリプトとこの表の行を削除する |
 
 共通仕様:
 
@@ -63,3 +65,22 @@ pnpm cleanup:discord-invite-temp -- --apply
 ```
 
 実行タイミング: 必要時のみ（Bot 招待フローの失敗が続いた後など）。定期実行は不要。
+
+---
+
+## migrate-roles-to-staff — ロールを staff へ寄せる（本番作業①）
+
+1. dry-run で role ごとの件数と、書き換え対象・未知の値を確認する
+
+```powershell
+node scripts/migrate-roles-to-staff.mjs
+```
+
+2. 本適用
+
+```powershell
+node scripts/migrate-roles-to-staff.mjs --apply
+```
+
+3. dry-run を再実行し、「旧 member / rom / editor / viewer は 0 件です」と出ることを確認する。**0 件を確認するまで PR B をデプロイしない**
+4. 未知の role が表示された場合は終了コード 2 になる。書き換えは行わないので、内容を確認して扱いを決める
