@@ -30,11 +30,14 @@ const dateLabel = (date: Date | null) =>
 export default function VideoRequestsPage() {
   const currentTeam = useAuthStore((s) => s.currentTeam);
   const currentUser = useAuthStore((s) => s.currentUser);
+  const members = useAuthStore((s) => s.members);
   const [requests, setRequests] = useState<VideoRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingRequest, setEditingRequest] = useState<VideoRequest | null>(null);
+  const canManageVideoRequests =
+    members.find((member) => member.userId === currentUser?.uid)?.role === 'member';
 
   useEffect(() => {
     if (!currentTeam) return;
@@ -67,6 +70,7 @@ export default function VideoRequestsPage() {
       <TopBar title="動画依頼" subtitle="依頼・納品・修正依頼をDiscordと同期します">
         <Button
           size="sm"
+          disabled={!canManageVideoRequests}
           onClick={() => {
             setEditingRequest(null);
             setShowForm((open) => !open);
@@ -111,7 +115,7 @@ export default function VideoRequestsPage() {
                 key={request.id}
                 request={request}
                 teamId={currentTeam.id}
-                canManageResources={currentTeam.operatorUids.includes(currentUser?.uid ?? '')}
+                canManageResources={canManageVideoRequests}
                 onEdit={() => {
                   setEditingRequest(request);
                   setShowForm(true);

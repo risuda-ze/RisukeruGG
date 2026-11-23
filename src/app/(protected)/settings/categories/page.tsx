@@ -197,7 +197,7 @@ function KanbanStatusSettings() {
         </p>
       </div>
 
-      {isOperator && <VideoRequestSettings key={teamId} teamId={teamId} columns={columns} />}
+      {isMember && <VideoRequestSettings key={teamId} teamId={teamId} columns={columns} />}
 
       {/* ステータス一覧 */}
       <Card noPadding>

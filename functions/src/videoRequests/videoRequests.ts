@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { onCall, type CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
-import { db, getAuthContext, requireOperator, requireOwnerOrEditor } from '../lib/validateAuth';
+import { db, getAuthContext, requireMemberRole } from '../lib/validateAuth';
 
 import { videoRequestColumns } from './columns';
 
@@ -175,7 +175,7 @@ export const createVideoRequest = onCall(
     const input = request.data;
     validateInput(input);
     const ctx = await getAuthContext(request, input.teamId);
-    requireOwnerOrEditor(ctx);
+    requireMemberRole(ctx);
     const videoRequestRef = db.collection(`teams/${input.teamId}/videoRequests`).doc();
     const taskRef = db.collection(`teams/${input.teamId}/tasks`).doc();
     const thumbnailTask = taskRef.parent.doc();
@@ -287,7 +287,7 @@ export const updateVideoRequest = onCall(
       throw new HttpsError('invalid-argument', '動画依頼が指定されていません');
     validateInput(input);
     const ctx = await getAuthContext(request, input.teamId);
-    requireOwnerOrEditor(ctx);
+    requireMemberRole(ctx);
     const requestRef = db.doc(`teams/${input.teamId}/videoRequests/${input.videoRequestId}`);
     const now = FieldValue.serverTimestamp();
     await db.runTransaction(async (tx) => {
@@ -388,7 +388,7 @@ export const retryVideoRequestDiscord = onCall(
     if (!teamId || !videoRequestId)
       throw new HttpsError('invalid-argument', '動画依頼が指定されていません');
     const ctx = await getAuthContext(request, teamId);
-    requireOperator(ctx);
+    requireMemberRole(ctx);
     const ref = db.doc(`teams/${teamId}/videoRequests/${videoRequestId}`);
     const now = FieldValue.serverTimestamp();
     await db.runTransaction(async (tx) => {
@@ -424,7 +424,7 @@ export const reviewThumbnail = onCall(
     }>
   ) => {
     const { teamId, videoRequestId, action } = request.data;
-    requireOwnerOrEditor(await getAuthContext(request, teamId));
+    requireMemberRole(await getAuthContext(request, teamId));
     const message = request.data.message?.trim();
     if (action !== 'approve' && (action !== 'revise' || !message || message.length > 1500))
       throw new HttpsError('invalid-argument', '修正内容を入力してください');
@@ -471,7 +471,7 @@ export const requestVideoRevision = onCall(
     if (!teamId || !videoRequestId || !message?.trim())
       throw new HttpsError('invalid-argument', '必須項目が不足しています');
     const ctx = await getAuthContext(request, teamId);
-    requireOwnerOrEditor(ctx);
+    requireMemberRole(ctx);
     const ref = db.doc(`teams/${teamId}/videoRequests/${videoRequestId}`);
     const snap = await ref.get();
     if (!snap.exists) throw new HttpsError('not-found', '動画依頼が見つかりません');
@@ -507,7 +507,7 @@ export const approveVideoRequest = onCall(
   async (request: CallableRequest<{ teamId: string; videoRequestId: string }>) => {
     const { teamId, videoRequestId } = request.data;
     const ctx = await getAuthContext(request, teamId);
-    requireOwnerOrEditor(ctx);
+    requireMemberRole(ctx);
     const ref = db.doc(`teams/${teamId}/videoRequests/${videoRequestId}`);
     const snap = await ref.get();
     if (!snap.exists) throw new HttpsError('not-found', '動画依頼が見つかりません');
@@ -558,7 +558,7 @@ export const addVideoOwnerResourceUrl = onCall(
       );
     }
     const ctx = await getAuthContext(request, teamId);
-    requireOperator(ctx);
+    requireMemberRole(ctx);
     const ref = db.doc(`teams/${teamId}/videoRequests/${videoRequestId}`);
     const snap = await ref.get();
     if (!snap.exists) throw new HttpsError('not-found', '動画依頼が見つかりません');

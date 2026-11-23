@@ -1,5 +1,5 @@
 import { onCall, type CallableRequest, HttpsError } from 'firebase-functions/v2/https';
-import { db, getAuthContext, requireOwnerOrEditor } from '../lib/validateAuth';
+import { db, getAuthContext, requireMemberRole } from '../lib/validateAuth';
 
 /**
  * タスクを削除する。
@@ -11,7 +11,7 @@ export const deleteTask = onCall(
     const { teamId, taskId } = request.data;
     if (!teamId || !taskId) throw new HttpsError('invalid-argument', 'タスクが指定されていません');
     const ctx = await getAuthContext(request, teamId);
-    requireOwnerOrEditor(ctx);
+    requireMemberRole(ctx);
     const taskRef = db.doc(`teams/${teamId}/tasks/${taskId}`);
 
     await db.runTransaction(async (tx) => {

@@ -45,7 +45,7 @@ function getBotToken(): string | null {
   return token ?? null;
 }
 
-/** ギルド内のチャンネル一覧を取得する。 */
+/** 指定したDiscordサーバーのチャンネル一覧を取得する。 */
 export async function listGuildChannels(guildId: string): Promise<DiscordChannel[] | null> {
   const botToken = getBotToken();
   if (!botToken) return null;
