@@ -180,12 +180,23 @@ service cloud.firestore {
 
       match /settings/videoRequests {
         allow read: if isTeamMember(teamId);
-        allow create, update: if isTeamOwner(teamId) &&
-          request.resource.data.keys().hasOnly(['pendingColumnId', 'progressColumnId', 'reviewColumnId', 'createThumbnailTask']) &&
+        allow create, update: if isMemberRole(teamId) &&
+          request.resource.data.keys().hasOnly([
+            'pendingColumnId', 'progressColumnId', 'reviewColumnId', 'createThumbnailTask', 'routing'
+          ]) &&
           request.resource.data.createThumbnailTask is bool &&
           request.resource.data.pendingColumnId is string &&
           request.resource.data.progressColumnId is string &&
-          request.resource.data.reviewColumnId is string;
+          request.resource.data.reviewColumnId is string &&
+          request.resource.data.routing is map &&
+          request.resource.data.routing.keys().hasOnly([
+            'editorChannelId', 'thumbnailChannelId', 'thumbnailLongIds', 'thumbnailShortIds', 'editorChannels'
+          ]) &&
+          request.resource.data.routing.editorChannelId is string &&
+          request.resource.data.routing.thumbnailChannelId is string &&
+          request.resource.data.routing.thumbnailLongIds is list &&
+          request.resource.data.routing.thumbnailShortIds is list &&
+          request.resource.data.routing.editorChannels is map;
       }
 
       match /taskStatuses/{columnId} {
