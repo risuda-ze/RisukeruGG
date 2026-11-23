@@ -14,7 +14,7 @@ export type ReleaseNote = {
 /** 新しい順に並べる */
 export const RELEASE_NOTES: ReleaseNote[] = [
   {
-    version: '0.3.0',
+    version: '0.2.2',
     date: '2026-11-24',
     body: `
 ### 見どころ！
