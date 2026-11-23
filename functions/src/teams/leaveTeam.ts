@@ -43,6 +43,11 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
   }
 
   const result = await db.runTransaction(async (tx) => {
+    // Firestore トランザクションの制約: 読み取りは書き込みより前に実行する必要がある
+    const tasksSnap = await tx.get(
+      db.collection(`teams/${teamId}/tasks`).where('assigneeId', '==', uid)
+    );
+
     const now = FieldValue.serverTimestamp();
 
     tx.delete(db.doc(`teams/${teamId}/members/${uid}`));
@@ -52,9 +57,6 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
       if (existingTeamCode) tx.delete(db.doc(`teamCodes/${existingTeamCode}`));
     }
 
-    const tasksSnap = await tx.get(
-      db.collection(`teams/${teamId}/tasks`).where('assigneeId', '==', uid)
-    );
     for (const taskDoc of tasksSnap.docs) {
       tx.update(taskDoc.ref, { assigneeId: null });
     }
