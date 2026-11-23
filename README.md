@@ -176,7 +176,7 @@ Windows では `scripts\seed.bat` をダブルクリックしても同じです�
 | 種別         | 内容                                           |
 | ------------ | ---------------------------------------------- |
 | チーム       | 2チーム（配信チームα / 編集チームβ）           |
-| メンバー     | 6人（operator×2・member×2・rom×2）             |
+| メンバー     | 6人（member×2・staff×4）                       |
 | スケジュール | 先月・当月・来月分（週1回配信 + 毎週土曜動画） |
 | タスク       | 14件（未着手・進行中・完了 + 連携有無を網羅）  |
 | 通知         | 10件（すべて未読）                             |
@@ -186,12 +186,12 @@ Windows では `scripts\seed.bat` をダブルクリックしても同じです�
 
 | 表示名           | メールアドレス     | ロール   |
 | ---------------- | ------------------ | -------- |
-| 配信太郎         | taro@example.com   | operator |
-| 運営花子         | hanako@example.com | operator |
-| マネージャー健太 | kenta@example.com  | member   |
-| ROM三郎          | saburo@example.com | rom      |
-| サポート里奈     | rina@example.com   | member   |
-| ROM美香          | mika@example.com   | rom      |
+| 配信太郎         | taro@example.com   | member   |
+| 運営花子         | hanako@example.com | member   |
+| マネージャー健太 | kenta@example.com  | staff    |
+| ROM三郎          | saburo@example.com | staff    |
+| サポート里奈     | rina@example.com   | staff    |
+| ROM美香          | mika@example.com   | staff    |
 
 ---
 
