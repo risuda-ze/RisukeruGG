@@ -178,6 +178,16 @@ service cloud.firestore {
                         validMemberProfile(request.resource.data);
       }
 
+      match /settings/videoRequests {
+        allow read: if isTeamMember(teamId);
+        allow create, update: if isTeamOwner(teamId) &&
+          request.resource.data.keys().hasOnly(['pendingColumnId', 'progressColumnId', 'reviewColumnId', 'createThumbnailTask']) &&
+          request.resource.data.createThumbnailTask is bool &&
+          request.resource.data.pendingColumnId is string &&
+          request.resource.data.progressColumnId is string &&
+          request.resource.data.reviewColumnId is string;
+      }
+
       match /taskStatuses/{columnId} {
         allow read: if isTeamMember(teamId);
         allow write: if isMemberRole(teamId);
@@ -200,8 +210,9 @@ service cloud.firestore {
 
       match /tasks/{taskId} {
         allow read: if isTeamMember(teamId);
-        allow update: if isMemberRole(teamId) && createdByUnchanged();
-        allow delete: if isMemberRole(teamId);
+          allow update: if isMemberRole(teamId) && createdByUnchanged();
+          // 関連する動画依頼も整合させるため、削除は deleteTask 経由に限定する。
+          allow delete: if false;
         allow create: if false;
       }
 
@@ -297,6 +308,17 @@ service cloud.firestore {
           allow read: if isTeamMember(teamId);
           allow create: if isTeamMember(teamId);
           allow update, delete: if false;
+        }
+      }
+
+      // 動画依頼。作成・更新は Cloud Functions、Bot は Admin SDK で処理する。
+      match /videoRequests/{requestId} {
+        allow read: if isTeamMember(teamId);
+        allow write: if false;
+
+        match /discordEvents/{eventId} {
+          allow read: if isTeamMember(teamId);
+          allow write: if false;
         }
       }
 

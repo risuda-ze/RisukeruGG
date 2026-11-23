@@ -6,6 +6,7 @@
 
 ## 対象範囲
 
+- [動画依頼](../video-request/README.md)のスレッド作成（Functions）・納品受付（既存Botの署名付きInteractions Endpoint）
 - Discord 連携設定画面（`/integrations/discord`）
 - チームごとの Discord 通知設定（`teams/{teamId}/discord/config`）
 - スケジュール通知の Discord 配送（Bot API / Webhook フォールバック）

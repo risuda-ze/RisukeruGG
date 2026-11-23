@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { handleAiConversation } from './handlers/handleRisukerugg';
 import { handleButtonClick } from './handlers/handleButtonClick';
 import { buildPresetChoices } from './handlers/handlePresetAutocomplete';
+import { deliveryModal, handleDelivery } from './handlers/handleVideoDelivery';
 import { handleStepButton } from './handlers/handleStepButton';
 
 /** Discord Interaction タイプ定数 */
@@ -13,11 +14,14 @@ const InteractionType = {
   APPLICATION_COMMAND: 2,
   MESSAGE_COMPONENT: 3,
   APPLICATION_COMMAND_AUTOCOMPLETE: 4,
+  MODAL_SUBMIT: 5,
 } as const;
 
 /** Zod スキーマ: Discord Interaction ペイロードのランタイムバリデーション */
 const InteractionSchema = z.object({
   type: z.number(),
+  channel_id: z.string().optional(),
+  message: z.object({ id: z.string() }).optional(),
   guild_id: z.string().optional(),  // サーバー内コマンドの場合に含まれる（DM では undefined）
   id: z.string().optional(),
   token: z.string().optional(),
@@ -26,6 +30,9 @@ const InteractionSchema = z.object({
     .object({
       name: z.string().optional(),
       custom_id: z.string().optional(),
+      components: z.array(z.object({
+        components: z.array(z.object({ custom_id: z.string(), value: z.string() })),
+      })).optional(),
       options: z
         .array(
           z.object({
@@ -103,6 +110,33 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   const token = interaction.token ?? '';
+
+  const custom = interaction.data?.custom_id ?? '';
+  if ((interaction.type === InteractionType.MESSAGE_COMPONENT || interaction.type === InteractionType.MODAL_SUBMIT) && custom.startsWith('vr:')) {
+    const match = /^vr:(video|thumb|submit):([a-zA-Z0-9_-]+):([a-zA-Z0-9_-]+)$/.exec(custom);
+    const guild = interaction.guild_id;
+    const channel = interaction.channel_id;
+    const user = interaction.member?.user?.id;
+    if (!match || !guild || !channel || !user || !token || !interaction.id ||
+        (interaction.type === InteractionType.MODAL_SUBMIT) !== (match[1] === 'submit')) {
+      return Response.json({ type: 4, data: { flags: 64, content: 'この納品操作は使えません。' } });
+    }
+    if (match[1] === 'video') return Response.json(deliveryModal(custom));
+    const fields = interaction.data?.components?.flatMap(row => row.components) ?? [];
+    waitUntil(handleDelivery({
+      kind: match[1] === 'thumb' ? 'thumb' : 'submit',
+      teamId: match[2],
+      requestId: match[3],
+      guild, channel, user,
+      app: appId,
+      token,
+      interaction: interaction.id,
+      buttonId: interaction.message?.id,
+      url: fields.find(field => field.custom_id === 'url')?.value.trim() ?? '',
+      note: fields.find(field => field.custom_id === 'note')?.value.trim() ?? '',
+    }));
+    return Response.json({ type: 5 });
+  }
 
   // ─── オートコンプリート（/risukerugg preset の候補。IN-030） ─────────
   if (interaction.type === InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE) {

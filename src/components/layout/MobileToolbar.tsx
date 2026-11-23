@@ -33,6 +33,7 @@ interface DrawerItem {
 const DRAWER_ITEMS: DrawerItem[] = [
   { label: '対応不可時間',   icon: 'person_off',      href: '/unavailability' },
   { label: 'タスク管理 v2（β）', icon: 'event_available', href: '/briefs' },
+  { label: '動画依頼',        icon: 'event_available', href: '/video-requests' },
   { label: 'チーム管理',      icon: 'groups',          href: '/team' },
   { label: 'カテゴリ設定', icon: 'task_alt',        href: '/settings/categories' },
   { label: 'AI設定',       icon: 'auto_awesome',    href: '/settings/ai' },

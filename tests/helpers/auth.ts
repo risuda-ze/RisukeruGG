@@ -38,6 +38,14 @@ export async function signInWithEmulator(
     throw new Error(`Auth Emulator サインイン失敗: ${JSON.stringify(user.error ?? user)}`);
   }
 
+  // SDKの初期化とテスト用トークンの保存が競合しないよう、同一オリジンの空ページで書き込む。
+  const appUrl = page.url();
+  const setupUrl = new URL('/__e2e_auth_setup', appUrl).href;
+  await page.route(setupUrl, (route) => route.fulfill({ contentType: 'text/html', body: '' }), {
+    times: 1,
+  });
+  await page.goto(setupUrl);
+
   // Step 2: Firebase Auth が使う IndexedDB にトークンを書き込む
   await page.evaluate(
     async ({ user, apiKey }) => {
@@ -103,13 +111,7 @@ export async function signInWithEmulator(
     { user, apiKey: FIREBASE_API_KEY }
   );
 
-  // Step 3: ページをリロードして Firebase が IndexedDB から auth state を読み込むのを待つ
-  await page.reload();
-  // Firebase Auth の初期化完了を待つ（loadingState が false になるまで）
-  await page.waitForFunction(
-    () =>
-      (window as Window & { __firebaseEmulatorsConnected?: boolean })
-        .__firebaseEmulatorsConnected === true,
-    { timeout: 10000 }
-  );
+  // 接続フラグは認証の復元前に立つため、保護されたアプリシェルの表示を待つ。
+  await page.goto('/dashboard');
+  await page.locator('main').waitFor({ state: 'visible' });
 }
