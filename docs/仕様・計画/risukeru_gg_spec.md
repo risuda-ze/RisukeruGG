@@ -147,9 +147,9 @@
 
 - **NFR-001**: 初回表示（LCP）は 4G 回線のモバイル端末で 3 秒以内
 - **NFR-002**: インタラクション応答（INP）は 100ms 以内
-- **NFR-003**: リアルタイムデータ更新は全チームメンバーに 1 秒以内に反映
+- **NFR-003**: リアルタイムデータ更新はチームの全所属者に 1 秒以内に反映
 - **NFR-004**: サービス稼働率 99.5% 以上
-- **NFR-005**: チームメンバーのデータは自チームのデータのみ読み書き可能（クロスチームアクセス禁止）
+- **NFR-005**: 所属者は自チームのデータのみ読み書き可能（クロスチームアクセス禁止）
 - **NFR-006**: ロールに応じた書き込み権限制御はサーバーサイドで強制（クライアントのみの制御は不可）
 - **NFR-007**: 全通信は HTTPS 経由
 - **NFR-008**: PC（Chrome/Edge/Firefox 最新 2 バージョン）と Android Chrome（最新 2 バージョン）で動作
@@ -168,7 +168,7 @@
 | **User**                                 | 詳細は [user/model.md](./user/model.md) を参照。認証済みアカウントの active / ghost 状態と保持フィールドを管理                                 |
 | **Plan**                                 | 詳細は [plan/model.md](./plan/model.md) を参照。プラン種別、月次カウント、保存先と制限判定を管理                                               |
 | **Team**                                 | 詳細は [team/model.md](./team/model.md) を参照。チームの保持フィールドと Firestore コレクション配置を管理                                      |
-| **TeamMember**                           | 詳細は [team/model.md](./team/model.md) を参照。ロール（operator/member/rom）と所属関係を管理                                                  |
+| **TeamMember**                           | 詳細は [team/model.md](./team/model.md) を参照。ロール（member/staff）と所属関係を管理                                                      |
 | **TaskStatus**                           | 詳細は [task/model.md](./task/model.md) を参照。タスク列定義と完了列判定を task カテゴリで正本化する                                           |
 | **Category**                             | 詳細は [task/model.md](./task/model.md) を参照。タスク・スケジュール共通の統合カテゴリ定義とコレクション配置を task カテゴリで正本化する       |
 | **ScheduleEntry**                        | title, startAt, endAt, allDay, platform, description, participantIds, categoryId（Category 参照）, version（楽観的ロック用）                   |

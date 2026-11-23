@@ -33,7 +33,7 @@ const del = async (path, auth) =>
 
 const OWNER = 'owner'; // rules を迂回する（seed と同じ）
 
-// 所属者: 管理者（member・移行互換の operator）、スタッフ（staff・旧 rom）
+// 所属者: 管理者（member）、スタッフ（staff。旧 operator / rom も staff 扱い）
 const roles = { mem: 'member', op: 'operator', st: 'staff', st2: 'staff', rom: 'rom' };
 for (const [uid, role] of Object.entries(roles)) {
   assert.equal(await put(`teams/t1/members/${uid}`, { role: str(role) }, OWNER), 200);
@@ -52,7 +52,7 @@ ng(await patch('teams/t1/schedules/s_st', { title: str('z') }, t.st2), '他の�
 ng(await patch('teams/t1/schedules/s_st', { createdBy: str('st2') }, t.st), '作成者の書き換え');
 ng(await patch('teams/t1/schedules/s_st', { createdBy: str('st2') }, t.mem), 'メンバーでも作成者は書き換え不可');
 ok(await patch('teams/t1/schedules/s_st', { title: str('m') }, t.mem), 'メンバーは他人のスケジュールを編集');
-ok(await patch('teams/t1/schedules/s_st', { title: str('o') }, t.op), '移行互換: operator も編集');
+ng(await patch('teams/t1/schedules/s_st', { title: str('o') }, t.op), '旧 operator は管理者ではない');
 ng(await patch('teams/t1/schedules/s_st', { title: str('r') }, t.rom), '旧 rom は他人分を編集不可');
 ng(await del('teams/t1/schedules/s_st', t.st2), '他のスタッフは削除不可');
 ok(await del('teams/t1/schedules/s_st', t.st), '作成者は自分のスケジュールを削除');

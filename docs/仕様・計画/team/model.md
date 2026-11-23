@@ -24,7 +24,7 @@ Team は共同作業単位を表す。TeamMember はユーザーとチームの�
 | `role`        | `member` \| `staff`             | チーム内ロール（`member` = メンバー、`staff` = スタッフ） |
 | `displayName` | string                          | UI 表示に使う名前        |
 | `avatarUrl`   | string \| null                  | アイコン画像 URL         |
-| `plan`        | `light` \| `party`              | このメンバーの現在プラン |
+| `plan`        | `light` \| `party`              | この所属者の現在プラン |
 | `joinedAt`    | timestamp                       | チーム参加日時           |
 | `discordUsername` | string \| null              | Discord のユーザー名（`@` の後ろの一意な名前）。メンション用に本人またはメンバーが任意登録（TE-012）。旧ドキュメントには存在せず null 扱い |
 | `discordUserId`   | string \| null              | `discordUsername` をサーバー内検索で解決した Discord ユーザー ID のキャッシュ。Bot（Admin SDK）が書き込み、ユーザー名変更時にクライアントが null に戻す |
@@ -85,14 +85,7 @@ Team は共同作業単位を表す。TeamMember はユーザーとチームの�
 
 ### 後方互換
 
-Firestore 既存ドキュメントに旧値が残っている場合、読み取り時に次のルールで変換する。書き込みは常に新値（`member` / `staff`）を使用する。下表に無い未知の値は `staff` として扱う（管理者にしない）。
-
-| 旧値                                       | 新値     |
-| ------------------------------------------ | -------- |
-| `operator` / `owner`                       | `member` |
-| `rom` / `editor` / `viewer`                | `staff`  |
-
-旧 `member`（管理者ではない）は新 `member`（管理者）と意味が逆になる。そのため旧 `member` の文書は、新しい意味で読み始める前にすべて `staff` へ書き換えておく（手順は変更仕様を参照）。
+`role` が `member` 以外の値（旧値・未知の値）は、読み取り時に `staff` として扱う（管理者にしない）。書き込みは常に `member` / `staff` を使用する。
 
 ## Firestore コレクション配置
 
@@ -124,10 +117,6 @@ teamCodes/{teamCode}              ← チームコード → teamId の逆引き
 - ソロチームのメンバーが退出した場合、チームドキュメントとチームコードドキュメントは自動削除される
 - `removeTeamMember` で削除後に所属者数が 0 になった場合も同様に自動削除される（防御的処理）
 
-### 旧フィールド
-
-旧フィールド `operatorUids` / `ownerId` が残っている Team ドキュメントでも、これらは参照しない。「最後のメンバー」は `members` の `role` で判定する。
-
 ## ロール遷移
 
 ```text
@@ -148,5 +137,5 @@ member → staff  （メンバーによる降格）
 
 ### plan 側で管理するもの
 
-- チームへの参加可否判定（メンバー上限）
+- チームへの参加可否判定（所属者数の上限）
 - プラン別制限値

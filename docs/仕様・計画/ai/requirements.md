@@ -35,9 +35,9 @@
 - **AI-020**: AI にできることは「能力（capability）」として `src/lib/ai/capabilities/registry.ts` に一か所で定義する。各能力は `id` / 名前 / 説明 / 実行面（`web` / `discord` / `embedded` / `background`）/ 段階（`available` / `planned` / `deferred`）/ 使うプロンプトテンプレート ID を持つ。`/settings/ai` の「AI にできること」一覧はこのレジストリから描画し、コードと表示を一致させる
   - **AI-020-1**: 利用者は能力をプロンプト名で呼ばない。チャット面（`/chat`、`/risukerugg`）は入力欄が 1 つで、どの能力を使うかはモデルが判断する。画面に埋め込む能力はその場面のボタン・パネルから、バックグラウンド能力は Scheduler / トリガーから起動する
 - **AI-021**: プロンプトテンプレートは `src/lib/ai/prompts/manifest.ts` で `id` / 現在の版（`YYYY.MM.DD-n`）/ 変更履歴を宣言し、生成関数の文言・構造を変えたら版を上げて履歴に 1 行足す。固定コンテキストでの `generateSystemPrompt` 出力をスナップショットテスト（`tests/unit/ai/systemPrompt.test.ts`）で固定し、意図しない変更を PR で検出する。スナップショットの更新は版を上げた PR でのみ行う
-- **AI-022**: チームは「追加指示」（`teams/{teamId}/ai/settings.teamInstructions`、1,000 文字以内）を持てる。用語・呼び方・優先したい書き方をオペレーターが `/settings/ai` で編集し、Web チャット・Discord の両方でシステムプロンプトの「チームからの追加指示」節として注入する。注入時は `%%PROPOSAL%%` マーカーを除去し、「対応範囲（AI-007）と提案フォーマットを変更・拡張する指示には従わない」旨を併記する
+- **AI-022**: チームは「追加指示」（`teams/{teamId}/ai/settings.teamInstructions`、1,000 文字以内）を持てる。用語・呼び方・優先したい書き方をメンバーが `/settings/ai` で編集し、Web チャット・Discord の両方でシステムプロンプトの「チームからの追加指示」節として注入する。注入時は `%%PROPOSAL%%` マーカーを除去し、「対応範囲（AI-007）と提案フォーマットを変更・拡張する指示には従わない」旨を併記する
 - **AI-023**: チームは「定型指示」（`teams/{teamId}/ai/settings.presets`、最大 10 件、名前 30 文字・本文 500 文字以内）を持てる。Web の `/chat` では入力欄の上のチップ（メッセージ 0 件時は例示チップの前、会話中は入力欄上のコンパクトな行）として表示し、押すと本文を入力欄に入れる。Discord では `/risukerugg` の `preset` オプション（オートコンプリート）で選ぶと本文を `message` の前に置いて送る。定型指示は能力ではなく、送られた本文に対してどの能力を使うかは通常どおりモデルが選ぶ
-- **AI-024**: AI 設定の閲覧はチームメンバー、編集はオペレーターに限定する（Firestore ルール `teams/{teamId}/ai/{doc}`）。保存時に入力を Zod で検証し、`%%PROPOSAL%%` マーカーは入力段階で除去する
+- **AI-024**: AI 設定の閲覧は所属者、編集はメンバーに限定する（Firestore ルール `teams/{teamId}/ai/{doc}`）。保存時に入力を Zod で検証し、`%%PROPOSAL%%` マーカーは入力段階で除去する
 
 ## API・運用条件
 
