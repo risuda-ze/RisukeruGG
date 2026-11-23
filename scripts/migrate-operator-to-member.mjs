@@ -23,6 +23,8 @@
  *   （Emulator に向ける場合は FIRESTORE_EMULATOR_HOST を設定する。キーは不要）
  * - 既定は dry-run。実際の書き換えは --apply を指定した場合のみ行う
  * - PR B の本番反映前に実行してはならない（PR B より前は `member` が編集者を指すため、管理者が権限を失う）
+ * - 誰も利用していない時間に実行する。読み取った時点の role をもとに書き換えるため、
+ *   読み取りから書き込みまでの間に降格された人を `member` で上書きして管理者に戻してしまう
  *
  * 使い方:
  *   node scripts/migrate-operator-to-member.mjs            # 件数の確認（dry-run）
