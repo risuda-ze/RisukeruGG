@@ -215,7 +215,7 @@ service cloud.firestore {
       }
 
       // Discord 通知設定 — メンバーのみ読み書き可
-      // Webhook URL をチームメンバーから隠すためサブコレクション方式を採用
+      // Webhook URL をスタッフから隠すためサブコレクション方式を採用
       match /discord/{doc} {
         allow read, write: if isMemberRole(teamId);
       }

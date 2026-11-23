@@ -3,7 +3,7 @@
 ## Bot 招待フロー
 
 1. メンバーが `/integrations/discord` で「Botをサーバーに追加」を押す
-2. `POST /api/discord/bot-invite-start`（ID トークンで メンバー認証）が nonce を発行し、`discord_bot_invite_requests/{nonce}`（期限 10 分）へ保存して Discord OAuth2 URL（scope: `bot applications.commands`、`state=nonce`）を返す
+2. `POST /api/discord/bot-invite-start`（ID トークンでメンバー認証）が nonce を発行し、`discord_bot_invite_requests/{nonce}`（期限 10 分）へ保存して Discord OAuth2 URL（scope: `bot applications.commands`、`state=nonce`）を返す
 3. ユーザーが Discord 認証画面でサーバーを選択・許可する
 4. `GET /api/discord/bot-invite-callback` が `state`（nonce）を検証して teamId を解決し、guildId の重複（他チーム使用中）をチェックする。使用中なら `?discord=error&reason=already-linked` で設定画面へ戻す
 5. Bot トークンでチャンネル一覧を取得して `discord_bot_invite_pending/{nonce}` に一時保存し、`?discord=channel-select&nonce=...` で設定画面へリダイレクトする

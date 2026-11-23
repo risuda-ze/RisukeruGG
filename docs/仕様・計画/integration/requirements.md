@@ -3,7 +3,7 @@
 ## 権限・設定画面
 
 - **IN-001**: Discord 連携の設定 UI は `/integrations/discord` に配置し、メンバーのみ設定セクションを表示・操作できる。関連 API（設定取得・保存・招待開始・解除・チャンネル一覧取得・通知チャンネル変更）はすべて Firebase ID トークンで認証し、対象チームのメンバー（ロール）であることをサーバーサイドで検証する
-- **IN-002**: Discord 通知設定はチームのメインドキュメントではなくサブコレクション `teams/{teamId}/discord/config` に保存し、Firestore ルールで メンバーのみ読み書き可能に制限する（Webhook URL をスタッフから隠すため）
+- **IN-002**: Discord 通知設定はチームのメインドキュメントではなくサブコレクション `teams/{teamId}/discord/config` に保存し、Firestore ルールでメンバーのみ読み書き可能に制限する（Webhook URL をスタッフから隠すため）
 
 ## 通知配送
 

@@ -55,7 +55,7 @@ Firestore コレクション配置: `discord_sessions/{guildId}`（ルートコ�
 
 ## 制約（アクセス制御）
 
-- `teams/{teamId}/discord/{doc}` は Firestore ルールで メンバーのみ読み書き可（Webhook URL をスタッフから隠す）。Cloud Functions / API Route（Admin SDK）はルールをバイパスして読み取る
+- `teams/{teamId}/discord/{doc}` は Firestore ルールでメンバーのみ読み書き可（Webhook URL をスタッフから隠す）。Cloud Functions / API Route（Admin SDK）はルールをバイパスして読み取る
 - `discord_sessions` / `discord_bot_invite_requests` / `discord_bot_invite_pending` はルールで `allow read, write: if false`（Admin SDK 専用。クライアント不可）
 - 同一 `guildId` を複数チームの config が持つことは禁止（1 サーバー 1 チーム。招待時に重複チェック）
 
