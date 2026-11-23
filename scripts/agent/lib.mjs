@@ -3,7 +3,10 @@ import { spawnSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 
 export function sh(cmd, args, { allowFail = false } = {}) {
-  const r = spawnSync(cmd, args, { encoding: 'utf8', shell: process.platform === 'win32' });
+  // シェルを介さない。shell: true は引数を引用符なしで連結するため、Windows で空白を含む引数が分割される。
+  // 呼び出すのは gh / git（Windows でも .exe）だけ。.cmd のコマンドは起動できず、r.error で失敗する
+  const r = spawnSync(cmd, args, { encoding: 'utf8' });
+  if (r.error) throw new Error(`${cmd} を起動できない: ${r.error.message}`);
   if (r.status !== 0 && !allowFail) {
     throw new Error(`${cmd} ${args.join(' ')} が失敗: ${r.stderr || r.stdout}`);
   }
