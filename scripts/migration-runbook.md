@@ -29,6 +29,7 @@
 | コマンド | スクリプト | 目的・実行タイミング |
 | --- | --- | --- |
 | `node scripts/migrate-roles-to-staff.mjs` | `migrate-roles-to-staff.mjs` | ロール移行の本番作業①（`docs/変更仕様/two-roles.md`）。`teams/*/members/*` の旧 `member` / `rom` / `editor` / `viewer` を `staff` へ書き換える。**PR A の本番反映後、PR B のデプロイ前**に実行する。PR B のデプロイ後は実行しない（新 `member`＝管理者を `staff` に落とす）。適用後にスクリプトとこの表の行を削除する |
+| `node scripts/migrate-operator-to-member.mjs` | `migrate-operator-to-member.mjs` | ロール移行の本番作業②（`docs/変更仕様/two-roles.md`）。`teams/*/members/*` の旧 `operator` / `owner` を `member` へ書き換え、`teams/*` の `operatorUids` / `ownerId` を削除する。**PR B の本番反映後、PR C のデプロイ前**に実行する。PR B の反映前は実行しない（PR B より前の `member` は編集者を指すため、管理者が権限を失う）。適用後にスクリプトとこの表の行を削除する |
 
 共通仕様:
 
@@ -84,3 +85,27 @@ node scripts/migrate-roles-to-staff.mjs --apply
 
 3. dry-run を再実行し、「旧 member / rom / editor / viewer は 0 件です」と出ることを確認する。**0 件を確認するまで PR B をデプロイしない**
 4. 未知の role が表示された場合は終了コード 2 になり、「0 件です」の行は出ない。書き換えは行わないので、内容を確認して扱いを決める。旧 member が 0 件かどうかは、role ごとの件数に `member` / `rom` / `editor` / `viewer` の行が無いことで確認する
+
+---
+
+## migrate-operator-to-member — 管理者を member へ揃える（本番作業②）
+
+前提:
+
+- PR B（ルール・Functions・クライアント）が本番に反映されていること
+- **誰も利用していない時間に実施すること。** スクリプトは読み取った時点の role をもとに書き換える。読み取りから書き込みまでの間にロール変更・退出・Kick が行われると、降格された人を `member` で上書きして管理者に戻す、または対象の文書が無くなって書き込みが失敗する
+
+1. dry-run で role ごとの件数と、書き換え対象・削除対象・未知の値を確認する
+
+```powershell
+node scripts/migrate-operator-to-member.mjs
+```
+
+2. 本適用
+
+```powershell
+node scripts/migrate-operator-to-member.mjs --apply
+```
+
+3. dry-run を再実行し、「旧 operator / owner と operatorUids / ownerId は 0 件です」と出ることを確認する。**0 件を確認するまで PR C をデプロイしない**（残っていると、その人が管理者でなくなる）
+4. 未知の role が表示された場合は終了コード 2 になり、「0 件です」の行は出ない。未知の値は書き換えないので、内容を確認して扱いを決める
