@@ -24,7 +24,7 @@ Team は共同作業単位を表す。TeamMember はユーザーとチームの�
 | `role`        | `member` \| `staff`             | チーム内ロール（`member` = メンバー、`staff` = スタッフ） |
 | `displayName` | string                          | UI 表示に使う名前        |
 | `avatarUrl`   | string \| null                  | アイコン画像 URL         |
-| `plan`        | `light` \| `party`              | このメンバーの現在プラン |
+| `plan`        | `light` \| `party`              | この所属者の現在プラン |
 | `joinedAt`    | timestamp                       | チーム参加日時           |
 | `discordUsername` | string \| null              | Discord のユーザー名（`@` の後ろの一意な名前）。メンション用に本人またはメンバーが任意登録（TE-012）。旧ドキュメントには存在せず null 扱い |
 | `discordUserId`   | string \| null              | `discordUsername` をサーバー内検索で解決した Discord ユーザー ID のキャッシュ。Bot（Admin SDK）が書き込み、ユーザー名変更時にクライアントが null に戻す |
@@ -137,5 +137,5 @@ member → staff  （メンバーによる降格）
 
 ### plan 側で管理するもの
 
-- チームへの参加可否判定（メンバー上限）
+- チームへの参加可否判定（所属者数の上限）
 - プラン別制限値
