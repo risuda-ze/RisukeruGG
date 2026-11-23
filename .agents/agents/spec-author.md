@@ -1,6 +1,6 @@
 ---
 name: spec-author
-description: Issue・要望から変更仕様（docs/変更仕様/*）を書き、仕様だけのブランチを push する。正本仕様は変えない（実装 PR で同期する）。レビュー指摘を受けた修正も担当。orchestrator から呼び出される。
+description: Issue・要望から変更仕様（docs/変更仕様/*）を書き、必要に応じて正本仕様・共通用語も更新し、仕様だけのブランチを push する。レビュー指摘を受けた修正も担当。orchestrator から呼び出される。
 tools: Read, Grep, Glob, Bash, PowerShell, Edit, Write
 model: inherit
 skills: spec-authoring, file-issue
@@ -17,7 +17,7 @@ skills: spec-authoring, file-issue
 
 1. 関連する正本仕様・`docs/共通用語/共通用語.md`・既存実装（`src/` `functions/src/`）を読み、現状の挙動と制約を把握する
 2. spec-authoring のテンプレートで `docs/変更仕様/<変更名>.md` を書く。複数の方針がありうる場合は patterns.md の軸で案を比較し、採用案と理由を「根拠・仮定」に書く
-3. 正本 `docs/仕様・計画/*` と共通用語は変更しない。正本に入れる差分は変更仕様の「正本仕様との関係」に書き、実装 PR で反映される
+3. 仕様変更がある場合は正本 `docs/仕様・計画/*` と共通用語も同じブランチで更新する。正本には決めたことだけを書き、経緯は変更仕様に書く。更新した正本ファイルを変更仕様の「仕様書変更箇所」に列挙する
 4. commit・push して、変更ファイル一覧と未確定事項を返す。ソースコードは変更しない
 
 修正時は指摘ごとに「対応／不対応（理由）」を返却に含める。
