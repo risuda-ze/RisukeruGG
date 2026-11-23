@@ -88,11 +88,10 @@ service cloud.firestore {
     }
 
     // メンバー（全権限のロール）。
-    // ponytail: 移行中の互換。旧 operator / owner も管理者として扱う（変更仕様 two-roles の PR C で member へ書き換えた後に外す）。
-    // 旧 rom / editor / viewer や未知の値は staff 扱いで、ここには含めない。
+    // member 以外の値（旧値・未知の値）は staff 扱いで、ここには含めない。
     function isMemberRole(teamId) {
       return isTeamMember(teamId) &&
-             get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role in ['member', 'operator', 'owner'];
+             get(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid)).data.role == 'member';
     }
 
     // ドキュメントの作成者が自分か。createdBy が無い・Discord 経由・退会済みは誰にも一致しない
@@ -179,6 +178,16 @@ service cloud.firestore {
                         validMemberProfile(request.resource.data);
       }
 
+      match /settings/videoRequests {
+        allow read: if isTeamMember(teamId);
+        allow create, update: if isTeamOwner(teamId) &&
+          request.resource.data.keys().hasOnly(['pendingColumnId', 'progressColumnId', 'reviewColumnId', 'createThumbnailTask']) &&
+          request.resource.data.createThumbnailTask is bool &&
+          request.resource.data.pendingColumnId is string &&
+          request.resource.data.progressColumnId is string &&
+          request.resource.data.reviewColumnId is string;
+      }
+
       match /taskStatuses/{columnId} {
         allow read: if isTeamMember(teamId);
         allow write: if isMemberRole(teamId);
@@ -201,8 +210,9 @@ service cloud.firestore {
 
       match /tasks/{taskId} {
         allow read: if isTeamMember(teamId);
-        allow update: if isMemberRole(teamId) && createdByUnchanged();
-        allow delete: if isMemberRole(teamId);
+          allow update: if isMemberRole(teamId) && createdByUnchanged();
+          // 関連する動画依頼も整合させるため、削除は deleteTask 経由に限定する。
+          allow delete: if false;
         allow create: if false;
       }
 
@@ -216,7 +226,7 @@ service cloud.firestore {
       }
 
       // Discord 通知設定 — メンバーのみ読み書き可
-      // Webhook URL をチームメンバーから隠すためサブコレクション方式を採用
+      // Webhook URL をスタッフから隠すためサブコレクション方式を採用
       match /discord/{doc} {
         allow read, write: if isMemberRole(teamId);
       }
@@ -298,6 +308,17 @@ service cloud.firestore {
           allow read: if isTeamMember(teamId);
           allow create: if isTeamMember(teamId);
           allow update, delete: if false;
+        }
+      }
+
+      // 動画依頼。作成・更新は Cloud Functions、Bot は Admin SDK で処理する。
+      match /videoRequests/{requestId} {
+        allow read: if isTeamMember(teamId);
+        allow write: if false;
+
+        match /discordEvents/{eventId} {
+          allow read: if isTeamMember(teamId);
+          allow write: if false;
         }
       }
 

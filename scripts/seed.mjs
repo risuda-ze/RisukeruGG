@@ -16,6 +16,7 @@
  *   - 複数チーム所属: 2チーム（teamAlpha / teamBeta）
  *   - スケジュール: 先月・当月・来月（週1回配信＋毎週土曜動画）
  *   - タスク: ステータス・担当・期限・連携有無の組み合わせを網羅
+ *   - 動画依頼: Discord送信待ち・作業中・確認待ち・完了の4状態
  *   - 通知: 10件（すべて未読）
  *   - コラボセッション: 2件
  *   - 対応不可時間: teamAlpha の 5 人ぶん（実行日基準。1 人は未入力）
@@ -279,6 +280,8 @@ async function main() {
     displayName: '配信太郎',
     avatarUrl: null,
     plan: 'party',
+    discordUsername: 'haishin_taro',
+    discordUserId: '111111111111111111',
     joinedAt: d(2026, 4, 1),
     duties: ['cast', 'planning'],
     note: '土日は配信しています',
@@ -288,6 +291,8 @@ async function main() {
     displayName: '運営花子',
     avatarUrl: null,
     plan: 'party',
+    discordUsername: 'unei_hanako',
+    discordUserId: '222222222222222222',
     joinedAt: d(2026, 4, 3),
     duties: ['edit', 'thumbnail'],
     note: '平日夜は編集できます',
@@ -297,6 +302,8 @@ async function main() {
     displayName: 'マネージャー健太',
     avatarUrl: null,
     plan: 'party',
+    discordUsername: 'manager_kenta',
+    discordUserId: '333333333333333333',
     joinedAt: d(2026, 4, 5),
   });
   await setDoc(`teams/${TEAM_ID}/members/${UID4}`, {
@@ -413,6 +420,13 @@ async function main() {
     role: null,
     createdAt: d(2026, 4, 1),
   });
+  await setDoc(`teams/${TEAM_ID}/taskStatuses/col004`, {
+    name: '確認待ち',
+    order: 3,
+    color: '#3b82f6',
+    role: null,
+    createdAt: d(2026, 4, 1),
+  });
   await setDoc(`teams/${TEAM_ID}/taskStatuses/col003`, {
     name: '完了',
     order: 2,
@@ -420,12 +434,12 @@ async function main() {
     role: 'done',
     createdAt: d(2026, 4, 1),
   });
-  console.log('  ✓ taskStatuses (3件)');
+  console.log('  ✓ taskStatuses (4件)');
 
   // ── タスク (14件) ─────────────────────────────────────────
   //   col001 = 未着手 (6件)
   //   col002 = 進行中 (4件)
-  //   col003 = 完了   (4件)
+  //   col004 = 確認待ち（動画納品確認用） / col003 = 完了 (4件)
   //   追加網羅: assignee=null, linkedScheduleIdあり, descriptionあり, dueDate=null
   const tasks = [
     // 未着手
@@ -568,6 +582,172 @@ async function main() {
     });
   }
   console.log(`  ✓ tasks (${tasks.length}件)`);
+
+  // ── 動画依頼 (4件) ───────────────────────────────────────
+  // Discord連携前後と、納品・修正・完了までの画面表示を確認するためのデータ。
+  // テスト用URLは実在するGigaFile便のファイルを指しません。
+  await setDoc(`teams/${TEAM_ID}/settings/videoRequests`, {
+    pendingColumnId: 'col001', progressColumnId: 'col002', reviewColumnId: 'col004', createThumbnailTask: true,
+  });
+  const videoRequests = [
+    {
+      id: 'video_request_pending',
+      taskId: 'video_task_pending',
+      title: '【テスト】Minecraft 建築対決 #12',
+      editorDiscordIds: ['111111111111111111'],
+      editorMemberIds: [UID1],
+      videoType: 'long',
+      summary: '3人で建築テーマ対決を行った横動画です。テンポ重視で編集をお願いします。',
+      projectManagementUrl: 'https://example.com/projects/minecraft-12',
+      notes: '冒頭30秒は勝負の見どころを先出ししてください。',
+      titleIdea: '3人で建築したら個性が出すぎたwww',
+      startAt: d(2026, 11, 24),
+      firstDraftDueAt: d(2026, 12, 2),
+      finalPackageDueAt: d(2026, 12, 8),
+      ownerResourceUrls: [],
+      status: 'pending_discord',
+      taskColumnId: 'col001',
+      reviewTaskColumnId: 'col004',
+      deliveryUrls: [],
+      discord: {
+        status: 'queued',
+        editorThreadIds: [],
+        editorThreadUrls: [],
+        thumbnailThreadId: null,
+        thumbnailThreadUrl: null,
+        error: null,
+      },
+    },
+    {
+      id: 'video_request_progress',
+      taskId: 'video_task_progress',
+      title: '【テスト】新作ゲームを3人で初見プレイ',
+      editorDiscordIds: ['222222222222222222'],
+      editorMemberIds: [UID2],
+      videoType: 'long',
+      summary: '新作アクションゲームの初見実況です。リアクションが伝わるカットを優先してください。',
+      projectManagementUrl: 'https://example.com/projects/new-game',
+      notes: 'SEは既存のチャンネル用素材を使用してください。',
+      titleIdea: '初見3人、開始5分で大パニック',
+      startAt: d(2026, 11, 21),
+      firstDraftDueAt: d(2026, 11, 28),
+      finalPackageDueAt: d(2026, 12, 4),
+      ownerResourceUrls: ['https://drive.google.com/example-project-files'],
+      status: 'in_progress',
+      taskColumnId: 'col002',
+      reviewTaskColumnId: 'col004',
+      deliveryUrls: [],
+      discord: {
+        status: 'created',
+        editorThreadIds: ['thread-editor-progress'],
+        editorThreadUrls: [
+          'https://discord.com/channels/000000000000000000/thread-editor-progress',
+        ],
+        thumbnailThreadId: 'thread-thumbnail-progress',
+        thumbnailThreadUrl:
+          'https://discord.com/channels/000000000000000000/thread-thumbnail-progress',
+        error: null,
+      },
+    },
+    {
+      id: 'video_request_review',
+      taskId: 'video_task_review',
+      title: '【テスト】神プレイ集 11月号',
+      editorDiscordIds: ['333333333333333333'],
+      editorMemberIds: [UID3],
+      videoType: 'long',
+      summary: '11月の配信アーカイブから、盛り上がった場面をまとめる動画です。',
+      projectManagementUrl: 'https://example.com/projects/edit',
+      notes: 'サムネイルは完パケ納期までに確認できる状態にしてください。',
+      titleIdea: '11月の神プレイ、全部見せます',
+      startAt: d(2026, 11, 15),
+      firstDraftDueAt: d(2026, 11, 22),
+      finalPackageDueAt: d(2026, 11, 30),
+      ownerResourceUrls: [],
+      status: 'review_requested',
+      taskColumnId: 'col002',
+      reviewTaskColumnId: 'col004',
+      deliveryUrls: ['https://gigafile.nu/example-review-delivery'],
+      discord: {
+        status: 'created',
+        editorThreadIds: ['thread-editor-review'],
+        editorThreadUrls: ['https://discord.com/channels/000000000000000000/thread-editor-review'],
+        thumbnailThreadId: 'thread-thumbnail-review',
+        thumbnailThreadUrl:
+          'https://discord.com/channels/000000000000000000/thread-thumbnail-review',
+        error: null,
+      },
+    },
+    {
+      id: 'video_request_completed',
+      taskId: 'video_task_completed',
+      title: '【テスト】ショート：珍プレイ集',
+      editorDiscordIds: ['222222222222222222'],
+      editorMemberIds: [UID2],
+      videoType: 'short',
+      summary: '配信中の珍プレイを30秒にまとめたショート動画です。',
+      projectManagementUrl: 'https://example.com/projects/edit',
+      notes: null,
+      titleIdea: 'それは聞いてないw',
+      startAt: d(2026, 11, 10),
+      firstDraftDueAt: d(2026, 11, 12),
+      finalPackageDueAt: d(2026, 11, 16),
+      ownerResourceUrls: [],
+      status: 'completed',
+      taskColumnId: 'col002',
+      reviewTaskColumnId: 'col004',
+      deliveryUrls: ['https://gigafile.nu/example-completed-delivery'],
+      discord: {
+        status: 'created',
+        editorThreadIds: ['thread-editor-completed'],
+        editorThreadUrls: [
+          'https://discord.com/channels/000000000000000000/thread-editor-completed',
+        ],
+        thumbnailThreadId: 'thread-thumbnail-completed',
+        thumbnailThreadUrl:
+          'https://discord.com/channels/000000000000000000/thread-thumbnail-completed',
+        error: null,
+      },
+    },
+  ];
+  for (const request of videoRequests) {
+    const columnId =
+      request.status === 'completed'
+        ? 'col003'
+        : request.status === 'review_requested'
+          ? request.reviewTaskColumnId
+          : request.taskColumnId;
+    await setDoc(`teams/${TEAM_ID}/tasks/${request.taskId}`, {
+      title: `動画依頼: ${request.title}`,
+      columnId,
+      categoryId: 'tcat001',
+      description: request.summary,
+      assigneeId: null,
+      dueDate: request.finalPackageDueAt,
+      dueDateAllDay: true,
+      linkedScheduleId: null,
+      videoRequestId: request.id,
+      updatedAt: NOW,
+      createdBy: UID1,
+      createdAt: d(2026, 11, 20),
+    });
+    const thumbnailTaskId = `thumb_${request.id}`;
+    await setDoc(`teams/${TEAM_ID}/tasks/${thumbnailTaskId}`, {
+      title: `サムネイル制作: ${request.title}`, columnId, thumbnailRequestId: request.id,
+      dueDate: request.finalPackageDueAt, createdBy: UID1, createdAt: NOW, updatedAt: NOW,
+    });
+    await setDoc(`teams/${TEAM_ID}/videoRequests/${request.id}`, {
+      thumbnailTaskId,
+      thumbnailStatus: request.status,
+      teamId: TEAM_ID,
+      ...request,
+      progressTaskColumnId: 'col002',
+      createdBy: UID1,
+      createdAt: d(2026, 11, 20),
+      updatedAt: NOW,
+    });
+  }
+  console.log(`  ✓ videoRequests (${videoRequests.length}件 — 送信待ち・作業中・確認待ち・完了)`);
 
   // ── スケジュール ──────────────────────────────────────────
   //
@@ -1170,7 +1350,10 @@ async function main() {
   console.log('    6/23 (火) — 複数日バー 2件（オーバーフローなし）');
   console.log('    6/24 (水) — 複数日バー 3件（+1件 表示）');
   console.log('    6/25 (木) — 複数日バー 4件（+2件 表示）');
-  console.log(`  タスク       : ${tasks.length}件 (未着手6・進行中4・完了4)`);
+  console.log(
+    `  タスク       : ${tasks.length + videoRequests.length * 2}件 (通常${tasks.length}件 + 動画${videoRequests.length}件 + サムネ${videoRequests.length}件)`
+  );
+  console.log('  動画依頼     : 4件 (Discord送信待ち / 作業中 / 確認待ち / 完了)');
   console.log('  コラボ       : 5件 (open/confirmed/expired/cancelled を含む)');
   console.log('\nFirebase Emulator UI: http://localhost:4000\n');
 }

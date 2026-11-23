@@ -6,6 +6,7 @@
 
 ## 対象範囲
 
+- [動画依頼](../video-request/README.md)のスレッド作成（Functions）・納品受付（既存Botの署名付きInteractions Endpoint）
 - Discord 連携設定画面（`/integrations/discord`）
 - チームごとの Discord 通知設定（`teams/{teamId}/discord/config`）
 - スケジュール通知の Discord 配送（Bot API / Webhook フォールバック）
@@ -32,7 +33,7 @@
 
 ### team との境界
 
-- Discord 設定の操作は `operator` ロールに限定する。ロール定義・チーム所属は team を参照する
+- Discord 設定の操作はメンバー（ロール）に限定する。ロール定義・チーム所属は team を参照する
 
 ### schedule / task / collab との境界
 

@@ -50,7 +50,7 @@ TeamMember 側の `plan` はチーム UI でメンバーの現在プランを表
 - `monthlyTaskCount` はタスク作成成功時のみ増加する
 - `monthlyCollabCount` はコラボ作成成功時のみ増加する
 - `countResetAt` は毎月 1 日 0:00 JST のリセット処理で更新する
-- チーム参加の 3 人目以降判定では、参加者を含む全メンバーの `planType` が `party` である必要がある
+- チーム参加の 3 人目以降判定では、参加者を含む全所属者の `planType` が `party` である必要がある
 
 ## 関連する隣接モデル
 

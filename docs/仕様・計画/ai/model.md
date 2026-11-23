@@ -54,7 +54,7 @@ Firestore コレクション配置: `teams/{teamId}/ai/settings`（サブコレ�
 | `presets` | `Array<{ id: string; name: string; body: string }>` | 定型指示（最大 10 件。名前 30 文字・本文 500 文字以内） |
 | `updatedAt` | timestamp | 最終更新日時 |
 
-閲覧はチームメンバー、編集はオペレーター（Firestore ルール）。未作成時はクライアントが既定値（空）として扱う。
+閲覧は所属者、編集はメンバー（Firestore ルール）。未作成時はクライアントが既定値（空）として扱う。
 
 ## 能力レジストリ・プロンプトマニフェスト（コード管理。AI-020 / AI-021）
 

@@ -36,6 +36,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: '/unavailability', label: '対応不可時間', icon: 'person_off' },
       { href: '/tasks',        label: 'タスク管理', icon: 'list_bullet' },
       { href: '/briefs',       label: 'タスク管理 v2', icon: 'event_available', badge: 'β' },
+      { href: '/video-requests', label: '動画依頼', icon: 'event_available' },
       { href: '/collabs',      label: 'コラボ調整', icon: 'handshake' },
     ],
   },

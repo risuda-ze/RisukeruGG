@@ -2,7 +2,6 @@ import {
   doc,
   collection,
   updateDoc,
-  deleteDoc,
   onSnapshot,
   Unsubscribe,
   Timestamp,
@@ -86,14 +85,27 @@ export async function updateTask(
 export async function addTaskComment(
   teamId: string,
   taskId: string,
-  comment: { id: string; authorId: string; authorName: string; text: string; createdAt: Timestamp; parentId?: string }
+  comment: {
+    id: string;
+    authorId: string;
+    authorName: string;
+    text: string;
+    createdAt: Timestamp;
+    parentId?: string;
+  }
 ): Promise<void> {
   const ref = doc(db, 'teams', teamId, 'tasks', taskId);
   await updateDoc(ref, { comments: arrayUnion(comment) });
 }
 
+const _deleteTask = httpsCallable<{ teamId: string; taskId: string }, void>(
+  functions,
+  'deleteTask'
+);
+
+/** 動画依頼に紐づくタスクでは、対応する動画依頼カードも同時に削除する。 */
 export async function deleteTask(teamId: string, taskId: string): Promise<void> {
-  await deleteDoc(doc(db, 'teams', teamId, 'tasks', taskId));
+  await _deleteTask({ teamId, taskId });
 }
 
 export function subscribeTasksByTeam(
@@ -112,7 +124,10 @@ export function subscribeTasksByTeam(
         cache.delete(change.doc.id);
       } else {
         // added / modified: 該当ドキュメントのみ再生成
-        cache.set(change.doc.id, toTask(change.doc.id, change.doc.data() as Record<string, unknown>));
+        cache.set(
+          change.doc.id,
+          toTask(change.doc.id, change.doc.data() as Record<string, unknown>)
+        );
       }
     }
     // 現在のスナップショット順で並べつつ、未変更ドキュメントは参照を維持

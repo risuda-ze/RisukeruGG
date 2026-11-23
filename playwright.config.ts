@@ -33,6 +33,7 @@ export default defineConfig({
       name: 'emulator',
       testMatch: [
         '**/e2e/visual.spec.ts',
+        '**/e2e/video-requests.spec.ts',
         '**/e2e/tasks/task-settings-icon.spec.ts',
         '**/e2e/collabs/collab-ui-redesign.spec.ts',
         '**/e2e/theme-toggle.spec.ts',

@@ -21,24 +21,15 @@ const TEST_USER = {
 };
 
 async function switchToTeam(page: Page, targetTeamName: string, expectedTeamCode: string) {
-  /* チームコードが既に表示されていれば切替不要（Firestore 読み込み後まで最大 10s 待機） */
-  try {
-    await page.getByText(expectedTeamCode).waitFor({ timeout: 10000 });
-    return;
-  } catch {
-    // まだ表示されていない場合は切替を実施する
+  // チーム切替時にページが再読み込みされても、コードを表示するタブを維持する。
+  await page.goto('/team?tab=team');
+  const info = page.getByRole('main').locator('dl');
+  await expect(info).toBeVisible();
+  if (!(await info.getByText(expectedTeamCode, { exact: true }).isVisible())) {
+    await page.getByTestId('team-switcher').press('Enter');
+    await page.getByRole('button', { name: new RegExp(targetTeamName) }).last().click();
   }
-
-  /* チーム切替ボタン: data-testid または groups アイコン含むボタンで検索 */
-  const switcher = page.locator(
-    '[data-testid="team-switcher"], button:has(.material-icons:has-text("groups"))'
-  ).first();
-  await switcher.click({ timeout: 15000 });
-  await page
-    .getByRole('button', { name: new RegExp(targetTeamName) })
-    .last()
-    .click();
-  await expect(page.getByText(expectedTeamCode)).toBeVisible({ timeout: 15000 });
+  await expect(info.getByText(expectedTeamCode, { exact: true })).toBeVisible();
 }
 
 // ── 各テストでサインイン（IndexedDB が browser context 間で共有されないため） ──
@@ -110,13 +101,15 @@ test.describe('各ページ表示確認 (シードデータ)', () => {
   test('チームを切り替えるとチーム名とメンバー一覧が新チームへ更新される', async ({ page }) => {
     await page.goto('/team');
 
+    await switchToTeam(page, '編集チームβ', 'BETA002');
     await switchToTeam(page, '配信チームα', 'ALPHA001');
 
     await expect(page.getByRole('main').getByText('配信チームα')).toBeVisible();
     await expect(page.getByText('ALPHA001')).toBeVisible();
+    await expect(page.locator('text=BETA002')).toHaveCount(0);
+    await page.getByRole('tab', { name: 'メンバー・スタッフ' }).click();
     await expect(page.getByText('マネージャー健太')).toBeVisible();
     await expect(page.getByText('ROM三郎')).toBeVisible();
-    await expect(page.locator('text=BETA002')).toHaveCount(0);
   });
 
   // ── コラボ ────────────────────────────────────────────────

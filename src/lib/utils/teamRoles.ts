@@ -12,11 +12,10 @@ export const ROLE_BADGE: Record<TeamRole, 'purple' | 'amber'> = {
 
 /**
  * 保存値をロールに変換する。
- * ponytail: 移行中の互換。旧 `operator` / `owner` は `member` として扱う（変更仕様 two-roles の PR C で書き換えた後に外す）。
- * 旧 `rom` / `editor` / `viewer` や未知の値は管理者にしないため `staff` に倒す。
+ * `member` 以外（旧値や未知の値）は管理者にしないため `staff` に倒す。
  */
 export function toTeamRole(raw: unknown): TeamRole {
-  return raw === 'member' || raw === 'operator' || raw === 'owner' ? 'member' : 'staff';
+  return raw === 'member' ? 'member' : 'staff';
 }
 
 /** メンバー（チームの全権限）か */
