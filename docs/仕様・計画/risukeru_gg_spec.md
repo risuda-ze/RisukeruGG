@@ -168,7 +168,7 @@
 | **User**                                 | 詳細は [user/model.md](./user/model.md) を参照。認証済みアカウントの active / ghost 状態と保持フィールドを管理                                 |
 | **Plan**                                 | 詳細は [plan/model.md](./plan/model.md) を参照。プラン種別、月次カウント、保存先と制限判定を管理                                               |
 | **Team**                                 | 詳細は [team/model.md](./team/model.md) を参照。チームの保持フィールドと Firestore コレクション配置を管理                                      |
-| **TeamMember**                           | 詳細は [team/model.md](./team/model.md) を参照。ロール（operator/member/rom）と所属関係を管理                                                  |
+| **TeamMember**                           | 詳細は [team/model.md](./team/model.md) を参照。ロール（member/staff）と所属関係を管理                                                      |
 | **TaskStatus**                           | 詳細は [task/model.md](./task/model.md) を参照。タスク列定義と完了列判定を task カテゴリで正本化する                                           |
 | **Category**                             | 詳細は [task/model.md](./task/model.md) を参照。タスク・スケジュール共通の統合カテゴリ定義とコレクション配置を task カテゴリで正本化する       |
 | **ScheduleEntry**                        | title, startAt, endAt, allDay, platform, description, participantIds, categoryId（Category 参照）, version（楽観的ロック用）                   |

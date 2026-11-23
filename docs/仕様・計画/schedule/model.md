@@ -44,7 +44,7 @@ Firestore コレクション配置: `teams/{teamId}/schedules/{scheduleId}`
 
 ### team 側で管理するもの
 
-- 操作権限の根拠となる `operator` / `member` / `rom`
+- 操作権限の根拠となるロール（メンバー / スタッフ）と作成者の定義
 - `participantIds` が参照するメンバー所属
 
 ### task 側で管理するもの

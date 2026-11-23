@@ -53,7 +53,7 @@ Firestore コレクション配置: `teams/{teamId}/unavailability/{userId}_{yyy
 
 | 操作 | 条件 |
 | ---- | ---- |
-| read | 同一チームの所属者（`rom` を含む） |
+| read | 同一チームの所属者（ロール不問） |
 | create / update | 同一チームの所属者（ロール不問）かつ β ゲート通過。書き込み後の `userId` が本人の UID、`docId` が `{本人の UID}_{month}`、`month` が `yyyy-mm` 形式、フィールドが `userId` / `month` / `days` / `notes` / `updatedAt` のみ、`days` が map、`notes` が 200 件以下の配列、`updatedAt` がリクエスト時刻 |
 | delete | 不可（削除は Admin SDK のみ） |
 

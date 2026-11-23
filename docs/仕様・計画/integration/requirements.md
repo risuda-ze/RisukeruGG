@@ -2,8 +2,8 @@
 
 ## 権限・設定画面
 
-- **IN-001**: Discord 連携の設定 UI は `/integrations/discord` に配置し、`operator` のみ設定セクションを表示・操作できる。関連 API（設定取得・保存・招待開始・解除・チャンネル一覧取得・通知チャンネル変更）はすべて Firebase ID トークンで認証し、対象チームの `operator` であることをサーバーサイドで検証する
-- **IN-002**: Discord 通知設定はチームのメインドキュメントではなくサブコレクション `teams/{teamId}/discord/config` に保存し、Firestore ルールで `operator` のみ読み書き可能に制限する（Webhook URL を一般メンバーから隠すため）
+- **IN-001**: Discord 連携の設定 UI は `/integrations/discord` に配置し、メンバーのみ設定セクションを表示・操作できる。関連 API（設定取得・保存・招待開始・解除・チャンネル一覧取得・通知チャンネル変更）はすべて Firebase ID トークンで認証し、対象チームのメンバー（ロール）であることをサーバーサイドで検証する
+- **IN-002**: Discord 通知設定はチームのメインドキュメントではなくサブコレクション `teams/{teamId}/discord/config` に保存し、Firestore ルールで メンバーのみ読み書き可能に制限する（Webhook URL をスタッフから隠すため）
 
 ## 通知配送
 
@@ -16,11 +16,11 @@
 
 ## Bot 招待フロー
 
-- **IN-006**: `operator` は設定画面の「Botをサーバーに追加」から Discord OAuth2（scope: `bot applications.commands`）で Bot をサーバーへ招待できる
+- **IN-006**: メンバーは設定画面の「Botをサーバーに追加」から Discord OAuth2（scope: `bot applications.commands`）で Bot をサーバーへ招待できる
 - **IN-007**: 招待フローは CSRF 保護として nonce（`crypto.randomUUID()`）を発行し、`discord_bot_invite_requests/{nonce}` に有効期限 10 分で保存して OAuth の `state` と照合する
 - **IN-008**: 1 つの Discord サーバー（guildId）は 1 チームにのみリンクできる。既に他チームが使用中のサーバーへの招待はエラー（`already-linked`）としてブロックする
 - **IN-009**: 招待完了後、Bot トークンで取得したチャンネル一覧を `discord_bot_invite_pending/{nonce}` に一時保存し、設定画面で通知チャンネルを選択・保存させる。保存時に `guildId` / `channelId` / 表示用の `channelName` を `teams/{teamId}/discord/config` へ書き込む
-- **IN-009-1**: 接続済みチームの `operator` は、Bot 招待フローをやり直さずに設定画面から通知チャンネルを変更できる。チャンネル一覧は Bot トークンで都度取得（`GET /api/discord/guild-channels`）し、変更（`POST /api/discord/update-channel`）時は指定 `channelId` が実在するテキストチャンネルであることをサーバーサイドで照合してから `channelId` / `channelName` を更新する。`channelName` が未保存の旧データは接続済み表示で `channelId` にフォールバックする
+- **IN-009-1**: 接続済みチームのメンバーは、Bot 招待フローをやり直さずに設定画面から通知チャンネルを変更できる。チャンネル一覧は Bot トークンで都度取得（`GET /api/discord/guild-channels`）し、変更（`POST /api/discord/update-channel`）時は指定 `channelId` が実在するテキストチャンネルであることをサーバーサイドで照合してから `channelId` / `channelName` を更新する。`channelName` が未保存の旧データは接続済み表示で `channelId` にフォールバックする
 - **IN-010**: チャンネル保存時に `/risukerugg` をそのサーバー専用のギルドコマンドとして登録する。グローバルコマンドは使用しない（無関係サーバーへの表示防止）
 - **IN-011**: Bot の kick は自動検知しない。接続解除は設定画面の「登録を解除する」による手動操作のみとし、破壊的操作のため実行前に確認を挟む。解除時は Discord 側も一括クリーンアップする: ギルドコマンド削除 → Bot 退出 → AI セッション（`discord_sessions/{guildId}`）削除 → `teams/{teamId}/discord/config` 削除。Discord API 呼び出しは best-effort とし、失敗しても解除処理本体は完了させる（Bot が手動削除済みのサーバーでも解除できる）
 
@@ -42,7 +42,7 @@
 
 ## タスク管理 v2（ブリーフ）との連携（2026-09 追加）
 
-- **IN-023**: ブリーフ連携の設定は `teams/{teamId}/discord/config` に `briefThreadsEnabled`（既定 true）/ `briefChannelId` / `briefChannelName`（スレッドの親チャンネル。未設定は `channelId`）/ `digestEnabled`（既定 true）/ `digestChannelId` / `digestChannelName`（未設定は `channelId`）/ `digestTime`（`HH:00`、JST、既定 `09:00`）として保持する。`operator` が `/integrations/discord` の「タスク管理 v2（ブリーフ）」から設定し、更新 API（`POST /api/discord/update-brief-settings`）はチャンネル ID を Bot トークンで取得した実チャンネル一覧と照合する
+- **IN-023**: ブリーフ連携の設定は `teams/{teamId}/discord/config` に `briefThreadsEnabled`（既定 true）/ `briefChannelId` / `briefChannelName`（スレッドの親チャンネル。未設定は `channelId`）/ `digestEnabled`（既定 true）/ `digestChannelId` / `digestChannelName`（未設定は `channelId`）/ `digestTime`（`HH:00`、JST、既定 `09:00`）として保持する。メンバーが `/integrations/discord` の「タスク管理 v2（ブリーフ）」から設定し、更新 API（`POST /api/discord/update-brief-settings`）はチャンネル ID を Bot トークンで取得した実チャンネル一覧と照合する
 - **IN-024**: ブリーフ作成時（Firestore トリガー）に、親チャンネルへ**公開スレッド**（名前 = ブリーフのタイトル、7 日で自動アーカイブ）を作り、先頭に**要約メッセージ**（タイトル・状態・公開予定日・進捗・工程ごとの状態/担当/締切/超過/入力待ち・Web の URL）を投稿して `Brief.discord = { threadId, summaryMessageId, channelId }` に記録する。以後、ブリーフのタイトル・公開予定日・状態、工程の状態・担当・締切・タイトルが変わるたびに Bot が同じメッセージを編集する。Discord はスレッドの入れ子を持たないため、工程ごとのスレッドは作らない
 - **IN-025**: 工程が `ready` になったとき、スレッドへ**着手可能通知**を投稿する。本文は「【工程名】@担当 着手できます。締切 M/D」に必要情報の未入力一覧を添え、ボタンは **完了**（`step_done:{teamId}:{briefId}:{stepId}`）/ **着手**（`step_start:...`）/ **Web で開く**（リンク）。二重投稿を避けるため、投稿前にトランザクションで `Step.discordMessageId` を予約する。担当者のメンションは IN-015-1 の解決を使い、未解決なら表示名に「個人設定で Discord ユーザー名を登録するとメンションで届きます」を添える
   - **IN-025-1**: ボタンはサーバーの誰でも押せる。Interactions Endpoint は `custom_id` の teamId とサーバーの guildId が連携済みであることを確認してから、操作層（`changeStepStatus`）を Discord 由来（`actorId: null`、role なし、`source: discord`）で実行する。誰が押したかは記録しない（IN-015-3）
@@ -50,7 +50,7 @@
   - **IN-025-3**: 工程が `done` / `skipped` になったら通知メッセージを書き換えてボタンを外す
 - **IN-026**: Bot 招待の権限は `VIEW_CHANNEL + SEND_MESSAGES + READ_MESSAGE_HISTORY + CREATE_PUBLIC_THREADS + SEND_MESSAGES_IN_THREADS`（`309237713920`）とする。旧権限（`2048`）で招待済みのサーバーは「Botをサーバーに追加」の再実行で権限を更新する。設定画面にその旨を案内する
 - **IN-027**: **朝ダイジェスト**は Cloud Scheduler（毎時 0 分、JST）で起動し、チームの `digestTime` の時と一致するチームだけに 1 日 1 回送る。内容は「今日が締切 / 締切を過ぎています（超過日数付き） / 担当が決まっていません / 入力待ち（未入力項目付き） / 昨日からの変更（新規ブリーフ・公開日変更・完了数・担当変更数）」で、該当なしの節は省略し、すべて該当なしなら投稿しない。対象は `planning` / `in_progress` のブリーフの `ready` / `in_progress` の工程
-- **IN-028**: **締切前リマインド**はダイジェストと同時刻に、`daysUntilDue === Step.reminderDaysBefore` の未完了工程について担当者へメンションで送る。送信先はブリーフのスレッド（未作成ならダイジェストの送信先）。担当未定は「担当未定」と表示する（operator へのメンションは行わない）
+- **IN-028**: **締切前リマインド**はダイジェストと同時刻に、`daysUntilDue === Step.reminderDaysBefore` の未完了工程について担当者へメンションで送る。送信先はブリーフのスレッド（未作成ならダイジェストの送信先）。担当未定は「担当未定」と表示する（メンバーへのメンションは行わない）
 - **IN-029**: ブリーフ関連の投稿はスレッド・ダイジェスト先で完結させ、既存の通知チャンネル向けトグル（IN-003）には影響しない。Discord への送信失敗はログのみで、ブリーフ・工程の処理本体を失敗させない（IN-005 と同じ）
 
 ## セキュリティ・運用条件
