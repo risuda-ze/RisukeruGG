@@ -6,7 +6,7 @@
 ## 開発フロー
 
 1. Issue またはユーザー指示を orchestrator が受け、仕様変更の要否を判定する
-2. 仕様変更あり: spec-author が `docs/変更仕様/<変更名>.md` だけの PR を作る → レビューセット。
+2. 仕様変更あり: spec-author が `docs/変更仕様/<変更名>.md` と、必要に応じて正本 `docs/仕様・計画/*`・共通用語を更新した仕様だけの PR を作る → レビューセット。
 3. 実装:仕様書をレビューした PR で実装を行う。実装 → レビューセット → マージ。
 4. マージ後、review-auditor が共通指摘を `review-finding` Issue に記録する。2回以上出た指摘は lint-from-findings で機械検査に変える
 

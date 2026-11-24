@@ -33,6 +33,9 @@ function currentBranch() {
   return run('git', ['branch', '--show-current']).stdout.trim();
 }
 
+// deny ではなくユーザーに許可を求める理由（null なら確認不要）
+let askReason = null;
+
 // && || ; | 改行 で分割して1コマンドずつ判定する
 const segments = command
   .split(/&&|\|\||[;|\n]/)
@@ -54,9 +57,8 @@ for (const seg of segments) {
   }
 
   if (isGit('push')) {
-    if (/--force|\s-f(\s|$)|\s\+\S/.test(seg)) {
-      deny('force push は禁止。rebase 後に履歴が食い違うなら新しいブランチで PR を作り直す。');
-    }
+    // force push は拒否せずユーザー確認に回す（他の判定を通過した後に ask を返す）
+    if (/--force|\s-f(\s|$)|\s\+\S/.test(seg)) askReason = 'force push を実行しようとしている。';
     if (PROTECTED.includes(currentBranch()) || /[\s:](main|develop)(\s|$)/.test(seg)) {
       deny('main / develop への push は禁止。feature/* ブランチを push して PR を作る。');
     }
@@ -125,4 +127,15 @@ for (const seg of segments) {
   }
 }
 
+if (askReason) {
+  process.stdout.write(
+    JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: 'PreToolUse',
+        permissionDecision: 'ask',
+        permissionDecisionReason: `[guard] ${askReason}`,
+      },
+    })
+  );
+}
 process.exit(0);

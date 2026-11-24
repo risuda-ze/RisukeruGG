@@ -56,4 +56,4 @@
 ## セキュリティ・運用条件
 
 - **IN-021**: `discord_sessions` / `discord_bot_invite_requests` / `discord_bot_invite_pending` はいずれも Admin SDK（サーバーサイド）専用とし、Firestore ルールでクライアントからのアクセスを全面禁止する
-- **IN-022**: Discord 関連シークレットは環境変数（`DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` / `DISCORD_BOT_TOKEN` / `DISCORD_APPLICATION_ID` / `DISCORD_PUBLIC_KEY`）で管理する。AI 応答には `ANTHROPIC_API_KEY` が必要で、未設定時は明示的な案内メッセージを返す
+- **IN-022**: Discord 関連シークレットは環境変数（`DISCORD_CLIENT_ID` / `DISCORD_BOT_TOKEN` / `DISCORD_APPLICATION_ID` / `DISCORD_PUBLIC_KEY`）で管理する。AI 応答には `ANTHROPIC_API_KEY` が必要で、未設定時は明示的な案内メッセージを返す
