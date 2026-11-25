@@ -198,8 +198,6 @@ test('⑤ 定期入力をプレビューして保存すると、一覧に反映�
   await bulk.getByRole('button', { name: `${weekday}曜日` }).click();
   await bulk.locator('[data-slot="dropdown-trigger"]').nth(1).click();
   await page.getByRole('option', { name: '12:00' }).click();
-  // 選択肢が閉じ切る前に隣の Dropdown を開くと、選択肢が見えないことがある（#241）。閉じるのを待つ
-  await expect(page.getByRole('listbox')).toHaveCount(0);
   await bulk.locator('[data-slot="dropdown-trigger"]').nth(0).click();
   await page.getByRole('option', { name: '10:00' }).click();
   await page.getByRole('button', { name: 'プレビュー' }).click();
