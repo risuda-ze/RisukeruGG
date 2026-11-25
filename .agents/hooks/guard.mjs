@@ -36,8 +36,16 @@ function currentBranch() {
 // deny ではなくユーザーに許可を求める理由（null なら確認不要）
 let askReason = null;
 
+// publish-report.mjs へヒアドキュメントで渡すレポート本文はコマンドではないので、判定から外す。
+// 外さないと、本文中の「gh pr merge」「git push」などの記述が1行ずつコマンドとして判定される。
+// 区切り語を引用符で囲んだ形（<<'EOF'）だけが対象。囲まない形は本文中の $(...) が実行されるため判定を続ける
+const checked = command.replace(
+  /(publish-report\.mjs[^\n;&|]*<<'(\w+)'[^\n]*\n)[\s\S]*?\n\2(?=\n|$)/,
+  '$1$2'
+);
+
 // && || ; | 改行 で分割して1コマンドずつ判定する
-const segments = command
+const segments = checked
   .split(/&&|\|\||[;|\n]/)
   .map((s) => s.trim())
   .filter(Boolean);

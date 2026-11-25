@@ -16,6 +16,17 @@ description: 最終レビューセット合格後に、人間がマージ内容�
 
 ## 手順
 
-1. `review-artifacts/pr-<番号>/report.md` を下のテンプレートで書く。画像はファイル名で参照する（`![変更後](after-tasks.png)`）
-2. `node scripts/agent/publish-report.mjs --sha <SHA> --dir review-artifacts/pr-<番号>` で投稿する
+1. レポート本文を `reference/template.md` の形式で書く。画像は `review-artifacts/pr-<番号>/` にあるファイル名で参照する（`![変更後](after-tasks.png)`）
+2. 本文を Bash ツールのヒアドキュメントで渡して投稿する。スクリプトが本文を `review-artifacts/pr-<番号>/report.md` に保存する（サブエージェントは Write ツールで `report.md` を作れない）
+
+   ```bash
+   node scripts/agent/publish-report.mjs --sha <SHA> --dir review-artifacts/pr-<番号> --stdin <<'EOF'
+   # 最終レポート
+   ...
+   EOF
+   ```
+
+   - 区切り語は引用符で囲む（`<<'EOF'`）。囲まないと本文中の `$` やバッククォートがシェルに展開され、guard hook が本文の各行をコマンドとして判定する
+   - PowerShell ツールでは渡さない（guard hook が本文をコマンドとして判定する）
+
    画面に影響する変更なのに「画面の変更」節や画像がない、定義ファイルを変えたのに「lint / E2E 定義の変更」節がない場合は、スクリプトが投稿を拒否する

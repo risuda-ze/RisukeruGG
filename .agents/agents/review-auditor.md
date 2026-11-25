@@ -28,7 +28,7 @@ skills: file-issue, final-report
 
 ## 最終レポートモード（最終セット合格後・マージ前）
 
-final-report スキルに従ってレポートを書き、`node scripts/agent/publish-report.mjs --sha <SHA> --dir review-artifacts/pr-<番号>` で投稿する。スクリプトが不足を返したら、その節を埋めて再投稿する。
+final-report スキルに従ってレポートを書き、本文を Bash のヒアドキュメントで `node scripts/agent/publish-report.mjs --sha <SHA> --dir review-artifacts/pr-<番号> --stdin` に渡して投稿する（Write ツールでは `report.md` を作れない）。スクリプトが不足を返したら、その節を埋めて再投稿する。
 
 ## 記録モード（マージ後）
 

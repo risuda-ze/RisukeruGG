@@ -1,5 +1,8 @@
 // エージェント用スクリプトの共通処理
 import { spawnSync } from 'node:child_process';
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, cpSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 
 export function sh(cmd, args, { allowFail = false } = {}) {
@@ -11,6 +14,43 @@ export function sh(cmd, args, { allowFail = false } = {}) {
     throw new Error(`${cmd} ${args.join(' ')} が失敗: ${r.stderr || r.stdout}`);
   }
   return r;
+}
+
+// 標準入力の本文を <dir>/report.md に保存する。
+// サブエージェントは Write ツールで report.md を作れないため、Bash のヒアドキュメントで本文を受け取る
+export function saveReportFromStdin(dir) {
+  const body = readFileSync(0, 'utf8');
+  if (!body.trim()) throw new Error('標準入力のレポート本文が空');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'report.md'), body);
+}
+
+// srcDir の中身を、ブランチ branch の destName/ に置いて origin へ push する。
+// branch がリモートに無ければ、履歴を共有しない orphan ブランチとして作る。repo は作業するリポジトリ
+export function pushDirToBranch({ repo = '.', branch, srcDir, destName, message }) {
+  const git = (a, opts) => sh('git', ['-C', repo, ...a], opts);
+  const wt = mkdtempSync(join(tmpdir(), `${branch}-`));
+  if (git(['ls-remote', '--heads', 'origin', branch]).stdout.trim()) {
+    git(['fetch', 'origin', branch]);
+    git(['worktree', 'add', '--force', '-B', branch, wt, `origin/${branch}`]);
+  } else {
+    git(['worktree', 'add', '--force', '--detach', wt]);
+    sh('git', ['-C', wt, 'switch', '--orphan', branch]);
+  }
+  try {
+    const dest = join(wt, destName);
+    rmSync(dest, { recursive: true, force: true });
+    cpSync(srcDir, dest, { recursive: true });
+    sh('git', ['-C', wt, 'add', '-A']);
+    // 同じ内容の再投稿では差分が無い。そのときだけ commit を省く（commit の失敗は握りつぶさない）
+    if (sh('git', ['-C', wt, 'status', '--porcelain']).stdout.trim()) {
+      sh('git', ['-C', wt, 'commit', '-m', message]);
+    }
+    sh('git', ['-C', wt, 'push', 'origin', branch]);
+  } finally {
+    // 一時ワークツリーの後始末。失敗しても push の成否は変わらず、次回は --force で作り直せる
+    git(['worktree', 'remove', '--force', wt], { allowFail: true });
+  }
 }
 
 export function ghJson(args) {
