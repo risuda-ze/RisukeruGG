@@ -26,7 +26,7 @@ CollabSession は外部相手との日程調整単位を表し、CollabComment �
 | `content` | string \| null | コラボ内容メモ |
 | `participants` | `CollabParticipant[]` \| undefined | 内部 / 外部の参加者候補 |
 | `participantResponses` | `Record<string, Record<string, 'ok' \| 'ng' \| 'pending'>>` \| undefined | 回答者ごとの候補日程回答 |
-| `comments` | `CollabComment[]` \| undefined | 回答コメントの一覧。`respondToCollab` だけが追記する |
+| `comments` | `CollabComment[]` \| undefined | 回答コメントの一覧。`respondToCollab` だけが追記する。`authorId` が `participantResponses` のキーと一致する要素を、その回答者の回答コメントとして扱う |
 
 ## CollabParticipant
 

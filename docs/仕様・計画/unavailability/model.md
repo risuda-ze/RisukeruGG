@@ -35,7 +35,7 @@ Firestore コレクション配置: `teams/{teamId}/unavailabilityComments/{comm
 | フィールド     | 型 / 例               | 意味 |
 | -------------- | --------------------- | ---- |
 | `targetUserId` | string                | コメントを付けた時間帯の持ち主（所属者）の UID。所属者詳細に表示する対象の特定と、退出時の削除（等価条件）に使う |
-| `authorId`     | string                | 投稿者の UID。ルールの本人確認（編集・削除は投稿者のみ）、投稿者名の表示（`TeamMember` を引く）、退出時の削除（等価条件）に使う |
+| `authorId`     | string                | 投稿者の UID。ルールの本人確認（編集は投稿者のみ、削除は投稿者かメンバー）、投稿者名の表示（`TeamMember` を引く）、退出時の削除（等価条件）に使う |
 | `month`        | string / `2026-11`    | `date` が属する月（JST）。月単位の購読（等価条件）と月次削除（範囲条件）の検索キーとして持つ |
 | `date`         | string / `2026-11-14` | 対象日 |
 | `start`        | number / 0〜23        | 開始時（その時を含む） |
@@ -82,7 +82,7 @@ Firestore コレクション配置: `teams/{teamId}/unavailabilityComments/{comm
 | read | 同一チームの所属者（ロール不問） |
 | create | 同一チームの所属者（ロール不問）かつ β ゲート通過。`authorId` が本人の UID、`targetUserId` が同一チームの所属者（`members/{targetUserId}` が存在する）、フィールドが `targetUserId` / `authorId` / `month` / `date` / `start` / `end` / `text` / `createdAt` のみ、`date` が `yyyy-mm-dd` 形式、`month` が `date` の先頭 7 文字、`start` が 0〜23 の整数、`end` が 1〜24 の整数で `start < end`、`text` が 1〜100 字の文字列、`createdAt` がリクエスト時刻 |
 | update | 同一チームの所属者（ロール不問）かつ β ゲート通過で、既存の `authorId` が本人の UID。`targetUserId` / `authorId` / `createdAt` を変えない。そのほかは create と同じ検証 |
-| delete | 同一チームの所属者で、既存の `authorId` が本人の UID。退出時・月次の削除は Admin SDK で行う |
+| delete | 同一チームの所属者で、既存の `authorId` が本人の UID、またはロールがメンバー。退出時・月次の削除は Admin SDK で行う |
 
 次はルールでは検証しない。書き込み前にクライアントの Zod スキーマで検証し、読み取り側も同じスキーマで検証して、通らないコメントは捨てて表示する。
 
