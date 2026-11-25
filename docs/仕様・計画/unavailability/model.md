@@ -35,7 +35,7 @@ Firestore コレクション配置: `teams/{teamId}/unavailabilityComments/{comm
 | フィールド     | 型 / 例               | 意味 |
 | -------------- | --------------------- | ---- |
 | `targetUserId` | string                | コメントを付けた時間帯の持ち主（所属者）の UID。所属者詳細に表示する対象の特定と、退出時の削除（等価条件）に使う |
-| `authorId`     | string                | 投稿者の UID。ルールの本人確認（編集は投稿者のみ、削除は投稿者かメンバー）、投稿者名の表示（`TeamMember` を引く）、退出時の削除（等価条件）に使う |
+| `authorId`     | string                | 投稿者の UID。ルールの本人確認（編集は投稿者のみ、削除は投稿者かメンバー）、投稿者名の表示（`TeamMember` を引く。所属していなければ「退出したユーザー」）に使う |
 | `month`        | string / `2026-11`    | `date` が属する月（JST）。月単位の購読（等価条件）と月次削除（範囲条件）の検索キーとして持つ |
 | `date`         | string / `2026-11-14` | 対象日 |
 | `start`        | number / 0〜23        | 開始時（その時を含む） |
@@ -43,7 +43,7 @@ Firestore コレクション配置: `teams/{teamId}/unavailabilityComments/{comm
 | `text`         | string                | 本文。1〜100 字 |
 | `createdAt`    | timestamp             | 投稿日時（サーバー時刻）。同一時間帯のコメントの並び順に使う。編集では変えない |
 
-コメントは対応不可マスクと独立で、同じ時間帯に複数あってよい。投稿者の表示名・アイコンは保存せず、表示時に `TeamMember` から引く。
+コメントは対応不可マスクと独立で、同じ時間帯に複数あってよい。投稿者の表示名は保存せず、表示時に `TeamMember` から引く。投稿者が退出した後もコメントは残り、`authorId` は退出したユーザーの UID のまま持つ。
 
 ## 制約
 
@@ -81,8 +81,10 @@ Firestore コレクション配置: `teams/{teamId}/unavailabilityComments/{comm
 | ---- | ---- |
 | read | 同一チームの所属者（ロール不問） |
 | create | 同一チームの所属者（ロール不問）かつ β ゲート通過。`authorId` が本人の UID、`targetUserId` が同一チームの所属者（`members/{targetUserId}` が存在する）、フィールドが `targetUserId` / `authorId` / `month` / `date` / `start` / `end` / `text` / `createdAt` のみ、`date` が `yyyy-mm-dd` 形式、`month` が `date` の先頭 7 文字、`start` が 0〜23 の整数、`end` が 1〜24 の整数で `start < end`、`text` が 1〜100 字の文字列、`createdAt` がリクエスト時刻 |
-| update | 同一チームの所属者（ロール不問）かつ β ゲート通過で、既存の `authorId` が本人の UID。`targetUserId` / `authorId` / `createdAt` を変えない。そのほかは create と同じ検証 |
+| update | 同一チームの所属者（ロール不問）かつ β ゲート通過で、既存の `authorId` が本人の UID。`targetUserId` / `authorId` / `createdAt` は既存の値から変えない（`createdAt` をリクエスト時刻にし直さない）。フィールドの種類と、`month` / `date` / `start` / `end` / `text` の検証は create と同じ |
 | delete | 同一チームの所属者で、既存の `authorId` が本人の UID、またはロールがメンバー。退出時・月次の削除は Admin SDK で行う |
+
+退出したユーザーは所属者でないため、自分が投稿したコメントを更新・削除できない。退出したユーザーのコメントを削除できるのはメンバーだけになる。
 
 次はルールでは検証しない。書き込み前にクライアントの Zod スキーマで検証し、読み取り側も同じスキーマで検証して、通らないコメントは捨てて表示する。
 
@@ -92,13 +94,13 @@ Firestore コレクション配置: `teams/{teamId}/unavailabilityComments/{comm
 ## 読み取り
 
 - 一覧・詳細とも `teams/{teamId}/unavailability` を `month` の等価条件で購読する（1 クエリでチーム全員の 1 ヶ月分）。当月を先に購読し、前月・翌月はスクロールが端に近づいたときに購読を足す
-- コメントは、所属者詳細を開いている間だけ、読み込み済みの月ごとに `teams/{teamId}/unavailabilityComments` を `month` の等価条件で購読する（1 クエリでチーム全員宛ての 1 ヶ月分）。表示するのは `targetUserId` が開いている所属者のものとする。一覧だけを見ている間は購読しない
+- コメントは、所属者詳細を開いている間だけ、読み込み済みの月ごとに `teams/{teamId}/unavailabilityComments` を `month` の等価条件で購読する（1 クエリでチーム全員宛ての 1 ヶ月分）。表示するのは `targetUserId` が開いている所属者のものとし、`createdAt` の古い順（同値はドキュメント ID の昇順）に並べる。一覧だけを見ている間は購読しない
 - 一覧の「最終更新」は、その所属者の読み込み済み月ドキュメントの `updatedAt` のうち最新のもの。読み込み済みの月にドキュメントが 1 つも無ければ「未入力」
 
 ## インデックス
 
 - 月次削除はコレクショングループ `unavailability` と `unavailabilityComments` を `month` の範囲条件で引くため、`firestore.indexes.json` の `fieldOverrides` に、それぞれの `month` のコレクショングループスコープのインデックスを追加する
-- 退出時の削除（月ドキュメントは `userId`、コメントは `targetUserId` と `authorId` の等価条件）と画面の購読（`month` の等価条件）は自動の単一フィールドインデックスで足りる
+- 退出時の削除（月ドキュメントは `userId`、コメントは `targetUserId` の等価条件）と画面の購読（`month` の等価条件）は自動の単一フィールドインデックスで足りる
 
 ## 関連する隣接モデル
 

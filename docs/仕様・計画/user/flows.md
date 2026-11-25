@@ -37,7 +37,7 @@
 3. `users/{uid}` ドキュメントを完全削除せず、ゴースト状態へ変換する
 4. `displayName` と `avatarUrl` など過去データ表示に必要な最小情報のみ残す
 5. 個人情報と運用情報を削除する
-6. 所属していた全チームから、本人の対応不可と対応不可コメントを削除する（[unavailability/flows.md](../unavailability/flows.md)）。削除に失敗してもアカウント削除は成立させる
+6. 所属していた全チームから、本人の対応不可と、本人の時間帯に付いた対応不可コメントを削除する（[unavailability/flows.md](../unavailability/flows.md)）。削除に失敗してもアカウント削除は成立させる
 7. ghost User は復元対象にせず、履歴参照用として残す
 
 ## 削除後の再サインインフロー
