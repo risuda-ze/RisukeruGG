@@ -44,7 +44,7 @@
    - User の `teamIds` から退出チームを除去し、`currentTeamId` を別チームに更新する
 6. **メンバーで、自分が唯一のメンバーかつ所属者が 2 人以上の場合**:
    - エラーを表示してブロックする（先に別の所属者をメンバーへ昇格させる必要がある旨）
-7. 退出が成立したら、退出したユーザーのそのチームの対応不可を削除する（[unavailability/flows.md](../unavailability/flows.md)）。削除に失敗しても退出は成立させる
+7. 退出が成立したら、退出したユーザーのそのチームの対応不可と対応不可コメントを削除する（[unavailability/flows.md](../unavailability/flows.md)）。削除に失敗しても退出は成立させる
 
 ## ロール変更フロー
 
@@ -61,7 +61,7 @@
 4. 削除対象の所属者が持つ未完タスクをすべて「未アサイン」状態に移行する
 5. メンバーにタスク移行の通知を送る（システム通知カテゴリ）
 6. User の `teamIds` から対象チームを除去し、`currentTeamId` を更新する
-7. 削除対象の所属者のそのチームの対応不可を削除する（[unavailability/flows.md](../unavailability/flows.md)）。削除に失敗しても Kick は成立させる
+7. 削除対象の所属者のそのチームの対応不可と対応不可コメントを削除する（[unavailability/flows.md](../unavailability/flows.md)）。削除に失敗しても Kick は成立させる
 
 ## チームスイッチャーフロー
 

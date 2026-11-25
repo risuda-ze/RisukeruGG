@@ -22,7 +22,6 @@ Firestore コレクション配置: `teams/{teamId}/tasks/{taskId}`
 | `dueDateAllDay`    | boolean（任意） | 締切が終日かどうか。`true` または未設定は日付のみ、`false` は `dueDate` の時刻まで使う                                |
 | `createdBy`        | string          | 作成者 UID                                                                                                            |
 | `linkedScheduleId` | string \| null  | 関連する動画投稿予定スケジュール ID                                                                                   |
-| `comments`         | 配列（任意）    | チーム内コメント。各要素は `id` / `authorId` / `authorName` / `text` / `createdAt` / `parentId`（返信先。任意）を持つ |
 | `createdAt`        | timestamp       | 作成日時                                                                                                              |
 | `updatedAt`        | timestamp       | 更新日時                                                                                                              |
 
@@ -58,6 +57,7 @@ Firestore コレクション配置: `teams/{teamId}/categories/{categoryId}`
 ## 制約
 
 - タスク状態の正本は `columnId` であり、独立した status フィールドは持たない
+- タスクはコメントを持たない（TA-029）
 - `TaskStatus.role` は 1 チームにつき 0 列以上で `'done'` を取りうる
 - 列は最低 1 つ、最大 10 個まで管理する
 - カテゴリ削除時は関連する全タスクおよび全スケジュールの `categoryId` を `null` に更新する
@@ -85,5 +85,5 @@ Firestore コレクション配置: `teams/{teamId}/categories/{categoryId}`
 ## 今後詳細化する項目
 
 - 列削除時のタスク再配置ルール
-- タスクコメントや履歴の保持方針
+- タスク履歴の保持方針
 - CSV エクスポートの列定義詳細
