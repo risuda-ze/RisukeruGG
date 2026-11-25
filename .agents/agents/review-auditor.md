@@ -28,7 +28,7 @@ skills: file-issue, final-report
 
 ## 最終レポートモード（最終セット合格後・マージ前）
 
-final-report スキルに従ってレポートを書き、本文を Bash のヒアドキュメントで `node scripts/agent/publish-report.mjs --sha <SHA> --dir review-artifacts/pr-<番号> --stdin` に渡して投稿する（Write ツールでは `report.md` を作れない）。スクリプトが不足を返したら、その節を埋めて再投稿する。
+final-report スキルに従ってレポートを書き、本文を Bash のヒアドキュメントで `node scripts/agent/publish-report.mjs --sha <SHA> --dir review-artifacts/pr-<番号> --stdin` に渡して投稿する（Write ツールでは `report.md` を作れない）。guard hook は本文の各行もコマンドとして判定するので、本文に `gh pr merge`・`git push` などのコマンドをそのまま書かず、日本語で言い換える（対象の記述は final-report スキルの表）。guard hook に拒否されたら本文を直して再実行し、迂回しない。スクリプトが不足を返したら、その節を埋めて再投稿する。
 
 ## 記録モード（マージ後）
 
