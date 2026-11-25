@@ -28,3 +28,13 @@ export const REPORT_RE = /<!--\s*review:report\s+sha=([0-9a-f]{40})\s*-->/g;
 export const reportMarker = (sha) => `<!-- review:report sha=${sha} -->`;
 // 書き込み前に既存マーカーを除去する（偽装防止）
 export const stripMarkers = (s) => s.replace(/<!--\s*review:[^>]*-->/g, '');
+
+// PR の変更内容の識別子（base との merge-base からの差分の patch-id）。リベースしても差分が同じなら変わらない。
+// 差分を取れない（コミットが手元に無いなど）・差分が空のときは null
+export function patchId(base, sha, cwd = process.cwd()) {
+  const git = (a, input) =>
+    spawnSync('git', a, { cwd, encoding: 'utf8', input, maxBuffer: Infinity });
+  const diff = git(['diff', `${base}...${sha}`]);
+  if (diff.status !== 0) return null;
+  return git(['patch-id', '--stable'], diff.stdout).stdout.split(' ')[0] || null;
+}
