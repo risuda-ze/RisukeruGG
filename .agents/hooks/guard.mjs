@@ -38,11 +38,12 @@ let askReason = null;
 
 // publish-report.mjs へヒアドキュメントで渡すレポート本文はコマンドではないので、判定から外す。
 // 外さないと、本文中の「gh pr merge」「git push」などの記述が1行ずつコマンドとして判定される。
-// 区切り語を引用符で囲んだ形（<<'EOF'）だけが対象。囲まない形は本文中の $(...) が実行されるため判定を続ける
-const checked = command.replace(
-  /(publish-report\.mjs[^\n;&|]*<<'(\w+)'[^\n]*\n)[\s\S]*?\n\2(?=\n|$)/,
-  '$1$2'
-);
+// 外すのは、コマンド全体の先頭行が final-report スキルの呼び方と1文字ずつ一致するときだけ
+// （空白は1個、区切り語は 'EOF'、行末に何も続けない）。それ以外の形は本文も1行ずつ判定する。
+// 本文は「EOF だけの行」の手前まで。シェルと同じく最初の EOF 行で終わりとし、その後ろは判定する
+const REPORT_HEREDOC =
+  /^(node scripts\/agent\/publish-report\.mjs --sha [0-9a-f]{7,40} --dir review-artifacts\/pr-\d+ --stdin(?: \d+)? <<'EOF'\n)(?:(?!EOF(?:\n|$))[^\n]*\n)*EOF(?=\n|$)/;
+const checked = agent === 'review-auditor' ? command.replace(REPORT_HEREDOC, '$1') : command;
 
 // && || ; | 改行 で分割して1コマンドずつ判定する
 const segments = checked
