@@ -36,7 +36,8 @@ if (
 ) {
   window.__firebaseEmulatorsConnected = true;
   const emulatorHost = process.env.NEXT_PUBLIC_EMULATOR_HOST ?? 'localhost';
-  connectAuthEmulator(auth, `http://${emulatorHost}:9098`, { disableWarnings: false });
+  // 警告バナーは画面下端に固定表示され、サイドバー下端・モバイル下部ナビのクリックを奪うため出さない
+  connectAuthEmulator(auth, `http://${emulatorHost}:9098`, { disableWarnings: true });
   connectFirestoreEmulator(db, emulatorHost, 8080);
   connectStorageEmulator(storage, emulatorHost, 9199);
   connectFunctionsEmulator(functions, emulatorHost, 5001);
