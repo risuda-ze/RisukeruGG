@@ -79,14 +79,6 @@ test.describe('タスク管理 UI 構造確認（Constitution III 必須 E2E）'
 //     expect(box?.width).toBeGreaterThanOrEqual(900);
 //   });
 //
-//   test('コメント入力欄が丸型フィールドである (SC-004)', async ({ page }) => {
-//     await page.locator('.tcard').first().click();
-//     const field = page.locator('.task-modal input[placeholder*="コメント"]');
-//     await expect(field).toBeVisible();
-//     // textarea ではなく input であること
-//     await expect(field).toHaveAttribute('type', /.*/);
-//   });
-//
 //   test('フッターが「削除/キャンセル/保存」構成 (US3-SC5)', async ({ page }) => {
 //     await page.locator('.tcard').first().click();
 //     const modal = page.locator('.task-modal');

@@ -4,7 +4,6 @@ import {
   addDoc,
   getDoc,
   updateDoc,
-  arrayUnion,
   onSnapshot,
   Unsubscribe,
   Timestamp,
@@ -28,7 +27,6 @@ function toCollabSession(id: string, data: Record<string, unknown>): CollabSessi
     authorName: c.authorName as string,
     text: c.text as string,
     createdAt: (c.createdAt as Timestamp).toDate(),
-    ...(c.parentId ? { parentId: c.parentId as string } : {}),
   }));
 
   return {
@@ -98,17 +96,6 @@ export async function updateCollabSession(
     payload.updatedAt = Timestamp.fromDate(new Date());
   }
   await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), payload);
-}
-
-/** コメントを追加 */
-export async function addCollabComment(
-  teamId: string,
-  sessionId: string,
-  comment: Omit<CollabComment, 'createdAt'> & { createdAt: Timestamp }
-): Promise<void> {
-  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), {
-    comments: arrayUnion(comment),
-  });
 }
 
 export const createCollabSession = httpsCallable<

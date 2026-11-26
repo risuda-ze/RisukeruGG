@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { signInWithEmulator } from '../../helpers/auth';
 
 /**
  * コラボ調整機能 UIリデザイン E2E テスト
@@ -140,29 +141,64 @@ test.describe('SC-008: US3 ステータス変更→ゾーン移動', () => {
   });
 });
 
-test.describe('SC-012〜SC-013: US5 コメント表示', () => {
-  test('SC-012: コメント投稿が詳細モーダル右ペインに表示される', async ({ page }) => {
-    await page.setViewportSize(PC_VIEWPORT);
-    const authed = await gotoCollabs(page);
-    test.skip(!authed, '未認証のためスキップ');
-    test.skip((await rows(page).count()) === 0, 'コラボがないためスキップ');
-    // 既存コラボを開く
-    await rows(page).first().click();
-    await expect(modal(page)).toBeVisible({ timeout: 5000 });
-    // コメント入力エリアが存在する
-    await expect(page.locator('textarea[placeholder*="メモ"]')).toBeVisible({ timeout: 3000 });
-  });
+/**
+ * コラボ詳細の「回答」の欄（CO-029 / CO-030）。
+ * シード（scripts/seed.mjs）の collab006「回答つきコラボ調整」を使う。データは変更しない。
+ */
+test.describe('SC-013: コラボ詳細の「回答」の欄', () => {
+  const SEEDED_TITLE = '回答つきコラボ調整';
 
-  test('SC-013: コメント入力・送信ができる', async ({ page }) => {
-    await page.setViewportSize(PC_VIEWPORT);
-    const authed = await gotoCollabs(page);
-    test.skip(!authed, '未認証のためスキップ');
-    test.skip((await adjustRows(page).count()) === 0, '調整中コラボがないためスキップ');
-    await adjustRows(page).first().click();
-    await expect(modal(page)).toBeVisible({ timeout: 5000 });
-    const commentInput = page.locator('textarea[placeholder*="メモ"]');
-    await commentInput.fill('E2Eテストコメント');
-    await page.getByRole('button', { name: '送信' }).click();
-    await expect(page.getByText('E2Eテストコメント')).toBeVisible({ timeout: 5000 });
-  });
+  for (const user of [
+    { role: 'メンバー', email: 'taro@example.com' },
+    { role: 'スタッフ', email: 'kenta@example.com' },
+  ]) {
+    test(`SC-013: ${user.role}のコラボ詳細にコメントの入力欄が無く、回答者ごとの回答と回答コメントが出る`, async ({
+      page,
+    }) => {
+      await page.setViewportSize(PC_VIEWPORT);
+      await page.goto('/');
+      await page.waitForFunction(
+        () =>
+          (window as Window & { __firebaseEmulatorsConnected?: boolean })
+            .__firebaseEmulatorsConnected === true,
+        { timeout: 10000 }
+      );
+      await signInWithEmulator(page, user.email, 'password123');
+      await page.goto('/collabs');
+
+      await rows(page).filter({ hasText: SEEDED_TITLE }).first().click();
+      await expect(modal(page)).toBeVisible({ timeout: 10000 });
+
+      // コメント欄（見出し・入力欄・送信・返信）が無い
+      await expect(modal(page).getByText('コメント / メモ')).toHaveCount(0);
+      await expect(modal(page).locator('textarea[placeholder*="メモ"]')).toHaveCount(0);
+      await expect(modal(page).getByRole('button', { name: '送信' })).toHaveCount(0);
+      await expect(modal(page).getByRole('button', { name: '返信' })).toHaveCount(0);
+
+      // 「回答」の欄: 回答者ごとに 1 行、回答者名の昇順
+      const responseRows = modal(page).getByTestId('collab-responses').getByTestId('collab-response-row');
+      await expect(responseRows).toHaveCount(2);
+
+      // 回答コメントあり: 候補日程は日時の昇順（6/24 が NG、6/25 が OK）。同じ本文の 2 件もそのまま出る
+      const withComments = responseRows.nth(0);
+      await expect(withComments).toContainText('ゲスト歌い手G');
+      await expect(withComments.getByRole('listitem').nth(0)).toContainText('NG');
+      await expect(withComments.getByRole('listitem').nth(1)).toContainText('OK');
+      await expect(withComments.getByTestId('collab-response-comment')).toHaveText([
+        /マイクは持参します/,
+        /21時半からなら参加できます/,
+        /21時半からなら参加できます/,
+      ]);
+
+      // 回答コメントなし: 回答だけ（未定と、ok / ng / pending 以外の「—」）
+      const withoutComments = responseRows.nth(1);
+      await expect(withoutComments).toContainText('飛び入りH');
+      await expect(withoutComments.getByRole('listitem').nth(0)).toContainText('未定');
+      await expect(withoutComments.getByRole('listitem').nth(1)).toContainText('—');
+      await expect(withoutComments.getByTestId('collab-response-comment')).toHaveCount(0);
+
+      // チーム内から投稿された既存のコメントは表示しない
+      await expect(modal(page).getByText('チーム内から投稿した既存のコメント')).toHaveCount(0);
+    });
+  }
 });

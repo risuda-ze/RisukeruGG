@@ -25,8 +25,9 @@ export const PROMPT_TEMPLATES: PromptTemplateInfo[] = [
     id: 'assistant',
     name: 'AI アシスタント（登録・照会・タスク編集）',
     usedBy: ['POST /api/ai/chat', 'Discord /risukerugg'],
-    version: '2026.11.19-1',
+    version: '2026.11.26-1',
     changelog: [
+      { version: '2026.11.26-1', date: '2026-11-26', summary: 'コンテキストと案内文からタスクのコメントを削除' },
       { version: '2026.11.19-1', date: '2026-11-19', summary: 'コンテキストから「メンバーの予定」を削除' },
       { version: '2026.09.06-1', date: '2026-09-06', summary: 'チームからの追加指示（AI 設定）の注入と版管理を追加' },
       { version: '2026.09.05-1', date: '2026-09-05', summary: 'task_update の編集可能フィールド全面対応、コメント・カテゴリのコンテキスト追加' },

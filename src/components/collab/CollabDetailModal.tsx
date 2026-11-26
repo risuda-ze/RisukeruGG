@@ -7,7 +7,6 @@ import {
   confirmCollabDate,
   cancelCollabSession,
   updateCollabSession,
-  addCollabComment,
   reopenCollabSession,
   createCollabSessionDraft,
 } from '@/lib/repositories/collabs';
@@ -16,9 +15,8 @@ import { useAuthStore } from '@/stores/auth';
 import { Icon } from '@/components/ui/Icon';
 import { DialogShell } from '@/components/ui/Dialog';
 import { COLLAB_STATUS_LABELS } from '@/types/entities';
-import type { CollabSession, CollabParticipant, CollabComment } from '@/types/entities';
-import { Timestamp, doc, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
+import type { CollabSession, CollabParticipant } from '@/types/entities';
+import { buildResponseRows, respondentNameResolver, type ResponseMark } from '@/lib/collab/responseRows';
 import { firebaseFunctionsErrorMessage } from '@/lib/firebase/errors';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useModalDrag } from '@/hooks/useModalDrag';
@@ -122,6 +120,25 @@ function ResponseAggregate({
   );
 }
 
+/* 回答の印（集計と同じアイコン・色。色だけに頼らないよう文言も付ける） */
+const RESPONSE_MARKS = {
+  ok: { icon: 'check_circle', iconClass: 'text-success', label: 'OK' },
+  ng: { icon: 'cancel', iconClass: 'text-live', label: 'NG' },
+  pending: { icon: 'help', iconClass: 'text-warning', label: '未定' },
+} as const;
+
+/* 回答者 1 人の、候補日程 1 件に対する回答。ok / ng / pending 以外は「—」 */
+function ResponseMarkLabel({ mark }: { mark: ResponseMark }) {
+  if (!mark) return <span className="text-[13px] text-text-muted">—</span>;
+  const { icon, iconClass, label } = RESPONSE_MARKS[mark];
+  return (
+    <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-text-2">
+      <span className={`material-icons text-[16px] ${iconClass}`} aria-hidden="true">{icon}</span>
+      {label}
+    </span>
+  );
+}
+
 export function CollabDetailModal({
   session,
   canEdit,
@@ -169,17 +186,6 @@ export function CollabDetailModal({
   const [showAddDate, setShowAddDate] = useState(false);
   const [newDateValue, setNewDateValue] = useState<Date | null>(null);
 
-  /* コメント（Firestore 永続化） */
-  const [comments, setComments] = useState<CollabComment[]>(session?.comments ?? []);
-  const [commentText, setCommentText] = useState('');
-  const [sendingComment, setSendingComment] = useState(false);
-
-  /* 返信（ローカル状態のみ） */
-  type LocalReply = { id: string; authorId: string; authorName: string; text: string; time: string };
-  const [localReplies, setLocalReplies] = useState<Record<string, LocalReply[]>>({});
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState('');
-
   /* 候補日程の複数選択（承諾） */
   const [selectedDateIdxs, setSelectedDateIdxs] = useState<number[]>([]);
   const [confirming, setConfirming] = useState(false);
@@ -219,30 +225,6 @@ export function CollabDetailModal({
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [showIconPicker]);
-
-  /*
-   * Firestoreのリアルタイム更新（コメントのみ即時反映）。
-   * 候補日程・参加者・回答・タイトル・内容・アイコンはローカル編集とし、
-   * 保存ボタン押下時にまとめて永続化する。これらをここで上書きすると
-   * 編集中のローカル変更がクロバーされるため同期対象から除外している。
-   */
-  useEffect(() => {
-    if (!teamId || isNew) return;
-    const ref = doc(db, 'teams', teamId, 'collabSessions', session!.id);
-    const unsub = onSnapshot(ref, (snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data();
-      const rawComments = (data.comments as Array<Record<string, unknown>> | null) ?? [];
-      setComments(rawComments.map((c) => ({
-        id: c.id as string,
-        authorId: c.authorId as string,
-        authorName: c.authorName as string,
-        text: c.text as string,
-        createdAt: (c.createdAt as Timestamp).toDate(),
-      })));
-    });
-    return unsub;
-  }, [teamId, isNew, session?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* タイトル編集終了（永続化はフッターの保存ボタンで行う） */
   function saveTitle() {
@@ -355,12 +337,7 @@ export function CollabDetailModal({
 
   /* 回答状況の集計 */
   function getDateAggregates(dateIndex: number) {
-    const keyToName: Record<string, string> = {};
-    for (const p of participants) {
-      keyToName[p.id] = p.name;
-      keyToName[p.name.replace(/[.#$[\]/]/g, '_')] = p.name;
-    }
-    const resolve = (key: string) => keyToName[key] ?? key;
+    const resolve = respondentNameResolver(participants);
     const ok: string[] = [];
     const ng: string[] = [];
     const pending: string[] = [];
@@ -373,56 +350,20 @@ export function CollabDetailModal({
     return { okNames: ok, ngNames: ng, pendingNames: pending };
   }
 
+  /*
+   * 「回答」の欄の行。集計と同じく、モーダルを開いた時点の値（ローカル state と session.comments）を使う。
+   * 開いている間に届いた回答は、開き直すと表示される。
+   */
+  const responseRows = isNew
+    ? []
+    : buildResponseRows({ participants, proposedDates, participantResponses, comments: session!.comments ?? [] });
+
   /* 候補日程を追加（ローカル状態のみ。保存ボタンで永続化） */
   function handleAddDate() {
     if (!newDateValue) return;
     setProposedDates((prev) => [...prev, newDateValue]);
     setNewDateValue(null);
     setShowAddDate(false);
-  }
-
-  /* コメント送信（Firestore + 楽観的ローカル更新） */
-  async function sendComment() {
-    if (!commentText.trim() || !currentUser || sendingComment || isNew) return;
-    const myMember = members.find((m) => m.userId === currentUser.uid);
-    setSendingComment(true);
-    try {
-      const newComment = {
-        id: `${Date.now()}`,
-        authorId: currentUser.uid,
-        authorName: myMember?.displayName ?? currentUser.displayName ?? 'あなた',
-        text: commentText.trim(),
-        createdAt: Timestamp.now(),
-      };
-      await addCollabComment(teamId, session!.id, newComment);
-      /* onSnapshot が同期するが、楽観的に先行表示 */
-      setComments((prev: CollabComment[]) => [
-        ...prev,
-        { ...newComment, createdAt: newComment.createdAt.toDate() },
-      ]);
-      setCommentText('');
-    } finally {
-      setSendingComment(false);
-    }
-  }
-
-  /* 返信追加（ローカルのみ） */
-  function addReply(commentId: string) {
-    if (!replyText.trim()) return;
-    const myMember = members.find((m) => m.userId === currentUser?.uid);
-    const reply: LocalReply = {
-      id: `r-${Date.now()}`, // eslint-disable-line react-hooks/purity
-      authorId: currentUser?.uid ?? '',
-      authorName: myMember?.displayName ?? 'あなた',
-      text: replyText.trim(),
-      time: format(new Date(), 'HH:mm', { locale: ja }),
-    };
-    setLocalReplies((prev) => ({
-      ...prev,
-      [commentId]: [...(prev[commentId] ?? []), reply],
-    }));
-    setReplyText('');
-    setReplyingTo(null);
   }
 
   /* 日程確定（確定後モーダルが閉じるため、未保存のローカル編集を先に永続化する） */
@@ -525,8 +466,8 @@ export function CollabDetailModal({
       onClose={onClose}
       label="コラボの詳細"
       data-testid="collab-detail-modal"
-      // モバイルは下寄せの全幅シート、PC は 900px のリサイズ可能なカード
-      className="flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-lg border border-border bg-card md:h-[min(720px,calc(100vh-32px))] md:max-h-[calc(100vh-32px)] md:min-h-[400px] md:w-[min(900px,calc(100vw-32px))] md:min-w-[540px] md:resize md:rounded-lg"
+      // モバイルは下寄せの全幅シート、PC は 720px のリサイズ可能なカード
+      className="flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-lg border border-border bg-card md:h-[min(720px,calc(100vh-32px))] md:max-h-[calc(100vh-32px)] md:min-h-[400px] md:w-[min(720px,calc(100vw-32px))] md:min-w-[540px] md:resize md:rounded-lg"
       style={{ transform: isMobile ? undefined : `translate(${position.x}px, ${position.y}px)` }}
     >
         {/* アンバーグラデーションバー */}
@@ -637,14 +578,11 @@ export function CollabDetailModal({
           </div>
         </div>
 
-        {/* ボディ — レスポンシブ2カラムレイアウト (md 未満は縦積み) */}
-        <div className="flex-1 overflow-hidden flex flex-col md:flex-row min-h-0">
+        {/* ボディ（1 カラム） */}
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
 
-          {/* 左カラム: コラボ情報 */}
-          <div
-            className="flex-1 overflow-y-auto px-5 md:px-8 py-4 md:py-6 flex flex-col gap-6 border-b md:border-b-0 md:border-r"
-            style={{ borderColor: 'var(--border)' }}
-          >
+          {/* コラボ情報 */}
+          <div className="flex-1 overflow-y-auto px-5 md:px-8 py-4 md:py-6 flex flex-col gap-6">
             {/* 確定日 */}
             {!isNew && session!.status === 'confirmed' && session!.confirmedDate && (
               <div
@@ -951,157 +889,69 @@ export function CollabDetailModal({
                 )
               )}
             </div>
-          </div>
 
-          {/* 右カラム: コメント（新規作成モードでは非表示） */}
-          {!isNew && (
-            <div
-              className="md:w-[320px] md:shrink-0 max-h-[280px] md:max-h-none flex flex-col overflow-hidden border-t md:border-t-0"
-              style={{ borderColor: 'var(--border)' }}
-            >
-              <div className="flex flex-col flex-1 overflow-hidden min-h-0">
-                <div className="px-6 py-4 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
-                  <p className="text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase">コメント / メモ</p>
-                </div>
-
-                {/* コメントリスト */}
-                <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4" style={{ minHeight: 0 }}>
-                  {comments.length === 0 && (
-                    <p className="text-[12px] text-text-muted italic text-center mt-4">まだコメントはありません</p>
-                  )}
-                  {comments.map((c) => {
-                    const style = avatarStyle(c.authorName);
-                    const cAvatarUrl = memberAvatarUrl(c.authorId);
-                    const replies = localReplies[c.id] ?? [];
-                    return (
-                      <div key={c.id}>
-                        <div className="flex gap-2.5">
-                          {cAvatarUrl ? (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img src={cAvatarUrl} alt={c.authorName} className="w-7 h-7 rounded-full object-cover shrink-0" />
-                          ) : (
+            {/* 回答（回答者ごとに 1 行。新規作成中は出さない） */}
+            {!isNew && (
+              <div data-testid="collab-responses">
+                <div className="text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase mb-3">回答</div>
+                {responseRows.length === 0 ? (
+                  <p className="text-[13px] text-text-muted">まだ回答はありません</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {responseRows.map((row) => {
+                      const style = avatarStyle(row.name);
+                      return (
+                        <div
+                          key={row.key}
+                          data-testid="collab-response-row"
+                          className="rounded-[12px] px-4 py-3 border"
+                          style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
                             <div
-                              className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
+                              className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
                               style={{ background: style.bg, color: style.text }}
+                              aria-hidden="true"
                             >
-                              {c.authorName.slice(0, 2).toUpperCase()}
+                              {row.name.slice(0, 2).toUpperCase()}
                             </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div
-                              className="rounded-[0_10px_10px_10px] px-3 py-2"
-                              style={{ background: 'var(--canvas)', border: '1px solid var(--border)' }}
-                            >
-                              <div className="flex justify-between mb-1 text-[11px] text-text-muted">
-                                <strong className="text-text font-semibold">{c.authorName}</strong>
-                                <span>{format(c.createdAt, 'HH:mm', { locale: ja })}</span>
-                              </div>
-                              <div className="text-[13px] text-text leading-relaxed">{c.text}</div>
-                            </div>
-                            <button
-                              onClick={() => { setReplyingTo(c.id); setReplyText(''); }}
-                              className="mt-1 text-[11px] text-text-muted hover:text-brand-2 transition-colors ml-1"
-                            >
-                              返信
-                            </button>
+                            <span className="text-[13px] font-semibold text-text">{row.name}</span>
                           </div>
-                        </div>
-
-                        {/* 返信リスト */}
-                        {replies.length > 0 && (
-                          <div className="ml-9 mt-2 flex flex-col gap-2 border-l-2 pl-3" style={{ borderColor: 'var(--border)' }}>
-                            {replies.map((r) => {
-                              const rs = avatarStyle(r.authorName);
-                              const rAvatarUrl = memberAvatarUrl(r.authorId);
-                              return (
-                                <div key={r.id} className="flex gap-2">
-                                  {rAvatarUrl ? (
-                                    /* eslint-disable-next-line @next/next/no-img-element */
-                                    <img src={rAvatarUrl} alt={r.authorName} className="w-5 h-5 rounded-full object-cover shrink-0 mt-0.5" />
-                                  ) : (
-                                    <div
-                                      className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5"
-                                      style={{ background: rs.bg, color: rs.text }}
-                                    >
-                                      {r.authorName.slice(0, 2).toUpperCase()}
-                                    </div>
-                                  )}
-                                  <div
-                                    className="flex-1 rounded-[0_8px_8px_8px] px-2.5 py-1.5"
-                                    style={{ background: 'var(--canvas)', border: '1px solid var(--border)' }}
-                                  >
-                                    <div className="flex justify-between mb-0.5 text-[10px] text-text-muted">
-                                      <strong className="text-text font-semibold">{r.authorName}</strong>
-                                      <span>{r.time}</span>
-                                    </div>
-                                    <div className="text-[12px] text-text leading-relaxed">{r.text}</div>
+                          <ul className="flex flex-col gap-1">
+                            {row.answers.map((a) => (
+                              <li key={a.dateIndex} className="flex items-center justify-between gap-3">
+                                <span className="text-[13px] font-num text-text-2">
+                                  {format(a.date, 'M月 dd日（E） HH:mm 〜', { locale: ja })}
+                                </span>
+                                <ResponseMarkLabel mark={a.mark} />
+                              </li>
+                            ))}
+                          </ul>
+                          {row.comments.length > 0 && (
+                            <ul className="mt-2 flex flex-col gap-1.5">
+                              {row.comments.map((c, i) => (
+                                <li
+                                  key={`${c.id}-${i}`}
+                                  data-testid="collab-response-comment"
+                                  className="rounded-[8px] px-3 py-2"
+                                  style={{ background: 'var(--canvas)', border: '1px solid var(--border)' }}
+                                >
+                                  <div className="text-[11px] text-text-muted font-num mb-0.5">
+                                    {format(c.createdAt, 'M/d HH:mm', { locale: ja })}
                                   </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {/* 返信入力 */}
-                        {replyingTo === c.id && (
-                          <div className="ml-9 mt-2 flex flex-col gap-1.5 border-l-2 pl-3" style={{ borderColor: 'var(--primary)' }}>
-                            <textarea
-                              value={replyText}
-                              onChange={(e) => setReplyText(e.target.value)}
-                              onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addReply(c.id); }}
-                              placeholder="返信を入力..."
-                              rows={2}
-                              className="w-full bg-canvas border border-border text-text px-2.5 py-2 rounded-[8px] text-[12px] outline-none focus:border-primary resize-none"
-                              autoFocus
-                            />
-                            <div className="flex gap-1.5 justify-end">
-                              <button
-                                onClick={() => setReplyingTo(null)}
-                                className="px-2.5 py-1 rounded-[6px] text-[11px] font-semibold border border-border text-text-muted"
-                              >
-                                キャンセル
-                              </button>
-                              <button
-                                onClick={() => addReply(c.id)}
-                                disabled={!replyText.trim()}
-                                className="px-2.5 py-1 rounded-[6px] text-[11px] font-semibold disabled:opacity-40"
-                                style={{ background: 'color-mix(in oklab, var(--primary) 35%, transparent)', color: 'var(--brand-2)' }}
-                              >
-                                返信
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* コメント入力 */}
-                <div className="px-4 py-3 border-t shrink-0 flex flex-col gap-2" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-                  <textarea
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendComment(); }}
-                    placeholder="チーム内メモを入力..."
-                    rows={2}
-                    className="w-full bg-canvas border border-border text-text px-3 py-2 rounded-[10px] text-[12px] outline-none transition-colors focus:border-primary resize-none"
-                  />
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-text-muted">Ctrl+Enter で送信</span>
-                    <button
-                      onClick={sendComment}
-                      disabled={!commentText.trim() || sendingComment}
-                      className="px-3 py-1.5 rounded-[8px] text-[11px] font-semibold transition-colors disabled:opacity-40"
-                      style={{ background: 'color-mix(in oklab, var(--primary) 35%, transparent)', color: 'var(--brand-2)' }}
-                    >
-                      {sendingComment ? '送信中...' : '送信'}
-                    </button>
+                                  <div className="text-[13px] text-text leading-relaxed whitespace-pre-wrap break-words">{c.text}</div>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
+                )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* フッター */}
@@ -1116,7 +966,7 @@ export function CollabDetailModal({
                   style={{ background: 'rgba(239,159,39,0.1)', color: 'var(--orange-text)', border: '1px solid rgba(239,159,39,0.3)' }}
                 >
                   <p className="font-semibold mb-2">確定済みのコラボを「調整中」に戻しますか？</p>
-                  <p className="text-[11px] text-text-muted mb-3">確定日・リンクスケジュールが削除されます。候補日程・参加者・コメントは保持されます。</p>
+                  <p className="text-[11px] text-text-muted mb-3">確定日・リンクスケジュールが削除されます。候補日程・参加者・回答コメントは保持されます。</p>
                   <div className="flex gap-2 justify-end">
                     <button
                       onClick={() => setShowReopenConfirm(false)}

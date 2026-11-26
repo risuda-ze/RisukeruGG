@@ -1,14 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Avatar } from '@/components/ui/Avatar';
 import { useAIChatStore } from '@/stores/aiChat';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { Timestamp } from 'firebase/firestore';
-import { updateTask, deleteTask, addTaskComment, createTask } from '@/lib/repositories/tasks';
-import { useAuthStore } from '@/stores/auth';
+import { updateTask, deleteTask, createTask } from '@/lib/repositories/tasks';
 import { MarkdownView } from '@/components/ui/MarkdownEditor';
 import { DateField } from '@/components/ui/DateField';
 import { Icon } from '@/components/ui/Icon';
@@ -17,7 +15,7 @@ import { saveDraft, loadDraft, clearDraft, DRAFT_KEYS } from '@/lib/formDraft';
 import { useModalDrag } from '@/hooks/useModalDrag';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { Switch } from '@/components/ui/Switch';
-import type { Task, TeamMember, Category, TaskStatus, CollabComment } from '@/types/entities';
+import type { Task, TeamMember, Category, TaskStatus } from '@/types/entities';
 
 interface TaskDetailDraft {
   description: string;
@@ -49,7 +47,6 @@ export function TaskDetailModal({
   onClose,
   onDeleted,
 }: TaskDetailModalProps) {
-  const currentUser = useAuthStore((s) => s.currentUser);
   const isNew = task === null;
   const router = useRouter();
 
@@ -83,25 +80,13 @@ export function TaskDetailModal({
   const [editingDesc, setEditingDesc] = useState(savedDraft?.editingDesc ?? false);
   const [description, setDescription] = useState(savedDraft?.description ?? task?.description ?? '');
 
-  /* コメント */
-  const [comments, setComments] = useState<CollabComment[]>(task?.comments ?? []);
-  const [commentText, setCommentText] = useState('');
-  const [sendingComment, setSendingComment] = useState(false);
-  const commentFieldRef = useRef<HTMLDivElement>(null);
 
   /* 保存中（新規・編集共通）とフッターのエラー表示 */
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
 
-  const myName = currentUser?.displayName ?? 'あなた';
-
   /* ドラッグ移動（PC のみ） */
   const { position, handleDragStart } = useModalDrag();
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!isNew) setComments(task!.comments ?? []);
-  }, [isNew, task?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentCategory = categories.find((c) => c.id === categoryId);
   const currentColumn = columns.find((c) => c.id === columnId);
@@ -128,24 +113,6 @@ export function TaskDetailModal({
     }
     setDueDateAllDay(newAllDay);
     if (newDate) setDueDate(newDate);
-  }
-
-  /* コメント追加 */
-  async function addComment() {
-    if (!commentText.trim() || !currentUser || sendingComment || isNew) return;
-    const newComment = {
-      id: `${Date.now()}`,
-      authorId: currentUser.uid,
-      authorName: myName,
-      text: commentText.trim(),
-      createdAt: Timestamp.now(),
-    };
-    setSendingComment(true);
-    try {
-      await addTaskComment(teamId, task!.id, newComment);
-      setComments((prev) => [...prev, { ...newComment, createdAt: newComment.createdAt.toDate() }]);
-      setCommentText('');
-    } finally { setSendingComment(false); }
   }
 
   /* タスク削除 */
@@ -228,24 +195,13 @@ export function TaskDetailModal({
     handleSaveEdit();
   }
 
-  /* アバタースタイル */
-  function avatarBg(name: string) {
-    return ['color-mix(in oklab, var(--primary) 35%, transparent)', 'var(--success-tint)', 'var(--warning-tint)', 'var(--danger-tint)'][name.charCodeAt(0) % 4];
-  }
-  function avatarColor(name: string) {
-    return ['var(--brand-2)', 'var(--success)', 'var(--orange-text)', 'var(--danger)'][name.charCodeAt(0) % 4];
-  }
-  function memberAvatarUrl(authorId: string) {
-    return members.find((m) => m.userId === authorId)?.avatarUrl ?? null;
-  }
-
   return (
     <DialogShell
       onClose={handleCancel}
       label={isNew ? 'タスクを作成' : 'タスクの詳細'}
       data-testid="task-detail-modal"
-      // モバイルは全画面、PC は 1180px のリサイズ可能なカード（ScheduleModal と同サイズ）
-      className="flex h-dvh max-h-dvh w-full flex-col overflow-hidden border border-border bg-card md:h-[min(720px,calc(100vh-64px))] md:max-h-[calc(100vh-64px)] md:min-h-[400px] md:w-[min(1180px,calc(100vw-64px))] md:min-w-[560px] md:resize md:rounded-lg"
+      // モバイルは全画面、PC は 720px のリサイズ可能なカード（ScheduleModal と同サイズ）
+      className="flex h-dvh max-h-dvh w-full flex-col overflow-hidden border border-border bg-card md:h-[min(720px,calc(100vh-64px))] md:max-h-[calc(100vh-64px)] md:min-h-[400px] md:w-[min(720px,calc(100vw-64px))] md:min-w-[560px] md:resize md:rounded-lg"
       style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
     >
         {/* パープルバー */}
@@ -298,10 +254,9 @@ export function TaskDetailModal({
           </div>
         </div>
 
-        {/* ボディ — モバイル: 縦積み / PC: 2カラム */}
-        <div className="flex-1 overflow-hidden flex flex-col md:flex-row min-h-0">
-          {/* 左カラム */}
-          <div className="flex-1 overflow-y-auto px-5 md:px-8 py-4 md:py-6 flex flex-col gap-5 border-b md:border-b-0 md:border-r" style={{ borderColor: 'var(--border)' }}>
+        {/* ボディ（1 カラム） */}
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto px-5 md:px-8 py-4 md:py-6 flex flex-col gap-5">
             <div className="grid grid-cols-2 gap-4">
               {/* ステータス */}
               <div>
@@ -476,87 +431,6 @@ export function TaskDetailModal({
               )}
             </div>
           </div>
-
-          {/* 右カラム: コメント（新規追加モードでは非表示） */}
-          {!isNew && (
-            <div className="md:w-[340px] md:shrink-0 flex flex-col overflow-hidden max-h-[280px] md:max-h-none" style={{ borderColor: 'var(--border)' }}>
-              <div className="px-5 py-3 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
-                <p className="text-[11px] font-semibold text-text-muted tracking-[0.06em] uppercase">コメント / メモ</p>
-              </div>
-              {/* コメントリスト */}
-              <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3" style={{ minHeight: 0 }}>
-                {comments.length === 0 && (
-                  <div className="flex items-center gap-2 p-3 rounded-[10px] text-[12px] text-text-muted" style={{ background: 'var(--surface)', border: '1px dashed var(--border)' }}>
-                    <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5 shrink-0 opacity-50"><path d="M2 2h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H9l-3 3v-3H2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Z" /></svg>
-                    まだコメントはありません
-                  </div>
-                )}
-                {comments.map((c) => {
-                  const isMe = c.authorId === currentUser?.uid;
-                  return (
-                    <div key={c.id} className={`flex gap-2 items-start ${isMe ? 'flex-row-reverse' : ''}`}>
-                      {memberAvatarUrl(c.authorId) ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={memberAvatarUrl(c.authorId)!} alt={c.authorName} className="w-7 h-7 rounded-full object-cover shrink-0" />
-                      ) : (
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
-                          style={{ background: avatarBg(c.authorName), color: avatarColor(c.authorName) }}>
-                          {c.authorName.slice(0, 2).toUpperCase()}
-                        </div>
-                      )}
-                      <div className={`max-w-[78%] flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'}`}>
-                        <div className="flex items-center gap-1.5 text-[10px] text-text-muted">
-                          {!isMe && <span className="font-semibold text-text-secondary">{c.authorName}</span>}
-                          <span>{format(c.createdAt, 'HH:mm', { locale: ja })}</span>
-                        </div>
-                        <div className="px-3 py-2 text-[13px] leading-relaxed text-text"
-                          style={{
-                            background: isMe ? 'var(--surface-2)' : 'var(--surface)',
-                            border: `1px solid ${isMe ? 'var(--border)' : 'var(--border)'}`,
-                            borderRadius: isMe ? '13px 4px 13px 13px' : '4px 13px 13px 13px',
-                          }}>
-                          {c.text}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              {/* 丸型コメント入力 */}
-              <div className="px-4 py-3 shrink-0 flex items-center gap-2" style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
-                <div
-                  ref={commentFieldRef}
-                  className="flex-1 flex items-center px-4"
-                  style={{ height: 46, background: 'var(--canvas)', border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', transition: 'border-color var(--duration-fast), box-shadow var(--duration-fast)' }}
-                  onFocusCapture={() => {
-                    if (commentFieldRef.current) {
-                      commentFieldRef.current.style.borderColor = 'var(--primary)';
-                    }
-                  }}
-                  onBlurCapture={() => {
-                    if (commentFieldRef.current) {
-                      commentFieldRef.current.style.borderColor = 'var(--border)';
-                    }
-                  }}
-                >
-                  <input
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(); } }}
-                    placeholder="コメントを入力..."
-                    className="flex-1 bg-transparent text-[13px] text-text outline-none placeholder:text-text-muted"
-                  />
-                </div>
-                <button onClick={addComment} disabled={!commentText.trim() || sendingComment}
-                  className="shrink-0 w-[46px] h-[46px] rounded-full flex items-center justify-center disabled:opacity-40 transition-opacity"
-                  style={{ background: 'var(--primary)' }} aria-label="コメントを送信">
-                  <svg viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth={2} className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 13V3M4 7l4-4 4 4" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* フッター */}

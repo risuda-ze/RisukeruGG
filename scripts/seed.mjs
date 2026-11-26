@@ -1302,7 +1302,41 @@ async function main() {
     linkedScheduleId: null,
     createdAt: d(2026, 5, 6),
   });
-  console.log('  ✓ collabSessions (5件)');
+  // 回答・回答コメントあり（コラボ詳細の「回答」の欄の確認用。E2E が参照する）
+  // 候補日程は添字 0 のほうが遅い日時。回答コメントは同じ本文の 2 件と、チーム内から投稿した既存のコメント 1 件を含む
+  await setDoc(`teams/${TEAM_ID}/collabSessions/collab006`, {
+    title: '回答つきコラボ調整',
+    partnerName: 'ゲスト歌い手G',
+    createdBy: UID1,
+    teamId: TEAM_ID,
+    proposedDates: [d(2026, 6, 25, 21, 0), d(2026, 6, 24, 21, 0)],
+    responses: {
+      dates: { 0: 'ok', 1: 'ng' },
+      alternativeDates: [],
+      respondedAt: d(2026, 5, 12, 10, 5),
+      note: '21時半からなら参加できます',
+    },
+    expiresAt: d(2026, 6, 20),
+    status: 'open',
+    confirmedDate: null,
+    linkedScheduleId: null,
+    createdAt: d(2026, 5, 8),
+    participants: [
+      { id: UID1, name: '配信太郎', type: 'member' },
+      { id: 'ext_seed_g', name: 'ゲスト歌い手G', type: 'external' },
+    ],
+    participantResponses: {
+      ゲスト歌い手G: { 0: 'ok', 1: 'ng' },
+      飛び入りH: { 0: 'maybe', 1: 'pending' },
+    },
+    comments: [
+      { id: 'resp_seed_1', authorId: 'ゲスト歌い手G', authorName: 'ゲスト歌い手G', text: 'マイクは持参します', createdAt: d(2026, 5, 11, 9, 0) },
+      { id: 'team_seed_1', authorId: UID2, authorName: '運営花子', text: 'チーム内から投稿した既存のコメント', createdAt: d(2026, 5, 11, 12, 0) },
+      { id: 'resp_seed_2', authorId: 'ゲスト歌い手G', authorName: 'ゲスト歌い手G', text: '21時半からなら参加できます', createdAt: d(2026, 5, 12, 10, 0) },
+      { id: 'resp_seed_3', authorId: 'ゲスト歌い手G', authorName: 'ゲスト歌い手G', text: '21時半からなら参加できます', createdAt: d(2026, 5, 12, 10, 5) },
+    ],
+  });
+  console.log('  ✓ collabSessions (6件)');
 
   // ── 対応不可時間 ──────────────────────────────────────────
   // 画面は実行時点の JST 当日を基準に前月〜翌月を表示するため、ここだけ固定の基準日ではなく実行日からの相対で作る
