@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { signInWithEmulator } from '../../helpers/auth';
+import { selectDropdownOption } from '../../helpers/dropdown';
 
 /**
  * 対応不可時間の入力・メモ E2E（emulator プロジェクト専用）
@@ -196,10 +197,8 @@ test('⑤ 定期入力をプレビューして保存すると、一覧に反映�
   await bulk.locator('#un-bulk-from').fill(date);
   await bulk.locator('#un-bulk-to').fill(date);
   await bulk.getByRole('button', { name: `${weekday}曜日` }).click();
-  await bulk.locator('[data-slot="dropdown-trigger"]').nth(1).click();
-  await page.getByRole('option', { name: '12:00' }).click();
-  await bulk.locator('[data-slot="dropdown-trigger"]').nth(0).click();
-  await page.getByRole('option', { name: '10:00' }).click();
+  await selectDropdownOption(bulk.locator('[data-slot="dropdown-trigger"]').nth(1), '12:00');
+  await selectDropdownOption(bulk.locator('[data-slot="dropdown-trigger"]').nth(0), '10:00');
   await page.getByRole('button', { name: 'プレビュー' }).click();
 
   // プレビュー: 対象日と時間帯を確認して保存する

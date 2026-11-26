@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { signInWithEmulator } from '../../helpers/auth';
+import { selectDropdownOption } from '../../helpers/dropdown';
 
 /**
  * 対応不可時間の閲覧 E2E（emulator プロジェクト専用）
@@ -117,12 +118,10 @@ test('時間帯を指定すると、表示中のメンバー全員が対応で�
   // 13:00〜15:00 を指定する
   await page.getByRole('button', { name: '検索条件' }).click();
   const filter = page.locator('#un-filter');
-  await filter.locator('[data-slot="dropdown-trigger"]').nth(0).click();
-  await page.getByRole('option', { name: '13:00' }).click();
+  await selectDropdownOption(filter.locator('[data-slot="dropdown-trigger"]').nth(0), '13:00');
   // 開始だけでは効かない
   await expect(page.getByTestId('un-free')).toHaveCount(0);
-  await filter.locator('[data-slot="dropdown-trigger"]').nth(1).click();
-  await page.getByRole('option', { name: '15:00' }).click();
+  await selectDropdownOption(filter.locator('[data-slot="dropdown-trigger"]').nth(1), '15:00');
 
   // シード: 当日は誰も 13〜15 時に対応不可が無い。翌日は運営花子が終日対応不可
   await expect(dayHead(today)).toHaveAttribute('data-free', 'true');
