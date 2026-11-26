@@ -199,6 +199,10 @@ test('⑤ 定期入力をプレビューして保存すると、一覧に反映�
   await bulk.getByRole('button', { name: `${weekday}曜日` }).click();
   await selectDropdownOption(bulk.locator('[data-slot="dropdown-trigger"]').nth(1), '12:00');
   await selectDropdownOption(bulk.locator('[data-slot="dropdown-trigger"]').nth(0), '10:00');
+  // 閉じた Dropdown の選択肢は DOM に残るが、inert で操作と支援技術から外れている（#241）。
+  // 「終了」のポップアップ（24:00 があるのは終了だけ）を包む Positioner で確かめる
+  const closedPopup = page.locator('[data-slot="dropdown-menu"]').filter({ hasText: '24:00' });
+  await expect(closedPopup.locator('..')).toHaveJSProperty('inert', true);
   await page.getByRole('button', { name: 'プレビュー' }).click();
 
   // プレビュー: 対象日と時間帯を確認して保存する
