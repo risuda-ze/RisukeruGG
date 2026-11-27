@@ -76,6 +76,10 @@ export function Dropdown({
           sideOffset={6}
           alignItemWithTrigger={false}
           className="z-[500]"
+          // 閉じた後もフェードアウトが終わるまで選択肢は DOM に残る。その間は操作できないので、
+          // inert にして支援技術にも出さない（続けて開いた隣の Dropdown の選択肢と二重に見えるのを防ぐ）。
+          // aria-hidden は、フォーカスがトリガーへ戻る前に付くとブラウザに無視されるので使わない
+          render={(props, state) => <div {...props} inert={!state.open} />}
         >
           <Select.Popup
             data-slot="dropdown-menu"
