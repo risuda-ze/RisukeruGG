@@ -5,7 +5,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 /**
  * ブリーフ削除は配下（工程・工程コメント・差分）ごと 1 回の commit で行う（PD-061）。
  * 途中まで消えた状態を作らないこと、commit の失敗を握りつぶさないことを確かめる。
- * 工程の削除も、その工程の工程コメントを同じ commit で消す（TE-023）。
+ * 工程の削除も、その工程の工程コメントを同じ commit で消す（TE-024）。
  */
 
 const TEAM = 't1';
