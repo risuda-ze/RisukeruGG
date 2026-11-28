@@ -31,6 +31,7 @@ describe('guard.mjs のヒアドキュメント', () => {
     ['終端行の後ろ', 'cat <<EOF > a.md\nx\nEOF\ngh pr merge 1 --merge'],
     ['開始行の同じ行', 'cat <<EOF > a.md && gh pr merge 1 --merge\nx\nEOF'],
     ['引用符の中の <<', 'echo "<<EOF"\ngh pr merge 1 --merge'],
+    ['コメントの中の <<', 'echo hi # <<EOF\ngh pr merge 1 --merge'],
     ['here-string <<<', 'cat <<<EOF\ngh pr merge 1 --merge'],
     ['ヒアドキュメントなし', 'gh pr merge 1 --merge'],
   ])('%s の gh pr merge は従来どおり拒否する', (_, command) => {
