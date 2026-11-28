@@ -22,8 +22,8 @@
 ## 通知配送フロー
 
 1. タスク作成・変更（Firestore トリガー）、コラボ調整の作成・回答（Cloud Functions）、または開始前リマインダー（毎分の定期実行）が発火する
-2. 共通ヘルパー `notifyDiscord` が `teams/{teamId}/discord/config` を読み、該当トグル（`notifyOnTaskCreate` / `notifyOnTaskUpdate` / `notifyOnCollabCreate` / `notifyOnCollabResponse` / `notifyBefore1h` / `notifyBefore15min`）を確認する（未設定はデフォルト有効、`false` のみスキップ）
-3. 送信が確定した後に Embed メッセージを遅延生成し、`channelId` 設定済みなら Bot API で、未設定かつ `webhookUrl` 設定済みなら Webhook で送信する
+2. `teams/{teamId}/discord/config` を読み、該当トグルを確認する（未設定はデフォルト有効、`false` のみスキップ）。タスク・コラボは共通ヘルパー `notifyDiscord` が `notifyOnTaskCreate` / `notifyOnTaskUpdate` / `notifyOnCollabCreate` / `notifyOnCollabResponse` を、開始前リマインダーは `scheduleReminders` が `notifyBefore1h` / `notifyBefore15min` を確認する
+3. `channelId` 設定済みなら Bot API で、未設定かつ `webhookUrl` 設定済みなら Webhook で送信する。`notifyDiscord` は送信が確定した後に Embed を遅延生成する
 4. 送信失敗はログに記録するのみで、本体処理は成功させる
 5. スケジュールの作成・変更、チームの参加・退出・ロール変更・Kick は通知しない
 
