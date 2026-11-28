@@ -151,3 +151,37 @@ describe('CollabDetailModal の保存と失敗表示', () => {
     expect(alertText()).toBe('この操作を行う権限がありません');
   });
 });
+
+describe('CollabDetailModal の再調整の失敗表示', () => {
+  it('再調整が失敗したら理由を出して閉じない（CO-031）', async () => {
+    vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+    vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} }));
+    const reopen = vi.mocked((await import('@/lib/repositories/collabs')).reopenCollabSession);
+    reopen.mockRejectedValue({ code: 'functions/failed-precondition', message: '確定済みのコラボだけ再調整できます' });
+    const onClose = vi.fn();
+    const container = document.body.appendChild(document.createElement('div'));
+    const root = createRoot(container);
+    act(() =>
+      root.render(
+        <CollabDetailModal
+          session={{ ...session, status: 'confirmed', confirmedDate: session.proposedDates[0]! }}
+          canEdit
+          onClose={onClose}
+          onDeleted={vi.fn()}
+        />
+      )
+    );
+    const reopenButtons = () =>
+      [...document.querySelectorAll<HTMLButtonElement>('button')].filter((b) => b.textContent?.includes('再調整する'));
+    // フッターの「再調整する」で確認を開き、確認の「再調整する」で実行する
+    act(() => reopenButtons()[0]!.click());
+    expect(reopenButtons()).toHaveLength(2);
+    const footer = reopenButtons().find((b) => b.querySelector('svg'));
+    await act(async () => reopenButtons().find((b) => b !== footer)!.click());
+    expect(document.querySelector('[role="alert"]')?.textContent).toBe('確定済みのコラボだけ再調整できます');
+    expect(onClose).not.toHaveBeenCalled();
+    act(() => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
+  });
+});
