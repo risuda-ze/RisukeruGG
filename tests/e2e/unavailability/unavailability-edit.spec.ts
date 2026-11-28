@@ -128,6 +128,8 @@ test('③ 自分の詳細で塗って保存すると、一覧の × と最終更
   await expect(hour(2)).toHaveAttribute('data-unavailable', 'false');
   await save.click();
   await expect(hour(2).getByTestId('un-block')).toHaveCount(0);
+  // 消した表示はローカルの書き込みで先に出る。書き込みの完了（未保存の表示が消える）を待ってから閉じる
+  await expect(detail.getByTestId('un-unsaved')).toHaveCount(0);
   await detail.getByRole('button', { name: '閉じる' }).click();
   await expect(myCell(page, date)).toHaveText('');
 });
@@ -236,6 +238,8 @@ test('⑤ 定期入力をプレビューして保存すると、一覧に反映�
   await dragHours(page, date, 10, 11);
   await detail.getByRole('button', { name: '保存', exact: true }).click();
   await expect(hourRow(page, date, 10).getByTestId('un-block')).toHaveCount(0);
+  // 消した表示はローカルの書き込みで先に出る。書き込みの完了（未保存の表示が消える）を待ってから閉じる
+  await expect(detail.getByTestId('un-unsaved')).toHaveCount(0);
   await detail.getByRole('button', { name: '閉じる' }).click();
   await expect(myCell(page, date)).toHaveText('');
 });
