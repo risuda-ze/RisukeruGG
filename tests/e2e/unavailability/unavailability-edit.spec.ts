@@ -28,6 +28,10 @@ function day(offset: number): string {
 }
 
 test.use({ viewport: { width: 1440, height: 900 } });
+// どのテストもログイン・ページ遷移と、Firestore Emulator への書き込みを 2 回以上行う。
+// 空いた環境では 5〜10 秒で終わるが、同じ機械で dev サーバーのコンパイルなど重い処理が走ると
+// 20 秒を超えることがあり、既定の 30 秒では途中で打ち切られる（#304）
+test.describe.configure({ timeout: 60_000 });
 
 async function openAs(page: Page, email: string) {
   await page.goto('/');
