@@ -69,7 +69,7 @@ teams/{teamId}/briefs/{briefId}/briefEvents/{eventId}                 ← BriefE
 | `headerFields` | FieldDef[] | 見出し項目の定義（生成時に複製） |
 | `fields` | Record<string, unknown> | 見出し項目の値 |
 | `linkedScheduleId` | string \| null | 公開予定スケジュールとのリンク |
-| `discord` | `{ threadId, summaryMessageId, channelId }` \| null | Discord スレッド（integration） |
+| `discord` | `{ threadId, summaryMessageId, channelId }` \| null | Discord スレッド（integration）。この項目の記録は最終更新に数えず、`updatedBy` / `updatedAt` を進めない |
 | `createdBy` / `createdAt` / `updatedBy` / `updatedAt` | | 作成者・作成日時・最終更新者・最終更新日時。[team/model.md](../team/model.md) の共通フィールド。工程の変更でも `updatedBy` / `updatedAt` を進める |
 
 ## Step（工程）
@@ -92,7 +92,7 @@ teams/{teamId}/briefs/{briefId}/briefEvents/{eventId}                 ← BriefE
 | `reminderDaysBefore` | number | |
 | `optional` | boolean | |
 | `completedAt` / `completedBy` | timestamp \| null / string \| null | |
-| `discordMessageId` | string \| null | 着手可能通知の ID（integration） |
+| `discordMessageId` | string \| null | 着手可能通知の ID（integration）。この項目の記録は最終更新に数えず、`updatedBy` / `updatedAt` を進めない |
 | `createdBy` / `createdAt` / `updatedBy` / `updatedAt` | | 作成者・作成日時・最終更新者・最終更新日時。[team/model.md](../team/model.md) の共通フィールド。`createdBy` は工程を追加した人（ブリーフ作成時はブリーフの作成者） |
 
 ## StepComment

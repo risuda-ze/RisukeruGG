@@ -111,6 +111,7 @@ Discord からの操作（作成・コメント・工程ボタン）は従来ど
 - `updatedBy` の値と付随する更新の扱い（PR #308 のレビューで決定。詳細は正本 `team/model.md`）
   - 操作者がいない更新（トリガー・定期実行による自動処理、未認証の外部参加者によるコラボ回答）は `'system'`。「書かない」「null に戻す」案は、最後に触った主体が分からなくなるため採らなかった
   - 退出・Kick・アカウント削除に伴うタスクの担当外しも最終更新として記録する（呼び出した人の uid）
+  - Discord 連携の ID の記録（`Brief.discord`、`Step.discordMessageId`。`functions/src/briefs/discordSync.ts` の 3 か所）は最終更新に数えない。`'system'` で記録する案は、連携のあるチームでブリーフは作成直後、工程は着手可能になった直後に `updatedBy` が `'system'` へ書き換わり、作成者や前の工程を完了した人が残らなくなるため採らなかった
 - ルールで `createdBy` を固定する。クライアントからの `create` は `createdBy == request.auth.uid` を必須にし、`update` では `createdBy` を変更不可にする（スタッフが他人の作成物の作成者を書き換えて削除する抜け道を塞ぐ）
 - 既存データを埋め直さない。`createdBy` が無い・一致しないものはメンバーのみが扱う（ルールは `resource.data.get('createdBy', null)` で比べる）
 - 退会・アカウント削除で `createdBy` を書き換えない。uid が認証できなくなるため、結果として「作成者なし」と同じ扱いになる

@@ -6,6 +6,7 @@ import {
   Unsubscribe,
   Timestamp,
   runTransaction,
+  type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '@/lib/firebase/client';
@@ -92,22 +93,23 @@ export function subscribeTasksByTeam(
      docChanges() で変更があったドキュメントだけを再生成し、それ以外は
      キャッシュ済みの参照を使い回す。 */
   const cache = new Map<string, Task>();
+  /* この端末の書き込み直後は updatedAt（serverTimestamp）がサーバーで確定しておらず、既定の読み方では null になる。
+     確定するまでは直前の確定値で読む。楽観的ロックはサーバーの updatedAt と比べるため、推定値（estimate）では
+     確定までの間かならず不一致になる。直前の値なら、書き込みがサーバーに届くまでは一致し、届いた後は不一致になる。
+     確定すると modified が届き、確定値に置き換わる。 */
+  const read = (d: QueryDocumentSnapshot) =>
+    toTask(d.id, d.data({ serverTimestamps: 'previous' }) as Record<string, unknown>);
   return onSnapshot(collection(db, 'teams', teamId, 'tasks'), (snap) => {
     for (const change of snap.docChanges()) {
       if (change.type === 'removed') {
         cache.delete(change.doc.id);
       } else {
         // added / modified: 該当ドキュメントのみ再生成
-        cache.set(
-          change.doc.id,
-          toTask(change.doc.id, change.doc.data() as Record<string, unknown>)
-        );
+        cache.set(change.doc.id, read(change.doc));
       }
     }
     // 現在のスナップショット順で並べつつ、未変更ドキュメントは参照を維持
-    const tasks = snap.docs.map(
-      (d) => cache.get(d.id) ?? toTask(d.id, d.data() as Record<string, unknown>)
-    );
+    const tasks = snap.docs.map((d) => cache.get(d.id) ?? read(d));
     callback(tasks);
   });
 }
