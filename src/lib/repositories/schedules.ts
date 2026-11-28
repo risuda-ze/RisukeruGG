@@ -6,10 +6,10 @@ import {
   Unsubscribe,
   Timestamp,
   runTransaction,
-  serverTimestamp,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import { db, functions, requireUid } from '@/lib/firebase/client';
+import { db, functions } from '@/lib/firebase/client';
+import { updatedFields } from '@/lib/firebase/audit';
 import type { ScheduleEntry } from '@/types/entities';
 
 function toSchedule(id: string, data: Record<string, unknown>): ScheduleEntry {
@@ -84,7 +84,7 @@ export async function updateSchedule(
       throw new Error('CONFLICT');
     }
 
-    tx.update(ref, { ...data, updatedBy: requireUid(), updatedAt: serverTimestamp() });
+    tx.update(ref, { ...data, ...updatedFields() });
   });
 }
 

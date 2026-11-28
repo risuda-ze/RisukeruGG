@@ -1,5 +1,5 @@
 import { getAdminFirestore } from '@/lib/firebase/admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { DISCORD_ACTOR, createdFields } from '@/lib/firebase/auditAdmin';
 import { parseProposalDateTime, type CollabProposal } from '@/lib/ai/parseProposal';
 
 /**
@@ -17,13 +17,10 @@ export async function registerCollab(
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   const collabRef = db.collection(`teams/${teamId}/collabSessions`).doc();
-  const now = FieldValue.serverTimestamp();
 
   await collabRef.set({
     title: proposal.title,
     partnerName: proposal.partnerName,
-    createdBy: 'discord-bot',  // 個人ユーザーを追跡しないため固定値
-    updatedBy: 'discord-bot',
     teamId,
     // タイムゾーン無しの日時は JST として解釈する（UTC サーバーでのずれ防止）
     proposedDates: proposal.proposedDates.map((d) => parseProposalDateTime(d)),
@@ -32,7 +29,7 @@ export async function registerCollab(
     status: 'open',
     confirmedDate: null,
     linkedScheduleId: null,
-    createdAt: now,
+    ...createdFields(DISCORD_ACTOR), // 個人ユーザーを追跡しないため固定値
   });
 
   return collabRef.id;

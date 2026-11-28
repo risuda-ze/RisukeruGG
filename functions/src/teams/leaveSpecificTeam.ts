@@ -1,5 +1,6 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
+import { updatedFields } from '../lib/audit';
 import { randomBytes } from 'crypto';
 import { db, requireAuth, getUserDoc } from '../lib/validateAuth';
 import { toTeamRole } from '../lib/role';
@@ -62,7 +63,7 @@ export const leaveSpecificTeam = onCall(
           tx.delete(db.doc(`teams/${teamId}/members/${uid}`));
 
           for (const taskDoc of tasksSnap.docs) {
-            tx.update(taskDoc.ref, { assigneeId: null });
+            tx.update(taskDoc.ref, { assigneeId: null, ...updatedFields(uid) });
           }
 
           const newActiveTeamId =
@@ -152,7 +153,7 @@ export const leaveSpecificTeam = onCall(
       tx.delete(db.doc(`teams/${teamId}/members/${uid}`));
 
       for (const taskDoc of tasksSnap.docs) {
-        tx.update(taskDoc.ref, { assigneeId: null });
+        tx.update(taskDoc.ref, { assigneeId: null, ...updatedFields(uid) });
       }
 
       let newActiveTeamId: string;

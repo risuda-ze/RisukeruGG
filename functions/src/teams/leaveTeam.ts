@@ -1,5 +1,6 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
+import { updatedFields } from '../lib/audit';
 import { randomBytes } from 'crypto';
 import { db, getAuthContext, requireAuth, getUserDoc } from '../lib/validateAuth';
 import { toTeamRole } from '../lib/role';
@@ -58,7 +59,7 @@ export const leaveTeam = onCall({ region: 'asia-northeast1' }, async (request: C
     }
 
     for (const taskDoc of tasksSnap.docs) {
-      tx.update(taskDoc.ref, { assigneeId: null });
+      tx.update(taskDoc.ref, { assigneeId: null, ...updatedFields(uid) });
     }
 
     const soloTeamCode = randomBytes(6)

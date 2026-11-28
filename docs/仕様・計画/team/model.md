@@ -105,8 +105,18 @@ teamCodes/{teamCode}              ← チームコード → teamId の逆引き
 | `createdBy` | string \| null  | 作成者の uid。Discord 経由は `'discord-bot'`、システム作成は `'system'`。記録の無い既存データは未設定（null 扱い） |
 | `createdAt` | timestamp        | 作成日時                                                                                   |
 | `updatedAt` | timestamp        | 最終更新日時                                                                               |
-| `updatedBy` | string \| null  | 最終更新者の uid                                                                           |
+| `updatedBy` | string \| null  | 最終更新者。入る値は下の表のとおり。記録の無い既存データは未設定（null 扱い）               |
 
+`updatedBy` に入る値:
+
+| 値              | 場合                                                                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| uid             | ログイン中の利用者による更新（画面からの保存、Callable Function の呼び出し）。操作した本人の uid                                       |
+| `'discord-bot'` | Discord 上の利用者の操作による更新（Bot 経由の登録・タスク更新、工程ボタン、動画の納品）。Discord の個人は特定しない                   |
+| `'system'`      | 操作者がいない更新。自動処理（Firestore トリガー・定期実行）と、未認証の外部参加者によるコラボへの回答                                 |
+
+- 他の操作に伴う更新も最終更新として記録し、`updatedBy` と `updatedAt` を書く。退出・Kick・アカウント削除に伴うタスクの担当外しは、その操作を呼び出した人（退出・アカウント削除は本人、Kick は実行したメンバー）の uid を入れる。カンバン列・カテゴリの削除に伴うタスク・スケジュールの付け替えと、カンバン列の並び替えは、操作したメンバーの uid を入れる
+- 書き込み経路は共通のヘルパーで `createdBy` / `createdAt` / `updatedBy` / `updatedAt` を付ける（クライアント `src/lib/firebase/audit.ts`、Admin SDK `src/lib/firebase/auditAdmin.ts`、Functions `functions/src/lib/audit.ts`）
 - クライアントからの作成は `createdBy` に本人の uid を必須とし、作成後の変更は禁止する
 - 退会・アカウント削除で `createdBy` は書き換えない（認証できない uid は誰にも一致しないため、結果として作成者なしの扱いになる）
 

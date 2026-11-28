@@ -1,5 +1,5 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
-import { FieldValue } from 'firebase-admin/firestore';
+import { createdFields, updatedFields } from '../lib/audit';
 import { db, getAuthContext, requireMemberRole } from '../lib/validateAuth';
 
 interface ConfirmCollabDateData {
@@ -34,7 +34,6 @@ export const confirmCollabDate = onCall(
     }
 
     const confirmedDateObj = new Date(confirmedDate);
-    const now = FieldValue.serverTimestamp();
 
     await db.runTransaction(async (tx) => {
       // カレンダーにスケジュールエントリを自動作成
@@ -52,16 +51,12 @@ export const confirmCollabDate = onCall(
         participantIds: [],
         collabPartnerName: session.partnerName,
         linkedTaskIds: [],
-        updatedAt: now,
-        updatedBy: ctx.uid,
-        createdBy: ctx.uid,
-        createdAt: now,
+        ...createdFields(ctx.uid),
       });
 
       tx.update(sessionRef, {
         status: 'confirmed',
-        updatedBy: ctx.uid,
-        updatedAt: now,
+        ...updatedFields(ctx.uid),
         confirmedDate: confirmedDateObj,
         linkedScheduleId: scheduleRef.id,
       });

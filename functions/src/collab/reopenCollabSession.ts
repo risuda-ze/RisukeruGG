@@ -1,5 +1,6 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
+import { updatedFields } from '../lib/audit';
 import { db, getAuthContext, requireMemberRole } from '../lib/validateAuth';
 
 interface ReopenCollabSessionData {
@@ -45,8 +46,7 @@ export const reopenCollabSession = onCall(
       /* セッションを open 状態に戻す */
       tx.update(sessionRef, {
         status: 'open',
-        updatedBy: ctx.uid,
-        updatedAt: FieldValue.serverTimestamp(),
+        ...updatedFields(ctx.uid),
         confirmedDate: FieldValue.delete(),
         linkedScheduleId: FieldValue.delete(),
       });

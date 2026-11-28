@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '@/lib/firebase/client';
+import { updatedFields } from '@/lib/firebase/audit';
 import type { CollabSession, CollabParticipant, CollabComment } from '@/types/entities';
 
 function toCollabSession(id: string, data: Record<string, unknown>): CollabSession {
@@ -83,19 +84,17 @@ export function subscribeCollabSessions(
   });
 }
 
-/** セッションを更新。updatedBy/updatedAt は自動セット */
+/** セッションを更新。updatedBy/updatedAt は自動セット（updatedByUid を省略するとログイン中のユーザー） */
 export async function updateCollabSession(
   teamId: string,
   sessionId: string,
   data: Partial<CollabSession>,
   updatedByUid?: string
 ): Promise<void> {
-  const payload: Record<string, unknown> = { ...(data as Record<string, unknown>) };
-  if (updatedByUid) {
-    payload.updatedBy = updatedByUid;
-    payload.updatedAt = Timestamp.fromDate(new Date());
-  }
-  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), payload);
+  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), {
+    ...(data as Record<string, unknown>),
+    ...updatedFields(updatedByUid),
+  });
 }
 
 export const createCollabSession = httpsCallable<

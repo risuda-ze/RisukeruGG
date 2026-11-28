@@ -7,13 +7,13 @@ import {
   onSnapshot,
   orderBy,
   query,
-  serverTimestamp,
   Timestamp,
   updateDoc,
   type FirestoreError,
   type Unsubscribe,
 } from 'firebase/firestore';
-import { db, requireUid } from '@/lib/firebase/client';
+import { db } from '@/lib/firebase/client';
+import { createdFields, updatedFields } from '@/lib/firebase/audit';
 import type { FieldDef, Playbook, PlaybookOrigin, StepDef } from '@/types/briefs';
 import type { PlaybookInput } from '@/lib/validations/briefs';
 
@@ -90,17 +90,13 @@ export function subscribePlaybooks(
 }
 
 export async function createPlaybook(teamId: string, input: PlaybookInput): Promise<string> {
-  const uid = requireUid();
   const ref = await addDoc(playbooksCol(teamId), {
     name: input.name,
     origin: input.origin,
     version: 1,
     headerFields: serializeFieldDefs(input.headerFields),
     steps: serializeSteps(input.steps),
-    createdBy: uid,
-    createdAt: serverTimestamp(),
-    updatedBy: uid,
-    updatedAt: serverTimestamp(),
+    ...createdFields(),
   });
   return ref.id;
 }
@@ -116,8 +112,7 @@ export async function updatePlaybook(
     headerFields: serializeFieldDefs(input.headerFields),
     steps: serializeSteps(input.steps),
     version: increment(1),
-    updatedBy: requireUid(),
-    updatedAt: serverTimestamp(),
+    ...updatedFields(),
   });
 }
 

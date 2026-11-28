@@ -80,7 +80,7 @@ it('納品URLと共有事項を保存し動画タスクを確認列へ移す', a
   await handleDelivery(input);
   expect(update).toHaveBeenCalledWith(
     expect.objectContaining({ key: 'video-task' }),
-    expect.objectContaining({ columnId: 'review' })
+    expect.objectContaining({ columnId: 'review', updatedBy: 'discord-bot', updatedAt: expect.anything() })
   );
   expect(update).toHaveBeenCalledWith(
     expect.objectContaining({ key: 'request' }),

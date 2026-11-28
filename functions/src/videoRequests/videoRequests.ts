@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { onCall, type CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
+import { createdFields, updatedFields } from '../lib/audit';
 import { db, getAuthContext, requireMemberRole } from '../lib/validateAuth';
 
 import { videoRequestColumns } from './columns';
@@ -220,9 +221,7 @@ export const createVideoRequest = onCall(
         dueDateAllDay: true,
         linkedScheduleId: null,
         videoRequestId: videoRequestRef.id,
-        updatedAt: now,
-        createdBy: ctx.uid,
-        createdAt: now,
+        ...createdFields(ctx.uid),
       });
       if (config.createThumbnailTask)
         tx.set(thumbnailTask, {
@@ -230,9 +229,7 @@ export const createVideoRequest = onCall(
           title: `サムネイル制作: ${input.title.trim()}`,
           columnId: pendingColumnId,
           dueDate: parseDate(input.finalPackageDueAt),
-          createdBy: ctx.uid,
-          createdAt: now,
-          updatedAt: now,
+          ...createdFields(ctx.uid),
         });
       tx.set(videoRequestRef, {
         discordTransport: 'integrated',
@@ -355,7 +352,7 @@ export const updateVideoRequest = onCall(
         tx.update(db.doc(`teams/${input.teamId}/tasks/${currentData.thumbnailTaskId}`), {
           title: `サムネイル制作: ${next.title}`,
           dueDate: next.finalPackageDueAt,
-          updatedAt: now,
+          ...updatedFields(ctx.uid),
         });
       }
       if (currentData.taskId) {
@@ -363,7 +360,7 @@ export const updateVideoRequest = onCall(
           title: `動画依頼: ${next.title}`,
           description: next.summary,
           dueDate: next.finalPackageDueAt,
-          updatedAt: now,
+          ...updatedFields(ctx.uid),
         };
         tx.update(db.doc(`teams/${input.teamId}/tasks/${currentData.taskId}`), taskUpdate);
       }
@@ -450,7 +447,7 @@ export const reviewThumbnail = onCall(
       });
       tx.update(db.doc(`teams/${teamId}/tasks/${data.thumbnailTaskId}`), {
         columnId,
-        updatedAt: now,
+        ...updatedFields(request.auth!.uid),
       });
       tx.set(ref.collection('discordEvents').doc(), {
         type: action === 'approve' ? 'thumbnail_approved' : 'thumbnail_revision',
@@ -487,7 +484,7 @@ export const requestVideoRevision = onCall(
       if (taskId && progressColumnId) {
         tx.update(db.doc(`teams/${teamId}/tasks/${taskId}`), {
           columnId: progressColumnId,
-          updatedAt: now,
+          ...updatedFields(ctx.uid),
         });
       }
       tx.set(event, {
@@ -525,7 +522,7 @@ export const approveVideoRequest = onCall(
       if (latestTaskId) {
         tx.update(db.doc(`teams/${teamId}/tasks/${latestTaskId}`), {
           columnId: doneColumnId,
-          updatedAt: now,
+          ...updatedFields(ctx.uid),
         });
       }
       tx.set(event, {

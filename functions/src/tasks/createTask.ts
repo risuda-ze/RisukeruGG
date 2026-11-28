@@ -1,5 +1,6 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
+import { createdFields } from '../lib/audit';
 import { db, getAuthContext, requireMemberRole, getUserDoc } from '../lib/validateAuth';
 import { LIGHT_PLAN_LIMITS } from '../lib/constants';
 import { isPartyPlan } from '../lib/plan';
@@ -40,7 +41,6 @@ export const createTask = onCall(
 
     return await db.runTransaction(async (tx) => {
       const taskRef = db.collection(`teams/${teamId}/tasks`).doc();
-      const now = FieldValue.serverTimestamp();
 
       tx.set(taskRef, {
         title,
@@ -50,10 +50,7 @@ export const createTask = onCall(
         assigneeId: assigneeId ?? null,
         dueDate: dueDate ? new Date(dueDate) : null,
         linkedScheduleId: linkedScheduleId ?? null,
-        updatedAt: now,
-        createdBy: ctx.uid,
-        updatedBy: ctx.uid,
-        createdAt: now,
+        ...createdFields(ctx.uid),
       });
 
       // 月次カウントをインクリメント（LIGHTプランのみ。試用モード中はカウントしない）

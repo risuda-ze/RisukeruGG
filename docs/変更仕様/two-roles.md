@@ -106,8 +106,11 @@ Discord からの操作（作成・コメント・工程ボタン）は従来ど
 | `createdBy` | string \| null | 作成者の uid。Discord 経由は従来どおり `'discord-bot'`、システム作成は `'system'`。記録の無い既存データは未設定 |
 | `createdAt` | timestamp | 作成日時 |
 | `updatedAt` | timestamp | 最終更新日時 |
-| `updatedBy` | string \| null | 最終更新者の uid |
+| `updatedBy` | string \| null | 最終更新者。利用者の操作は uid、Discord 上の利用者の操作は `'discord-bot'`、操作者がいない更新は `'system'` |
 
+- `updatedBy` の値と付随する更新の扱い（PR #308 のレビューで決定。詳細は正本 `team/model.md`）
+  - 操作者がいない更新（トリガー・定期実行による自動処理、未認証の外部参加者によるコラボ回答）は `'system'`。「書かない」「null に戻す」案は、最後に触った主体が分からなくなるため採らなかった
+  - 退出・Kick・アカウント削除に伴うタスクの担当外しも最終更新として記録する（呼び出した人の uid）
 - ルールで `createdBy` を固定する。クライアントからの `create` は `createdBy == request.auth.uid` を必須にし、`update` では `createdBy` を変更不可にする（スタッフが他人の作成物の作成者を書き換えて削除する抜け道を塞ぐ）
 - 既存データを埋め直さない。`createdBy` が無い・一致しないものはメンバーのみが扱う（ルールは `resource.data.get('createdBy', null)` で比べる）
 - 退会・アカウント削除で `createdBy` を書き換えない。uid が認証できなくなるため、結果として「作成者なし」と同じ扱いになる
@@ -145,6 +148,10 @@ Discord からの操作（作成・コメント・工程ボタン）は従来ど
 - 文言: 「オペレーター」「ROM専」を含む画面（`/team`、`/settings/profile`、`/settings/ai`、`/integrations/discord`、退出・Discord ユーザー名のダイアログ、プライバシーポリシー）、AI のプロンプトと能力の説明
 - テスト・シード: `roleChangeVisibility.test.ts`、`leaveTeamLogic.test.ts`、`systemPrompt` のスナップショット、`tests/e2e/visual.spec.ts`、`scripts/seed.mjs`（`rom` のユーザー 2 人）
 - ブリーフ削除: 配下の `steps`・`briefEvents`・工程コメントを連鎖して削除する。Discord 連携（`BriefDiscordLink`）のメッセージの扱いは実装 PR で決める
+  - 実装 PR（#308）での決定: 削除は 1 回の commit で原子的に行う（PD-061 をそのまま適用）。当初の実装は 400 件ずつに分けていたが、途中で失敗すると工程の減ったブリーフが見えるため改めた。Firestore の 1 commit に書き込み件数の上限は無く、制限はリクエストサイズ（10 MiB）など。超えた場合は何も消えず、エラーとして表示する。クライアントが配下を消すので、`briefEvents` の削除をメンバーに許す
+  - Discord のスレッドとメッセージは削除せず残す（IN-024-1）
+  - 反映はルールとクライアントを同時に出し、切り替わるまでの短時間の拒否を許容する
+  - 削除後のブリーフに工程コメントを作成できる問題は #313 で扱う
 
 ### 正本（本 PR で更新したもの）
 

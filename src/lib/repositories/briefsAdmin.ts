@@ -1,6 +1,7 @@
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import type { BriefsPort, BriefTransaction } from '@/lib/briefs/operations/port';
 import { stripUndefined, toBrief, toStep } from '@/lib/briefs/convert';
+import { createdFields, updatedFields } from '@/lib/firebase/auditAdmin';
 
 /**
  * 操作層ポートの Admin SDK 実装（Next.js API Route の Discord ボタン処理用）。
@@ -27,8 +28,16 @@ export class AdminBriefsPort implements BriefsPort {
 
   async commit(teamId: string, tx: BriefTransaction): Promise<void> {
     if (tx.deleteBrief) {
-      // 配下（工程・工程コメント・差分）ごと削除する
-      await this.db.recursiveDelete(this.db.doc(`teams/${teamId}/briefs/${tx.briefId}`));
+      // 配下（工程・工程コメント・差分）ごと、1 回の commit で原子的に削除する（PD-061）
+      const target = this.db.doc(`teams/${teamId}/briefs/${tx.briefId}`);
+      const deletion = this.db.batch();
+      for (const step of await target.collection('steps').listDocuments()) {
+        for (const comment of await step.collection('comments').listDocuments()) deletion.delete(comment);
+        deletion.delete(step);
+      }
+      for (const event of await target.collection('briefEvents').listDocuments()) deletion.delete(event);
+      deletion.delete(target);
+      await deletion.commit();
       return;
     }
     const batch = this.db.batch();
@@ -41,15 +50,13 @@ export class AdminBriefsPort implements BriefsPort {
         ...rest,
         teamId,
         discord: null,
-        createdAt: now,
-        updatedAt: now,
-        updatedBy: tx.actor,
+        ...createdFields(tx.actor),
       });
     }
     if (tx.briefPatch && Object.keys(tx.briefPatch).length > 0) {
-      batch.update(briefRef, { ...stripUndefined(tx.briefPatch), updatedAt: now, updatedBy: tx.actor });
+      batch.update(briefRef, { ...stripUndefined(tx.briefPatch), ...updatedFields(tx.actor) });
     } else if (tx.stepPatches.length > 0 || tx.stepCreates.length > 0 || tx.stepDeletes.length > 0) {
-      batch.update(briefRef, { updatedAt: now, updatedBy: tx.actor });
+      batch.update(briefRef, updatedFields(tx.actor));
     }
     for (const c of tx.stepCreates) {
       const { id, ...rest } = c;
@@ -60,17 +67,13 @@ export class AdminBriefsPort implements BriefsPort {
         completedAt: null,
         completedBy: null,
         discordMessageId: null,
-        createdBy: tx.actor,
-        createdAt: now,
-        updatedAt: now,
-        updatedBy: tx.actor,
+        ...createdFields(tx.actor),
       });
     }
     for (const { stepId, patch } of tx.stepPatches) {
       batch.update(briefRef.collection('steps').doc(stepId), {
         ...stripUndefined(patch),
-        updatedAt: now,
-        updatedBy: tx.actor,
+        ...updatedFields(tx.actor),
       });
     }
     for (const stepId of tx.stepDeletes) {

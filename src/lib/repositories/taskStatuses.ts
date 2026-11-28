@@ -6,10 +6,10 @@ import {
   onSnapshot,
   Unsubscribe,
   Timestamp,
-  serverTimestamp,
   writeBatch,
 } from 'firebase/firestore';
-import { db, requireUid } from '@/lib/firebase/client';
+import { db } from '@/lib/firebase/client';
+import { createdFields, updatedFields } from '@/lib/firebase/audit';
 import type { TaskStatus } from '@/types/entities';
 
 function toColumn(id: string, data: Record<string, unknown>): TaskStatus {
@@ -33,14 +33,10 @@ export async function createColumn(
     icon?: string | null;
   }
 ): Promise<string> {
-  const uid = requireUid();
   const ref = await addDoc(collection(db, 'teams', teamId, 'taskStatuses'), {
     ...data,
     role: null,
-    createdBy: uid,
-    createdAt: serverTimestamp(),
-    updatedBy: uid,
-    updatedAt: serverTimestamp(),
+    ...createdFields(),
   });
   return ref.id;
 }
@@ -52,8 +48,7 @@ export async function updateColumn(
 ): Promise<void> {
   await updateDoc(doc(db, 'teams', teamId, 'taskStatuses', columnId), {
     ...data,
-    updatedBy: requireUid(),
-    updatedAt: serverTimestamp(),
+    ...updatedFields(),
   });
 }
 
@@ -75,7 +70,7 @@ export async function deleteColumn(
 
   // タスクを先頭カラムへ移行
   for (const taskId of taskIds) {
-    batch.update(doc(db, 'teams', teamId, 'tasks', taskId), { columnId: fallbackColumn.id });
+    batch.update(doc(db, 'teams', teamId, 'tasks', taskId), { columnId: fallbackColumn.id, ...updatedFields() });
   }
 
   batch.delete(doc(db, 'teams', teamId, 'taskStatuses', columnId));
@@ -88,7 +83,7 @@ export async function reorderColumns(
 ): Promise<void> {
   const batch = writeBatch(db);
   for (const col of columns) {
-    batch.update(doc(db, 'teams', teamId, 'taskStatuses', col.id), { order: col.order });
+    batch.update(doc(db, 'teams', teamId, 'taskStatuses', col.id), { order: col.order, ...updatedFields() });
   }
   await batch.commit();
 }

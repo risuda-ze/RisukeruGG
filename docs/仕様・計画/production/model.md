@@ -39,7 +39,7 @@ teams/{teamId}/briefs/{briefId}/briefEvents/{eventId}                 ← BriefE
 | `origin` | `dialogue` \| `manual` \| `derived` | 対話で作成 / 手で作成 / ブリーフから作成 |
 | `headerFields` | FieldDef[] | 見出しに置く項目 |
 | `steps` | StepDef[] | 工程の型（順序どおり） |
-| `createdAt` / `updatedAt` | timestamp | |
+| `createdBy` / `createdAt` / `updatedBy` / `updatedAt` | | 作成者・作成日時・最終更新者・最終更新日時。[team/model.md](../team/model.md) の共通フィールド |
 
 `StepDef`:
 
@@ -70,7 +70,7 @@ teams/{teamId}/briefs/{briefId}/briefEvents/{eventId}                 ← BriefE
 | `fields` | Record<string, unknown> | 見出し項目の値 |
 | `linkedScheduleId` | string \| null | 公開予定スケジュールとのリンク |
 | `discord` | `{ threadId, summaryMessageId, channelId }` \| null | Discord スレッド（integration） |
-| `createdBy` / `createdAt` / `updatedAt` | | |
+| `createdBy` / `createdAt` / `updatedBy` / `updatedAt` | | 作成者・作成日時・最終更新者・最終更新日時。[team/model.md](../team/model.md) の共通フィールド。工程の変更でも `updatedBy` / `updatedAt` を進める |
 
 ## Step（工程）
 
@@ -93,7 +93,7 @@ teams/{teamId}/briefs/{briefId}/briefEvents/{eventId}                 ← BriefE
 | `optional` | boolean | |
 | `completedAt` / `completedBy` | timestamp \| null / string \| null | |
 | `discordMessageId` | string \| null | 着手可能通知の ID（integration） |
-| `createdAt` / `updatedAt` | timestamp | |
+| `createdBy` / `createdAt` / `updatedBy` / `updatedAt` | | 作成者・作成日時・最終更新者・最終更新日時。[team/model.md](../team/model.md) の共通フィールド。`createdBy` は工程を追加した人（ブリーフ作成時はブリーフの作成者） |
 
 ## StepComment
 
@@ -120,8 +120,8 @@ teams/{teamId}/briefs/{briefId}/briefEvents/{eventId}                 ← BriefE
 ## 制約
 
 - 工程の状態は 5 値固定。列（`TaskStatus`）は使わない
-- `briefEvents` は追記のみ
-- ブリーフ作成・工程の変更はすべて操作層（`src/lib/briefs/operations`）を経由し、1 操作 = 1 writeBatch
+- `briefEvents` は追記のみで、改変しない。削除するのはブリーフの削除に伴うときだけ
+- ブリーフの作成・削除と工程の変更はすべて操作層（`src/lib/briefs/operations`）を経由し、1 操作 = 1 writeBatch。ブリーフの削除は配下の工程・工程コメント・差分とブリーフ本体を同じ writeBatch で消す
 - `steps` の書き込み時は必ず `teamId` と `briefId` を持たせる（コレクショングループのルール評価に必要）
 
 ## 関連する隣接モデル

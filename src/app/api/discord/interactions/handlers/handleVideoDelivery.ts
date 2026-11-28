@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getAdminFirestore } from '@/lib/firebase/admin';
+import { DISCORD_ACTOR, updatedFields } from '@/lib/firebase/auditAdmin';
 
 const id = z.string().regex(/^\d{17,20}$/);
 const imageMessages = z.array(
@@ -119,7 +120,7 @@ async function register(input: Delivery) {
     if (!taskId) throw Error('対象タスクがありません。');
     tx.update(team.collection('tasks').doc(taskId), {
       columnId: r.reviewTaskColumnId,
-      updatedAt: now,
+      ...updatedFields(DISCORD_ACTOR),
     });
     tx.set(receipt, { createdAt: now });
     if (thumb && imageId) {

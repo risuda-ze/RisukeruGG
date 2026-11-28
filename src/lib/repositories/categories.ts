@@ -10,9 +10,9 @@ import {
   getDocs,
   Unsubscribe,
   Timestamp,
-  serverTimestamp,
 } from 'firebase/firestore';
-import { db, requireUid } from '@/lib/firebase/client';
+import { db } from '@/lib/firebase/client';
+import { createdFields, updatedFields } from '@/lib/firebase/audit';
 import type { Category } from '@/types/entities';
 
 function toCategory(id: string, data: Record<string, unknown>): Category {
@@ -35,14 +35,10 @@ export async function createCategory(
     icon?: string | null;
   }
 ): Promise<string> {
-  const uid = requireUid();
   const ref = await addDoc(collection(db, 'teams', teamId, 'categories'), {
     ...data,
     icon: data.icon ?? null,
-    createdBy: uid,
-    createdAt: serverTimestamp(),
-    updatedBy: uid,
-    updatedAt: serverTimestamp(),
+    ...createdFields(),
   });
   return ref.id;
 }
@@ -54,8 +50,7 @@ export async function updateCategory(
 ): Promise<void> {
   await updateDoc(doc(db, 'teams', teamId, 'categories', categoryId), {
     ...data,
-    updatedBy: requireUid(),
-    updatedAt: serverTimestamp(),
+    ...updatedFields(),
   });
 }
 
@@ -69,13 +64,13 @@ export async function deleteCategory(teamId: string, categoryId: string): Promis
   const tasksRef = collection(db, 'teams', teamId, 'tasks');
   const taskSnap = await getDocs(query(tasksRef, where('categoryId', '==', categoryId)));
   for (const taskDoc of taskSnap.docs) {
-    batch.update(taskDoc.ref, { categoryId: null });
+    batch.update(taskDoc.ref, { categoryId: null, ...updatedFields() });
   }
 
   const schedulesRef = collection(db, 'teams', teamId, 'schedules');
   const scheduleSnap = await getDocs(query(schedulesRef, where('categoryId', '==', categoryId)));
   for (const scheduleDoc of scheduleSnap.docs) {
-    batch.update(scheduleDoc.ref, { categoryId: null });
+    batch.update(scheduleDoc.ref, { categoryId: null, ...updatedFields() });
   }
 
   batch.delete(doc(db, 'teams', teamId, 'categories', categoryId));

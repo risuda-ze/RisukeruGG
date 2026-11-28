@@ -1,6 +1,7 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { SYSTEM_ACTOR, updatedFields } from '../lib/audit';
 import { db } from '../lib/admin';
 import { notifyDiscord } from '../discord/notifyDiscord';
 import { discordBotToken } from '../discord/botToken';
@@ -82,7 +83,8 @@ export const respondToCollab = onCall(
       });
     }
 
-    await sessionRef.update(updatePayload);
+    // 回答者は未認証の外部参加者を含むため、最終更新者は個人ではなくシステムとして記録する
+    await sessionRef.update({ ...updatePayload, ...updatedFields(SYSTEM_ACTOR) });
 
     // Discord 通知（失敗しても回答本体を失敗させない）
     try {

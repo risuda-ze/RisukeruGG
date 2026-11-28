@@ -1,5 +1,5 @@
 import { getAdminFirestore } from '@/lib/firebase/admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { DISCORD_ACTOR, updatedFields } from '@/lib/firebase/auditAdmin';
 import type { TaskUpdateProposal } from '@/lib/ai/parseProposal';
 
 /**
@@ -55,7 +55,7 @@ export async function registerTaskUpdate(
     throw new Error('更新できる変更内容がありません');
   }
 
-  await taskRef.update({ ...data, updatedBy: 'discord-bot', updatedAt: FieldValue.serverTimestamp() });
+  await taskRef.update({ ...data, ...updatedFields(DISCORD_ACTOR) });
 
   // 完了メッセージ用に更新後のタイトルを返す
   return (c.title ?? (snap.data()?.title as string | undefined)) ?? proposal.taskId;

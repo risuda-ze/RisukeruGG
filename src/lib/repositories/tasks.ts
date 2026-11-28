@@ -6,10 +6,10 @@ import {
   Unsubscribe,
   Timestamp,
   runTransaction,
-  serverTimestamp,
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db, requireUid } from '@/lib/firebase/client';
+import { db } from '@/lib/firebase/client';
+import { updatedFields } from '@/lib/firebase/audit';
 import type { Task } from '@/types/entities';
 
 const functions = getFunctions(undefined, 'asia-northeast1');
@@ -65,10 +65,10 @@ export async function updateTask(
       if (currentUpdatedAt.getTime() !== expectedUpdatedAt.getTime()) {
         throw new Error('CONFLICT');
       }
-      tx.update(ref, { ...data, updatedBy: requireUid(), updatedAt: serverTimestamp() });
+      tx.update(ref, { ...data, ...updatedFields() });
     });
   } else {
-    await updateDoc(ref, { ...data, updatedBy: requireUid(), updatedAt: serverTimestamp() });
+    await updateDoc(ref, { ...data, ...updatedFields() });
   }
 }
 
