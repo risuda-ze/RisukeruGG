@@ -92,9 +92,11 @@ export function subscribeColumns(
   teamId: string,
   callback: (columns: TaskStatus[]) => void
 ): Unsubscribe {
+  // この端末での作成・更新の直後は createdAt / updatedAt（serverTimestamp）が未確定で、既定の読み方では null になる。
+  // 確定までは推定値で読む（確定すると modified が届き、確定値に置き換わる）
   return onSnapshot(collection(db, 'teams', teamId, 'taskStatuses'), (snap) => {
     const cols = snap.docs
-      .map((d) => toColumn(d.id, d.data() as Record<string, unknown>))
+      .map((d) => toColumn(d.id, d.data({ serverTimestamps: 'estimate' }) as Record<string, unknown>))
       .sort((a, b) => a.order - b.order);
     callback(cols);
   });
