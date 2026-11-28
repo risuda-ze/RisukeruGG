@@ -36,8 +36,32 @@ function currentBranch() {
 // deny ではなくユーザーに許可を求める理由（null なら確認不要）
 let askReason = null;
 
+// ヒアドキュメントの本文（<<EOF / <<'EOF' / <<"EOF" / <<-EOF 〜 終端行）を取り除く。本文はデータでコマンドではない。
+// 引用符の中の << は演算子ではないので無視する。終端行は前後の空白を除いて比べる（bash より早く本文を終える側に倒し、
+// 本文の後ろのコマンドを判定から外さない）。終端が無ければ bash と同じく最後まで本文として扱う。
+// 終端語は英字か _ で始まる語だけ認める。それ以外の形は取り除かず判定する（拒否側に倒す）。
+// ponytail: 行単位の引用符判定。複数行にまたがる引用符の中の << や算術式 $(( a << b )) はヒアドキュメントと誤認し、
+// 後続行を判定から外す。エージェントが書く形では起きない前提。必要になったら字句解析にする
+function stripHeredocs(cmd) {
+  const out = [];
+  const pending = [];
+  for (const line of cmd.split('\n')) {
+    if (pending.length) {
+      if (line.trim() === pending[0]) pending.shift();
+      continue;
+    }
+    out.push(line);
+    const bare = line
+      .replace(/(?<!<)<<(-?)\s*(['"])([A-Za-z_]\w*)\2/g, '<<$1$3')
+      .replace(/'[^']*'|"(?:\\.|[^"\\])*"/g, '');
+    for (const m of bare.matchAll(/(?<!<)<<-?\s*([A-Za-z_]\w*)(?=[\s;&|<>]|$)/g))
+      pending.push(m[1]);
+  }
+  return out.join('\n');
+}
+
 // && || ; | 改行 で分割して1コマンドずつ判定する
-const segments = command
+const segments = stripHeredocs(command)
   .split(/&&|\|\||[;|\n]/)
   .map((s) => s.trim())
   .filter(Boolean);

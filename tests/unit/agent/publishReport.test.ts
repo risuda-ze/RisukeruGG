@@ -97,6 +97,24 @@ describe('pushDirToBranch', () => {
   );
 
   it(
+    '初回に commit 後の push だけ失敗しても、再実行で push でき、一時ワークツリーも残らない',
+    () => {
+      const { root, git, remoteGit, push } = setup();
+      const remote = join(root, 'remote.git');
+      git('remote', 'set-url', '--push', 'origin', join(root, 'no-such.git'));
+      expect(() => push('pr-1', 'report: PR #1 @ abc1234')).toThrow(/ push origin review-reports/);
+      expect(git('branch', '--list', 'review-reports')).not.toBe('');
+
+      git('remote', 'set-url', '--push', 'origin', remote);
+      push('pr-1', 'report: PR #1 @ abc1234');
+      expect(remoteGit('log', '--format=%s', 'review-reports')).toBe('report: PR #1 @ abc1234');
+      expect(remoteGit('show', 'review-reports:pr-1/report.md')).toBe('v1');
+      expect(git('worktree', 'list').split('\n')).toHaveLength(1);
+    },
+    GIT_TIMEOUT
+  );
+
+  it(
     'commit が失敗したら例外を投げ、push しない',
     () => {
       const { repo, remoteGit, push } = setup();

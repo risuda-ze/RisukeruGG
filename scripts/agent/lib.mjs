@@ -30,14 +30,22 @@ export function saveReportFromStdin(dir) {
 export function pushDirToBranch({ repo = '.', branch, srcDir, destName, message }) {
   const git = (a, opts) => sh('git', ['-C', repo, ...a], opts);
   const wt = mkdtempSync(join(tmpdir(), `${branch}-`));
-  if (git(['ls-remote', '--heads', 'origin', branch]).stdout.trim()) {
-    git(['fetch', 'origin', branch]);
-    git(['worktree', 'add', '--force', '-B', branch, wt, `origin/${branch}`]);
-  } else {
-    git(['worktree', 'add', '--force', '--detach', wt]);
-    sh('git', ['-C', wt, 'switch', '--orphan', branch]);
-  }
   try {
+    if (git(['ls-remote', '--heads', 'origin', branch]).stdout.trim()) {
+      git(['fetch', 'origin', branch]);
+      git(['worktree', 'add', '--force', '-B', branch, wt, `origin/${branch}`]);
+    } else {
+      git(['worktree', 'add', '--force', '--detach', wt]);
+      // 前回 commit 後に push だけ失敗すると、ローカルに同名ブランチが残り switch --orphan が失敗する。
+      // リモートに無いブランチは未公開なので作り直す（中身は srcDir から毎回コピーし直す）
+      if (
+        git(['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`], { allowFail: true })
+          .status === 0
+      ) {
+        git(['branch', '-D', branch]);
+      }
+      sh('git', ['-C', wt, 'switch', '--orphan', branch]);
+    }
     const dest = join(wt, destName);
     rmSync(dest, { recursive: true, force: true });
     cpSync(srcDir, dest, { recursive: true });
