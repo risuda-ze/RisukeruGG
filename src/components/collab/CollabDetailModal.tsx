@@ -7,6 +7,7 @@ import {
   confirmCollabDate,
   cancelCollabSession,
   updateCollabSession,
+  updateCollabSessionIfUnchanged,
   reopenCollabSession,
   createCollabSessionDraft,
 } from '@/lib/repositories/collabs';
@@ -16,6 +17,7 @@ import { Icon } from '@/components/ui/Icon';
 import { DialogShell } from '@/components/ui/Dialog';
 import { COLLAB_STATUS_LABELS } from '@/types/entities';
 import type { CollabSession, CollabParticipant } from '@/types/entities';
+import { buildCollabSavePayload } from '@/lib/collab/savePayload';
 import { buildResponseRows, respondentNameResolver, type ResponseMark } from '@/lib/collab/responseRows';
 import { firebaseFunctionsErrorMessage } from '@/lib/firebase/errors';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -204,6 +206,10 @@ export function CollabDetailModal({
   const [saving, setSaving] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  /* 保存・調整を確定・削除・再調整の失敗（CO-031） */
+  const [actionError, setActionError] = useState<string | null>(null);
+  /* 調整を確定で保存だけ済んだ。自分の保存で updatedAt が変わり、この画面から保存し直すと必ず競合になるため、保存・確定を止めて開き直してもらう */
+  const [savedBeforeConfirmFailed, setSavedBeforeConfirmFailed] = useState(false);
   const shareUrl = !isNew && typeof window !== 'undefined'
     ? `${window.location.origin}/collab/${teamId}__${session!.id}`
     : '';
@@ -246,34 +252,44 @@ export function CollabDetailModal({
   }
 
   /*
-   * ローカル編集内容を Firestore へ書き込む。
-   * participants / proposedDates / participantResponses は編集時に新しい
-   * オブジェクトへ置き換わる（初期値は session の参照そのまま）ため、
-   * 参照比較で未編集のフィールドを除外する。これにより、モーダル表示中に
-   * 外部回答者が送信した回答を古いスナップショットで上書きしない。
+   * ローカル編集内容を Firestore へ書き込む（CO-032）。未編集のフィールドは書かない。
+   * 候補日程・回答を書くときは、開いた後に届いた回答を開いた時点の値で上書きしないよう、
+   * updatedAt が開いた時点と同じときだけ書く（違えば Error('CONFLICT')）。
    */
   async function persistLocalChanges() {
-    const payload: Partial<CollabSession> = {
-      title: titleValue.trim() || session!.title,
+    const { payload, needsLock } = buildCollabSavePayload(session!, {
+      title: titleValue,
       content: contentValue,
       icon: iconValue,
-    };
-    if (participants !== session!.participants) payload.participants = participants;
-    if (proposedDates !== session!.proposedDates) payload.proposedDates = proposedDates;
-    if (participantResponses !== session!.participantResponses) {
-      payload.participantResponses = participantResponses;
+      participants,
+      proposedDates,
+      participantResponses,
+    });
+    if (needsLock) {
+      await updateCollabSessionIfUnchanged(teamId, session!.id, payload, session!.updatedAt, currentUser?.uid);
+    } else {
+      await updateCollabSession(teamId, session!.id, payload, currentUser?.uid);
     }
-    await updateCollabSession(teamId, session!.id, payload, currentUser?.uid);
+  }
+
+  /* 保存（Firestore への直接の書き込み）の失敗の文言（CO-032） */
+  function saveErrorMessage(err: unknown) {
+    return err instanceof Error && err.message === 'CONFLICT'
+      ? '開いている間にこのコラボが更新されました。開き直してから編集してください'
+      : '保存に失敗しました。時間をおいて再度お試しください';
   }
 
   /* 変更をまとめてFirestoreに保存し、完了後モーダルを閉じる */
   async function handleSaveChanges() {
     if (isNew || saving) return;
     setSaving(true);
+    setActionError(null);
     try {
       await persistLocalChanges();
       onSaved?.();
       onClose();
+    } catch (err) {
+      setActionError(saveErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -371,8 +387,15 @@ export function CollabDetailModal({
     if (selectedDateIdxs.length === 0 || !teamId || isNew) return;
     const idx = selectedDateIdxs[0];
     setConfirming(true);
+    setActionError(null);
     try {
       await persistLocalChanges();
+    } catch (err) {
+      setActionError(saveErrorMessage(err));
+      setConfirming(false);
+      return;
+    }
+    try {
       await confirmCollabDate({
         teamId,
         sessionId: session!.id,
@@ -380,6 +403,11 @@ export function CollabDetailModal({
       });
       trackEvent('collab_confirm');
       onClose();
+    } catch (err) {
+      setSavedBeforeConfirmFailed(true);
+      setActionError(
+        `変更は保存しました。調整の確定に失敗しました（${firebaseFunctionsErrorMessage(err, '確定に失敗しました')}）。開き直してから確定してください`
+      );
     } finally {
       setConfirming(false);
     }
@@ -389,9 +417,12 @@ export function CollabDetailModal({
   async function handleCancel() {
     if (!confirm('このコラボ調整を削除しますか？')) return;
     setCancelling(true);
+    setActionError(null);
     try {
       await cancelCollabSession({ teamId, sessionId: session!.id });
       onDeleted();
+    } catch (err) {
+      setActionError(firebaseFunctionsErrorMessage(err, '削除に失敗しました'));
     } finally {
       setCancelling(false);
     }
@@ -445,10 +476,13 @@ export function CollabDetailModal({
   async function handleReopen() {
     if (isNew) return;
     setReopening(true);
+    setActionError(null);
     try {
       await reopenCollabSession({ teamId, sessionId: session!.id });
       onReopen?.();
       onClose();
+    } catch (err) {
+      setActionError(firebaseFunctionsErrorMessage(err, '再調整に失敗しました'));
     } finally {
       setReopening(false);
       setShowReopenConfirm(false);
@@ -1002,6 +1036,10 @@ export function CollabDetailModal({
           {isNew && createError && (
             <span className="text-[12px]" style={{ color: 'var(--live)' }}>{createError}</span>
           )}
+          {/* 保存・調整を確定・削除・再調整の失敗 (既存モードのみ) */}
+          {!isNew && actionError && (
+            <span role="alert" className="text-[12px]" style={{ color: 'var(--live)' }}>{actionError}</span>
+          )}
 
           <div className="flex items-center gap-3 flex-wrap">
             {/* 削除 (既存モードのみ) */}
@@ -1055,7 +1093,7 @@ export function CollabDetailModal({
             {!isNew && canEdit && isOpen && (
               <button
                 onClick={handleConfirm}
-                disabled={selectedDateIdxs.length === 0 || confirming}
+                disabled={selectedDateIdxs.length === 0 || confirming || savedBeforeConfirmFailed}
                 className="flex items-center gap-1.5 px-5 py-2.5 rounded-[12px] text-[13px] font-semibold transition-colors disabled:opacity-40"
                 style={{ background: 'color-mix(in oklab, var(--primary) 35%, transparent)', color: 'var(--brand-2)' }}
               >
@@ -1067,7 +1105,7 @@ export function CollabDetailModal({
             {canEdit && (isNew || isOpen) && (
               <button
                 onClick={isNew ? handleCreate : handleSaveChanges}
-                disabled={isNew ? creating : saving}
+                disabled={isNew ? creating : saving || savedBeforeConfirmFailed}
                 className="flex items-center gap-1.5 px-5 py-2.5 rounded-[12px] text-[13px] font-semibold border transition-colors disabled:opacity-40"
                 style={{ background: 'color-mix(in oklab, var(--warning) 35%, transparent)', color: 'var(--orange-text)', borderColor: 'var(--warning)' }}
               >
