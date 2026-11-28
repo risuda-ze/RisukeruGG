@@ -32,9 +32,9 @@
 
 - task は `linkedScheduleId` による関連付けだけを扱い、スケジュール本体の項目や同期詳細は schedule を参照する
 
-### notification との境界
+### integration との境界（通知）
 
-- task は通知対象イベントを持つが、配送条件・既読・配信チャネルは notification を参照する
+- task は通知対象イベント（作成・主要フィールドの変更）を持ち、Discord への配送と通知設定は integration を参照する
 
 ### user / plan との境界
 

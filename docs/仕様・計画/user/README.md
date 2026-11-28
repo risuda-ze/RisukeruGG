@@ -23,9 +23,9 @@
 
 - user は認証済みアカウントの生成と保持を扱い、初回所属・ロール・所属切り替えは team を参照する
 
-### notification / platform との境界
+### platform との境界
 
-- user はアカウント本体の保持を扱い、通知サブリソース運用や端末連携情報の詳細は notification / platform を参照する
+- user はアカウント本体の保持を扱い、端末連携情報の詳細は platform を参照する
 
 ## 読む順番
 

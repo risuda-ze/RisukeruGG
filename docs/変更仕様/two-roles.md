@@ -145,7 +145,7 @@ Discord からの操作（作成・コメント・工程ボタン）は従来ど
 - ルール: `isTeamOwner` → `isMemberRole`、`isOwnerOrEditor` を廃止。`schedules` / `briefs` / `steps` / `playbooks` の `allow write` を `create` / `update` / `delete` に分割し、「権限」の表どおりにする。タスク・コラボは更新・削除を `isMemberRole` に。工程の完了・状態変更は変更キーを検査して担当者に許す。`members` の本人更新で `role` を書き換えられない制限は別 Issue（下記）
 - Functions: `requireOperator` → `requireMemberRole`、`requireOperatorOrMember` は廃止し、作成者・担当者の判定ヘルパーを置く。`createTask` / コラボ作成 / `updateMemberRole` / `joinTeam` / `getAuthContext`（旧値の変換を 1 か所に）。退会・解散・Kick・`deleteAccount` は `operatorUids` を使わず `members` の `role` から「最後のメンバー」を判定
 - Discord の各 Route: `role !== 'operator'` を `member` 判定へ
-- クライアント: `toMember`（変換）、`canEdit` の判定（タスク・コラボはメンバー、スケジュールは作成者かメンバー、ブリーフ・工程は上表）、`ROLE_LABELS` / `ROLE_BADGE`（2 か所の重複を 1 つに）、ロール変更 UI、`RoleChangeDialog`、ブリーフ削除 UI（新設）、操作層の権限判定
+- クライアント: `toTeamRole`（旧ロール値の変換）、`canEdit` の判定（タスク・コラボはメンバー、スケジュールは作成者かメンバー、ブリーフ・工程は上表）、`ROLE_LABELS` / `ROLE_BADGE`（2 か所の重複を 1 つに）、ロール変更 UI、`RoleChangeDialog`、ブリーフ削除 UI（新設）、操作層の権限判定
 - 文言: 「オペレーター」「ROM専」を含む画面（`/team`、`/settings/profile`、`/settings/ai`、`/integrations/discord`、退出・Discord ユーザー名のダイアログ、プライバシーポリシー）、AI のプロンプトと能力の説明
 - テスト・シード: `roleChangeVisibility.test.ts`、`leaveTeamLogic.test.ts`、`systemPrompt` のスナップショット、`tests/e2e/visual.spec.ts`、`scripts/seed.mjs`（`rom` のユーザー 2 人）
 - ブリーフ削除: 配下の `steps`・`briefEvents`・工程コメントを連鎖して削除する。Discord 連携（`BriefDiscordLink`）のメッセージの扱いは実装 PR で決める

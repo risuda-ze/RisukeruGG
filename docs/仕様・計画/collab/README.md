@@ -16,7 +16,6 @@
 
 - LIGHT / PARTY プランの月次上限値とアップグレード導線
 - 確定時に生成されるスケジュールの詳細項目や Google カレンダー書き出し
-- 通知カテゴリ定義、既読管理、プッシュ通知設定
 - Google ログイン自体の認証方式とセッション維持
 - コラボ以外の共通ナビゲーション仕様
 
@@ -30,9 +29,9 @@
 
 - collab は確定結果として `linkedScheduleId` を扱うが、作成される `ScheduleEntry` の項目や保持・削除ルールは schedule を参照する
 
-### notification との境界
+### integration との境界（通知）
 
-- collab は通知を発生させるイベントだけを持ち、配送方法・既読・受信設定は notification を参照する
+- collab は通知を発生させるイベント（作成・回答）だけを持ち、Discord への配送と通知設定は integration を参照する
 
 ### user / team との境界
 

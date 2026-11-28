@@ -4,7 +4,7 @@
 
 ui カテゴリでは、画面横断で共有するナビゲーション状態と表示用の投影モデルだけを正本化する。
 
-業務データ自体の型は task / schedule / collab / team / notification / user / plan を参照し、ui では「どう見せるか」「どの状態を保持するか」だけを定義する。
+業務データ自体の型は task / schedule / collab / team / user / plan を参照し、ui では「どう見せるか」「どの状態を保持するか」だけを定義する。
 
 ## SidebarState
 
@@ -66,14 +66,3 @@ ui カテゴリでは、画面横断で共有するナビゲーション状態�
 ### resolvedTheme
 
 - `<html data-theme>` に付ける値（`dark` / `light`）。`ThemePreference` が `system` のときは `prefers-color-scheme` から導出する
-
-## notification 側モデルとの境界
-
-- 通知データの正本は notification カテゴリが持つ
-- ui は TopBar 上の未読件数表示、ドロップダウン開閉状態、一覧プレビュー上限、設定/通知画面の削除導線の見せ方を扱う
-
-## 通知表示投影
-
-- 通知ドロップダウンは Notification の表示用投影から最大 4 件だけを扱う
-- 設定/通知画面は未削除の Notification 一覧を表示用に投影する
-- 1 件削除と全件削除の操作可否は notification カテゴリのルールに従って表示する

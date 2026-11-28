@@ -33,9 +33,9 @@
 - schedule はタスクとの関連情報を扱うが、タスク進捗の意味づけやボード管理は task を参照する
 - schedule は `categoryId` によるカテゴリ参照を扱うが、カテゴリ（タスク・スケジュール共通）の定義・管理は task を参照する
 
-### notification との境界
+### integration との境界（通知）
 
-- schedule は通知対象となる変更イベントを持つが、配送条件や受信設定は notification を参照する
+- schedule は開始前リマインダーの対象となる開始日時を持ち、Discord への配送と通知設定は integration を参照する
 
 ### user / platform との境界
 

@@ -20,6 +20,8 @@ Firestore コレクション配置: `teams/{teamId}/discord/config`（サブコ�
 | `notifyOnTaskUpdate`     | boolean     | タスク変更時に通知するか（主要フィールドの変更のみ） |
 | `notifyOnCollabCreate`   | boolean     | コラボ調整の作成時に通知するか |
 | `notifyOnCollabResponse` | boolean     | コラボ調整への回答時に通知するか |
+| `notifyBefore1h`         | boolean     | スケジュール開始 1 時間前にリマインダーを送るか |
+| `notifyBefore15min`      | boolean     | スケジュール開始 15 分前にリマインダーを送るか |
 
 | `briefThreadsEnabled` | boolean（任意） | ブリーフごとにスレッドを立てるか（既定 true。IN-023） |
 | `briefChannelId` / `briefChannelName` | string（任意） | スレッドの親チャンネル。未設定は `channelId` |

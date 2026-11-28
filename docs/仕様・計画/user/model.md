@@ -20,16 +20,6 @@ User は、認証済み利用者のアカウント状態を表す。
 | `deletedAt`     | null または未設定  | 削除前は値を持たない              |
 | `googleCalendarExports` | map / 未設定 | Google カレンダー書き出し（schedule の SC-008 系）が使う状態。キーは `teamId`、値は `{ calendarId: string, exportedAt: timestamp | null }`。`calendarId` は再書き出し時に同じ専用副カレンダーへ書き込むため、`exportedAt` は最終書き出し日時を画面に表示するために使う。書き込みは本人のみ。詳細は [schedule/model.md](../schedule/model.md) |
 
-### user 配下に配置する通知サブリソース
-
-次の通知運用データは `users/{uid}` 配下に配置するが、user ドキュメント本体のフィールドではなく notification カテゴリのサブリソースとして扱う。
-
-- `users/{uid}/notificationEndpoints/{token}`
-- `users/{uid}/notificationSettings/default`
-
-- 保存場所は user 配下だが、仕様上の責務は notification カテゴリが持つ
-- アカウント削除時は ghost User に引き継がず除去する
-
 ### Ghost 状態
 
 アカウント削除後は `users/{uid}` を完全削除せず、表示情報だけを残した軽量ドキュメントとして保持する。
@@ -58,11 +48,6 @@ User は、認証済み利用者のアカウント状態を表す。
 - `teamIds`
 - その他の個人情報
 
-## 削除時に除去する通知サブリソース
-
-- `users/{uid}/notificationEndpoints`
-- `users/{uid}/notificationSettings`
-
 ## 関連する隣接モデル
 
 ### team 側で管理するもの
@@ -70,12 +55,6 @@ User は、認証済み利用者のアカウント状態を表す。
 - `currentTeamId`
 - `teamIds`
 - チーム内ロール
-
-### notification 側で管理するもの
-
-- `notificationEndpoints`
-- `notificationSettings`
-- 通知配送チャネルごとの運用データ
 
 ### ui 側で管理するもの
 

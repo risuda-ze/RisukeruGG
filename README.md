@@ -31,8 +31,8 @@
 | コラボ調整       | コラボ打診の送受信・候補日程調整・確定枠の自動カレンダー登録     |
 | タスク管理       | カンバン形式（TODO / 進行中 / 完了）で撮影・編集・告知を一元管理 |
 | チーム管理       | メンバー招待・ロール設定（オーナー / 編集者 / 閲覧者）           |
-| 通知設定         | LIVEリマインダー・コラボ返答・タスク更新の通知（プラン別）       |
-| PWA対応          | ホーム画面追加・プッシュ通知（Android Chrome）                   |
+| Discord 通知     | 予定の開始前リマインダー・コラボ作成/回答・タスク作成/更新を通知 |
+| PWA対応          | ホーム画面追加                                                   |
 
 ---
 
@@ -77,7 +77,6 @@
 | 認証           | Firebase Authentication（Google SSO / メール認証）      |
 | DB             | Cloud Firestore（リアルタイム同期）                     |
 | ストレージ     | Firebase Storage                                        |
-| 通知           | Firebase Cloud Messaging（FCM）                         |
 | サーバーレス   | Firebase Cloud Functions                                |
 | ホスティング   | Vercel                                                  |
 | テスト         | Vitest（ユニット）/ Playwright（E2E）                   |
@@ -125,7 +124,7 @@ node scripts/seed.mjs
 - **データ**: 終了時に `.emulator-data/` へ書き出し、次回起動時に読み込みます。`Ctrl+C` で終了してください。強制終了すると書き出されず、その回のデータは残りません。Windows では `Ctrl+C` の直後に「バッチ ジョブを終了しますか (Y/N)?」と出ますが、書き出しは裏で続いています。`Export complete` の表示を待ってから `Y` で閉じてください。
 - **worktree**: `.emulator-data/` と `.env.local` は作業ディレクトリごとなので、git worktree ごとに `.env.local` の作成とシードが必要です。
 - **ログイン**: 「Googleでサインイン」を押すとエミュレータのサインイン画面が開きます。`Add new account` を選び、Email にテストアカウント（[テストデータ投入](#テストデータ投入) 参照。例: `taro@example.com`）のメールアドレスを入れて `Sign in with Google.com` を押すと、そのユーザーとしてログインできます。2 回目以降は一覧から選べます。
-- **環境変数**: エミュレータへの接続設定（`NEXT_PUBLIC_USE_EMULATORS` / `FIREBASE_AUTH_EMULATOR_HOST` / `FIRESTORE_EMULATOR_HOST`）は `.env.local.example` に入っています。Discord 連携や AI 機能を試す場合だけ、該当のキーを `.env.local` に追記します。
+- **環境変数**: エミュレータへの接続設定（`NEXT_PUBLIC_USE_EMULATORS` / `FIREBASE_AUTH_EMULATOR_HOST` / `FIRESTORE_EMULATOR_HOST`）は `.env.local.example` に入っています。Discord 連携や AI 機能を試す場合だけ、`.env.local` の該当のキーに値を入れます。
 
 ### Linux 環境での動作確認（任意）
 
@@ -179,7 +178,6 @@ Windows では `scripts\seed.bat` をダブルクリックしても同じです�
 | 所属者       | 6人（member×2・staff×4）                       |
 | スケジュール | 先月・当月・来月分（週1回配信 + 毎週土曜動画） |
 | タスク       | 14件（未着手・進行中・完了 + 連携有無を網羅）  |
-| 通知         | 10件（すべて未読）                             |
 | コラボ       | 5件（open / confirmed / expired / cancelled）  |
 
 **テストアカウント（パスワード共通: `password123`）:**
@@ -211,7 +209,7 @@ NEXT_PUBLIC_USE_EMULATORS=true   # Firebase エミュレータ使用時（Analyt
 
 # 試用モード（PL-011）: 'true' のとき課金なしで全ユーザーを PARTY プラン相当として扱う。
 # クライアント・サーバーの両方で有効化する必要がある。試用終了時は両方を外す（未設定 = 通常運用）。
-NEXT_PUBLIC_FREE_PARTY_MODE=true   # クライアント（広告非表示・CTA非表示・通知制限解除の判定）
+NEXT_PUBLIC_FREE_PARTY_MODE=true   # クライアント（広告非表示・CTA非表示の判定）
 
 # クローズドベータ入場制限（T11）: 'true' のとき allowlist 外ユーザーに待機画面を表示する。
 # 表示切替用のクライアントフラグ。実際のデータアクセス拒否は firestore.rules と
@@ -223,7 +221,7 @@ Cloud Functions 側は `functions/` の環境変数（`.env` もしくはデプ�
 
 ```env
 # 試用モード（PL-011）のサーバー側フラグ。クライアントの NEXT_PUBLIC_FREE_PARTY_MODE と必ず揃える。
-# 月次上限・チーム参加要件（PL-005）・リマインダー通知などサーバー判定に適用される。
+# 月次上限・チーム参加要件（PL-005）などサーバー判定に適用される。
 FREE_PARTY_MODE=true
 ```
 
@@ -375,13 +373,12 @@ tests/
 | ランディングページ | `/`              | サービス紹介・ログイン導線     |
 | ログイン           | `/login`         | Google認証・メール認証         |
 | チーム作成 / 参加  | `/onboarding`    | 初回セットアップ               |
-| ダッシュボード     | `/dashboard`     | 統計・今日のスケジュール・通知 |
+| ダッシュボード     | `/dashboard`     | 統計・今日のスケジュール       |
 | スケジュール       | `/schedule`      | カレンダービュー（週 / 月）    |
 | 配信枠詳細         | `/schedule/[id]` | 配信枠の詳細・編集             |
 | タスクボード       | `/tasks`         | カンバンビュー                 |
 | コラボ管理         | `/collabs`       | 打診一覧・日程調整             |
 | メンバー管理       | `/team`          | メンバー一覧・招待・ロール設定 |
-| 通知一覧           | `/notifications` | 全通知履歴                     |
 | 設定               | `/settings`      | プロフィール・チーム設定・連携 |
 
 ---
@@ -393,7 +390,6 @@ tests/
 | メンバー数     | 2人まで              | 無制限                       |
 | タスク管理     | 月5件まで            | 無制限                       |
 | コラボ調整     | 月3件まで            | 無制限                       |
-| 通知           | LIVEリマインダーのみ | 全種類                       |
 | 広告・告知枠   | あり                 | なし                         |
 | 無料トライアル | —                    | 14日間（正式課金開始時に提供予定） |
 

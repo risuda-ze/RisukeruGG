@@ -4,7 +4,7 @@
 
 CollabSession は外部相手との日程調整単位を表し、CollabComment は公開回答時に回答者が書いたコメント（回答コメント）を表す。
 
-このカテゴリでは、コラボ作成、公開回答、確定、再調整に直接関係する項目だけを正本化する。月次上限判定は plan、確定後に生成されるスケジュール詳細は schedule、通知配送条件は notification を参照する。
+このカテゴリでは、コラボ作成、公開回答、確定、再調整に直接関係する項目だけを正本化する。月次上限判定は plan、確定後に生成されるスケジュール詳細は schedule、通知配送条件は integration を参照する。
 
 ## CollabSession
 
@@ -13,7 +13,6 @@ CollabSession は外部相手との日程調整単位を表し、CollabComment �
 | `id` | string | コラボセッション ID |
 | `title` | string | コラボの件名 |
 | `partnerName` | string | 外部相手の表示名 |
-| `createdBy` | string | セッション作成者の UID |
 | `teamId` | string | 打診側チーム ID |
 | `proposedDates` | `Date[]` | 候補日程一覧 |
 | `responses` | object \| null | 直近送信の集約回答。`dates`、`alternativeDates`、`respondedAt`、`note` を持つ |
@@ -21,7 +20,7 @@ CollabSession は外部相手との日程調整単位を表し、CollabComment �
 | `status` | `open` \| `confirmed` \| `expired` \| `cancelled` | 現在状態 |
 | `confirmedDate` | Date \| null | 確定日時 |
 | `linkedScheduleId` | string \| null | 確定時に自動作成したスケジュール ID |
-| `createdAt` | Date | 作成日時 |
+| `createdBy` / `createdAt` / `updatedBy` / `updatedAt` | | 作成者・作成日時・最終更新者・最終更新日時。[team/model.md](../team/model.md) の共通フィールド |
 | `icon` | string \| null | 任意の表示アイコン |
 | `content` | string \| null | コラボ内容メモ |
 | `participants` | `CollabParticipant[]` \| undefined | 内部 / 外部の参加者候補 |
@@ -83,13 +82,6 @@ confirmed -> cancelled
 
 - 確定時に自動作成される `ScheduleEntry`
 - `linkedScheduleId` で参照するスケジュールの詳細項目
-
-### notification 側で管理するもの
-
-- `collab_created`
-- `collab_responded`
-- `collab_confirmed`
-- `collab_cancelled`
 
 ### plan 側で管理するもの
 
