@@ -18,6 +18,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { COLLAB_STATUS_LABELS } from '@/types/entities';
 import type { CollabSession } from '@/types/entities';
 import { isMemberRole } from '@/lib/utils/teamRoles';
+import { firebaseFunctionsErrorMessage } from '@/lib/firebase/errors';
 
 type BadgeVariant = 'purple' | 'amber' | 'live' | 'green' | 'muted' | 'default';
 const STATUS_BADGE: Record<string, BadgeVariant> = {
@@ -40,6 +41,8 @@ export default function CollabDetailPage() {
   const [confirming, setConfirming] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  /* 確定・キャンセルの失敗（CO-031） */
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const teamId = currentTeam?.id;
   const myMember = members.find((m) => m.userId === currentUser?.uid);
@@ -58,9 +61,12 @@ export default function CollabDetailPage() {
   async function handleConfirm() {
     if (!selectedDate || !teamId) return;
     setConfirming(true);
+    setActionError(null);
     try {
       await confirmCollabDate({ teamId, sessionId, confirmedDate: selectedDate });
       trackEvent('collab_confirm');
+    } catch (err) {
+      setActionError(firebaseFunctionsErrorMessage(err, '確定に失敗しました'));
     } finally {
       setConfirming(false);
     }
@@ -69,9 +75,12 @@ export default function CollabDetailPage() {
   async function handleCancel() {
     if (!teamId || !confirm('このコラボ調整をキャンセルしますか？')) return;
     setCancelling(true);
+    setActionError(null);
     try {
       await cancelCollabSession({ teamId, sessionId });
       router.push('/collabs');
+    } catch (err) {
+      setActionError(firebaseFunctionsErrorMessage(err, 'キャンセルに失敗しました'));
     } finally {
       setCancelling(false);
     }
@@ -208,6 +217,9 @@ export default function CollabDetailPage() {
           <Button variant="danger" onClick={handleCancel} loading={cancelling}>
             キャンセル
           </Button>
+          {actionError && (
+            <p role="alert" className="w-full text-[12px] text-danger">{actionError}</p>
+          )}
         </div>
       )}
     </div>

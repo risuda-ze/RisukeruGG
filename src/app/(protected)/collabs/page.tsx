@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useAuthStore } from '@/stores/auth';
@@ -17,6 +18,7 @@ import { cn } from '@/lib/utils/cn';
 import { COLLAB_STATUS_LABELS } from '@/types/entities';
 import type { CollabSession, CollabStatus } from '@/types/entities';
 import { isMemberRole } from '@/lib/utils/teamRoles';
+import { firebaseFunctionsErrorMessage } from '@/lib/firebase/errors';
 
 // ステータス → Badge の variant
 const STATUS_BADGE: Record<CollabStatus, 'primary' | 'success' | 'neutral'> = {
@@ -122,7 +124,8 @@ function ZoneEmpty({ isFixed }: { isFixed: boolean }) {
 interface CollabRowProps {
   collab: CollabSession;
   onOpen: (s: CollabSession) => void;
-  onDelete: (s: CollabSession) => void;
+  /* 削除はメンバーだけ（CO-031）。スタッフには渡さず、削除ボタンを出さない */
+  onDelete?: (s: CollabSession) => void;
 }
 function CollabRow({ collab, onOpen, onDelete }: CollabRowProps) {
   const isFixed = collab.status === 'confirmed';
@@ -206,15 +209,17 @@ function CollabRow({ collab, onOpen, onDelete }: CollabRowProps) {
           <Icon name="open_in_new" size={16} />
           詳細
         </Button>
-        <Button
-          variant="subtle"
-          size="icon-sm"
-          className="hover:bg-danger-tint hover:text-danger"
-          onClick={() => onDelete(collab)}
-          title="削除"
-        >
-          <Icon name="delete" size={16} />
-        </Button>
+        {onDelete && (
+          <Button
+            variant="subtle"
+            size="icon-sm"
+            className="hover:bg-danger-tint hover:text-danger"
+            onClick={() => onDelete(collab)}
+            title="削除"
+          >
+            <Icon name="delete" size={16} />
+          </Button>
+        )}
       </div>
     </Card>
   );
@@ -264,13 +269,15 @@ function MCollabCard({ collab, onOpen, onDelete }: CollabRowProps) {
             <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
           </div>
           <span className="shrink-0 text-caption whitespace-nowrap text-text-2">{responded}/{total}人回答</span>
-          <span
-            onClick={(e) => { e.stopPropagation(); onDelete(collab); }}
-            className="ml-auto cursor-pointer text-text-muted"
-            title="削除"
-          >
-            <Icon name="delete" size={15} />
-          </span>
+          {onDelete && (
+            <span
+              onClick={(e) => { e.stopPropagation(); onDelete(collab); }}
+              className="ml-auto cursor-pointer text-text-muted"
+              title="削除"
+            >
+              <Icon name="delete" size={15} />
+            </span>
+          )}
         </div>
       ) : null}
     </Card>
@@ -284,7 +291,8 @@ interface CollabZoneProps {
   zone: 'adjust' | 'fixed';
   sessions: CollabSession[];
   onOpen: (s: CollabSession) => void;
-  onDelete: (s: CollabSession) => void;
+  /* 削除はメンバーだけ（CO-031）。スタッフには渡さず、削除ボタンを出さない */
+  onDelete?: (s: CollabSession) => void;
 }
 function CollabZone({ zone, sessions, onOpen, onDelete }: CollabZoneProps) {
   const isFixed = zone === 'fixed';
@@ -328,7 +336,8 @@ interface CollabBoardProps {
   isMobile: boolean;
   canEdit: boolean;
   onOpen: (s: CollabSession) => void;
-  onDelete: (s: CollabSession) => void;
+  /* 削除はメンバーだけ（CO-031）。スタッフには渡さず、削除ボタンを出さない */
+  onDelete?: (s: CollabSession) => void;
   onStartNew: () => void;
 }
 function CollabBoard({
@@ -501,6 +510,8 @@ export default function CollabsPage() {
     setProcessingId(session.id);
     try {
       await cancelCollabSession({ teamId, sessionId: session.id });
+    } catch (err) {
+      toast.error(firebaseFunctionsErrorMessage(err, '削除に失敗しました'));
     } finally {
       setProcessingId(null);
     }
@@ -540,7 +551,7 @@ export default function CollabsPage() {
           isMobile={isMobile}
           canEdit={canEdit}
           onOpen={setSelectedSession}
-          onDelete={handleDelete}
+          onDelete={canEdit ? handleDelete : undefined}
           onStartNew={handleStartNew}
         />
       )}

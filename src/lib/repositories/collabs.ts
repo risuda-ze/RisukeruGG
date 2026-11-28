@@ -5,6 +5,7 @@ import {
   getDoc,
   updateDoc,
   onSnapshot,
+  runTransaction,
   Unsubscribe,
   Timestamp,
 } from 'firebase/firestore';
@@ -94,6 +95,27 @@ export async function updateCollabSession(
   await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), {
     ...(data as Record<string, unknown>),
     ...updatedFields(updatedByUid),
+  });
+}
+
+/**
+ * 楽観的ロック付きの更新（CO-032）。文書の updatedAt が expectedUpdatedAt（開いた時点の値）と
+ * 違えば書かずに Error('CONFLICT') を投げる。updatedAt の無い古い文書は、どちらも無いときだけ一致とみなす。
+ */
+export async function updateCollabSessionIfUnchanged(
+  teamId: string,
+  sessionId: string,
+  data: Partial<CollabSession>,
+  expectedUpdatedAt: Date | undefined,
+  updatedByUid?: string
+): Promise<void> {
+  const ref = doc(db, 'teams', teamId, 'collabSessions', sessionId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) throw new Error('コラボが見つかりません');
+    const current = (snap.data().updatedAt as Timestamp | undefined)?.toDate().getTime() ?? null;
+    if (current !== (expectedUpdatedAt?.getTime() ?? null)) throw new Error('CONFLICT');
+    tx.update(ref, { ...(data as Record<string, unknown>), ...updatedFields(updatedByUid) });
   });
 }
 
