@@ -76,8 +76,11 @@ export class AdminBriefsPort implements BriefsPort {
         ...updatedFields(tx.actor),
       });
     }
+    // 工程は配下のコメントごと消す（クライアント実装と同じ）
     for (const stepId of tx.stepDeletes) {
-      batch.delete(briefRef.collection('steps').doc(stepId));
+      const step = briefRef.collection('steps').doc(stepId);
+      for (const comment of await step.collection('comments').listDocuments()) batch.delete(comment);
+      batch.delete(step);
     }
     for (const e of tx.events) {
       batch.set(briefRef.collection('briefEvents').doc(), { ...e, createdAt: now });

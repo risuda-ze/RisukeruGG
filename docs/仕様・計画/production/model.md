@@ -121,7 +121,7 @@ teams/{teamId}/briefs/{briefId}/briefEvents/{eventId}                 ← BriefE
 
 - 工程の状態は 5 値固定。列（`TaskStatus`）は使わない
 - `briefEvents` は追記のみで、改変しない。削除するのはブリーフの削除に伴うときだけ
-- ブリーフの作成・削除と工程の変更はすべて操作層（`src/lib/briefs/operations`）を経由し、1 操作 = 1 writeBatch。ブリーフの削除は配下の工程・工程コメント・差分とブリーフ本体を同じ writeBatch で消す
+- ブリーフの作成・削除と工程の変更はすべて操作層（`src/lib/briefs/operations`）を経由し、1 操作 = 1 writeBatch。ブリーフの削除は配下の工程・工程コメント・差分とブリーフ本体を同じ writeBatch で消す。工程の削除も、その工程の工程コメントを同じ writeBatch で消す
 - `steps` の書き込み時は必ず `teamId` と `briefId` を持たせる（コレクショングループのルール評価に必要）
 
 ## 関連する隣接モデル
