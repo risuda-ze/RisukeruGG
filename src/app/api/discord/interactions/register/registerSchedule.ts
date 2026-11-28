@@ -1,5 +1,5 @@
 import { getAdminFirestore } from '@/lib/firebase/admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { DISCORD_ACTOR, createdFields } from '@/lib/firebase/auditAdmin';
 import { parseProposalDateTime, type ScheduleProposal } from '@/lib/ai/parseProposal';
 
 /**
@@ -20,7 +20,6 @@ export async function registerSchedule(
     .filter((id): id is string => id !== undefined);
 
   const scheduleRef = db.collection(`teams/${teamId}/schedules`).doc();
-  const now = FieldValue.serverTimestamp();
 
   await scheduleRef.set({
     title: proposal.title,
@@ -33,9 +32,7 @@ export async function registerSchedule(
     collabPartnerName: null,
     linkedTaskIds: [],
     allDay: proposal.allDay ?? false,
-    createdBy: 'discord-bot',  // 個人ユーザーを追跡しないため固定値
-    updatedAt: now,
-    createdAt: now,
+    ...createdFields(DISCORD_ACTOR), // 個人ユーザーを追跡しないため固定値
   });
 
   return scheduleRef.id;

@@ -1,5 +1,6 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
+import { updatedFields } from '../lib/audit';
 import { randomBytes } from 'crypto';
 import { db, getAuthContext, requireMemberRole, getUserDoc } from '../lib/validateAuth';
 import { deleteUserUnavailability } from '../unavailability/cleanup';
@@ -61,7 +62,7 @@ export const removeTeamMember = onCall(
       }
 
       for (const taskDoc of tasksSnap.docs) {
-        tx.update(taskDoc.ref, { assigneeId: null });
+        tx.update(taskDoc.ref, { assigneeId: null, ...updatedFields(ctx.uid) });
       }
 
       tx.set(soloTeamRef, {

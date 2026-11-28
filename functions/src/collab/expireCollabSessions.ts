@@ -1,6 +1,7 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { db } from '../lib/admin';
+import { SYSTEM_ACTOR, updatedFields } from '../lib/audit';
 
 export const expireCollabSessions = onSchedule(
   { schedule: '0 * * * *', region: 'asia-northeast1' },
@@ -23,7 +24,7 @@ export const expireCollabSessions = onSchedule(
 
       const batch = db.batch();
       for (const sessionDoc of sessionsSnap.docs) {
-        batch.update(sessionDoc.ref, { status: 'expired' });
+        batch.update(sessionDoc.ref, { status: 'expired', ...updatedFields(SYSTEM_ACTOR) });
         expiredCount++;
       }
       await batch.commit();

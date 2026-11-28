@@ -72,6 +72,10 @@ export interface BriefEventDraft {
 
 export interface BriefTransaction {
   briefId: string;
+  /** 書き込みの主体。作成者・最終更新者（createdBy / updatedBy）に使う。Discord は 'discord-bot'、システムは 'system' */
+  actor: string;
+  /** true ならブリーフを配下（工程・工程コメント・差分）ごと削除する。他のフィールドは無視する */
+  deleteBrief?: boolean;
   createBrief?: BriefCreateDraft;
   briefPatch?: BriefPatch;
   stepCreates: StepCreateDraft[];
@@ -105,8 +109,8 @@ export class OperationError extends Error {
 }
 
 /** 空のトランザクションを作る */
-export function emptyTransaction(briefId: string): BriefTransaction {
-  return { briefId, stepCreates: [], stepPatches: [], stepDeletes: [], events: [] };
+export function emptyTransaction(briefId: string, actor: string): BriefTransaction {
+  return { briefId, actor, stepCreates: [], stepPatches: [], stepDeletes: [], events: [] };
 }
 
 export type { StepStatus };

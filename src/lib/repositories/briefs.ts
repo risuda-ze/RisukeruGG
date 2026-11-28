@@ -15,6 +15,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
+import { createdFields, updatedFields } from '@/lib/firebase/audit';
 import type { Brief, BriefEvent, Step, StepComment } from '@/types/briefs';
 import type { BriefsPort, BriefTransaction } from '@/lib/briefs/operations/port';
 import { stripUndefined, toBrief, toBriefEvent, toStep, toStepComment } from '@/lib/briefs/convert';
@@ -133,6 +134,10 @@ export class FirestoreBriefsPort implements BriefsPort {
   }
 
   async commit(teamId: string, tx: BriefTransaction): Promise<void> {
+    if (tx.deleteBrief) {
+      await deleteBriefTree(teamId, tx.briefId);
+      return;
+    }
     const batch = writeBatch(db);
     const now = serverTimestamp();
 
@@ -142,15 +147,17 @@ export class FirestoreBriefsPort implements BriefsPort {
         ...rest,
         teamId,
         discord: null,
-        createdAt: now,
-        updatedAt: now,
+        ...createdFields(tx.actor),
       });
     }
     if (tx.briefPatch && Object.keys(tx.briefPatch).length > 0) {
-      batch.update(briefDoc(teamId, tx.briefId), { ...stripUndefined(tx.briefPatch), updatedAt: now });
+      batch.update(briefDoc(teamId, tx.briefId), {
+        ...stripUndefined(tx.briefPatch),
+        ...updatedFields(tx.actor),
+      });
     } else if (tx.stepPatches.length > 0 || tx.stepCreates.length > 0 || tx.stepDeletes.length > 0) {
       // 工程の変更でもブリーフの updatedAt を進める（一覧の並び・差分の目印）
-      batch.update(briefDoc(teamId, tx.briefId), { updatedAt: now });
+      batch.update(briefDoc(teamId, tx.briefId), updatedFields(tx.actor));
     }
     for (const c of tx.stepCreates) {
       const { id, ...rest } = c;
@@ -161,12 +168,14 @@ export class FirestoreBriefsPort implements BriefsPort {
         completedAt: null,
         completedBy: null,
         discordMessageId: null,
-        createdAt: now,
-        updatedAt: now,
+        ...createdFields(tx.actor),
       });
     }
     for (const { stepId, patch } of tx.stepPatches) {
-      batch.update(stepDoc(teamId, tx.briefId, stepId), { ...stripUndefined(patch), updatedAt: now });
+      batch.update(stepDoc(teamId, tx.briefId, stepId), {
+        ...stripUndefined(patch),
+        ...updatedFields(tx.actor),
+      });
     }
     for (const stepId of tx.stepDeletes) {
       batch.delete(stepDoc(teamId, tx.briefId, stepId));
@@ -176,6 +185,25 @@ export class FirestoreBriefsPort implements BriefsPort {
     }
     await batch.commit();
   }
+}
+
+/**
+ * ブリーフを配下（工程・工程コメント・差分）ごと削除する。
+ * 1 回の commit で原子的に消す（PD-061）。途中まで消えた状態は作らない。
+ * リクエストの大きさの上限などで commit が失敗した場合は何も消えず、エラーをそのまま呼び出し元へ返す。
+ */
+async function deleteBriefTree(teamId: string, briefId: string): Promise<void> {
+  const stepsSnap = await getDocs(stepsCol(teamId, briefId));
+  const batch = writeBatch(db);
+  for (const step of stepsSnap.docs) {
+    const comments = await getDocs(commentsCol(teamId, briefId, step.id));
+    for (const comment of comments.docs) batch.delete(comment.ref);
+    batch.delete(step.ref);
+  }
+  const events = await getDocs(eventsCol(teamId, briefId));
+  for (const event of events.docs) batch.delete(event.ref);
+  batch.delete(briefDoc(teamId, briefId));
+  await batch.commit();
 }
 
 export const firestoreBriefsPort = new FirestoreBriefsPort();

@@ -85,8 +85,10 @@ export function makeStep(overrides: Partial<Step> & { id: string; key: string })
     completedAt: null,
     completedBy: null,
     discordMessageId: null,
+    createdBy: null,
     createdAt: new Date('2026-09-01'),
     updatedAt: new Date('2026-09-01'),
+    updatedBy: null,
     ...overrides,
   };
 }

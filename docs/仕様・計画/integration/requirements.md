@@ -44,6 +44,7 @@
 
 - **IN-023**: ブリーフ連携の設定は `teams/{teamId}/discord/config` に `briefThreadsEnabled`（既定 true）/ `briefChannelId` / `briefChannelName`（スレッドの親チャンネル。未設定は `channelId`）/ `digestEnabled`（既定 true）/ `digestChannelId` / `digestChannelName`（未設定は `channelId`）/ `digestTime`（`HH:00`、JST、既定 `09:00`）として保持する。メンバーが `/integrations/discord` の「タスク管理 v2（ブリーフ）」から設定し、更新 API（`POST /api/discord/update-brief-settings`）はチャンネル ID を Bot トークンで取得した実チャンネル一覧と照合する
 - **IN-024**: ブリーフ作成時（Firestore トリガー）に、親チャンネルへ**公開スレッド**（名前 = ブリーフのタイトル、7 日で自動アーカイブ）を作り、先頭に**要約メッセージ**（タイトル・状態・公開予定日・進捗・工程ごとの状態/担当/締切/超過/入力待ち・Web の URL）を投稿して `Brief.discord = { threadId, summaryMessageId, channelId }` に記録する。以後、ブリーフのタイトル・公開予定日・状態、工程の状態・担当・締切・タイトルが変わるたびに Bot が同じメッセージを編集する。Discord はスレッドの入れ子を持たないため、工程ごとのスレッドは作らない
+  - **IN-024-1**: ブリーフを削除しても、作成済みのスレッド・要約メッセージ・着手可能通知は削除も書き換えもせず、Discord に残す。削除後に通知のボタンを押した場合は、見つからない旨をフォローアップで返す
 - **IN-025**: 工程が `ready` になったとき、スレッドへ**着手可能通知**を投稿する。本文は「【工程名】@担当 着手できます。締切 M/D」に必要情報の未入力一覧を添え、ボタンは **完了**（`step_done:{teamId}:{briefId}:{stepId}`）/ **着手**（`step_start:...`）/ **Web で開く**（リンク）。二重投稿を避けるため、投稿前にトランザクションで `Step.discordMessageId` を予約する。担当者のメンションは IN-015-1 の解決を使い、未解決なら表示名に「個人設定で Discord ユーザー名を登録するとメンションで届きます」を添える
   - **IN-025-1**: ボタンはサーバーの誰でも押せる。Interactions Endpoint は `custom_id` の teamId とサーバーの guildId が連携済みであることを確認してから、操作層（`changeStepStatus`）を Discord 由来（`actorId: null`、role なし、`source: discord`）で実行する。誰が押したかは記録しない（IN-015-3）
   - **IN-025-2**: 成功時は元メッセージを即時に書き換え（完了はボタンなし、着手は完了ボタンのみ残す）、要約の更新と後続工程の通知は Firestore トリガーが行う。遷移できない場合（待機中の工程を完了にする等）は理由をフォローアップで返す

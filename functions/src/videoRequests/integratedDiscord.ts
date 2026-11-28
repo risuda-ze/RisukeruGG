@@ -2,6 +2,7 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { FieldValue } from 'firebase-admin/firestore';
 import { z } from 'zod';
 import { db } from '../lib/admin';
+import { SYSTEM_ACTOR, updatedFields } from '../lib/audit';
 import { discordBotToken } from '../discord/botToken';
 import {
   createPublicThread,
@@ -240,7 +241,7 @@ async function processIntegratedVideoRequest(ref: Ref, teamId: string) {
     for (const id of [r.taskId, r.thumbnailTaskId].filter(Boolean))
       batch.update(team.collection('tasks').doc(id), {
         columnId: progress.id,
-        updatedAt: FieldValue.serverTimestamp(),
+        ...updatedFields(SYSTEM_ACTOR),
       });
     batch.update(ref, {
       editorDiscordIds: editors,

@@ -75,7 +75,11 @@ vi.mock('../../../functions/src/lib/validateAuth', () => {
 import { leaveTeam } from '../../../functions/src/teams/leaveTeam';
 import { leaveSpecificTeam } from '../../../functions/src/teams/leaveSpecificTeam';
 
-const TASK_UNASSIGNED = { path: `teams/${TEAM}/tasks/task1`, data: { assigneeId: null } };
+// 担当外しは退出した本人による最終更新として記録する（TE-018）
+const TASK_UNASSIGNED = {
+  path: `teams/${TEAM}/tasks/task1`,
+  data: { assigneeId: null, updatedBy: UID, updatedAt: expect.anything() },
+};
 // onCall の run は CallableRequest 全体を要求するが、関数が読むのは data だけ（認証はモック済み）
 const request = (data: unknown) => ({ data }) as never;
 

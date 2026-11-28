@@ -7,13 +7,13 @@ import {
   onSnapshot,
   orderBy,
   query,
-  serverTimestamp,
   Timestamp,
   updateDoc,
   type FirestoreError,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client';
+import { createdFields, updatedFields } from '@/lib/firebase/audit';
 import type { FieldDef, Playbook, PlaybookOrigin, StepDef } from '@/types/briefs';
 import type { PlaybookInput } from '@/lib/validations/briefs';
 
@@ -58,6 +58,8 @@ function toPlaybook(id: string, data: Record<string, unknown>): Playbook {
     steps: toStepDefs(data.steps),
     createdAt: toDate(data.createdAt),
     updatedAt: toDate(data.updatedAt),
+    createdBy: (data.createdBy as string | null | undefined) ?? null,
+    updatedBy: (data.updatedBy as string | null | undefined) ?? null,
   };
 }
 
@@ -94,8 +96,7 @@ export async function createPlaybook(teamId: string, input: PlaybookInput): Prom
     version: 1,
     headerFields: serializeFieldDefs(input.headerFields),
     steps: serializeSteps(input.steps),
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    ...createdFields(),
   });
   return ref.id;
 }
@@ -111,7 +112,7 @@ export async function updatePlaybook(
     headerFields: serializeFieldDefs(input.headerFields),
     steps: serializeSteps(input.steps),
     version: increment(1),
-    updatedAt: serverTimestamp(),
+    ...updatedFields(),
   });
 }
 

@@ -17,6 +17,13 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
+
+/** ログイン中のユーザーの uid。作成者・最終更新者（createdBy / updatedBy）の記録に使う */
+export function requireUid(): string {
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error('ログインが必要です');
+  return uid;
+}
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 // functionsをモジュールレベルで作成し、エミュレータ接続前にインスタンスを確立する

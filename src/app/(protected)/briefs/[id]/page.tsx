@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
 import { briefsLoadErrorMessage, selectStepsOfBrief, useBriefsStore } from '@/stores/briefs';
 import { useBriefOps } from '@/hooks/useBriefOps';
@@ -62,6 +62,7 @@ function describeEvent(e: BriefEvent, members: TeamMember[], stepTitle: (id: str
  */
 export default function BriefDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const briefId = params.id;
 
@@ -80,6 +81,7 @@ export default function BriefDetailPage() {
   const [showEvents, setShowEvents] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savingPlaybook, setSavingPlaybook] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const teamId = currentTeam?.id;
   useEffect(() => {
@@ -107,6 +109,25 @@ export default function BriefDetailPage() {
       await briefOps.changeStepStatus(step.briefId, step.id, 'done');
     } catch (err) {
       setError(err instanceof Error ? err.message : '完了にできませんでした');
+    }
+  }
+
+  /** ブリーフを削除する（メンバーのみ）。配下の工程・やり取り・差分も消える */
+  async function removeBrief() {
+    if (!brief) return;
+    const ok = confirm(
+      `ブリーフ「${brief.title}」を削除しますか？
+工程（${steps.length} 件）、工程のやり取り、変更の記録もすべて削除され、元に戻せません。`
+    );
+    if (!ok) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await briefOps.deleteBrief(brief.id);
+      router.push('/briefs');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'ブリーフを削除できませんでした');
+      setDeleting(false);
     }
   }
 
@@ -175,6 +196,12 @@ export default function BriefDetailPage() {
             <Button size="sm" onClick={() => setShowAdd(true)}>
               <Icon name="add" size={14} />
               工程
+            </Button>
+          )}
+          {briefOps.isMember && (
+            <Button size="sm" variant="danger" onClick={removeBrief} loading={deleting}>
+              <Icon name="delete" size={14} />
+              削除
             </Button>
           )}
         </div>
