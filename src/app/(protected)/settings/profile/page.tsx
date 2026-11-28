@@ -21,6 +21,7 @@ import { Dropdown } from '@/components/ui/Dropdown';
 import { isPartyPlan, isFreePartyMode } from '@/lib/plan';
 import { createStripeCheckoutSession, createStripePortalSession } from '@/lib/repositories/billing';
 import { trackEvent } from '@/lib/analytics';
+import { isLastMember } from '@/lib/utils/teamRoles';
 
 // アプリ情報タブを含む4タブ構成
 type Tab = 'profile' | 'plan' | 'account' | 'app-info';
@@ -41,7 +42,8 @@ export default function ProfileSettingsPage() {
   const router = useRouter();
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
-  const isMemberWithOthers = myMember?.role === 'member' && members.length > 1;
+  /* 自分が最後のメンバーで、ほかに所属者がいる間は、削除前に新しいメンバーの指名が必要 */
+  const isMemberWithOthers = isLastMember(members, currentUser?.uid) && members.length > 1;
   // 通知制限（PL-002）の判定。試用モード中は PARTY 相当として全通知カテゴリを解放する
   const isParty = isPartyPlan(myMember?.plan);
 

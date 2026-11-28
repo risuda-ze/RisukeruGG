@@ -24,6 +24,19 @@ export function isMemberRole(role: TeamRole | null | undefined): boolean {
 }
 
 /**
+ * 自分がチームの最後のメンバー（全権限のロール）か。自分以外にメンバーがいなければ true。
+ * 最後のメンバーは、ほかの所属者がいる間は退出・アカウント削除の前に、別の所属者をメンバーにする必要がある。
+ */
+export function isLastMember(
+  members: ReadonlyArray<{ userId: string; role: TeamRole }>,
+  uid: string | null | undefined
+): boolean {
+  if (!uid) return false;
+  const me = members.find((m) => m.userId === uid);
+  return isMemberRole(me?.role) && !members.some((m) => m.userId !== uid && isMemberRole(m.role));
+}
+
+/**
  * 作成者本人かメンバーか。スタッフが「自分が作ったもの」を扱えるかの判定。
  * `createdBy` が無い・Discord 経由（'discord-bot'）・退会済みは誰にも一致せず、メンバーのみが扱える。
  */
