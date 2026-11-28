@@ -5,6 +5,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 /**
  * ブリーフ削除は配下（工程・工程コメント・差分）ごと 1 回の commit で行う（PD-061）。
  * 途中まで消えた状態を作らないこと、commit の失敗を握りつぶさないことを確かめる。
+ * 工程の削除も、その工程の工程コメントを同じ commit で消す（TE-023）。
  */
 
 const TEAM = 't1';
@@ -32,6 +33,8 @@ function newBatch() {
   fs.batches.push(batch);
   return {
     delete: (r: { path: string }) => batch.deletes.push(r.path),
+    update: () => {},
+    set: () => {},
     commit: async () => {
       if (fs.commitError) throw fs.commitError;
       batch.committed = true;
@@ -70,9 +73,10 @@ const deleteTx = {
 
 /** Admin SDK の最小限の代役（doc / collection.listDocuments / batch） */
 function fakeAdminDb(): Firestore {
-  const doc = (path: string) => ({
+  const doc = (path: string): unknown => ({
     path,
     collection: (name: string) => ({
+      doc: (id: string) => doc(`${path}/${name}/${id}`),
       listDocuments: async () => children(`${path}/${name}`).map(doc),
     }),
   });
@@ -88,7 +92,7 @@ beforeEach(() => {
 describe.each([
   ['クライアント SDK', () => firestoreBriefsPort],
   ['Admin SDK', () => new AdminBriefsPort(fakeAdminDb())],
-])('ブリーフ削除（%s）', (_name, port) => {
+])('削除の commit（%s）', (_name, port) => {
   it('配下とブリーフ本体を 1 回の commit で削除する', async () => {
     await port().commit(TEAM, deleteTx);
     expect(fs.batches).toHaveLength(1);
@@ -101,6 +105,14 @@ describe.each([
     await port().commit(TEAM, deleteTx);
     expect(fs.batches).toHaveLength(1);
     expect(fs.batches[0]!.deletes).toHaveLength(601);
+  });
+
+  it('工程の削除はその工程の工程コメントも同じ commit で削除し、他の工程には触れない', async () => {
+    await port().commit(TEAM, { ...deleteTx, deleteBrief: false, stepDeletes: ['s1'] });
+    expect(fs.batches).toHaveLength(1);
+    expect([...fs.batches[0]!.deletes].sort()).toEqual(
+      [`${BRIEF}/steps/s1`, `${BRIEF}/steps/s1/comments/c1`, `${BRIEF}/steps/s1/comments/c2`].sort()
+    );
   });
 
   it('commit が失敗したらエラーをそのまま返し、別の書き込みに切り替えない', async () => {

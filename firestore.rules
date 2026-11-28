@@ -314,12 +314,16 @@ service cloud.firestore {
                             resource.data.status in ['waiting', 'ready'] &&
                             request.resource.data.status in ['waiting', 'ready']);
 
-          // 工程のやり取り: 作成は所属者全員、編集・削除は本人かメンバー
+          // 工程のやり取り: 作成は所属者全員（親の工程があるときだけ）、編集・削除は本人かメンバー。
+          // 工程の削除に伴う削除（同じバッチで工程が消える）は、工程を削除できるブリーフの作成者にも許す
           match /comments/{commentId} {
             allow read: if isTeamMember(teamId);
-            allow create: if isTeamMember(teamId);
+            allow create: if isTeamMember(teamId) &&
+                             exists(/databases/$(database)/documents/teams/$(teamId)/briefs/$(briefId)/steps/$(stepId));
             allow update, delete: if isMemberRole(teamId) ||
                                     (isTeamMember(teamId) && resource.data.authorId == request.auth.uid);
+            allow delete: if isTeamMember(teamId) && isBriefCreator(teamId, briefId) &&
+                             !existsAfter(/databases/$(database)/documents/teams/$(teamId)/briefs/$(briefId)/steps/$(stepId));
           }
         }
 

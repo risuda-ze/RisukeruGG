@@ -177,7 +177,10 @@ export class FirestoreBriefsPort implements BriefsPort {
         ...updatedFields(tx.actor),
       });
     }
+    // 工程は配下のコメントごと消す。読み取り後に追加されたコメントは残りうるが、工程が消えた後の作成はルールが拒否する
     for (const stepId of tx.stepDeletes) {
+      const comments = await getDocs(commentsCol(teamId, tx.briefId, stepId));
+      for (const comment of comments.docs) batch.delete(comment.ref);
       batch.delete(stepDoc(teamId, tx.briefId, stepId));
     }
     for (const e of tx.events) {
