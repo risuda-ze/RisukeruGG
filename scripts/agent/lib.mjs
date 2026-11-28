@@ -2,7 +2,7 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, cpSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
 export function sh(cmd, args, { allowFail = false } = {}) {
@@ -30,14 +30,32 @@ export function saveReportFromStdin(dir) {
 export function pushDirToBranch({ repo = '.', branch, srcDir, destName, message }) {
   const git = (a, opts) => sh('git', ['-C', repo, ...a], opts);
   const wt = mkdtempSync(join(tmpdir(), `${branch}-`));
-  if (git(['ls-remote', '--heads', 'origin', branch]).stdout.trim()) {
-    git(['fetch', 'origin', branch]);
-    git(['worktree', 'add', '--force', '-B', branch, wt, `origin/${branch}`]);
-  } else {
-    git(['worktree', 'add', '--force', '--detach', wt]);
-    sh('git', ['-C', wt, 'switch', '--orphan', branch]);
-  }
   try {
+    if (git(['ls-remote', '--heads', 'origin', branch]).stdout.trim()) {
+      git(['fetch', 'origin', branch]);
+      git(['worktree', 'add', '--force', '-B', branch, wt, `origin/${branch}`]);
+    } else {
+      git(['worktree', 'add', '--force', '--detach', wt]);
+      // 前回 commit 後に push だけ失敗すると、ローカルに同名ブランチが残り switch --orphan が失敗する。
+      // リモートに無いブランチは未公開なので作り直す（中身は srcDir から毎回コピーし直す）。
+      // 前回の一時ワークツリーが後始末に失敗して残っていると branch -D できないので、先に外す。
+      // 外すのはこの関数が作る一時ワークツリー（tmpdir 直下の `${branch}-*`）だけ。それ以外は branch -D の失敗で知らせる
+      const ours = (p) =>
+        dirname(resolve(p)) === resolve(tmpdir()) && basename(p).startsWith(`${branch}-`);
+      for (const block of git(['worktree', 'list', '--porcelain']).stdout.split(/\n\n/)) {
+        const path = block.match(/^worktree (.+)$/m)?.[1];
+        if (path && block.split('\n').includes(`branch refs/heads/${branch}`) && ours(path)) {
+          git(['worktree', 'remove', '--force', path]);
+        }
+      }
+      if (
+        git(['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`], { allowFail: true })
+          .status === 0
+      ) {
+        git(['branch', '-D', branch]);
+      }
+      sh('git', ['-C', wt, 'switch', '--orphan', branch]);
+    }
     const dest = join(wt, destName);
     rmSync(dest, { recursive: true, force: true });
     cpSync(srcDir, dest, { recursive: true });
@@ -48,7 +66,7 @@ export function pushDirToBranch({ repo = '.', branch, srcDir, destName, message 
     }
     sh('git', ['-C', wt, 'push', 'origin', branch]);
   } finally {
-    // 一時ワークツリーの後始末。失敗しても push の成否は変わらず、次回は --force で作り直せる
+    // 一時ワークツリーの後始末。失敗しても push の成否は変わらず、次回は残ったワークツリーを外して作り直せる
     git(['worktree', 'remove', '--force', wt], { allowFail: true });
   }
 }

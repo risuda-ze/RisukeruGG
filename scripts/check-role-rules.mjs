@@ -65,14 +65,15 @@ for (const [id, createdBy] of [['s_discord', 'discord-bot'], ['s_legacy', null],
   ok(await patch(`teams/t1/schedules/${id}`, { title: str('y') }, t.mem), `${id} はメンバーが編集可`);
 }
 
-// ── タスク・コラボ: 更新・削除はメンバーのみ ──
+// ── タスク・コラボ: 更新はメンバーのみ。削除はコラボはメンバーのみ、タスクは deleteTask 経由だけ ──
 for (const col of ['tasks', 'collabSessions']) {
   assert.equal(await put(`teams/t1/${col}/c1`, { title: str('x'), createdBy: str('st') }, OWNER), 200);
   ng(await patch(`teams/t1/${col}/c1`, { title: str('y') }, t.st), `${col}: スタッフは作成者でも編集不可`);
   ng(await del(`teams/t1/${col}/c1`, t.st), `${col}: スタッフは削除不可`);
   ok(await patch(`teams/t1/${col}/c1`, { title: str('y') }, t.mem), `${col}: メンバーは編集可`);
-  ok(await del(`teams/t1/${col}/c1`, t.mem), `${col}: メンバーは削除可`);
 }
+ng(await del('teams/t1/tasks/c1', t.mem), 'tasks: メンバーでも直接削除は不可（deleteTask 経由）');
+ok(await del('teams/t1/collabSessions/c1', t.mem), 'collabSessions: メンバーは削除可');
 
 // ── 進め方・カテゴリ・カンバン列・Discord・AI 設定: メンバーのみ ──
 for (const path of ['ai/a1', 'discord/d1']) {

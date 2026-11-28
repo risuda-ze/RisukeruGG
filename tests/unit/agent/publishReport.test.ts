@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -92,6 +92,44 @@ describe('pushDirToBranch', () => {
       // 取得はできるが push 先が存在しないリモート
       git('remote', 'set-url', '--push', 'origin', join(root, 'no-such.git'));
       expect(() => push('pr-1', 'm')).toThrow(/ push origin review-reports が失敗/);
+    },
+    GIT_TIMEOUT
+  );
+
+  it(
+    '初回に commit 後の push だけ失敗しても、再実行で push でき、一時ワークツリーも残らない',
+    () => {
+      const { root, git, remoteGit, push } = setup();
+      const remote = join(root, 'remote.git');
+      git('remote', 'set-url', '--push', 'origin', join(root, 'no-such.git'));
+      expect(() => push('pr-1', 'report: PR #1 @ abc1234')).toThrow(/ push origin review-reports/);
+      expect(git('branch', '--list', 'review-reports')).not.toBe('');
+
+      git('remote', 'set-url', '--push', 'origin', remote);
+      push('pr-1', 'report: PR #1 @ abc1234');
+      expect(remoteGit('log', '--format=%s', 'review-reports')).toBe('report: PR #1 @ abc1234');
+      expect(remoteGit('show', 'review-reports:pr-1/report.md')).toBe('v1');
+      expect(git('worktree', 'list').split('\n')).toHaveLength(1);
+    },
+    GIT_TIMEOUT
+  );
+
+  it(
+    '前回の一時ワークツリーが後始末されずに残っていても、再実行で push できる',
+    () => {
+      const { root, git, remoteGit, push } = setup();
+      const remote = join(root, 'remote.git');
+      git('remote', 'set-url', '--push', 'origin', join(root, 'no-such.git'));
+      expect(() => push('pr-1', 'm1')).toThrow(/ push origin review-reports/);
+      // 後始末に失敗した状態を作る: 同名ブランチを持つ一時ワークツリーを残す
+      const left = mkdtempSync(join(tmpdir(), 'review-reports-'));
+      rmSync(left, { recursive: true });
+      git('worktree', 'add', left, 'review-reports');
+
+      git('remote', 'set-url', '--push', 'origin', remote);
+      push('pr-1', 'm2');
+      expect(remoteGit('log', '--format=%s', 'review-reports')).toBe('m2');
+      expect(git('worktree', 'list').split('\n')).toHaveLength(1);
     },
     GIT_TIMEOUT
   );
