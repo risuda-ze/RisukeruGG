@@ -15,11 +15,11 @@ const guard = (command: string) =>
 
 describe('guard.mjs のヒアドキュメント', () => {
   it.each([
-    ['<<EOF', "cat > a.md <<EOF\n手順: gh pr merge 1 --merge\nEOF"],
+    ['<<EOF', 'cat > a.md <<EOF\n手順: gh pr merge 1 --merge\nEOF'],
     ["<<'EOF'", "gh issue create --body-file - <<'EOF'\ngh pr merge 1\ngit push origin main\nEOF"],
     ['<<"EOF"', 'cat <<"EOF" > a.md\ngit commit --no-verify\nEOF'],
     ['<<-EOF', 'cat <<-EOF > a.md\n\tnode scripts/agent/post-review.mjs\n\tEOF'],
-    ['$(cat <<EOF)', "echo \"$(cat <<'EOF'\ngh pr merge 1\nEOF\n)\""],
+    ['$(cat <<EOF)', 'echo "$(cat <<\'EOF\'\ngh pr merge 1\nEOF\n)"'],
     ['2つのヒアドキュメント', 'cat <<A <<B\ngh pr merge 1\nA\ngh pr merge 2\nB'],
   ])('%s の本文はコマンドとして判定しない', (_, command) => {
     const r = guard(command);
