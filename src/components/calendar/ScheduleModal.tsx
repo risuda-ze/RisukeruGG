@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { format, startOfDay, addDays } from 'date-fns';
-import { ja } from 'date-fns/locale';
+import { startOfDay, addDays } from 'date-fns';
 import { createSchedule, updateSchedule, deleteSchedule } from '@/lib/repositories/schedules';
 import { trackEvent } from '@/lib/analytics';
 import { useAuthStore } from '@/stores/auth';
@@ -36,21 +35,6 @@ interface ScheduleModalDraft {
   endAt: Date | null;
   description: string;
   allDay: boolean;
-}
-
-interface LocalComment {
-  id: string;
-  authorName: string;
-  authorInitials: string;
-  text: string;
-  time: string;
-  replies: Array<{
-    id: string;
-    authorName: string;
-    authorInitials: string;
-    text: string;
-    time: string;
-  }>;
 }
 
 export function ScheduleModal({
@@ -119,15 +103,6 @@ export function ScheduleModal({
   function handleResizePointerUp() {
     isResizing.current = false;
   }
-
-  /* ── コメント状態 */
-  const [comments, setComments] = useState<LocalComment[]>([]);
-  const [commentText, setCommentText] = useState('');
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState('');
-
-  const myInitials = (currentUser?.displayName ?? 'ME').slice(0, 2).toUpperCase();
-  const myName = currentUser?.displayName ?? 'あなた';
 
   useEffect(() => {
     saveDraft<ScheduleModalDraft>(draftKey, { title, categoryId, startAt, endAt, description, allDay: isAllDay });
@@ -200,22 +175,6 @@ export function ScheduleModal({
     clearDraft(draftKey); onDeleted(); onClose();
   }
 
-  function addComment() {
-    if (!commentText.trim()) return;
-    setComments((prev) => [...prev, { id: `c-${Date.now()}`, authorName: myName, authorInitials: myInitials, text: commentText.trim(), time: format(new Date(), 'HH:mm', { locale: ja }), replies: [] }]);
-    setCommentText('');
-  }
-
-  function addReply(commentId: string) {
-    if (!replyText.trim()) return;
-    setComments((prev) => prev.map((c) => c.id === commentId ? { ...c, replies: [...c.replies, { id: `r-${Date.now()}`, authorName: myName, authorInitials: myInitials, text: replyText.trim(), time: format(new Date(), 'HH:mm', { locale: ja }) }] } : c));
-    setReplyText(''); setReplyingTo(null);
-  }
-
-  /* ── スタイル定数 */
-  const avatarSm: React.CSSProperties = { background: 'var(--border)', color: 'var(--text-2)' };
-  const bubbleBase: React.CSSProperties = { background: 'var(--canvas)', border: '1px solid var(--border)' };
-
   /* ─────────────────── レンダリング ─────────────────── */
   return (
     <DialogShell
@@ -238,7 +197,7 @@ export function ScheduleModal({
             isMobile
               ? { width: '100%', height: '92dvh', minWidth: 0, borderRadius: '20px 20px 0 0' }
               : {
-                  width: modalSize?.width ?? 'min(1180px, calc(100vw - 64px))',
+                  width: modalSize?.width ?? 'min(720px, calc(100vw - 64px))',
                   height: modalSize?.height ?? 'min(720px, calc(100vh - 64px))',
                   minWidth: '560px',
                 }
@@ -271,19 +230,18 @@ export function ScheduleModal({
             </button>
           </div>
 
-          {/* ── 本体 2 カラム（スマホは縦積み・全体スクロール） */}
+          {/* ── 本体 1 カラム（スマホは全体スクロール） */}
           <div
-            className="flex flex-col md:flex-row"
+            className="flex flex-col"
             style={{ flex: 1, minHeight: 0, overflow: isMobile ? 'auto' : 'hidden' }}
           >
 
-            {/* ─ 左: 入力フォーム */}
+            {/* ─ 入力フォーム */}
             <div
               className="flex flex-col gap-5 md:overflow-y-auto"
               style={{
-                flex: isMobile ? '0 0 auto' : '0 0 55%',
+                flex: isMobile ? '0 0 auto' : 1,
                 padding: isMobile ? '18px 16px' : '22px 20px 22px 26px',
-                borderRight: isMobile ? 'none' : '1px solid var(--border)',
                 minHeight: 0,
               }}
             >
@@ -311,98 +269,6 @@ export function ScheduleModal({
 
               {error && <p className="text-[12px]" style={{ color: 'var(--danger)' }}>{error}</p>}
             </div>
-
-            {/* ─ 右: コメント / メモ（スマホの新規作成時はコメント不可のため非表示） */}
-            {!(isMobile && isNew) && (
-            <div
-              style={{
-                flex: 1,
-                minHeight: isMobile ? 260 : 0,
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
-                borderTop: isMobile ? '1px solid var(--border)' : 'none',
-              }}
-            >
-
-              {/* 右カラムヘッダー */}
-              <div className="flex items-center gap-2 shrink-0 px-5 py-3" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
-                <span className="material-icons text-[15px]" style={{ color: 'var(--brand-2)' }}>chat</span>
-                <span className="text-[12px] font-semibold tracking-[0.05em]" style={{ color: 'var(--text-2)' }}>コメント / メモ</span>
-              </div>
-
-              {/* コメント一覧（スクロール可） */}
-              <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4" style={{ minHeight: 0 }}>
-                {isNew ? (
-                  <div className="flex flex-col items-center justify-center h-full gap-2 text-center" style={{ color: 'var(--text-disabled)' }}>
-                    <span className="material-icons text-[32px]">chat_bubble_outline</span>
-                    <p className="text-[12px]">予定を保存すると<br />コメントを残せます</p>
-                  </div>
-                ) : comments.length === 0 ? (
-                  <p className="text-[12px]" style={{ color: 'var(--text-disabled)' }}>まだコメントはありません</p>
-                ) : (
-                  comments.map((comment) => (
-                    <div key={comment.id} className="flex flex-col gap-2">
-                      {/* 親コメント */}
-                      <div className="flex gap-2.5">
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5" style={avatarSm}>{comment.authorInitials}</div>
-                        <div className="flex-1 px-3 py-2.5 rounded-[0_10px_10px_10px] text-[13px]" style={bubbleBase}>
-                          <div className="flex justify-between text-[11px] mb-1" style={{ color: 'var(--text-muted)' }}>
-                            <strong style={{ color: 'var(--text)' }}>{comment.authorName}</strong>
-                            <span>{comment.time}</span>
-                          </div>
-                          <p className="leading-relaxed mb-1.5" style={{ color: 'var(--text)' }}>{comment.text}</p>
-                          <button className="text-[11px] font-semibold transition-colors" style={{ color: 'var(--text-muted)' }} onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--brand-2)'; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}>返信する</button>
-                        </div>
-                      </div>
-                      {/* 返信一覧 */}
-                      {comment.replies.map((reply) => (
-                        <div key={reply.id} className="flex gap-2.5 ml-9 relative">
-                          <div className="absolute -left-[20px] top-0 bottom-4 w-px bg-border rounded" />
-                          <div className="absolute -left-[20px] top-4 w-3 h-px bg-border rounded" />
-                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5" style={{ background: 'rgba(239,159,39,0.2)', color: 'var(--orange-text)' }}>{reply.authorInitials}</div>
-                          <div className="flex-1 px-3 py-2 rounded-[0_10px_10px_10px] text-[12px]" style={bubbleBase}>
-                            <div className="flex justify-between text-[11px] mb-1" style={{ color: 'var(--text-muted)' }}>
-                              <strong style={{ color: 'var(--text)' }}>{reply.authorName}</strong>
-                              <span>{reply.time}</span>
-                            </div>
-                            <p style={{ color: 'var(--text)' }}>{reply.text}</p>
-                          </div>
-                        </div>
-                      ))}
-                      {/* 返信入力 */}
-                      {replyingTo === comment.id && (
-                        <div className="flex gap-2.5 ml-9">
-                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5" style={avatarSm}>{myInitials}</div>
-                          <div className="flex-1 flex flex-col gap-1.5">
-                            <textarea value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder="返信を入力..." rows={2} className="w-full px-3 py-2 rounded-[10px] text-[12px] outline-none resize-none" style={bubbleBase} />
-                            <div className="flex gap-1.5 self-end">
-                              <button onClick={() => setReplyingTo(null)} className="px-2.5 py-1 text-[11px] rounded-[6px] border" style={{ color: 'var(--text-muted)', borderColor: 'var(--border)' }}>キャンセル</button>
-                              <button onClick={() => addReply(comment.id)} disabled={!replyText.trim()} className="px-2.5 py-1 text-[11px] rounded-[6px] disabled:opacity-40" style={{ background: 'var(--primary)', color: '#fff' }}>送信</button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-
-              {/* コメント入力（編集モードのみ） */}
-              {!isNew && (
-                <div className="shrink-0 flex gap-2.5 px-5 py-3" style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5" style={avatarSm}>{myInitials}</div>
-                  <div className="flex-1 flex gap-2">
-                    <textarea value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) addComment(); }} placeholder="コメントを入力… (Ctrl+Enter で送信)" rows={2} className="flex-1 px-3 py-2 rounded-[10px] text-[13px] outline-none resize-none" style={{ ...bubbleBase, minHeight: '60px' }} />
-                    <button onClick={addComment} disabled={!commentText.trim()} className="self-end px-3 py-2 rounded-[10px] text-[12px] font-semibold disabled:opacity-40 flex items-center gap-1" style={{ background: 'var(--primary)', color: '#fff' }}>
-                      <span className="material-icons text-[14px]">send</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-            </div>
-            )}
           </div>
 
           {/* ── フッター */}

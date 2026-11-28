@@ -2,6 +2,7 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { FieldValue } from 'firebase-admin/firestore';
 import { z } from 'zod';
 import { db } from '../lib/admin';
+import { SYSTEM_ACTOR, updatedFields } from '../lib/audit';
 import { discordBotToken } from '../discord/botToken';
 import {
   createPublicThread,
@@ -35,6 +36,17 @@ type DiscordThreadState = {
 
 function mentions(ids: string[]) {
   return ids.map((id) => `<@${id}>`).join(' ');
+}
+
+function dateLabel(value: unknown): string {
+  if (!value) return '未設定';
+  const date =
+    typeof (value as { toDate?: unknown }).toDate === 'function'
+      ? (value as { toDate: () => Date }).toDate()
+      : value instanceof Date
+        ? value
+        : null;
+  return date?.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' }) ?? '未設定';
 }
 
 function button(kind: 'video' | 'thumb', ref: Ref): DiscordActionRow[] {
@@ -181,10 +193,13 @@ async function processIntegratedVideoRequest(ref: Ref, teamId: string) {
         ids,
         [
           r.videoType === 'short'
-            ? 'ショート動画の編集をお願いします。'
-            : '横動画の編集をお願いします。',
+            ? 'お疲れ様です！ショート動画の編集をお願いします🙏'
+            : 'お疲れ様です！横動画の編集をお願いします🙏',
           '**編集内容**',
           r.summary,
+          `- 編集開始日：${dateLabel(r.startAt)}`,
+          `- 初稿提出日：${dateLabel(r.firstDraftDueAt)}`,
+          `- 完パケ納期：${dateLabel(r.finalPackageDueAt)}`,
           '**プロマネ**',
           r.projectManagementUrl,
           '**共有事項**',
@@ -204,16 +219,15 @@ async function processIntegratedVideoRequest(ref: Ref, teamId: string) {
         await saveThreadState(ref, state);
       }
       if (!state.thumbnailThreadPosted) {
-        const due = r.finalPackageDueAt
-          .toDate()
-          .toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
         await post(
           thumb,
           thumbIds(r),
           [
-            'サムネイルの制作をお願いします。',
+            r.videoType === 'short'
+              ? 'ショート動画のサムネイルの制作をお願いします🙇‍♀️'
+              : '横動画のサムネイルの制作をお願いします🙇‍♀️',
             'タイトル案（仮）：' + r.titleIdea,
-            '納期：' + due,
+            '納期：' + dateLabel(r.finalPackageDueAt),
             ...state.editorThreadUrls,
             '画像を投稿してから納品ボタンを押してください。',
           ].join('\n\n'),
@@ -227,7 +241,7 @@ async function processIntegratedVideoRequest(ref: Ref, teamId: string) {
     for (const id of [r.taskId, r.thumbnailTaskId].filter(Boolean))
       batch.update(team.collection('tasks').doc(id), {
         columnId: progress.id,
-        updatedAt: FieldValue.serverTimestamp(),
+        ...updatedFields(SYSTEM_ACTOR),
       });
     batch.update(ref, {
       editorDiscordIds: editors,

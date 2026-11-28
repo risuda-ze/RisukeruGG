@@ -56,6 +56,7 @@ export function useBriefOps() {
         ops.renameStep(port, ctx(), briefId, stepId, title),
       addStep: (briefId: string, input: AddStepInput) => ops.addStep(port, ctx(), briefId, input),
       removeStep: (briefId: string, stepId: string) => ops.removeStep(port, ctx(), briefId, stepId),
+      deleteBrief: (briefId: string) => ops.deleteBrief(port, ctx(), briefId),
     };
   }, [teamId, uid, role, isMember, canCreate]);
 }

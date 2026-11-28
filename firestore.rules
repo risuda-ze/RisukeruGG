@@ -180,23 +180,38 @@ service cloud.firestore {
 
       match /settings/videoRequests {
         allow read: if isTeamMember(teamId);
-        allow create, update: if isTeamOwner(teamId) &&
-          request.resource.data.keys().hasOnly(['pendingColumnId', 'progressColumnId', 'reviewColumnId', 'createThumbnailTask']) &&
+        allow create, update: if isMemberRole(teamId) &&
+          request.resource.data.keys().hasOnly([
+            'pendingColumnId', 'progressColumnId', 'reviewColumnId', 'createThumbnailTask', 'routing'
+          ]) &&
           request.resource.data.createThumbnailTask is bool &&
           request.resource.data.pendingColumnId is string &&
           request.resource.data.progressColumnId is string &&
-          request.resource.data.reviewColumnId is string;
+          request.resource.data.reviewColumnId is string &&
+          request.resource.data.routing is map &&
+          request.resource.data.routing.keys().hasOnly([
+            'editorChannelId', 'thumbnailChannelId', 'thumbnailLongIds', 'thumbnailShortIds', 'editorChannels'
+          ]) &&
+          request.resource.data.routing.editorChannelId is string &&
+          request.resource.data.routing.thumbnailChannelId is string &&
+          request.resource.data.routing.thumbnailLongIds is list &&
+          request.resource.data.routing.thumbnailShortIds is list &&
+          request.resource.data.routing.editorChannels is map;
       }
 
       match /taskStatuses/{columnId} {
         allow read: if isTeamMember(teamId);
-        allow write: if isMemberRole(teamId);
+        allow create: if isMemberRole(teamId) && createdByIsMe();
+        allow update: if isMemberRole(teamId) && createdByUnchanged();
+        allow delete: if isMemberRole(teamId);
       }
 
       // タスク・スケジュール共通の統合カテゴリ。編集はメンバーのみ。
       match /categories/{categoryId} {
         allow read: if isTeamMember(teamId);
-        allow write: if isMemberRole(teamId);
+        allow create: if isMemberRole(teamId) && createdByIsMe();
+        allow update: if isMemberRole(teamId) && createdByUnchanged();
+        allow delete: if isMemberRole(teamId);
       }
 
       // スケジュール: 作成は所属者全員、編集・削除はメンバーか作成者
@@ -260,7 +275,9 @@ service cloud.firestore {
       // 進め方（工程の型）。閲覧は所属者全員、編集はメンバー
       match /playbooks/{playbookId} {
         allow read: if isTeamMember(teamId);
-        allow write: if isMemberRole(teamId);
+        allow create: if isMemberRole(teamId) && createdByIsMe();
+        allow update: if isMemberRole(teamId) && createdByUnchanged();
+        allow delete: if isMemberRole(teamId);
       }
 
       // ブリーフ（動画1本）。書き込みは操作層（writeBatch）経由
@@ -271,7 +288,7 @@ service cloud.firestore {
         allow create: if isTeamMember(teamId) && createdByIsMe();
         allow update: if (isMemberRole(teamId) || (isTeamMember(teamId) && isCreator(resource.data)) ||
                           (isTeamMember(teamId) &&
-                           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt']))) &&
+                           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt', 'updatedBy']))) &&
                          createdByUnchanged();
         allow delete: if isMemberRole(teamId);
 
@@ -282,15 +299,18 @@ service cloud.firestore {
         // を所属者に許す。
         match /steps/{stepId} {
           allow read: if isTeamMember(teamId);
-          allow create, delete: if isMemberRole(teamId) || (isTeamMember(teamId) && isBriefCreator(teamId, briefId));
-          allow update: if isMemberRole(teamId) ||
-                           (isTeamMember(teamId) && isBriefCreator(teamId, briefId)) ||
+          allow create: if (isMemberRole(teamId) || (isTeamMember(teamId) && isBriefCreator(teamId, briefId))) &&
+                           createdByIsMe();
+          allow delete: if isMemberRole(teamId) || (isTeamMember(teamId) && isBriefCreator(teamId, briefId));
+          allow update: if ((isMemberRole(teamId) ||
+                            (isTeamMember(teamId) && isBriefCreator(teamId, briefId))) &&
+                            createdByUnchanged()) ||
                            (isTeamMember(teamId) &&
                             resource.data.assigneeId == request.auth.uid &&
                             request.resource.data.diff(resource.data).affectedKeys()
-                              .hasOnly(['status', 'completedAt', 'completedBy', 'updatedAt'])) ||
+                              .hasOnly(['status', 'completedAt', 'completedBy', 'updatedAt', 'updatedBy'])) ||
                            (isTeamMember(teamId) &&
-                            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']) &&
+                            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'updatedBy']) &&
                             resource.data.status in ['waiting', 'ready'] &&
                             request.resource.data.status in ['waiting', 'ready']);
 
@@ -303,11 +323,13 @@ service cloud.firestore {
           }
         }
 
-        // 差分（追記のみ。改変・削除は不可）
+        // 差分（追記のみ。改変は不可。削除はブリーフの削除に伴うメンバーのみ）
         match /briefEvents/{eventId} {
           allow read: if isTeamMember(teamId);
           allow create: if isTeamMember(teamId);
-          allow update, delete: if false;
+          // 改変は不可。削除はブリーフごと消すとき（メンバーのみ）だけ
+          allow update: if false;
+          allow delete: if isMemberRole(teamId);
         }
       }
 

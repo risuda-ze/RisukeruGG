@@ -1,5 +1,6 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
+import { updatedFields } from '../lib/audit';
 import { getAuth } from 'firebase-admin/auth';
 import { db, requireAuth, getUserDoc } from '../lib/validateAuth';
 import { toTeamRole } from '../lib/role';
@@ -123,10 +124,7 @@ export const deleteAccount = onCall(
 
           const taskIdx = nonSoloTeamIds.indexOf(teamId);
           for (const taskDoc of taskSnaps[taskIdx].docs) {
-            tx.update(taskDoc.ref, {
-              assigneeId: null,
-              updatedAt: FieldValue.serverTimestamp(),
-            });
+            tx.update(taskDoc.ref, { assigneeId: null, ...updatedFields(uid) });
           }
 
           tx.delete(db.doc(`teams/${teamId}/members/${uid}`));

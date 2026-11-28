@@ -4,13 +4,13 @@ import {
   addDoc,
   getDoc,
   updateDoc,
-  arrayUnion,
   onSnapshot,
   Unsubscribe,
   Timestamp,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '@/lib/firebase/client';
+import { updatedFields } from '@/lib/firebase/audit';
 import type { CollabSession, CollabParticipant, CollabComment } from '@/types/entities';
 
 function toCollabSession(id: string, data: Record<string, unknown>): CollabSession {
@@ -28,7 +28,6 @@ function toCollabSession(id: string, data: Record<string, unknown>): CollabSessi
     authorName: c.authorName as string,
     text: c.text as string,
     createdAt: (c.createdAt as Timestamp).toDate(),
-    ...(c.parentId ? { parentId: c.parentId as string } : {}),
   }));
 
   return {
@@ -85,29 +84,16 @@ export function subscribeCollabSessions(
   });
 }
 
-/** セッションを更新。updatedBy/updatedAt は自動セット */
+/** セッションを更新。updatedBy/updatedAt は自動セット（updatedByUid を省略するとログイン中のユーザー） */
 export async function updateCollabSession(
   teamId: string,
   sessionId: string,
   data: Partial<CollabSession>,
   updatedByUid?: string
 ): Promise<void> {
-  const payload: Record<string, unknown> = { ...(data as Record<string, unknown>) };
-  if (updatedByUid) {
-    payload.updatedBy = updatedByUid;
-    payload.updatedAt = Timestamp.fromDate(new Date());
-  }
-  await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), payload);
-}
-
-/** コメントを追加 */
-export async function addCollabComment(
-  teamId: string,
-  sessionId: string,
-  comment: Omit<CollabComment, 'createdAt'> & { createdAt: Timestamp }
-): Promise<void> {
   await updateDoc(doc(db, 'teams', teamId, 'collabSessions', sessionId), {
-    comments: arrayUnion(comment),
+    ...(data as Record<string, unknown>),
+    ...updatedFields(updatedByUid),
   });
 }
 

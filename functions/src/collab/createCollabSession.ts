@@ -1,5 +1,5 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
-import { FieldValue } from 'firebase-admin/firestore';
+import { createdFields } from '../lib/audit';
 import { randomUUID } from 'crypto';
 import { db, getAuthContext, requireMemberRole, getUserDoc } from '../lib/validateAuth';
 import { assertActiveCollabLimit, assertCollabQuota, incrementCollabCount } from './lib';
@@ -35,7 +35,6 @@ export const createCollabSession = onCall(
     assertCollabQuota(userData);
 
     const sessionId = randomUUID();
-    const now = FieldValue.serverTimestamp();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expiresInDays);
 
@@ -45,7 +44,6 @@ export const createCollabSession = onCall(
       tx.set(sessionRef, {
         title,
         partnerName,
-        createdBy: ctx.uid,
         teamId,
         proposedDates: proposedDates.map((d) => new Date(d)),
         responses: null,
@@ -53,7 +51,7 @@ export const createCollabSession = onCall(
         status: 'open',
         confirmedDate: null,
         linkedScheduleId: null,
-        createdAt: now,
+        ...createdFields(ctx.uid),
       });
 
       incrementCollabCount(tx, ctx.uid, userData);

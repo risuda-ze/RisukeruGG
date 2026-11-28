@@ -1,13 +1,56 @@
 // エージェント用スクリプトの共通処理
 import { spawnSync } from 'node:child_process';
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, cpSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 
 export function sh(cmd, args, { allowFail = false } = {}) {
-  const r = spawnSync(cmd, args, { encoding: 'utf8', shell: process.platform === 'win32' });
+  // シェルを介さない。shell: true は引数を引用符なしで連結するため、Windows で空白を含む引数が分割される。
+  // 呼び出すのは gh / git（Windows でも .exe）だけ。.cmd のコマンドは起動できず、r.error で失敗する
+  const r = spawnSync(cmd, args, { encoding: 'utf8' });
+  if (r.error) throw new Error(`${cmd} を起動できない: ${r.error.message}`);
   if (r.status !== 0 && !allowFail) {
     throw new Error(`${cmd} ${args.join(' ')} が失敗: ${r.stderr || r.stdout}`);
   }
   return r;
+}
+
+// 標準入力の本文を <dir>/report.md に保存する。
+// サブエージェントは Write ツールで report.md を作れないため、Bash のヒアドキュメントで本文を受け取る
+export function saveReportFromStdin(dir) {
+  const body = readFileSync(0, 'utf8');
+  if (!body.trim()) throw new Error('標準入力のレポート本文が空');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'report.md'), body);
+}
+
+// srcDir の中身を、ブランチ branch の destName/ に置いて origin へ push する。
+// branch がリモートに無ければ、履歴を共有しない orphan ブランチとして作る。repo は作業するリポジトリ
+export function pushDirToBranch({ repo = '.', branch, srcDir, destName, message }) {
+  const git = (a, opts) => sh('git', ['-C', repo, ...a], opts);
+  const wt = mkdtempSync(join(tmpdir(), `${branch}-`));
+  if (git(['ls-remote', '--heads', 'origin', branch]).stdout.trim()) {
+    git(['fetch', 'origin', branch]);
+    git(['worktree', 'add', '--force', '-B', branch, wt, `origin/${branch}`]);
+  } else {
+    git(['worktree', 'add', '--force', '--detach', wt]);
+    sh('git', ['-C', wt, 'switch', '--orphan', branch]);
+  }
+  try {
+    const dest = join(wt, destName);
+    rmSync(dest, { recursive: true, force: true });
+    cpSync(srcDir, dest, { recursive: true });
+    sh('git', ['-C', wt, 'add', '-A']);
+    // 同じ内容の再投稿では差分が無い。そのときだけ commit を省く（commit の失敗は握りつぶさない）
+    if (sh('git', ['-C', wt, 'status', '--porcelain']).stdout.trim()) {
+      sh('git', ['-C', wt, 'commit', '-m', message]);
+    }
+    sh('git', ['-C', wt, 'push', 'origin', branch]);
+  } finally {
+    // 一時ワークツリーの後始末。失敗しても push の成否は変わらず、次回は --force で作り直せる
+    git(['worktree', 'remove', '--force', wt], { allowFail: true });
+  }
 }
 
 export function ghJson(args) {
@@ -28,3 +71,13 @@ export const REPORT_RE = /<!--\s*review:report\s+sha=([0-9a-f]{40})\s*-->/g;
 export const reportMarker = (sha) => `<!-- review:report sha=${sha} -->`;
 // 書き込み前に既存マーカーを除去する（偽装防止）
 export const stripMarkers = (s) => s.replace(/<!--\s*review:[^>]*-->/g, '');
+
+// PR の変更内容の識別子（base との merge-base からの差分の patch-id）。リベースしても差分が同じなら変わらない。
+// 差分を取れない（コミットが手元に無いなど）・差分が空のときは null
+export function patchId(base, sha, cwd = process.cwd()) {
+  const git = (a, input) =>
+    spawnSync('git', a, { cwd, encoding: 'utf8', input, maxBuffer: Infinity });
+  const diff = git(['diff', `${base}...${sha}`]);
+  if (diff.status !== 0) return null;
+  return git(['patch-id', '--stable'], diff.stdout).stdout.split(' ')[0] || null;
+}

@@ -2,7 +2,9 @@
 // 同じタイトルの open Issue があればコメント追記、なければ作成する。発見元のブランチ・PR を本文に付ける。
 //   task:    作業中に見つけた範囲外の課題（ラベル agent-found）
 //   finding: レビューで出た共通指摘（ラベル review-finding）。コメント数 = 発生回数
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { sh, ghJson, args } from './lib.mjs';
 
 const LABELS = {
@@ -29,6 +31,9 @@ const prUrl = sh('gh', ['pr', 'view', '--json', 'url', '-q', '.url'], {
   allowFail: true,
 }).stdout.trim();
 const body = `${readFileSync(v['body-file'], 'utf8').trim()}\n\n---\n発見元: ブランチ \`${branch}\`${prUrl ? ` / ${prUrl}` : ''}`;
+// 本文はファイルで渡す。引数で渡すと Windows のコマンドライン長の上限（約 32,000 文字）を超えて失敗する
+const bodyFile = join(mkdtempSync(join(tmpdir(), 'issue-')), 'body.md');
+writeFileSync(bodyFile, body);
 
 sh('gh', [
   'label',
@@ -55,7 +60,7 @@ const dup = ghJson([
 ]).find((i) => i.title.trim().toLowerCase() === title.toLowerCase());
 
 if (dup) {
-  sh('gh', ['issue', 'comment', String(dup.number), '--body', body]);
+  sh('gh', ['issue', 'comment', String(dup.number), '--body-file', bodyFile]);
   console.log(`既存 Issue に追記: ${dup.url}`);
 } else {
   console.log(
@@ -66,8 +71,8 @@ if (dup) {
       title,
       '--label',
       label.name,
-      '--body',
-      body,
+      '--body-file',
+      bodyFile,
     ]).stdout.trim()
   );
 }

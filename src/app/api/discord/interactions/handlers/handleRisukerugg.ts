@@ -177,7 +177,6 @@ async function runAiConversation(
     const data = d.data();
     const col = columnsSnap.docs.find((c) => c.id === data.columnId);
     const assignee = members.find((m) => m.userId === data.assigneeId);
-    const rawComments = (data.comments as Array<{ authorName?: string; text?: string }> | undefined) ?? [];
     return {
       id: d.id,
       title: data.title as string,
@@ -188,10 +187,6 @@ async function runAiConversation(
         : undefined,
       description: (data.description as string | null | undefined) ?? undefined,
       categoryName: categoriesList.find((c) => c.id === data.categoryId)?.name,
-      comments: rawComments.map((c) => ({
-        authorName: c.authorName ?? '不明',
-        text: c.text ?? '',
-      })),
     };
   });
 

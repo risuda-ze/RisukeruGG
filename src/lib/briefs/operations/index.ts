@@ -24,6 +24,11 @@ import {
 
 /* ── 権限 ─────────────────────────────────────────────── */
 
+/** 書き込みの主体（createdBy / updatedBy）。Discord は 'discord-bot'、システムは 'system' */
+function actorOf(ctx: OperationContext): string {
+  return ctx.actorId ?? (ctx.source === 'discord' ? 'discord-bot' : 'system');
+}
+
 /** Discord・システム由来はロールを見ない。サーバーを信頼境界として許可する */
 function isTrustedSource(ctx: OperationContext): boolean {
   return ctx.source === 'discord' || ctx.source === 'system';
@@ -33,6 +38,12 @@ function isTrustedSource(ctx: OperationContext): boolean {
 export function assertCanCreateBrief(ctx: OperationContext): void {
   if (isTrustedSource(ctx) || ctx.role !== null) return;
   throw new OperationError('permission-denied', 'チームの所属者のみブリーフを作成できます');
+}
+
+/** ブリーフを削除できるか。メンバーのみ（Discord・システム由来も不可） */
+export function assertCanDeleteBrief(ctx: OperationContext): void {
+  if (ctx.role === 'member') return;
+  throw new OperationError('permission-denied', 'ブリーフの削除はメンバーのみ行えます');
 }
 
 /** ブリーフと工程の構成を編集できるか。メンバーか、そのブリーフの作成者 */
@@ -133,7 +144,7 @@ export async function createBrief(
     throw new OperationError('invalid-argument', '指定された進め方が見つかりません');
   }
   const briefId = port.newId();
-  const tx = emptyTransaction(briefId);
+  const tx = emptyTransaction(briefId, actorOf(ctx));
   const drafts = playbook ? buildStepsFromPlaybook(playbook, input.publishAt) : [];
   tx.createBrief = {
     id: briefId,
@@ -146,7 +157,7 @@ export async function createBrief(
     headerFields: playbook ? playbook.headerFields.map((f) => ({ ...f })) : [],
     fields: {},
     linkedScheduleId: input.linkedScheduleId,
-    createdBy: ctx.actorId ?? 'system',
+    createdBy: actorOf(ctx),
   };
   tx.stepCreates = drafts.map((d) => ({ ...d, id: port.newId() }));
   tx.events.push({
@@ -174,7 +185,7 @@ export async function updateBriefHeader(
 ): Promise<void> {
   const { brief, steps } = await loadOrThrow(port, ctx, briefId);
   assertCanEditBrief(ctx, brief);
-  const tx = emptyTransaction(briefId);
+  const tx = emptyTransaction(briefId, actorOf(ctx));
   tx.briefPatch = {};
 
   if (input.title !== undefined && input.title !== brief.title) {
@@ -217,6 +228,18 @@ export async function updateBriefHeader(
   await port.commit(ctx.teamId, tx);
 }
 
+/**
+ * ブリーフを削除する。配下の工程・工程コメント・差分も削除する。メンバーのみ。
+ * Discord に作ったスレッドとメッセージは削除しない（Discord 側には残り、ボタンは「見つかりません」になる）。
+ */
+export async function deleteBrief(port: BriefsPort, ctx: OperationContext, briefId: string): Promise<void> {
+  assertCanDeleteBrief(ctx);
+  await loadOrThrow(port, ctx, briefId);
+  const tx = emptyTransaction(briefId, actorOf(ctx));
+  tx.deleteBrief = true;
+  await port.commit(ctx.teamId, tx);
+}
+
 /* ── 工程 ─────────────────────────────────────────────── */
 
 /** 状態を手動で変える（着手・完了・スキップ・差し戻し） */
@@ -232,7 +255,7 @@ export async function changeStepStatus(
   assertCanChangeStep(ctx, brief, step);
   const check = canTransition(step, to);
   if (!check.ok) throw new OperationError('invalid-transition', check.reason ?? '遷移できません');
-  const tx = emptyTransaction(briefId);
+  const tx = emptyTransaction(briefId, actorOf(ctx));
   applyStatusChange(tx, ctx, steps, step, to);
   await port.commit(ctx.teamId, tx);
 }
@@ -258,7 +281,7 @@ export async function assignStep(
   assertCanEditBrief(ctx, brief);
   const step = findStep(steps, stepId);
   if (step.assigneeId === assigneeId) return;
-  const tx = emptyTransaction(briefId);
+  const tx = emptyTransaction(briefId, actorOf(ctx));
   tx.stepPatches.push({ stepId, patch: { assigneeId } });
   tx.events.push(event('step.assignee_changed', step, step.assigneeId, assigneeId, ctx));
   await port.commit(ctx.teamId, tx);
@@ -282,7 +305,7 @@ export async function setStepDueDate(
   const next = dueDate ? startOfDay(dueDate) : computeDueDate(brief.publishAt, step.leadDays);
   const overridden = dueDate !== null;
   if (isSameDate(step.dueDate, next) && step.dueDateOverridden === overridden) return;
-  const tx = emptyTransaction(briefId);
+  const tx = emptyTransaction(briefId, actorOf(ctx));
   tx.stepPatches.push({ stepId, patch: { dueDate: next, dueDateOverridden: overridden } });
   tx.events.push(event('step.dueDate_changed', step, step.dueDate, next, ctx));
   await port.commit(ctx.teamId, tx);
@@ -300,7 +323,7 @@ export async function setStepFields(
   assertCanEditBrief(ctx, brief);
   const step = findStep(steps, stepId);
   const merged = { ...step.fields, ...fields };
-  const tx = emptyTransaction(briefId);
+  const tx = emptyTransaction(briefId, actorOf(ctx));
   tx.stepPatches.push({ stepId, patch: { fields: merged } });
   for (const [key, value] of Object.entries(fields)) {
     if (step.fields[key] !== value) {
@@ -324,7 +347,7 @@ export async function renameStep(
   const step = findStep(steps, stepId);
   const trimmed = title.trim();
   if (!trimmed || trimmed === step.title) return;
-  const tx = emptyTransaction(briefId);
+  const tx = emptyTransaction(briefId, actorOf(ctx));
   tx.stepPatches.push({ stepId, patch: { title: trimmed } });
   await port.commit(ctx.teamId, tx);
 }
@@ -349,7 +372,7 @@ export async function addStep(
   const afterIndex = input.afterStepId ? sorted.findIndex((s) => s.id === input.afterStepId) : -1;
   const order = afterIndex >= 0 ? sorted[afterIndex]!.order + 1 : (sorted.at(-1)?.order ?? -1) + 1;
 
-  const tx = emptyTransaction(briefId);
+  const tx = emptyTransaction(briefId, actorOf(ctx));
   // 後ろの工程の order を 1 つずつ繰り下げる
   if (afterIndex >= 0) {
     for (const s of sorted.slice(afterIndex + 1)) {
@@ -396,7 +419,7 @@ export async function removeStep(
   const { brief, steps } = await loadOrThrow(port, ctx, briefId);
   assertCanEditBrief(ctx, brief);
   const step = findStep(steps, stepId);
-  const tx = emptyTransaction(briefId);
+  const tx = emptyTransaction(briefId, actorOf(ctx));
   tx.stepDeletes.push(stepId);
   const remaining = steps
     .filter((s) => s.id !== stepId)

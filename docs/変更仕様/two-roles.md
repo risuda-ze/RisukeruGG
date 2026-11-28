@@ -106,8 +106,12 @@ Discord からの操作（作成・コメント・工程ボタン）は従来ど
 | `createdBy` | string \| null | 作成者の uid。Discord 経由は従来どおり `'discord-bot'`、システム作成は `'system'`。記録の無い既存データは未設定 |
 | `createdAt` | timestamp | 作成日時 |
 | `updatedAt` | timestamp | 最終更新日時 |
-| `updatedBy` | string \| null | 最終更新者の uid |
+| `updatedBy` | string \| null | 最終更新者。利用者の操作は uid、Discord 上の利用者の操作は `'discord-bot'`、操作者がいない更新は `'system'` |
 
+- `updatedBy` の値と付随する更新の扱い（PR #308 のレビューで決定。詳細は正本 `team/model.md`）
+  - 操作者がいない更新（トリガー・定期実行による自動処理、未認証の外部参加者によるコラボ回答）は `'system'`。「書かない」「null に戻す」案は、最後に触った主体が分からなくなるため採らなかった
+  - 退出・Kick・アカウント削除に伴うタスクの担当外しも最終更新として記録する（呼び出した人の uid）
+  - Discord 連携の ID の記録（`Brief.discord`、`Step.discordMessageId`。`functions/src/briefs/discordSync.ts` の 3 か所）は最終更新に数えない。`'system'` で記録する案は、連携のあるチームでブリーフは作成直後、工程は着手可能になった直後に `updatedBy` が `'system'` へ書き換わり、作成者や前の工程を完了した人が残らなくなるため採らなかった
 - ルールで `createdBy` を固定する。クライアントからの `create` は `createdBy == request.auth.uid` を必須にし、`update` では `createdBy` を変更不可にする（スタッフが他人の作成物の作成者を書き換えて削除する抜け道を塞ぐ）
 - 既存データを埋め直さない。`createdBy` が無い・一致しないものはメンバーのみが扱う（ルールは `resource.data.get('createdBy', null)` で比べる）
 - 退会・アカウント削除で `createdBy` を書き換えない。uid が認証できなくなるため、結果として「作成者なし」と同じ扱いになる
@@ -145,6 +149,10 @@ Discord からの操作（作成・コメント・工程ボタン）は従来ど
 - 文言: 「オペレーター」「ROM専」を含む画面（`/team`、`/settings/profile`、`/settings/ai`、`/integrations/discord`、退出・Discord ユーザー名のダイアログ、プライバシーポリシー）、AI のプロンプトと能力の説明
 - テスト・シード: `roleChangeVisibility.test.ts`、`leaveTeamLogic.test.ts`、`systemPrompt` のスナップショット、`tests/e2e/visual.spec.ts`、`scripts/seed.mjs`（`rom` のユーザー 2 人）
 - ブリーフ削除: 配下の `steps`・`briefEvents`・工程コメントを連鎖して削除する。Discord 連携（`BriefDiscordLink`）のメッセージの扱いは実装 PR で決める
+  - 実装 PR（#308）での決定: 削除は 1 回の commit で原子的に行う（PD-061 をそのまま適用）。当初の実装は 400 件ずつに分けていたが、途中で失敗すると工程の減ったブリーフが見えるため改めた。Firestore の 1 commit に書き込み件数の上限は無く、制限はリクエストサイズ（10 MiB）など。超えた場合は何も消えず、エラーとして表示する。クライアントが配下を消すので、`briefEvents` の削除をメンバーに許す
+  - Discord のスレッドとメッセージは削除せず残す（IN-024-1）
+  - 反映はルールとクライアントを同時に出し、切り替わるまでの短時間の拒否を許容する
+  - 削除後のブリーフに工程コメントを作成できる問題は #313 で扱う
 
 ### 正本（本 PR で更新したもの）
 
@@ -180,7 +188,7 @@ Discord からの操作（作成・コメント・工程ボタン）は従来ど
 | 1 | `members/{memberId}` の本人による `role` 書き換え（自己昇格） | develop で修正済み（許可リスト方式で、`role` / `plan` は Callable Function のみが書く）。本変更の前提は満たされている。実装時は、許可リストと `scripts/check-member-rules.mjs` の検証を新しい値に合わせて更新する |
 | 2 | 旧 `updateMemberRole` が `operatorUids` を更新しない | `operatorUids` の廃止で解消 |
 | 3 | 旧正本 TE-004 / flows は参加時「ROM専」、実装は `member` | 本 PR の正本更新で解消（参加時はスタッフ） |
-| 4 | 正本の読み取り時変換表（`owner` / `editor` / `viewer`）は、実装では `owner` の一部判定しかない | PR A・B で変換を 1 関数にまとめて解消。本番に旧値の文書が残っているかは未確認（本番作業①のスクリプトが件数を出す） |
+| 4 | 正本の読み取り時変換表（`owner` / `editor` / `viewer`）は、実装では `owner` の一部判定しかない | PR B で変換を 1 関数にまとめて解消。本番に旧値の文書が残っているかは未確認（本番作業①のスクリプトが件数を出す） |
 
 ## PR 分割と状態
 
@@ -190,11 +198,11 @@ Discord からの操作（作成・コメント・工程ボタン）は従来ど
 | --- | --- | --- | --- |
 | 設計書 | 本書、正本 `team/*`、共通用語 | なし | 本 PR |
 | 先行修正 | `members` の本人更新で `role` を書き換えられない制限（問題 1） | なし | develop で完了 |
-| A | 互換: `staff` を認識（ルール・Functions・クライアントの型と `canEdit`）。変換関数。テスト | 設計書の合意 | マージ済み |
+| A | 互換: `staff` を認識（ルール・Functions・クライアントの型と `canEdit`）。テスト | 設計書の合意 | マージ済み |
 | 本番作業① | 旧 `member` / `rom` / `editor` / `viewer` → `staff` の一括書き換え。0 件確認 | A の本番反映 | 適用済み（スクリプトは削除） |
-| B | 意味の切り替えと権限の細分化: `member` を管理者へ。ルール分割・作成者フィールド・タスク/コラボのメンバー限定・ブリーフ削除 UI・改名・文言・AI・シード・テスト・正本の同期。`updateMemberRole` の新形式 | 本番作業① | マージ済み |
+| B | 意味の切り替えと権限の細分化: `member` を管理者へ。ルール分割・作成者フィールド・タスク/コラボのメンバー限定・ブリーフ削除 UI・改名・文言・AI・シード・テスト・正本の同期。旧値の変換関数。`updateMemberRole` の新形式 | 本番作業① | マージ済み |
 | 本番作業② | `operator` / `owner` → `member`、`operatorUids` と `ownerId` の削除。0 件確認 | B の本番反映 | 適用済み（スクリプトは削除） |
-| C | ルール・コードから `operator` / `owner` の互換を除去 | 本番作業② | PR #273 |
+| C | ルール・コードから `operator` / `owner` の互換を除去 | 本番作業② | マージ済み |
 
 B は大きいため、「作成者フィールドとルール分割」と「ブリーフ削除 UI」を別 PR に分けてもよい（デプロイ順は守る）。
 

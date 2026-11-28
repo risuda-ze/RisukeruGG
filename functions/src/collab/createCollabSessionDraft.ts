@@ -1,5 +1,5 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
-import { FieldValue } from 'firebase-admin/firestore';
+import { createdFields } from '../lib/audit';
 import { randomUUID } from 'crypto';
 import { logger } from 'firebase-functions/v2';
 import { db, getAuthContext, requireMemberRole, getUserDoc } from '../lib/validateAuth';
@@ -90,7 +90,6 @@ export const createCollabSessionDraft = onCall(
 
         // --- 作成 ---
         const sessionId = randomUUID();
-        const now = FieldValue.serverTimestamp();
         const expiresAt = new Date(Date.now() + EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000);
 
         await db.runTransaction(async (tx) => {
@@ -105,14 +104,13 @@ export const createCollabSessionDraft = onCall(
             proposedDates: parsedDates,
             participantResponses: {},
             comments: [],
-            createdBy: ctx.uid,
             teamId,
             expiresAt,
             icon: icon ?? 'sports_esports',
             responses: null,
             confirmedDate: null,
             linkedScheduleId: null,
-            createdAt: now,
+            ...createdFields(ctx.uid),
           });
 
           incrementCollabCount(tx, ctx.uid, userData);

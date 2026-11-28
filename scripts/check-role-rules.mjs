@@ -75,9 +75,21 @@ for (const col of ['tasks', 'collabSessions']) {
 }
 
 // ── 進め方・カテゴリ・カンバン列・Discord・AI 設定: メンバーのみ ──
-for (const path of ['playbooks/p1', 'categories/c1', 'taskStatuses/k1', 'ai/a1', 'discord/d1']) {
+for (const path of ['ai/a1', 'discord/d1']) {
   ng(await put(`teams/t1/${path}`, { name: str('x') }, t.st), `${path}: スタッフは書けない`);
   ok(await put(`teams/t1/${path}`, { name: str('x') }, t.mem), `${path}: メンバーは書ける`);
+}
+// 作成者（createdBy）を持つ設定系: メンバーのみ。作成時は自分の uid、更新で createdBy は変更不可
+for (const path of ['playbooks/p1', 'categories/c1', 'taskStatuses/k1']) {
+  const doc = (by) => ({ name: str('x'), createdBy: str(by) });
+  ng(await put(`teams/t1/${path}`, doc('st'), t.st), `${path}: スタッフは作成不可`);
+  ng(await put(`teams/t1/${path}`, { name: str('x') }, t.mem), `${path}: createdBy なしでは作成不可`);
+  ng(await put(`teams/t1/${path}`, doc('st'), t.mem), `${path}: 他人名義では作成不可`);
+  ok(await put(`teams/t1/${path}`, doc('mem'), t.mem), `${path}: メンバーが自分名義で作成`);
+  ok(await patch(`teams/t1/${path}`, { name: str('y'), updatedBy: str('mem') }, t.mem), `${path}: メンバーは編集可`);
+  ng(await patch(`teams/t1/${path}`, { createdBy: str('st') }, t.mem), `${path}: createdBy は書き換え不可`);
+  ng(await patch(`teams/t1/${path}`, { name: str('z') }, t.st), `${path}: スタッフは編集不可`);
+  ng(await del(`teams/t1/${path}`, t.st), `${path}: スタッフは削除不可`);
 }
 
 // ── ブリーフ・工程・工程コメント ──
@@ -88,10 +100,16 @@ ng(await patch('teams/t1/briefs/b1', { title: str('d') }, t.st2), '他のスタ�
 ok(await patch('teams/t1/briefs/b1', { title: str('e') }, t.mem), 'メンバーはブリーフを編集');
 ng(await del('teams/t1/briefs/b1', t.st), 'ブリーフの削除は作成者のスタッフでも不可');
 // 工程: ブリーフの作成者が触れる。担当者は完了・状態変更だけ
-const step = (assignee, status = 'ready') => ({ title: str('s'), status: str(status), assigneeId: str(assignee) });
+const step = (assignee, status = 'ready', by = 'st') => ({
+  title: str('s'),
+  status: str(status),
+  assigneeId: str(assignee),
+  createdBy: str(by),
+});
 ok(await put('teams/t1/briefs/b1/steps/s1', step('st2'), t.st), 'ブリーフ作成者が工程を作成');
-ng(await put('teams/t1/briefs/b1/steps/s2', step('st2'), t.st2), '作成者でも担当者でもないスタッフは工程を作れない');
-ok(await patch('teams/t1/briefs/b1/steps/s1', { status: str('done'), completedBy: str('st2') }, t.st2), '担当者が完了できる');
+ng(await put('teams/t1/briefs/b1/steps/s2', step('st2', 'ready', 'st2'), t.st2), '作成者でも担当者でもないスタッフは工程を作れない');
+ng(await put('teams/t1/briefs/b1/steps/s2', step('st2', 'ready', 'mem'), t.st), '他人名義の工程は作れない');
+ok(await patch('teams/t1/briefs/b1/steps/s1', { status: str('done'), completedBy: str('st2'), updatedBy: str('st2') }, t.st2), '担当者が完了できる（updatedBy を伴う）');
 ng(await patch('teams/t1/briefs/b1/steps/s1', { title: str('t') }, t.st2), '担当者でもタイトルは変更不可');
 ng(await patch('teams/t1/briefs/b1/steps/s1', { assigneeId: str('mem') }, t.st2), '担当者でも担当は変更不可');
 ok(await patch('teams/t1/briefs/b1/steps/s1', { title: str('t') }, t.st), 'ブリーフ作成者は工程を編集');
@@ -105,6 +123,12 @@ ok(await put('teams/t1/briefs/b1/steps/s1/comments/c1', { authorId: str('st2'), 
 ng(await patch('teams/t1/briefs/b1/steps/s1/comments/c1', { body: str('y') }, t.st), '他人のコメントは編集不可');
 ok(await patch('teams/t1/briefs/b1/steps/s1/comments/c1', { body: str('y') }, t.st2), '本人はコメントを編集');
 ok(await del('teams/t1/briefs/b1/steps/s1/comments/c1', t.mem), 'メンバーはコメントを削除');
+// 差分: 追記のみ。ブリーフごと消すときのメンバー削除だけ許す
+ok(await put('teams/t1/briefs/b1/briefEvents/e1', { type: str('x') }, t.st2), '所属者は差分を追記できる');
+ng(await patch('teams/t1/briefs/b1/briefEvents/e1', { type: str('y') }, t.mem), '差分は改変不可');
+ng(await del('teams/t1/briefs/b1/briefEvents/e1', t.st), '差分の削除はスタッフ不可');
+ok(await del('teams/t1/briefs/b1/briefEvents/e1', t.mem), 'メンバーは差分を削除できる（ブリーフ削除の連鎖）');
+ok(await patch('teams/t1/briefs/b1', { updatedBy: str('st2') }, t.st2), '所属者はブリーフの updatedAt/updatedBy だけ更新できる');
 ok(await del('teams/t1/briefs/b1', t.mem), 'メンバーはブリーフを削除');
 
 // ── チーム設定: メンバーのみ ──

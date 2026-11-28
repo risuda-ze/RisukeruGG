@@ -382,7 +382,6 @@ export function AIChatPage() {
         dueDate: t.dueDate ? format(t.dueDate, 'yyyy/MM/dd') : null,
         description: t.description,
         categoryName: categories.find((c) => c.id === t.categoryId)?.name ?? null,
-        comments: (t.comments ?? []).map((c) => ({ authorName: c.authorName, text: c.text })),
       })),
       schedules: schedules
         .filter((s) => s.startAt >= sevenDaysAgo)
@@ -414,10 +413,6 @@ export function AIChatPage() {
             dueDate: pinnedTask.dueDate ? format(pinnedTask.dueDate, 'yyyy-MM-dd') : null,
             description: pinnedTask.description,
             categoryName: categories.find((c) => c.id === pinnedTask.categoryId)?.name ?? null,
-            comments: (pinnedTask.comments ?? []).map((c) => ({
-              authorName: c.authorName,
-              text: c.text,
-            })),
           }
         : undefined,
     };

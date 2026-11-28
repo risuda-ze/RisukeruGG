@@ -24,6 +24,7 @@ const fixedContext: AiChatContext = {
       dueDate: '2026/09/12',
       description: '第10回のサムネ。文言案は構成確認後に決める。',
       categoryName: 'サムネ',
+      /* 既存のタスク文書に残る comments。コンテキストに載せないことを確かめるために渡す */
       comments: [{ authorName: 'りす', text: '明るめの色で' }],
     },
   ],
@@ -44,6 +45,28 @@ describe('generateSystemPrompt（スナップショット）', () => {
   it('固定コンテキストで出力が変わらない', () => {
     const prompt = generateSystemPrompt(fixedContext, '2026年9月6日（日曜日）', '2026-09-06');
     expect(prompt).toMatchSnapshot();
+  });
+
+  it('タスクのコメントをコンテキストにも案内文にも含めない（タスク一覧・ピン留めタスク）', () => {
+    const prompt = generateSystemPrompt(
+      {
+        ...fixedContext,
+        pinnedTask: {
+          id: 'task_1',
+          title: 'サムネ作成',
+          columnName: '進行中',
+          assigneeName: 'さとう',
+          dueDate: '2026-09-12',
+          description: '第10回のサムネ。',
+          categoryName: 'サムネ',
+        },
+      },
+      '2026年9月6日（日曜日）',
+      '2026-09-06'
+    );
+    expect(prompt).toContain('## 対象タスク');
+    expect(prompt).not.toContain('コメント');
+    expect(prompt).not.toContain('明るめの色で');
   });
 
   it('プロンプトの版はマニフェストに宣言されている', () => {

@@ -6,10 +6,10 @@ import {
   Unsubscribe,
   Timestamp,
   runTransaction,
-  serverTimestamp,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '@/lib/firebase/client';
+import { updatedFields } from '@/lib/firebase/audit';
 import type { ScheduleEntry } from '@/types/entities';
 
 function toSchedule(id: string, data: Record<string, unknown>): ScheduleEntry {
@@ -25,6 +25,7 @@ function toSchedule(id: string, data: Record<string, unknown>): ScheduleEntry {
     linkedTaskIds: (data.linkedTaskIds as string[]) ?? [],
     updatedAt: (data.updatedAt as Timestamp | null)?.toDate() ?? new Date(),
     createdBy: data.createdBy as string,
+    updatedBy: (data.updatedBy as string | null | undefined) ?? null,
     createdAt: (data.createdAt as Timestamp | null)?.toDate() ?? new Date(),
     allDay: (data.allDay as boolean | undefined) ?? false,
   };
@@ -83,7 +84,7 @@ export async function updateSchedule(
       throw new Error('CONFLICT');
     }
 
-    tx.update(ref, { ...data, updatedAt: serverTimestamp() });
+    tx.update(ref, { ...data, ...updatedFields() });
   });
 }
 

@@ -1,5 +1,5 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
-import { FieldValue } from 'firebase-admin/firestore';
+import { createdFields } from '../lib/audit';
 import { db, getAuthContext } from '../lib/validateAuth';
 
 interface CreateScheduleData {
@@ -45,7 +45,6 @@ export const createSchedule = onCall(
     const ctx = await getAuthContext(request, teamId);
 
     const scheduleRef = db.collection(`teams/${teamId}/schedules`).doc();
-    const now = FieldValue.serverTimestamp();
 
     await scheduleRef.set({
       title,
@@ -57,9 +56,7 @@ export const createSchedule = onCall(
       collabPartnerName: collabPartnerName ?? null,
       linkedTaskIds: linkedTaskIds ?? [],
       allDay: allDay ?? false,
-      createdBy: ctx.uid,
-      updatedAt: now,
-      createdAt: now,
+      ...createdFields(ctx.uid),
     });
 
     return { scheduleId: scheduleRef.id };

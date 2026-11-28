@@ -17,6 +17,13 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
+
+/** ログイン中のユーザーの uid。作成者・最終更新者（createdBy / updatedBy）の記録に使う */
+export function requireUid(): string {
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error('ログインが必要です');
+  return uid;
+}
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 // functionsをモジュールレベルで作成し、エミュレータ接続前にインスタンスを確立する
@@ -36,7 +43,8 @@ if (
 ) {
   window.__firebaseEmulatorsConnected = true;
   const emulatorHost = process.env.NEXT_PUBLIC_EMULATOR_HOST ?? 'localhost';
-  connectAuthEmulator(auth, `http://${emulatorHost}:9098`, { disableWarnings: false });
+  // 警告バナーは画面下端に固定表示され、サイドバー下端・モバイル下部ナビのクリックを奪うため出さない
+  connectAuthEmulator(auth, `http://${emulatorHost}:9098`, { disableWarnings: true });
   connectFirestoreEmulator(db, emulatorHost, 8080);
   connectStorageEmulator(storage, emulatorHost, 9199);
   connectFunctionsEmulator(functions, emulatorHost, 5001);

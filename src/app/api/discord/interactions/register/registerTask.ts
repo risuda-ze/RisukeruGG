@@ -1,5 +1,5 @@
 import { getAdminFirestore } from '@/lib/firebase/admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { DISCORD_ACTOR, createdFields } from '@/lib/firebase/auditAdmin';
 import type { TaskProposal } from '@/lib/ai/parseProposal';
 
 /**
@@ -27,7 +27,6 @@ export async function registerTask(
     columns[0];
 
   const taskRef = db.collection(`teams/${teamId}/tasks`).doc();
-  const now = FieldValue.serverTimestamp();
 
   await taskRef.set({
     title: proposal.title,
@@ -37,9 +36,7 @@ export async function registerTask(
     assigneeId,
     dueDate: proposal.dueDate ? new Date(proposal.dueDate) : null,
     linkedScheduleId: null,
-    createdBy: 'discord-bot',  // 個人ユーザーを追跡しないため固定値
-    updatedAt: now,
-    createdAt: now,
+    ...createdFields(DISCORD_ACTOR), // 個人ユーザーを追跡しないため固定値
   });
 
   return taskRef.id;

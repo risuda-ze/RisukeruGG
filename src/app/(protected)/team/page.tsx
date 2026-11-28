@@ -23,7 +23,7 @@ import { createTeam, dissolveTeam } from '@/lib/repositories/teams';
 import { trackEvent } from '@/lib/analytics';
 import { Icon } from '@/components/ui/Icon';
 import { Dropdown } from '@/components/ui/Dropdown';
-import { ROLE_BADGE, ROLE_LABELS } from '@/lib/utils/teamRoles';
+import { ROLE_BADGE, ROLE_LABELS, isLastMember } from '@/lib/utils/teamRoles';
 import { MEMBER_DUTIES, MEMBER_DUTY_LABELS } from '@/types/entities';
 import type { MemberDuty, TeamMember, TeamRole } from '@/types/entities';
 
@@ -647,7 +647,7 @@ function TeamPageInner() {
         onClose={() => setDialog(null)}
         teamId={teamId ?? ''}
         isSoloMember={isMember && members.length <= 1}
-        isMultiMember={isMember && members.length > 1}
+        isMultiMember={isLastMember(members, currentUser?.uid) && members.length > 1}
         onSuccess={() => setDialog(null)}
       />
     </div>

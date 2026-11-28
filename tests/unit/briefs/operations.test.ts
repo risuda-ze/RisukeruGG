@@ -4,6 +4,7 @@ import {
   assignStep,
   completeStep,
   createBrief,
+  deleteBrief,
   OperationError,
   removeStep,
   setStepDueDate,
@@ -287,5 +288,81 @@ describe('工程の追加と削除', () => {
     expect(steps[0]!.dependsOn).toEqual([]);
     expect(steps[0]!.status).toBe('ready');
     expect(port.events.some((e) => e.type === 'step.removed')).toBe(true);
+  });
+});
+
+describe('ブリーフの削除', () => {
+  let port: MemoryBriefsPort;
+  let briefId: string;
+  const creator: OperationContext = { ...ctx, actorId: 'u_creator', role: 'staff' };
+
+  beforeEach(async () => {
+    port = new MemoryBriefsPort();
+    const r = await createBrief(
+      port,
+      creator,
+      { title: '第10回', publishAt: new Date('2026-09-20'), playbookId: 'pb_1', performerIds: [], linkedScheduleId: null },
+      samplePlaybook()
+    );
+    briefId = r.briefId;
+  });
+
+  it('メンバーは削除でき、配下の工程と差分も消える', async () => {
+    expect(port.steps.size).toBeGreaterThan(0);
+    expect(port.events.length).toBeGreaterThan(0);
+    await deleteBrief(port, ctx, briefId);
+    expect(await port.loadBrief('t_1', briefId)).toBeNull();
+    expect(port.steps.size).toBe(0);
+    expect(port.events).toHaveLength(0);
+  });
+
+  it('スタッフは作成者でも削除できない', async () => {
+    await expect(deleteBrief(port, creator, briefId)).rejects.toBeInstanceOf(OperationError);
+    expect(await port.loadBrief('t_1', briefId)).not.toBeNull();
+  });
+
+  it('Discord・システム由来は削除できない', async () => {
+    await expect(
+      deleteBrief(port, { ...ctx, actorId: null, role: null, source: 'discord' }, briefId)
+    ).rejects.toBeInstanceOf(OperationError);
+  });
+
+  it('存在しないブリーフは not-found', async () => {
+    await expect(deleteBrief(port, ctx, 'nope')).rejects.toMatchObject({ code: 'not-found' });
+  });
+});
+
+describe('作成者・最終更新者の記録', () => {
+  it('作成時に createdBy と updatedBy を残し、更新で updatedBy が操作者になる', async () => {
+    const port = new MemoryBriefsPort();
+    const creator: OperationContext = { ...ctx, actorId: 'u_creator', role: 'staff' };
+    const { briefId, stepIds } = await createBrief(
+      port,
+      creator,
+      { title: 'x', publishAt: new Date('2026-09-20'), playbookId: 'pb_1', performerIds: [], linkedScheduleId: null },
+      samplePlaybook()
+    );
+    let loaded = await port.loadBrief('t_1', briefId);
+    expect(loaded!.brief.createdBy).toBe('u_creator');
+    expect(loaded!.brief.updatedBy).toBe('u_creator');
+    expect(loaded!.steps[0]!.createdBy).toBe('u_creator');
+
+    await updateBriefHeader(port, ctx, briefId, { title: 'y' });
+    loaded = await port.loadBrief('t_1', briefId);
+    expect(loaded!.brief.updatedBy).toBe('u_risu');
+    await completeStep(port, ctx, briefId, stepIds[0]!);
+    expect((await port.loadBrief('t_1', briefId))!.steps[0]!.updatedBy).toBe('u_risu');
+  });
+
+  it('Discord 由来は discord-bot、システムは system', async () => {
+    const port = new MemoryBriefsPort();
+    const { briefId, stepIds } = await createBrief(
+      port,
+      ctx,
+      { title: 'x', publishAt: new Date('2026-09-20'), playbookId: 'pb_1', performerIds: [], linkedScheduleId: null },
+      samplePlaybook()
+    );
+    await completeStep(port, { ...ctx, actorId: null, role: null, source: 'discord' }, briefId, stepIds[0]!);
+    expect((await port.loadBrief('t_1', briefId))!.steps[0]!.updatedBy).toBe('discord-bot');
   });
 });

@@ -6,25 +6,16 @@ import {
   Unsubscribe,
   Timestamp,
   runTransaction,
-  serverTimestamp,
-  arrayUnion,
+  type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '@/lib/firebase/client';
-import type { Task, CollabComment } from '@/types/entities';
+import { updatedFields } from '@/lib/firebase/audit';
+import type { Task } from '@/types/entities';
 
 const functions = getFunctions(undefined, 'asia-northeast1');
 
 function toTask(id: string, data: Record<string, unknown>): Task {
-  const rawComments = (data.comments as Array<Record<string, unknown>> | null) ?? [];
-  const comments: CollabComment[] = rawComments.map((c) => ({
-    id: c.id as string,
-    authorId: c.authorId as string,
-    authorName: c.authorName as string,
-    text: c.text as string,
-    createdAt: (c.createdAt as Timestamp).toDate(),
-    parentId: (c.parentId as string | undefined) ?? undefined,
-  }));
   return {
     id,
     title: data.title as string,
@@ -35,9 +26,9 @@ function toTask(id: string, data: Record<string, unknown>): Task {
     dueDate: data.dueDate ? (data.dueDate as Timestamp).toDate() : null,
     dueDateAllDay: (data.dueDateAllDay as boolean | undefined) ?? true,
     linkedScheduleId: (data.linkedScheduleId as string | null) ?? null,
-    comments,
     updatedAt: (data.updatedAt as Timestamp).toDate(),
     createdBy: data.createdBy as string,
+    updatedBy: (data.updatedBy as string | null | undefined) ?? null,
     createdAt: (data.createdAt as Timestamp).toDate(),
   };
 }
@@ -75,27 +66,11 @@ export async function updateTask(
       if (currentUpdatedAt.getTime() !== expectedUpdatedAt.getTime()) {
         throw new Error('CONFLICT');
       }
-      tx.update(ref, { ...data, updatedAt: serverTimestamp() });
+      tx.update(ref, { ...data, ...updatedFields() });
     });
   } else {
-    await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
+    await updateDoc(ref, { ...data, ...updatedFields() });
   }
-}
-
-export async function addTaskComment(
-  teamId: string,
-  taskId: string,
-  comment: {
-    id: string;
-    authorId: string;
-    authorName: string;
-    text: string;
-    createdAt: Timestamp;
-    parentId?: string;
-  }
-): Promise<void> {
-  const ref = doc(db, 'teams', teamId, 'tasks', taskId);
-  await updateDoc(ref, { comments: arrayUnion(comment) });
 }
 
 const _deleteTask = httpsCallable<{ teamId: string; taskId: string }, void>(
@@ -118,22 +93,23 @@ export function subscribeTasksByTeam(
      docChanges() で変更があったドキュメントだけを再生成し、それ以外は
      キャッシュ済みの参照を使い回す。 */
   const cache = new Map<string, Task>();
+  /* この端末の書き込み直後は updatedAt（serverTimestamp）がサーバーで確定しておらず、既定の読み方では null になる。
+     確定するまでは直前の確定値で読む。楽観的ロックはサーバーの updatedAt と比べるため、推定値（estimate）では
+     確定までの間かならず不一致になる。直前の値なら、書き込みがサーバーに届くまでは一致し、届いた後は不一致になる。
+     確定すると modified が届き、確定値に置き換わる。 */
+  const read = (d: QueryDocumentSnapshot) =>
+    toTask(d.id, d.data({ serverTimestamps: 'previous' }) as Record<string, unknown>);
   return onSnapshot(collection(db, 'teams', teamId, 'tasks'), (snap) => {
     for (const change of snap.docChanges()) {
       if (change.type === 'removed') {
         cache.delete(change.doc.id);
       } else {
         // added / modified: 該当ドキュメントのみ再生成
-        cache.set(
-          change.doc.id,
-          toTask(change.doc.id, change.doc.data() as Record<string, unknown>)
-        );
+        cache.set(change.doc.id, read(change.doc));
       }
     }
     // 現在のスナップショット順で並べつつ、未変更ドキュメントは参照を維持
-    const tasks = snap.docs.map(
-      (d) => cache.get(d.id) ?? toTask(d.id, d.data() as Record<string, unknown>)
-    );
+    const tasks = snap.docs.map((d) => cache.get(d.id) ?? read(d));
     callback(tasks);
   });
 }
