@@ -17,7 +17,7 @@
 
 ゲーム配信者（Twitch・YouTube）およびその制作チームを対象とした、配信者特化型チームスケジュール管理 Web アプリ。配信枠の共有管理・コラボ日程調整・制作タスク管理を一元化し、配信者が本業（配信）に集中できる環境を提供する。
 
-**技術スタック**: Next.js 14（App Router）/ TypeScript / Tailwind CSS / Zustand / Firebase（Auth・Firestore・Storage・Cloud Functions・FCM）/ Vercel / pnpm / ESLint+Prettier / Vitest / Playwright
+**技術スタック**: Next.js 14（App Router）/ TypeScript / Tailwind CSS / Zustand / Firebase（Auth・Firestore・Storage・Cloud Functions）/ Vercel / pnpm / ESLint+Prettier / Vitest / Playwright
 
 ---
 
@@ -46,7 +46,6 @@
   - `plan`: `PL`
   - `platform`: `PF`
   - `collab`: `CO`
-  - `notification`: `NO`
   - `ui`: `UI`
   - `integration`: `IN`
   - `ai`: `AI`
@@ -67,10 +66,9 @@
 | `schedule`       | スケジュール管理       | スケジュール CRUD、カレンダー表示、Google カレンダー書き出し、カレンダー UI 改善を扱う                     | [README](./schedule/README.md) / [requirements](./schedule/requirements.md) / [model](./schedule/model.md)                                                        |
 | `task`           | 制作タスク管理         | カンバン、タスク詳細、担当者、カテゴリ、列設定、タスク進捗管理を扱う                                       | [README](./task/README.md) / [requirements](./task/requirements.md) / [model](./task/model.md)                                                                    |
 | `collab`         | コラボ日程調整         | コラボセッション、公開回答フォーム、再調整、複製、関連 UI を扱う                                           | [README](./collab/README.md) / [requirements](./collab/requirements.md) / [model](./collab/model.md)                                                              |
-| `notification`   | 通知                   | 通知カテゴリ、既読管理、プッシュ通知、通知設定、遷移ルールを扱う                                           | [README](./notification/README.md) / [requirements](./notification/requirements.md) / [model](./notification/model.md)                                            |
-| `ui`             | UI・ナビゲーション     | サイドバー、TopBar、通知導線、共通ナビゲーション状態を扱う                                                 | [README](./ui/README.md) / [requirements](./ui/requirements.md) / [model](./ui/model.md)                                                                          |
+| `ui`             | UI・ナビゲーション     | サイドバー、TopBar、共通ナビゲーション状態を扱う                                                 | [README](./ui/README.md) / [requirements](./ui/requirements.md) / [model](./ui/model.md)                                                                          |
 | `platform`       | PWA・オフライン        | PWA インストール、Service Worker、オフライン閲覧、接続断時の扱い、バージョン表示・リリースノートを扱う     | [README](./platform/README.md) / [requirements](./platform/requirements.md) / [model](./platform/model.md)                                                        |
-| `integration`    | 外部サービス連携       | Discord 連携（通知配送、Bot 招待、`/risukerugg` AI ボット）を扱う                                          | [README](./integration/README.md) / [requirements](./integration/requirements.md) / [model](./integration/model.md)                                               |
+| `integration`    | 外部サービス連携       | Discord 連携（通知配送、Bot 招待、`/risukerugg` AI ボット）を扱う。アプリの通知はすべてここ                                          | [README](./integration/README.md) / [requirements](./integration/requirements.md) / [model](./integration/model.md)                                               |
 | `ai`             | AIチャット             | `/chat` の AI アシスタント、提案生成、スケジュール・タスク・コラボ登録連携を扱う                           | [README](./ai/README.md) / [requirements](./ai/requirements.md) / [model](./ai/model.md)                                                                          |
 | `production`     | タスク管理 v2（1枚紙） | ブリーフ（動画1本）、工程、進め方、締切逆算、差分、操作層を扱う。既存カンバン（task）と並行提供            | [README](./production/README.md) / [requirements](./production/requirements.md) / [model](./production/model.md) / [flows](./production/flows.md)                 |
 | `unavailability` | 対応不可時間           | 所属者が申告する対応不可の時間帯、時間帯に付けるコメント、全所属者の一覧、所属者詳細、CSV・定期入力を扱う                    | [README](./unavailability/README.md) / [requirements](./unavailability/requirements.md) / [model](./unavailability/model.md) / [flows](./unavailability/flows.md) |
@@ -86,7 +84,7 @@
 #### plan
 
 - 機能利用可否を決定する課金・制限ルールの責務を持つ
-- タスク、コラボ、通知、チーム参加条件など横断的な判定基盤になる
+- タスク、コラボ、チーム参加条件など横断的な判定基盤になる
 
 #### team
 
@@ -108,15 +106,10 @@
 - 外部相手との日程調整と確定プロセスの責務を持つ
 - 公開回答導線と内部スケジュール登録を橋渡しする機能になる
 
-#### notification
-
-- システム内イベントをユーザーへ伝達する責務を持つ
-- アプリ内通知とプッシュ通知の配信・設定・既読管理を統括する
-
 #### ui
 
 - 複数機能にまたがるナビゲーションと情報提示の責務を持つ
-- 共通ナビゲーション状態と通知導線を通して各機能の入口を提供する
+- 共通ナビゲーション状態を通して各機能の入口を提供する
 
 #### platform
 
@@ -125,7 +118,7 @@
 
 #### integration
 
-- 外部サービス（Discord）との接続・通知配送・コマンド受け口の責務を持つ
+- 外部サービス（Discord）との接続・通知配送・コマンド受け口の責務を持つ。通知は Discord のチャンネルへの送信だけで、アプリ内通知・プッシュ通知は持たない
 - チーム単位の連携設定とサーバーサイド専用のセッション・一時データを管理する
 
 #### ai
@@ -156,7 +149,7 @@
 - **NFR-007**: 全通信は HTTPS 経由
 - **NFR-008**: PC（Chrome/Edge/Firefox 最新 2 バージョン）と Android Chrome（最新 2 バージョン）で動作
 - **NFR-009**: UI は WCAG 2.1 AA 基準のアクセシビリティを満たす
-- **NFR-010**: カレンダーと通知は JST（日本標準時）基準で表示（フェーズ 1）
+- **NFR-010**: カレンダーと Discord 通知は JST（日本標準時）基準で表示（フェーズ 1）
 - **NFR-011**: プランの月次制限値はバックエンドで強制（クライアント側のみの制御は不可）
 - **NFR-012**: TypeScript strict モードでコンパイルエラーゼロ
 - **NFR-013**: ソースコード内のコメントは日本語。変数名・コンポーネント名は英語
@@ -177,7 +170,6 @@
 | **Task**                                 | 詳細は [task/model.md](./task/model.md) を参照。タスク項目と `columnId` 中心の状態表現を task カテゴリで正本化する                             |
 | **CollabSession**                        | 詳細は [collab/model.md](./collab/model.md) を参照。コラボ作成、公開回答、確定、再調整に必要な保持項目を管理                                   |
 | **CollabComment**                        | 詳細は [collab/model.md](./collab/model.md) を参照。公開回答時に回答者が書いたコメントの保持項目を管理                                                    |
-| **Notification**                         | receiverId, type, refEntityId, isRead, createdAt                                                                                               |
 | **SidebarState**                         | collapsed（boolean）, openSections（string[]）— Zustand ストア（localStorage 永続化）                                                          |
 | **DiscordTeamConfig**                    | 詳細は [integration/model.md](./integration/model.md) を参照。チームの Discord 通知設定（webhookUrl / guildId / channelId / 通知トグル）を管理 |
 | **DiscordSession**                       | 詳細は [integration/model.md](./integration/model.md) を参照。`/risukerugg` AI ボットのサーバー単位会話セッションを管理                        |

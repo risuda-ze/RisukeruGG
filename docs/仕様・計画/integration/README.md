@@ -9,7 +9,7 @@
 - [動画依頼](../video-request/README.md)のスレッド作成（Functions）・納品受付（既存Botの署名付きInteractions Endpoint）
 - Discord 連携設定画面（`/integrations/discord`）
 - チームごとの Discord 通知設定（`teams/{teamId}/discord/config`）
-- スケジュール通知の Discord 配送（Bot API / Webhook フォールバック）
+- タスク・コラボ・スケジュール開始前リマインダーの Discord 通知（Bot API / Webhook フォールバック）。アプリの通知はこの Discord 通知だけで、アプリ内通知・プッシュ通知・個人単位の通知設定は持たない
 - Bot 招待フロー（OAuth2・CSRF 保護・チャンネル選択）
 - ギルドコマンド登録と接続解除
 - `/risukerugg` スラッシュコマンドによる AI 会話・登録（Discord 側の受け口とセッション管理）
@@ -18,14 +18,9 @@
 
 - Google カレンダー書き出し（schedule カテゴリを参照）
 - AI のシステムプロンプト・提案フォーマットの定義（ai カテゴリを参照。Discord ボットは ai の共通ユーティリティを再利用する）
-- アプリ内通知・プッシュ通知（notification カテゴリを参照）
 - 通知のトリガーとなるスケジュール自体の定義（schedule を参照）
 
 ## 他カテゴリとの境界
-
-### notification との境界
-
-- integration はチーム単位の Discord チャンネルへの配送を扱う。ユーザー単位のアプリ内通知・プッシュ通知は notification を参照する
 
 ### ai との境界
 

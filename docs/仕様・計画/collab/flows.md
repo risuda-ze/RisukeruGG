@@ -18,7 +18,7 @@
 5. 代替日程を ISO 8601 UTC 文字列へ正規化して送信する
 6. Step3 で必要に応じてコメントを入力して送信する
 7. `respondToCollab` が回答内容を `participantResponses` に保存し、コメントがあれば回答コメントとして `comments` に追記する
-8. 回答受信通知を送る（配送先・配送条件は notification を参照）
+8. 回答受信の Discord 通知を送る（integration の IN-003 / IN-004）
 
 ## 日程確定フロー
 

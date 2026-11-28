@@ -17,10 +17,10 @@
 - **US-007**: アカウント削除時、Firebase Auth 上の認証アカウントは削除する
 - **US-008**: アカウント削除時、`users/{uid}` ドキュメントは完全削除せずゴースト状態へ移行する
 - **US-009**: ゴースト状態の User には `uid`, `displayName`, `avatarUrl`, `deleted`, `deletedAt` を保持する
-- **US-010**: ゴースト化時には `email`, `googleCalendarExports`, `teamIds` に加え、通知運用サブリソースである `notificationEndpoints`, `notificationSettings` を削除する
+- **US-010**: ゴースト化時には `email`, `googleCalendarExports`, `teamIds` を削除する
 - **US-011**: 削除済みの ghost User は再ログイン時に復元しない
 - **US-012**: 削除後に同じ Google アカウントで再度サインインした場合は、新しい active User を新規作成する
-- **US-013**: 旧 ghost User は過去のタスク、コメント、通知、履歴表示の参照整合を維持するため削除せず残存させる
+- **US-013**: 旧 ghost User は過去のタスク、コメント、履歴表示の参照整合を維持するため削除せず残存させる
 
 ## クローズドベータ入場制限（T11）
 

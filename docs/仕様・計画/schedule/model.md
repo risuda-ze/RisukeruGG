@@ -17,11 +17,12 @@ Firestore コレクション配置: `teams/{teamId}/schedules/{scheduleId}`
 | `categoryId`     | string \| null                        | カテゴリ ID。未分類なら `null`。タスクと共通の Category を参照する（正本は [task/model.md](../task/model.md) の Category） |
 | `startAt`        | timestamp                             | 開始日時 |
 | `endAt`          | timestamp                             | 終了日時 |
-| `allDay`         | boolean                               | 終日予定かどうか |
-| `platform`       | YouTube / Twitch / 両方               | 配信プラットフォーム |
+| `allDay`         | boolean（任意）                       | 終日予定かどうか。未設定は `false` 扱い |
 | `description`    | string                                | 詳細説明。閲覧時は Markdown 表示対象 |
 | `participantIds` | string[]                              | 関連メンバーの UID 一覧 |
-| `version`        | number                                | 楽観的ロック用の更新番号 |
+| `collabPartnerName` | string \| null                    | コラボ相手の表示名。コラボ確定で作ったスケジュールは `CollabSession.partnerName`、それ以外は `null`。Google カレンダー書き出しの説明欄に使う |
+| `linkedTaskIds`  | string[]                              | 紐付くタスク ID の一覧。作成時は空配列で保存する |
+| `createdBy` / `createdAt` / `updatedBy` / `updatedAt` | | 作成者・作成日時・最終更新者・最終更新日時。[team/model.md](../team/model.md) の共通フィールド |
 
 ## Google カレンダー書き出しの対応づけ
 
@@ -36,9 +37,8 @@ Firestore コレクション配置: `teams/{teamId}/schedules/{scheduleId}`
 
 - `allDay: true` の場合、Google カレンダー仕様に準拠し「開始日の 00:00:00 〜 最終日翌日の 00:00:00」で保存する（終了は排他的境界。終了時刻ちょうどはイベントに含まれない）。旧仕様（終了時刻を包含的に解釈）で保存された既存データは移行スクリプトで本仕様に一括移行済み（適用済みスクリプトは削除方針に従い除去。Git 履歴の `scripts/migrate-allday-schedule-encoding.mjs` を参照）
 - 開始日時入力時に終了日時が未設定の場合、UI は 2 時間後を仮設定として補完する
-- `version` は競合検知のため更新時に利用する
 - カレンダー表示上の週始まりは日曜だが、これは保存値ではなく表示ルールである
-- 既存スケジュールを参照した複製新規作成は保存項目を増やさず、`id` と `version` は新規スケジュールとして生成する
+- 既存スケジュールを参照した複製新規作成は保存項目を増やさず、`id` と共通フィールドは新規スケジュールとして生成する
 
 ## 関連する隣接モデル
 
