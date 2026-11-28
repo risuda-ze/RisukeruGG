@@ -159,8 +159,6 @@ export interface Task {
    */
   dueDateAllDay?: boolean;
   linkedScheduleId: string | null;
-  /** チーム内コメント（CollabComment と同一構造） */
-  comments?: CollabComment[];
   updatedAt: Date;
   createdBy: string;
   createdAt: Date;
@@ -173,15 +171,14 @@ export interface CollabParticipant {
   type: 'member' | 'external';
 }
 
-// コラボ調整内のチームコメント
+// 回答コメント（コラボの公開回答で回答者が書くコメント。Function respondToCollab だけが追記する）
 export interface CollabComment {
   id: string;
+  /** 回答者のキー（participantResponses のキーと同じ値） */
   authorId: string;
   authorName: string;
   text: string;
   createdAt: Date;
-  /** 返信先コメントの ID。未設定はルートコメント、設定済みは返信（1階層のみ） */
-  parentId?: string;
 }
 
 export interface CollabSession {

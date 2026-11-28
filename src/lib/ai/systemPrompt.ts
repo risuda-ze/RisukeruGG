@@ -4,12 +4,6 @@
  */
 import { ROLE_LABELS, toTeamRole } from '@/lib/utils/teamRoles';
 
-/** コンテキストに載せるタスクコメント（読み取り専用） */
-export interface TaskCommentContext {
-  authorName: string;
-  text: string;
-}
-
 export interface AiChatContext {
   tasks: Array<Record<string, unknown>>;
   schedules: Array<{ title: string; startAt: string; endAt: string; allDay: boolean }>;
@@ -32,7 +26,6 @@ export interface AiChatContext {
     dueDate: string | null;
     description: string | null;
     categoryName?: string | null;
-    comments?: TaskCommentContext[];
   };
 }
 
@@ -166,11 +159,10 @@ export function generateSystemPrompt(
 | columnName | ステータス移動（【タスクカラム】のカラム名） | "columnName":"完了" |
 | categoryName | カテゴリ変更（【カテゴリ】のカテゴリ名）。null でカテゴリを外す | "categoryName":"配信準備" / "categoryName":null |
 
-- 詳細文の作成を頼まれたら、タスクのタイトル・コメント・会話内容から実用的な詳細文（目的・作業内容・完了条件など）を書いて提案する
+- 詳細文の作成を頼まれたら、タスクのタイトル・会話内容から実用的な詳細文（目的・作業内容・完了条件など）を書いて提案する
 - 「〇〇を完了にして」「終わったよ」→ columnName で完了系カラムへ移動を提案する
 
 **編集できないもの（依頼されたら「ここでは変更できない」と断り、アプリ画面での操作を案内する）:**
-- コメントの追加・編集・削除（コメントは読み取りのみ。内容の参照や要約はOK）
 - タスクの削除、作成者・作成日、スケジュールとのリンク
 
 ## タスク照会
@@ -251,24 +243,11 @@ export function formatCategories(categories: Array<{ name: string }>): string {
 
 /** タスク一覧コンテキストでの詳細文の最大文字数（トークン節約のため切り詰める） */
 const TASK_DESC_PREVIEW_MAX = 200;
-/** タスク一覧コンテキストでのコメント表示件数・文字数上限 */
-const TASK_COMMENTS_PREVIEW_COUNT = 3;
-const TASK_COMMENT_PREVIEW_MAX = 100;
 
 /** 文字数上限で切り詰める（改行はスペースに潰す） */
 function preview(text: string, max: number): string {
   const flat = text.replace(/\n/g, ' ');
   return flat.length > max ? `${flat.slice(0, max)}…` : flat;
-}
-
-/** コメント配列（unknown）を安全に TaskCommentContext[] とみなして整形する */
-function formatCommentsInline(comments: unknown, count: number, max: number): string {
-  if (!Array.isArray(comments) || comments.length === 0) return '';
-  const items = (comments as TaskCommentContext[])
-    .slice(-count) // 直近 N 件
-    .map((c) => `${c.authorName}「${preview(c.text, max)}」`)
-    .join(' / ');
-  return items;
 }
 
 export function formatTasks(tasks: Array<Record<string, unknown>>): string {
@@ -277,31 +256,17 @@ export function formatTasks(tasks: Array<Record<string, unknown>>): string {
     .slice(0, 30)
     .map((t) => {
       const desc = typeof t.description === 'string' && t.description ? t.description : null;
-      const comments = formatCommentsInline(
-        t.comments,
-        TASK_COMMENTS_PREVIEW_COUNT,
-        TASK_COMMENT_PREVIEW_MAX
-      );
       return (
         `- ${t.title}（ID: ${t.id ?? '不明'}、ステータス: ${t.columnName ?? '不明'}、担当: ${t.assigneeName ?? 'なし'}、期限: ${t.dueDate ?? 'なし'}、カテゴリ: ${t.categoryName ?? 'なし'}）` +
-        (desc ? `\n  詳細: ${preview(desc, TASK_DESC_PREVIEW_MAX)}` : '') +
-        (comments ? `\n  コメント（直近）: ${comments}` : '')
+        (desc ? `\n  詳細: ${preview(desc, TASK_DESC_PREVIEW_MAX)}` : '')
       );
     })
     .join('\n');
 }
 
-/** ピン留めタスクのコメント表示件数・文字数上限（一覧より多めに全文寄りで渡す） */
-const PINNED_COMMENTS_COUNT = 10;
-const PINNED_COMMENT_MAX = 300;
-
 /** ピン留めタスク（タスク詳細画面から「AIに相談」で遷移した場合）のプロンプトブロックを生成する */
 export function formatPinnedTask(pinnedTask: AiChatContext['pinnedTask']): string {
   if (!pinnedTask) return '';
-  const comments = (pinnedTask.comments ?? [])
-    .slice(-PINNED_COMMENTS_COUNT)
-    .map((c) => `  - ${c.authorName}: ${preview(c.text, PINNED_COMMENT_MAX)}`)
-    .join('\n');
   return `## 対象タスク（ユーザーは今このタスクについて相談している）
 
 - ID: ${pinnedTask.id}
@@ -312,8 +277,6 @@ export function formatPinnedTask(pinnedTask: AiChatContext['pinnedTask']): strin
 - カテゴリ: ${pinnedTask.categoryName ?? 'なし'}
 - 詳細（全文）:
 ${pinnedTask.description ?? '（未記入）'}
-- コメント（直近${PINNED_COMMENTS_COUNT}件・古い順）:
-${comments || '  （コメントなし）'}
 
 「このタスク」「詳細を書いて」など対象を明示しない依頼は、すべてこのタスク（taskId: ${pinnedTask.id}）への task_update として扱う。
 

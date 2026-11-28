@@ -47,7 +47,7 @@ export const AI_CAPABILITIES: AiCapability[] = [
   {
     id: 'task_update',
     name: '既存タスクを編集する',
-    description: 'タイトル・詳細・期限・担当・ステータス・カテゴリの変更を、変更前 → 変更後の差分付きで提案する。コメントや削除は扱わない。',
+    description: 'タイトル・詳細・期限・担当・ステータス・カテゴリの変更を、変更前 → 変更後の差分付きで提案する。削除は扱わない。',
     surfaces: ['web', 'discord'],
     stage: 'available',
     promptId: 'assistant',

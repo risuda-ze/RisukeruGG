@@ -2,7 +2,7 @@
 
 ## モデル方針
 
-CollabSession は外部相手との日程調整単位を表し、CollabComment は調整中のメモ / コメントを表す。
+CollabSession は外部相手との日程調整単位を表し、CollabComment は公開回答時に回答者が書いたコメント（回答コメント）を表す。
 
 このカテゴリでは、コラボ作成、公開回答、確定、再調整に直接関係する項目だけを正本化する。月次上限判定は plan、確定後に生成されるスケジュール詳細は schedule、通知配送条件は notification を参照する。
 
@@ -26,7 +26,7 @@ CollabSession は外部相手との日程調整単位を表し、CollabComment �
 | `content` | string \| null | コラボ内容メモ |
 | `participants` | `CollabParticipant[]` \| undefined | 内部 / 外部の参加者候補 |
 | `participantResponses` | `Record<string, Record<string, 'ok' \| 'ng' \| 'pending'>>` \| undefined | 回答者ごとの候補日程回答 |
-| `comments` | `CollabComment[]` \| undefined | コメント / メモ一覧 |
+| `comments` | `CollabComment[]` \| undefined | 回答コメントの一覧。`respondToCollab` だけが追記する。`authorId` が `participantResponses` のキーと一致する要素を、その回答者の回答コメントとして扱う |
 
 ## CollabParticipant
 
@@ -41,11 +41,10 @@ CollabSession は外部相手との日程調整単位を表し、CollabComment �
 | フィールド | 型 / 例 | 意味 |
 | --- | --- | --- |
 | `id` | string | コメント ID |
-| `authorId` | string | 投稿者識別子 |
-| `authorName` | string | UI 表示名 |
+| `authorId` | string | 回答者名から作る識別子（`participantResponses` のキーと同じ。UID ではない） |
+| `authorName` | string | 回答者名 |
 | `text` | string | コメント本文 |
 | `createdAt` | Date | 作成日時 |
-| `parentId` | string \| undefined | 返信先コメント ID。未設定はルートコメント |
 
 ## Firestore コレクション配置
 
@@ -63,7 +62,7 @@ teams/{teamId}/collabSessions/{sessionId}   ← CollabSession ドキュメント
 - `status === 'confirmed'` のときは `confirmedDate` を持ち、通常は `linkedScheduleId` も保持する
 - `status === 'open'` では共有 URL から回答可能、`confirmed` / `expired` / `cancelled` では新規回答を受け付けない
 - 候補日程の削除時は `participantResponses` の添字を再マッピングする
-- コメント入力時は `comments` に外部回答コメントを追記する
+- 公開回答でコメントが入力されたときは、`respondToCollab` が `comments` に回答コメントを追記する。チーム内からは `comments` に書き込まない
 
 ## 状態遷移
 

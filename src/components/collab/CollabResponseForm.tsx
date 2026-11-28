@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { format, differenceInDays } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { respondToCollab, addCollabComment } from '@/lib/repositories/collabs';
-import { Timestamp } from 'firebase/firestore';
+import { respondToCollab } from '@/lib/repositories/collabs';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import type { CollabSession, CollabParticipant } from '@/types/entities';
@@ -130,17 +129,6 @@ export default function CollabResponseForm({
         alternativeDates: alternativeDate ? [new Date(alternativeDate).toISOString()] : [],
         note: note.trim() || null,
       });
-      /* T026: コメントを comments[] に追記（note がある場合のみ） */
-      if (note.trim()) {
-        const authorId = respondentName.trim().replace(/[.#$[\]/]/g, '_');
-        await addCollabComment(teamId, sessionId, {
-          id: `resp_${Date.now()}`,
-          authorId,
-          authorName: respondentName.trim(),
-          text: note.trim(),
-          createdAt: Timestamp.now(),
-        });
-      }
       onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : '送信に失敗しました');

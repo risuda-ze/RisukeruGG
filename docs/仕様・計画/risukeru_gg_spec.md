@@ -73,7 +73,7 @@
 | `integration`    | 外部サービス連携       | Discord 連携（通知配送、Bot 招待、`/risukerugg` AI ボット）を扱う                                          | [README](./integration/README.md) / [requirements](./integration/requirements.md) / [model](./integration/model.md)                                               |
 | `ai`             | AIチャット             | `/chat` の AI アシスタント、提案生成、スケジュール・タスク・コラボ登録連携を扱う                           | [README](./ai/README.md) / [requirements](./ai/requirements.md) / [model](./ai/model.md)                                                                          |
 | `production`     | タスク管理 v2（1枚紙） | ブリーフ（動画1本）、工程、進め方、締切逆算、差分、操作層を扱う。既存カンバン（task）と並行提供            | [README](./production/README.md) / [requirements](./production/requirements.md) / [model](./production/model.md) / [flows](./production/flows.md)                 |
-| `unavailability` | 対応不可時間           | 所属者が申告する対応不可の時間帯とメモ、全所属者の一覧、所属者詳細、CSV・定期入力を扱う                    | [README](./unavailability/README.md) / [requirements](./unavailability/requirements.md) / [model](./unavailability/model.md) / [flows](./unavailability/flows.md) |
+| `unavailability` | 対応不可時間           | 所属者が申告する対応不可の時間帯、時間帯に付けるコメント、全所属者の一覧、所属者詳細、CSV・定期入力を扱う                    | [README](./unavailability/README.md) / [requirements](./unavailability/requirements.md) / [model](./unavailability/model.md) / [flows](./unavailability/flows.md) |
 | `video-request`  | 動画依頼               | 動画とサムネの依頼・納品・修正・承認                                                                        | [README](./video-request/README.md) / [requirements](./video-request/requirements.md) / [model](./video-request/model.md) / [flows](./video-request/flows.md) |
 
 ### カテゴリ別の役割
@@ -176,14 +176,15 @@
 | **ScheduleEntry**                        | title, startAt, endAt, allDay, platform, description, participantIds, categoryId（Category 参照）, version（楽観的ロック用）                   |
 | **Task**                                 | 詳細は [task/model.md](./task/model.md) を参照。タスク項目と `columnId` 中心の状態表現を task カテゴリで正本化する                             |
 | **CollabSession**                        | 詳細は [collab/model.md](./collab/model.md) を参照。コラボ作成、公開回答、確定、再調整に必要な保持項目を管理                                   |
-| **CollabComment**                        | 詳細は [collab/model.md](./collab/model.md) を参照。コラボ内コメント / メモの保持項目を管理                                                    |
+| **CollabComment**                        | 詳細は [collab/model.md](./collab/model.md) を参照。公開回答時に回答者が書いたコメントの保持項目を管理                                                    |
 | **Notification**                         | receiverId, type, refEntityId, isRead, createdAt                                                                                               |
 | **SidebarState**                         | collapsed（boolean）, openSections（string[]）— Zustand ストア（localStorage 永続化）                                                          |
 | **DiscordTeamConfig**                    | 詳細は [integration/model.md](./integration/model.md) を参照。チームの Discord 通知設定（webhookUrl / guildId / channelId / 通知トグル）を管理 |
 | **DiscordSession**                       | 詳細は [integration/model.md](./integration/model.md) を参照。`/risukerugg` AI ボットのサーバー単位会話セッションを管理                        |
 | **ChatMessage / Proposal**               | 詳細は [ai/model.md](./ai/model.md) を参照。AIチャットの会話履歴と登録提案（セッションメモリのみ・Firestore 永続化なし）                       |
 | **Playbook / Brief / Step / BriefEvent** | 詳細は [production/model.md](./production/model.md) を参照。進め方（工程の型）、ブリーフ（動画1本）、工程、差分                                |
-| **UnavailabilityMonth**                  | 詳細は [unavailability/model.md](./unavailability/model.md) を参照。1 人 1 ヶ月の対応不可（日ごとの 24 ビットマスク）とメモ                    |
+| **UnavailabilityMonth**                  | 詳細は [unavailability/model.md](./unavailability/model.md) を参照。1 人 1 ヶ月の対応不可（日ごとの 24 ビットマスク）                    |
+| **UnavailabilityComment**                | 詳細は [unavailability/model.md](./unavailability/model.md) を参照。所属者 1 人の時間帯に全所属者が付けられるコメント |
 
 ---
 

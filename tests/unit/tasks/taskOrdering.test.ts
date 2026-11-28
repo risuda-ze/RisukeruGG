@@ -14,7 +14,6 @@ function createTask(overrides: Partial<Task>): Task {
     assigneeId: null,
     dueDate: null,
     linkedScheduleId: null,
-    comments: [],
     updatedAt: baseDate,
     createdBy: 'user-1',
     createdAt: baseDate,
